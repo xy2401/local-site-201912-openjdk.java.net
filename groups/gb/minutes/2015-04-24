@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK GB: 2015/4/24</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      PRE { font: inherit; }
+/**/
+</style></head><body><div id="main">
+<h1>OpenJDK Governing Board Minutes: 2015/4/24</h1>
+<p>The OpenJDK Governing Board met via conference call on Thursday,
+24 April 2015 at 16:00 UTC with the following agenda:</p>
+<ol>
+<li>Vulnerability Group (NDA/License)</li>
+<li>Any other business</li>
+</ol>
+<p>Four Board members were present: Georges Saab, Andrew Haley,
+Doug Lea, and Mark Reinhold.</p>
+<p>The intent of these minutes is to capture the conversational
+flow of the Board's discussion and also to record decisions. If you
+are interested only in the latter then search for the word "AGREED"
+throughout the text.</p>
+<h2>1. Vulnerability Group (NDA/License)</h2>
+<p>The meeting started with Georges and Andrew providing a summary
+of what they believed were John's two difficulties with the latest
+draft legal document:</p>
+<ul>
+<li>
+<p>Concerns around information confidentiality and public
+announcements</p>
+</li>
+<li>
+<p>Concerns about pre-existing customer agreements which require
+disclosure of vulnerabilities</p>
+</li>
+</ul>
+<p>Georges acknowledged that the pre-existing customer agreement
+situation might be a problem.</p>
+<p>Andrew thought it would be nice to address John's
+confidentiality/announcement issues. Georges said that it was his
+understanding that the problematic section was very specifically
+about information received through Group membership, not
+information the member brought to the Group or that was already
+known by the member. Doug added that if that was an accurate
+assessment, he did not think that there was any way to re-word the
+document to address John's concerns; however, he would be
+interested to hear possible solutions. He was also open to
+acknowledging that the section contained room for interpretation
+and simply move on. After Georges read the definition of
+confidential information, Andrew (not a lawyer) commented that the
+definition seemed pretty clear. Georges (not a lawyer) believed
+that the basic intent was to put restrictions only on information
+received by virtue of being in the Group.</p>
+<p>The Board briefly considered what needed to occur next. Andrew
+saw no reason to continue speculation about John's concerns. Doug
+expressed unease about creating a Group which IBM could not join.
+Georges thought it unfriendly and unwise to call for an immediate
+vote. He said he would speak to John to understand the issues and
+to determine possible solutions. The Board asked Georges to
+emphasize that they wished to move forward to create the Group.</p>
+<h2>2. Any other business</h2>
+<p>Andrew raised a question about Vulnerability Group
+infrastructure. After brief conversation, it was determined that a
+mailing list with appropriate encryption would meet the Group's
+bootstrapping needs and would be straight-forward to implement.</p>
+<p>Andrew also raised concerns about write access to the <a href="https://bugs.openjdk.java.net">OpenJDK bug system</a>. At the
+present time, the user must be a Project <a href="//openjdk.java.net/bylaws#author">Author</a>. He thought that
+people who aren't Authors should at least be allowed to create
+bugs. The other Board members acknowledged that they'd observed the
+concerns that have been expressed due to the scheduled OpenJFX bug
+migration.</p>
+<p>Georges noted that everybody seemed to agree that there should
+be only one bug system; however, the different policies between the
+two systems was problematic. Within the current OpenJDK framework,
+he asserted that there was leeway to interpret the definition of a
+"contribution". Thus he thought it may be possible to offer the
+Author role to OpenJFX Contributors who have already met some
+unspecified requirement. However, he wondered what should be done
+for the next set of potential Authors in a similar situation.
+Georges did not recommend changing the <a href="//openjdk.java.net/bylaws">Bylaw's</a> definitions of roles
+or define new ones. Instead, he suggested focusing on how to
+optimize workflows through the existing system to accomplish the
+desired goals.</p>
+<p>Andrew appreciated Georges' position but had difficulty
+reconciling it with his knowledge of other open source projects
+which do not have restrictions on bug creation. Georges explained
+that write access to the <a href="https://bugs.openjdk.java.net">bug
+system</a> was intentionally restricted because Oracle has very
+concrete knowledge of the volume and quality of bug submissions in
+unrestricted systems. <a href="http://bugreport.java.com">bugreport.java.com</a> allows
+submission from any user (including anonymous users) making it easy
+for people to report issues. The reports are filtered and acted
+upon quite quickly; however there was room for improvement,
+particularly with respect to tracking and transparency.</p>
+<p>Doug dropped off the call saying that he had another commitment
+but hoped that progress was made.</p>
+<p>Mark reminded the Board that anybody could create bug reports
+via the indirect method of <a href="http://bugreport.java.com">bugreport.java.com</a>. As the original
+author of the <a href="//openjdk.java.net/bylaws">Bylaws</a>,
+he thought that there was an argument for another kind of role or
+re-conception of the Author role. However, since changing the
+Bylaws is difficult, he recommended exploring an adjustment to the
+threshold of Authorship. The <a href="//openjdk.java.net/projects/#project-author">Author
+guidelines</a> are not part of the Bylaws, so they could be revised
+to include some number of high quality bug reports as valid
+references. On Andrew's request, Mark volunteered to send a reply
+to the OpenJFX thread on behalf of the Board.</p>
+<p>At this point the Board adjourned.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>HotSpot Glossary of Terms</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>HotSpot Glossary of Terms</h1>
+<p>A work in progress, especially as the HotSpot VM evolves. But a
+place to put definitions of things so we only have to define them
+once. There are empty entries (marked <i>TBD</i> for "to be
+defined") because we think of things that we need to define faster
+than we think of good definitions.</p>
+<dl>
+<dt><a name="adaptiveSpinning" id="adaptiveSpinning"><b>adaptive
+spinning</b></a></dt>
+<dd>An optimization technique whereby a thread spins waiting for a
+change-of-state to occur (typically a flag that represents some
+event has occurred - such as the release of a lock) rather than
+just blocking until notified that the change has occurred. The
+"adaptive" part comes from the policy decisions that control how
+long the thread will spin until eventually deciding to block.</dd>
+<dt><a name="biasedLocking" id="biasedLocking"><b>biased
+locking</b></a></dt>
+<dd>An optimization in the VM that leaves an object as logically
+locked by a given thread even after the thread has released the
+lock. The premise is that if the thread subsequently reacquires the
+lock (as often happens), then reacquisition can be achieved at very
+low cost. If a different thread tries to acquire a biased lock then
+the bias must be revoked from the current bias owner.</dd>
+<dt><a name="blockStartTable" id="blockStartTable"><b>block start
+table</b></a></dt>
+<dd>A table that shows, for a region of the heap, where the object
+starts that comes on to this region from lower addresees. Used, for
+example, with the <a href="#cardTable">card table</a> variant of
+the <a href="#rememberedSet">remembered set</a>.</dd>
+<dt><a name="bootstrapClassloader" id="bootstrapClassloader"><b>bootstrap classloader</b></a></dt>
+<dd>The logical classloader that has responsibility for loading the
+classes (and resources) that are found in the boot-classpath -
+typically the core Java platform classes. Typically implemented as
+part of the VM, by historical convention the bootstrap classloader
+is represented by NULL at the Java API level.</dd>
+<dt><a name="bytecodeVerification" id="bytecodeVerification"><b>bytecode verification</b></a></dt>
+<dd>A step in the linking process of a class where the methods
+bytecodes are analyzed to ensure type-safety.</dd>
+<dt><a name="C1Compiler" id="C1Compiler"><b>C1
+compiler</b></a></dt>
+<dd>Fast, lightly optimizing bytecode compiler. Performs some value
+numbering, inlining, and class analysis. Uses a simple CFG-oriented
+SSA "high" IR, a machine-oriented "low" IR, a linear scan register
+allocation, and a template-style code generator.</dd>
+<dt><a name="C2Compiler" id="C2Compiler"><b>C2
+compiler</b></a></dt>
+<dd>Highly optimizing bytecode compiler, also known as 'opto'. Uses
+a "sea of nodes" SSA "ideal" IR, which lowers to a machine-specific
+IR of the same kind. Has a graph-coloring register allocator;
+colors all machine state, including local, global, and argument
+registers and stack. Optimizations include global value numbering,
+conditional constant type propagation, constant folding, global
+code motion, algebraic identities, method inlining (aggressive,
+optimistic, and/or multi-morphic), intrinsic replacement, loop
+transformations (unswitching, unrolling), array range check
+elimination.</dd>
+<dt><a name="cardTable" id="cardTable"><b>card table</b></a></dt>
+<dd>A kind of <a href="#rememberedSet">remembered set</a> that
+records where oops have changed in a generation.</dd>
+<dt><a name="classDataSharing" id="classDataSharing"><b>class data
+sharing</b></a></dt>
+<dd>A startup optimization that records the in-memory form of some
+classes, so that that form can be mapped into memory by a
+subsequent run of the virtual machine, rather than loading those
+classes from their class files.</dd>
+<dt><a name="classHierachyAnalysis" id="classHierachyAnalysis"><b>class hierachy analysis</b></a></dt>
+<dd>Also known as 'CHA'. Analysis of the class tree used by a
+compiler to determine if the receiver at a virtual call site has a
+single implementor. If so, the callee can be inlined or the
+compiler can employ some other static call mechanism.</dd>
+<dt><a name="codeCache" id="codeCache"><b>code cache</b></a></dt>
+<dd>A special heap that holds compiled code. These objects are not
+relocated by the GC, but may contain oops, which serve as GC
+roots.</dd>
+<dt><a name="compaction" id="compaction"><b>compaction</b></a></dt>
+<dd>A garbage collection technique that results in live objects
+occupying a dense portion of the virtual address space, and
+available space in another portion of the address space. Cf.
+<a href="#freeList">free list</a>.</dd>
+<dt><a name="concurrency" id="concurrency"><b>concurrency</b></a></dt>
+<dd>Concurrency, or more specifically concurrent programming, is
+the logical simultaneous execution of multiple instruction streams.
+If multiple processors are available then the logical simultaneity
+can be physical simultaneity - this is known as 'parallelism'</dd>
+<dt><a name="concurrentGarbageCollection" id="concurrentGarbageCollection"><b>concurrent garbage
+collection</b></a></dt>
+<dd>A garbage collection algorithm that does most (if not all) of
+its work while the Java application threads are still running.</dd>
+<dt><a name="copyingGarbageCollection" id="copyingGarbageCollection"><b>copying garbage
+collection</b></a></dt>
+<dd>A garbage collection algorithm that moves objects during the
+collection.</dd>
+<dt><a name="deoptimization" id="deoptimization"><b>deoptimization</b></a></dt>
+<dd>The process of converting an compiled (or more optimized) stack
+frame into an interpreted (or less optimized) stack frame. Also
+describes the discarding of an nmethod whose dependencies (or other
+assumptions) have been broken. Deoptimized nmethods are typically
+recompiled to adapt to changing application behavior. Example: A
+compiler initially assumes a reference value is never null, and
+tests for it using a trapping memory access. Later on, the
+application uses null values, and the method is deoptimized and
+recompiled to use an explicit test-and-branch idiom to detect such
+nulls.</dd>
+<dt><a name="dependency" id="dependency"><b>dependency</b></a></dt>
+<dd>An optimistic assumption associated with an nmethod, which
+allowed the compiler to emit improved code into the nmethod.
+Example: A given class has no subclasses, which simplifies method
+dispatch and type testing. The loading of new classes (or
+replacement of old classes) can cause dependencies to become false,
+which requires dependent nmethods to be discarded and activations
+of those nmethods to be deoptimized.</dd>
+<dt><a name="eden" id="eden"><b>eden</b></a></dt>
+<dd>A part of the Java object heap where object can be created
+efficiently.</dd>
+<dt><a name="freeList" id="freeList"><b>free list</b></a></dt>
+<dd>A storage management technique in which unused parts of the
+Java object heap are chained one to the next, rather than having
+all of the unused part of the heap in a single block.</dd>
+<dt><a name="garbageCollection" id="garbageCollection"><b>garbage
+collection</b></a></dt>
+<dd>The automatic management of storage.</dd>
+<dt><a name="garbageCollectionRoot" id="garbageCollectionRoot"><b>garbage collection root</b></a></dt>
+<dd>A pointer into the Java object heap from outside the heap.
+These come up, e.g., from static fields of classes, local
+references in activation frames, etc.</dd>
+<dt><a name="GCMap" id="GCMap"><b>GC map</b></a></dt>
+<dd>A description emitted by the JIT (C1 or C2) of the locations of
+oops in registers or on stack in a compiled stack frame. Each code
+location which might execute a safepoint has an associated GC map.
+The GC knows how to parse a frame from a stack, to request a GC map
+from a frame's nmethod, and to unpack the GC map and manage the
+indicated oops within the stack frame.</dd>
+<dt><a name="generationalGarbageCollection" id="generationalGarbageCollection"><b>generational garbage
+collection</b></a></dt>
+<dd>A storage management technique that separates objects expected
+to be referenced for different lengths of time into different
+regions of the heap, so that different algorithms can be applied to
+the collection of those regions.</dd>
+<dt><a name="handle" id="handle"><b>handle</b></a></dt>
+<dd>A memory word containing an oop. The word is known to the GC,
+as a root reference. C/C++ code generally refers to oops indirectly
+via handles, to enable the GC to find and manage its root set more
+easily. Whenever C/C++ code blocks in a safepoint, the GC may
+change any oop stored in a handle. Handles are either 'local'
+(thread-specific, subject to a stack discipline though not
+necessarily on the thread stack) or global (long-lived and
+explicitly deallocated). There are a number of handle
+implementations throughout the VM, and the GC knows about them
+all.</dd>
+<dt><a name="hotLock" id="hotLock"><b>hot lock</b></a></dt>
+<dd>A lock that is highly contended.</dd>
+<dt><a name="interpreter" id="interpreter"><b>interpreter</b></a></dt>
+<dd>A VM module which implements method calls by individually
+executing bytecodes. The interpreter has a limited set of highly
+stylized stack frame layouts and register usage patterns, which it
+uses for all method activations. The Hotspot VM generates its own
+interpreter at start-up time.</dd>
+<dt><a name="JITCompilers" id="JITCompilers"><b>JIT
+compilers</b></a></dt>
+<dd>An on-line compiler which generates code for an application (or
+class library) during execution of the application itself. ("JIT"
+stands for "just in time".) A JIT compiler may create machine code
+shortly before the first invocation of a Java method. Hotspot
+compilers usually allow the interpreter ample time to "warm up"
+Java methods, by executing them thousands of times. This warm-up
+period allows a compiler to make better optimization decisions,
+because it can observe (after initial class loading) a more
+complete class hierarchy. The compiler can also inspect branch and
+type profile information gathered by the interpreter.</dd>
+<dt><a name="JNI" id="JNI"><b>JNI</b></a></dt>
+<dd>The Java Native Interface - a specification and API for how
+Java code can call out to native C code, and how native C code can
+call into the Java VM</dd>
+<dt><a name="JVMTI" id="JVMTI"><b>JVM TI</b></a></dt>
+<dd>The Java Virtual Machine Tools Interface - a standard
+specification and API that is used by development and monitoring
+tools. See <a href="Serviceability.html#tjvmti">JVM TI</a> for more
+information.</dd>
+<dt><a name="klassPointer" id="klassPointer"><b>klass
+pointer</b></a></dt>
+<dd>The second word of every object header. Points to another
+object (a metaobject) which describes the layout and behavior of
+the original object. For Java objects, the "klass" contains a C++
+style "vtable".</dd>
+<dt><a name="markWord" id="markWord"><b>mark word</b></a></dt>
+<dd>The first word of every object header. Usually a set of
+bitfields including synchronization state and identity hash code.
+May also be a pointer (with characteristic low bit encoding) to
+synchronization related information. During GC, may contain GC
+state bits.</dd>
+<dt><a name="nmethod" id="nmethod"><b>nmethod</b></a></dt>
+<dd>A block of executable code which implements some Java
+bytecodes. It may be a complete Java method, or an 'OSR' method. It
+routinely includes object code for additional methods inlined by
+the compiler.</dd>
+<dt><a name="objectHeader" id="objectHeader"><b>object
+header</b></a></dt>
+<dd>Common structure at the beginning of every GC-managed heap
+object. (Every oop points to an object header.) Includes
+fundamental information about the heap object's layout, type, GC
+state, synchronization state, and identity hash code. Consists of
+two words. In arrays it is immediately followed by a length field.
+Note that both Java objects and VM-internal objects have a common
+object header format.</dd>
+<dt><a name="objectPromotion" id="objectPromotion"><b>object
+promotion</b></a></dt>
+<dd>The act of copying an object from one generation to
+another.</dd>
+<dt><a name="oldGeneration" id="oldGeneration"><b>old
+generation</b></a></dt>
+<dd>A region of the Java object heap that holds object that have
+remained referenced for a while.</dd>
+<dt><a name="onStackReplacement" id="onStackReplacement"><b>on-stack replacement</b></a></dt>
+<dd>Also known as 'OSR'. The process of converting an interpreted
+(or less optimized) stack frame into a compiled (or more optimized)
+stack frame. This happens when the interpreter discovers that a
+method is looping, requests the compiler to generate a special
+nmethod with an entry point somewhere in the loop (specifically, at
+a backward branch), and transfers control to that nmethod. A rough
+inverse to deoptimization.</dd>
+<dt><a name="oop" id="oop"><b>oop</b></a></dt>
+<dd>An object pointer. Specifically, a pointer into the GC-managed
+heap. (The term is traditional. One 'o' may stand for 'ordinary'.)
+Implemented as a native machine address, not a handle. Oops may be
+directly manipulated by compiled or interpreted Java code, because
+the GC knows about the liveness and location of oops within such
+code. (See GC map.) Oops can also be directly manipulated by short
+spans of C/C++ code, but must be kept by such code within handles
+across every safepoint.</dd>
+<dt><a name="parallelClassloading" id="parallelClassloading"><b>parallel classloading</b></a></dt>
+<dd>The ability to have multiple classes/type be in the process of
+being loaded by the same classloader at the same time.</dd>
+<dt><a name="parallelGarbageCollection" id="parallelGarbageCollection"><b>parallel garbage
+collection</b></a></dt>
+<dd>A garbage collection algorithm that uses multiple threads of
+control to perform more efficiently on multi-processor boxes.</dd>
+<dt><a name="permanentGeneration" id="permanentGeneration"><b>permanent generation</b></a></dt>
+<dd>A region of the address space that holds object allocated by
+the virtual machine itself, but which is managed by the garbage
+collector. The permanent generation is mis-named, in that almost
+all of the objects in it <i>can</i> be collected, though they tend
+to be referenced for a long time, so they rarely become
+garbage.</dd>
+<dt><a name="rememberedSet" id="rememberedSet"><b>remembered
+set</b></a></dt>
+<dd>A data structure that records pointers between
+generations.</dd>
+<dt><a name="safepoint" id="safepoint"><b>safepoint</b></a></dt>
+<dd>A point during program execution at which all GC roots are
+known and all heap object contents are consistent. From a global
+point of view, all threads must block at a safepoint before the GC
+can run. (As a special case, threads running JNI code can continue
+to run, because they use only handles. During a safepoint they must
+block instead of loading the contents of the handle.) From a local
+point of view, a safepoint is a distinguished point in a block of
+code where the executing thread may block for the GC. Most call
+sites qualify as safepoints. There are strong invariants which hold
+true at every safepoint, which may be disregarded at
+non-safepoints. Both compiled Java code and C/C++ code be optimized
+between safepoints, but less so across safepoints. The JIT compiler
+emits a GC map at each safepoint. C/C++ code in the VM uses
+stylized macro-based conventions (e.g., TRAPS) to mark potential
+safepoints.</dd>
+<dt><a name="seaOfNodes" id="seaOfNodes"><b>sea-of-nodes</b></a></dt>
+<dd>The high-level intermediate representation in C2. It is an SSA
+form where both data and control flow are represented with explicit
+edges between nodes. It differs from forms used in more traditional
+compilers in that nodes are not bound to a block in a control flow
+graph. The IR allows nodes to float within the sea (subject to edge
+constraints) until they are scheduled late in the compilation
+process.</dd>
+<dt><a name="sa" id="sa"><b>Serviceability Agent (SA)</b></a></dt>
+<dd>The Serviceablity Agent is collection of Sun internal code that
+aids in debugging HotSpot problems. It is also used by several JDK
+tools - jstack, jmap, jinfo, and jdb. See <a href="Serviceability.html#tsa">SA</a> for more information.</dd>
+<dt><a name="stackmap" id="stackmap"><b>stackmap</b></a></dt>
+<dd>Refers to the StackMapTable attribut e or a particular
+StackMapFrame in the table.</dd>
+<dt><a name="StackMapTable" id="StackMapTable"><b>StackMapTable</b></a></dt>
+<dd>An attribute of the Code attribute in a classfile which
+contains type information used by the new verifier during
+verification. It consists of an array of StackMapFrames. It is
+generated automatically by javac as of JDK6.</dd>
+<dt><a name="survivorSpace" id="survivorSpace"><b>survivor
+space</b></a></dt>
+<dd>A region of the Java object heap used to hold objects. There
+are usually a pair of survivor spaces, and collection of one is
+achieved by copying the referenced objects in one survivor space to
+the other survivor space.</dd>
+<dt><a name="synchronization" id="synchronization"><b>synchronization</b></a></dt>
+<dd>In general terms this is the coordination of concurrent
+activities to ensure the safety and liveness properties of those
+activities. For example, protecting access to shared data by using
+a lock to guard all code paths to that data.</dd>
+<dt><a name="TLAB" id="TLAB"><b>TLAB</b></a></dt>
+<dd>Thread-local allocation buffer. Used to allocate heap space
+quickly without synchronization. Compiled code has a "fast path" of
+a few instructions which tries to bump a high-water mark in the
+current thread's TLAB, successfully allocating an object if the
+bumped mark falls before a TLAB-specific limit address.</dd>
+<dt><a name="uncommonTrap" id="uncommonTrap"><b>uncommon
+trap</b></a></dt>
+<dd>When code generated by C2 reverts back to the interpreter for
+further execution. C2 typically compiles for the common case,
+allowing it to focus on optimization of frequently executed paths.
+For example, C2 inserts an uncommon trap in generated code when a
+class that is uninitialized at compile time requires run time
+initialization.</dd>
+<dt><a name="verifier" id="verifier"><b>verifier</b></a></dt>
+<dd>The software code in the VM which performs bytecode
+verification.</dd>
+<dt><a name="VMOperations" id="VMOperations"><b>VM
+Operations</b></a></dt>
+<dd>Operations in the VM that can be requested by Java threads, but
+which must be executed, in serial fashion by a specific thread
+known as the VM thread. These operations are often synchronous, in
+that the requester will block until the VM thread has completed the
+operation. Many of these operations also require that the VM be
+brought to a safepoint before the operation can be performed - a
+garbage collection request is a simple example.</dd>
+<dt><a name="writeBarrier" id="writeBarrier"><b>write
+barrier</b></a></dt>
+<dd>Code that is executed on every oop store. For example, to
+maintain a remembered set.</dd>
+<dt><a name="youngGeneration" id="youngGeneration"><b>young
+generation</b></a></dt>
+<dd>A region of the Java object heap that holds recently-allocated
+objects.</dd>
+</dl>
+<hr />
+<p>Copyright &#169; 2006 Sun Microsystems, Inc. All rights
+reserved.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

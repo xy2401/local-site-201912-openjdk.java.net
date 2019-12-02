@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK GB:</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      PRE { font: inherit; }
+/**/
+</style></head><body><div id="main">
+<h1>Governing Board Minutes: 2012/9/13</h1>
+<p>The OpenJDK Governing Board met via conference call on Thursday,
+13 September 2012 at 16:00 UTC with the following agenda:</p>
+<ol>
+<li>Board membership changes
+<ul>
+<li>John Duimovich now representing IBM</li>
+<li>Nominating Ed Lynch (IBM) to Observer</li>
+</ul>
+</li>
+<li>JavaOne</li>
+<li>OpenJDK Scorecard</li>
+<li>Infrastructure update</li>
+</ol>
+<p>Four Board members were present: John Duimovich, Doug Lea, and
+Mark Reinhold, and Georges Saab.</p>
+<p>One Observer, Ed Lynch, joined the call about 30 minutes
+late.</p>
+<p>Donald Smith (Oracle) was a guest presenter.</p>
+<p>The intent of these minutes is to capture the conversational
+flow of the Board&#8217;s discussion and also to record decisions.
+If you are interested only in the latter then search for the word
+&#8220;AGREED&#8221; throughout the text.</p>
+<h2>1. Board membership changes</h2>
+<p>Mark began the meeting by announcing that Jason Gartner of IBM
+had moved on to new duties and would no longer serve on the Board.
+He reported that IBM wished to appoint John Duimovich as their new
+representative. John was warmly welcomed.</p>
+<p>John nominated his colleague Ed Lynch to be an Observer.</p>
+<blockquote>
+<p>AGREED: Ed Lynch is appointed an Observer.</p>
+</blockquote>
+<h2>2. JavaOne</h2>
+<p>Mark reminded Board members that <a href="http://www.oracle.com/javaone/index.html">JavaOne</a> will be in a
+few short weeks, and encouraged them to participate in the
+Governing Board panel session scheduled for Monday, 1 October at
+3:00pm PDT. Georges, Andrew, and John said they&#8217;d attend.
+Doug said that his schedule is very constrained, but he&#8217;d try
+to be there if he can.</p>
+<p>Georges reminded everybody that the keynotes will be on Sunday,
+30 September, rather than on Monday as in the past. He will deliver
+part of the Java Strategy Keynote, and Mark will lead the Technical
+Keynote.</p>
+<h2>3. OpenJDK Scorecard</h2>
+<p>Georges reintroduced this topic from previous meetings. The goal
+is to have something general and persistent enough that it can be
+used from year to year. It would outline things that we want to do
+and report on how we well we are doing them. Georges then handed
+the floor over to Donald Smith, whom he&#8217;d asked to coordinate
+the creation of the score card.</p>
+<p>Donald started by saying that the current draft was a result of
+multiple iterations of discussions with IBM, the <a href="http://www.meetup.com/Londonjavacommunity/">London Java
+Community</a>, and others. In this meeting he wanted to get Board
+members&#8217; feedback on the structure and content of the score
+card before proceeding with evaluation.</p>
+<p>Each section has a number of goals. For each goal, there is a
+score (0&#8211;5) and notes. The notes section will be used to
+provide guidance on improving the score. Doug thought that the
+draft was surprisingly well-constructed. He liked that it
+enumerated the kinds of things that OpenJDK can do versus things
+that were outside its scope (e.g., the <a href="http://jcp.org">JCP</a>). John commented that he liked the parts
+that identified the qualities of a &#8220;good&#8221; Project. He
+wanted to know how the score card would evolve over time. For
+example, the current draft asks if mailing lists are available; in
+the future, we should ask whether they&#8217;re used. Doug was
+dismayed that there was no mention of bug tracking, but then John
+pointed out that it was under &#8220;Global Infrastructure, Issue
+Tracker.&#8221;</p>
+<p>Doug suggested that <a href="http://www.surveymonkey.com">SurveyMonkey</a> be used to gather
+broad feedback. Georges asked who would be eligible to fill it out.
+Doug suggested that OpenJDK Members would be the right set of
+respondents. John argued for a wider set of people. Doug noted that
+the survey really consists of two parts, feedback on the score
+card&#8217;s structure and contents, and rating of the goals.
+Georges asked how the results would be used, and suggested that
+they be a potential topic for the Governing Board panel session at
+JavaOne.</p>
+<blockquote>
+<p>AGREED: SurveyMonkey will be used to gather feedback on the
+goals in the &#8220;score card for openness&#8221; and to provide
+ratings. The results will be publicized ahead of JavaOne so that
+they may be discussed at the JavaOne Governing Board panel
+session.</p>
+</blockquote>
+<h2>4. Infrastructure update</h2>
+<p>Georges declared that, after resolving various
+license-procurement issues, the date for migration from the closed
+Sun legacy bug tracking system to a closed JIRA system was now 26
+September. After that, planning to make that system publicly
+available would begin immediately. In the mean time, the new system
+would have the same external visibility as the legacy system. Doug
+wished to go on record stating that he viewed the lack of a public
+bug system as the single biggest failure of OpenJDK. Georges and
+Mark assured him that they understand the need to resolve this
+quickly but that they need to work within the bounds of Oracle
+processes.</p>
+<p>At this point the Board adjourned.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

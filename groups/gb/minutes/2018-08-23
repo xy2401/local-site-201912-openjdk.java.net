@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK GB: 2018/8/23</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      PRE { font: inherit; }
+/**/
+</style></head><body><div id="main">
+<h1>OpenJDK Governing Board Minutes: 2018/8/23</h1>
+<p>The OpenJDK Governing Board met via conference call on Thursday,
+23 August 2018 at 15:00 UTC with the following agenda:</p>
+<ol>
+<li>OCW comments/feedback</li>
+<li>OCTLA</li>
+<li>100% complete OpenJDK</li>
+<li>Any other business</li>
+</ol>
+<p>Four Board members were present: Georges Saab, Andrew Haley,
+Doug Lea, and Mark Reinhold.</p>
+<p>One Observer was present: Steve Wallin.</p>
+<p>The intent of these minutes is to capture the conversational
+flow of the Board's discussion and also to record decisions. If you
+are interested only in the latter then search for the word "AGREED"
+throughout the text.</p>
+<h2>1. OCW comments/feedback</h2>
+<p>Georges noted that this was the required quarterly meeting for
+calendar Q3 2018.</p>
+<p>Moving to the <a href="https://openjdk.java.net/workshop">OpenJDK Committers'
+Workshop</a>, Georges outlined the Governing Board member's
+attendance (Andrew, Mark - all; Georges, Steve - some) and
+requested a brief summary. Andrew said that over the two days, it
+was clear that there were many important topics to discuss and
+misunderstandings to clarify. He observed many informal
+conversations in the corridors. Andrew believed that the OCW was
+worth doing and appreciated the "unconference" format. Georges
+agreed that there were a wealth of good topics. Mark said that the
+next OCW would be one or two days attached to <a href="https://fosdem.org/2019/">FOSDEM '19</a> (Brussels, 2 &amp; 3 Feb
+2019). In response to Doug's request for attendance numbers, Mark
+replied that about 80 people registered; however, more than that
+showed up and there were a few no-shows. He also said that he
+thought it turned out really well and while there were some
+disagreements, everybody was constructive and positive. Andrew
+noted that there were quite a few people there who had never
+committed a patch.</p>
+<p>Steve commented that recordings of several OCW talks were
+<a href="https://www.youtube.com/playlist?list=PLX8CzqL3ArzXY_9Ornabhxs-j2h4hnvJ3">
+available</a> and asked about the status of the others. Georges
+replied that the four introductory sessions were recorded and
+highly recommended. Mark said that the lack of recordings was
+intentional. Recording less formal talks was expected to be of
+dubious value and to suppress conversation. Andrew indicated that
+some people were hesitant to lead topics. In lieu of recordings,
+Mark encouraged those who lead topics to submit summaries to the
+<a href="https://mail.openjdk.java.net/mailman/listinfo/workshop-discuss">workshop-discuss</a>
+mailing list. Georges added that the summaries were not expected to
+be detailed. He observed that while live discussions were useful,
+the OCW was not a forum to make decisions and would not replace
+discussions which occur on the mailing lists.</p>
+<h2>2. OCTLA</h2>
+<p>Steve opened his topic by asking whether the Board viewed the
+<a href="https://openjdk.java.net/legal/">OpenJDKCommunity TCK
+License Agreement (OCTLA)</a> as an OpenJDK Project activity or an
+Oracle activity. He reported that there was an <a href="https://openjdk.java.net/groups/conformance/JckAccess/index.html">OpenJDK
+page</a> which described the process for accessing the JCK and he
+wanted to know whether the Board had insight into the application
+and distribution process.</p>
+<p>Georges replied that the OCTLA is an Oracle agreement and
+information was available on OpenJDK for historical reasons. When
+<a href="https://en.wikipedia.org/wiki/Sun_Microsystems">Sun
+Microsystems</a> created the program in 2007, they wished to
+provide the TCK to those who were working on OpenJDK-derived
+implementations so that they could verify whether the
+implementation was compliant to the Specification. Doug viewed the
+fact that the TCK was not part of OpenJDK an oversight. Steve
+declared that IBM would like to contribute more to OpenJDK;
+however, without access to the OCTLA, their contributions were
+restricted.</p>
+<h2>3. 100% complete OpenJDK</h2>
+<p>Steve asked for the Board's perspective regarding the
+expectation that OpenJDK be 100% complete and independent of
+external components. In particular, he noted that the TCK was a
+dependency requiring a third-party commercial license. Doug agreed
+that this was a problem and he would support bring the TCK closer
+to OpenJDK if there was any single thing that would accomplish
+that. Steve believed that the TCK issue needed to be addressed to
+encourage a collaborative environment. Andrew expected that Steve's
+difficulty with TCK acquisition was due to being a corporation.
+Steve countered claiming that IBM was working on purely OpenJDK
+technology.</p>
+<p>Andrew said that it was always his understanding that TCK access
+was at the good will of Oracle; however, he had not heard of it
+being a problem for anybody. Steve asserted that IBM's use was not
+any different than other <a href="https://openjdk.java.net/groups/conformance/JckAccess/jck-access.html">
+OCTLA signatories</a>. Mark disagreed, saying that the situation
+was materially different. Further, this had been explained
+privately and he didn't believe that a Board meeting was the forum
+for further discussion. Doug suggested public contribution of tests
+which would become part of the TCK as he did for concurrency. Mark
+emphasized that following Doug's advice required contributions.
+Steve said that they were working toward and open end-to-end
+environment and needed the tests to verify that they had compliant
+builds. Georges stated that the OCTLA made it possible for people
+doing an OpenJDK-derived implementation to acquire the TCK. Steve
+asserted that was what IBM was doing. Georges and Mark both
+disagreed. Continuing his comment about the OCTLA, Georges
+enumerated the list of 11 <a href="https://openjdk.java.net/groups/conformance/JckAccess/jck-access.html">
+OCTLA signatories</a> for Java SE 9, or later and began reading the
+list of 21 OCTLA signatories for Java SE 8. He stopped reading the
+list at Andrew's request.</p>
+<p>Doug believed that the <a href="https://www.oracle.com/technetwork/java/index-137188.html">Compatibility
+Testing Scholarship Program</a> was still operational and suggested
+that IBM consider applying. Steve said that he would need to
+investigate and did not understand how IBM's situation was any
+different than Red Hat or Azul Systems which did have access to the
+TCK. He declared that IBM's implementation was more than 90%
+derived from OpenJDK. Georges asked Steve whether he was saying
+that IBM's implementation was an OpenJDK derivative. Steve could
+not conclusively answer whether or not IBM's implementation is a
+derivative of OpenJDK. Steve requested clarification regarding
+whether this was at the VM level and received no response.</p>
+<h2>4. Any other business</h2>
+<p>Andrew reported that the <a href="https://openjdk.java.net/groups/vulnerability/">Vulnerability
+Group</a> was going well, though there was a small unanticipated
+problem. The Group did not see non-security-related patches until
+quite late in the release. He assumed that the critical patch
+release was the responsibility of the Vulnerability team; however,
+that did not appear to be the case. Mark noted that in principle,
+non-security patches needed to be handled differently and advised
+Andrew to speak to the JDK Updates Project Lead to request earlier
+communication of non-security patches. Andrew replied that the
+problem had already been discussed in the Group and earlier notice
+was expected.</p>
+<p>Georges mentioned that he did not have an update on <a href="https://mail.openjdk.java.net/pipermail/discuss/2018-July/004801.html">
+Project Skara</a> but he expected it to move forward and wanted to
+raise awareness. Doug asked whether it was a side project or a
+serious contender. Mark replied that it was somewhere in between,
+noting that several people were investigating a move to Git and
+possibly a hosted provider. He added that there were a number of
+technical advantages in moving source to an essentially free
+content delivery network and while Git does have flaws, it had come
+a long way and was popular. Andrew observed that the potential
+issues with something like <a href="https://github.com/">GitHub</a>
+were obvious and he was not particularly happy. Mark said the
+source would not be bound to a single provider and another would be
+selected if there were problems. He concluded saying that in the
+worst case, self-hosting is always possible.</p>
+<p>Andrew was perplexed that some people considered tool popularity
+to be a draw for developers when working on the JDK requires a
+great deal of understanding. Mark agreed saying that it was never a
+goal of his, or others in OpenJDK, to maximize the number of
+OpenJDK Contributors. The goal is to foster and mentor long-term,
+steady Committers.</p>
+<p>Andrew recommended Karen Kinnear's <a href="https://youtu.be/-k_IicifbxQ">Just a Small Class File Change --
+Nestmates: A Case Study</a> saying it was a fantastic description
+of what is actually involved in integrating features into the JDK.
+Mark agreed and noted that it was part of the <a href="https://openjdk.java.net/projects/mlvm/jvmlangsummit/">JVM
+Language Summit</a>.</p>
+<p>At this point, the Board adjourned.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK GB:</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      PRE { font: inherit; }
+/**/
+</style></head><body><div id="main">
+<h1>Governing Board Minutes: 2011/8/25</h1>
+<p>The OpenJDK Governing Board met via conference call on Thursday,
+25 August 2011 at 15:00 UTC with the following agenda:</p>
+<ol>
+<li>Census and Bylaws</li>
+<li>Process update</li>
+<li>Infrastructure update</li>
+<li>JDK 7 Updates Project</li>
+</ol>
+<p>Three Board members were present at the start: Jason Gartner,
+Adam Messinger, and Mark Reinhold. Doug Lea joined the call about
+five minutes late.</p>
+<p>Two Observers were present: Andrew Haley and Georges Saab.</p>
+<p>The intent of these minutes is to capture the conversational
+flow of the Board&#8217;s discussion and also to record decisions.
+If you are interested only in the latter then search for the word
+&#8220;AGREED&#8221; throughout the text.</p>
+<h2>1. Census and Bylaws</h2>
+<p>Mark reminded Board members that he sent the Census to them for
+review two weeks ago. The Census represents the implementation of
+<a href="//openjdk.java.net/bylaws#_B">Appendix B</a> of the
+Bylaws, which requires an accounting of who is associated with each
+Project and Group. Record-keeping during the early years of the
+OpenJDK Community was unfortunately somewhat lax, so census data
+had to be reconstructed from mailing-list archives and Mercurial
+repository histories. Mark thanked Iris Clark for having done that
+reconstruction.</p>
+<p>Adam asked what the policy was for membership renewal. Mark
+replied that the one-year renewal requirement is only relevant to
+OpenJDK Members. Jason recommended that there be an effort to clean
+up OpenJDK membership one year from now. Mark emphasized that
+mailing-list subscriptions would not be part of that clean up, just
+OpenJDK Group and Project roles. Adam suggested that inactive
+individuals be sent an invitation to become more active
+participants in OpenJDK. OpenJDK Members should be reminded that
+their membership expires annually. Mark noted that in many cases,
+valid e-mail addresses for inactive people are not available.</p>
+<p>At this point, Doug joined the call.</p>
+<blockquote>
+<p>AGREED: The Census will not attempt to reflect only individuals
+who are active in OpenJDK. The Governing Board reserves the right
+to drop such individuals in the future, and will consider
+Adam&#8217;s recommendation to contact those individuals
+directly.</p>
+</blockquote>
+<p>Mark asked for any specific feedback on the details of the
+Census; there was none. Mark said that if there were no objections,
+he&#8217;d publish the Census on Monday. He then requested
+recommendations for the review interval, noting that 2 weeks was
+typical.</p>
+<blockquote>
+<p>AGREED: The <a href="//mail.openjdk.java.net/pipermail/announce/2011-August/000108.html">
+Census</a> review period will be 2 weeks.</p>
+</blockquote>
+<h2>2. Process update</h2>
+<p>Mark noted that the <a href="//mail.openjdk.java.net/pipermail/announce/2011-August/000107.html">
+JEP process</a> was posted yesterday and was now up and running. He
+expected to see JEPs start flowing in, at least from developers at
+Oracle. Georges explained that JEP submission is intended to be an
+on-going practice which should be encouraged. It is expected to aid
+release planning by building a pipeline of ideas which can be
+explored over a longer period of time than a single release cycle.
+That way a release can be planned by considering which features in
+the pipeline might be ready in time, rather than by coming up with
+new features for a release only when the planning for that release
+begins.</p>
+<p>Andrew observed that there seemed to be overlap between the JCP
+and JEPs, and wanted to know how they interacted. To put things
+into perspective, Georges offered the example of JDK 7. In that
+release, had the JEP process been in place, approximately 100
+features would have had JEPs. Georges explained that JEPs should be
+used for discussing an idea without any initial commitment about
+when and if it might become a feature in an actual release.</p>
+<p>Doug remarked that JEPs seemed very Oracle-centric and did not
+accommodate the common form of contribution. Mark reiterated that
+the goal of the process was to bring transparency to all of the
+work being done for JDK Release Projects, since these releases are
+not small efforts and require extensive planning. Georges added
+that development is bottom up, while funding is top down. Doug
+wondered who would be handling all of the paperwork. Mark responded
+that most small changes would not require a JEP. Doug attempted to
+determine the boundaries of the need for a JEP by offering various
+scenarios. Mark explained that JEPs are typically required for
+changes requiring more than two weeks of work; there are, however,
+conceivably some cases (e.g., a brand new sorting algorithm) which
+require less time, but might require a JEP to ensure visibility.
+Mark provided another example: The fork-join work in JDK 7 would
+likely have required a JEP.</p>
+<p>Georges stated that, going forward, JEPs would be submitted and
+reviewed on a regular basis. The JEP process is being bootstrapped
+during JDK 8. Per <a href="https://blogs.oracle.com/mr/entry/plan_b_details">Plan B</a>, JEPs
+will be funded and targeted to JDK 8 based in part on which
+features can fit alongside <a href="//openjdk.java.net/projects/jigsaw/">Jigsaw</a> and <a href="//openjdk.java.net/projects/lambda/">Lambda</a>. A
+light-weight process is still needed by which developers can
+provide status on funded JEPs during development so that early
+warning can be given if problems arise.</p>
+<p>Adam solicited feedback from Jason and Andrew. Jason echoed some
+of Doug&#8217;s point of view, but said he didn&#8217;t have to
+squint very hard to see how IBM could work with the JEP process.
+(IBM&#8217;s rough threshold for significant features is
+&#8220;bigger than a bread box&#8221; rather than two weeks of
+development time.) Overall he&#8217;s in favor of JEPs since they
+fit into overall the spirit of the OpenJDK Community. Andrew noted
+that the means of providing feedback could be improved but he
+thought that the best course of action was to proceed with the
+process and review it later to identify any potential
+improvements.</p>
+<h2>3. Infrastructure update</h2>
+<p>Georges presented a <a href="files/openjdk-infrastructure-update-2011-08-25.pdf">set of
+slides</a> that Mohan Pakkurti (Oracle) prepared. Georges
+highlighted slide 3, which provides the current status including
+the decision to use JIRA and sets the expectation that a pilot will
+be used for two OpenJDK Projects, Jigsaw and Lambda, and to model
+scalability and performance. Slide 4 outlines Oracle&#8217;s
+resource commitments to this project. Finally, there are slides
+providing a rough timeline for the project.</p>
+<p>Doug was generally disappointed that this would take some time
+and predicted that it would take more time than anticipated.
+Georges empathized but asserted that this was a large, complex
+project that needed to be done correctly to achieve the goal of
+making everybody&#8217;s lives easier.</p>
+<h2>4. JDK 7 Updates Project</h2>
+<p>Andrew observed that the JDK 7 Updates Project did not seem to
+have a clear plan. Mark asked whether he&#8217;d consulted the
+Project Lead, Dalibor Topic. Doug replied that the Lead was not
+obvious. General conversation followed. The primary recommendations
+were that the Lead be more visible, particularly on the <a href="//openjdk.java.net/projects/jdk7u/">Project page</a>, and
+that a timeline be posted.</p>
+<p>Several people had questions regarding the content decisions for
+the update releases, and their schedules. Georges explained that
+JDK 7u1 is scheduled for October and will contain security fixes
+plus a small set of high-priority items. He also mentioned that
+since 7u1 contains security fixes, content decisions were not
+strictly made by the Project Lead. JDK 7u2 is scheduled for
+December. Doug requested information for how to get additional
+changes into 7u1. Mark responded that the bar would be quite high
+(i.e., hair-on-fire).</p>
+<p>At this point the Board adjourned.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta content="text/html; charset=us-ascii" http-equiv="content-type" /><title>The Hitchhiker's Guide to javac</title><link rel="shortcut icon" href="../../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../../page.css" /><script type="text/javascript" src="../../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+div.classes { margin: 12px 20px; }
+h3 { margin-top: 12px }
+table { margin: 12px 0px }
+table, th, td { border: solid black 1px; border-collapse: collapse; padding: 2px 5px }
+table.classes { width:100%; }
+table.classes tbody tr td { font-family: monospace; font-size: smaller }
+th { background-color:lightgray }
+ul ul { margin-top: 0px }
+/**/
+</style></head><body><div id="main">
+<h1>The Hitchhiker's Guide to javac</h1>
+<p style="color:pink; font-family: fantasy cursive serif; font-size:64px; font-weight: bold; text-align:center; margin:-10px 0">
+DON'T PANIC</p>
+<p>The following notes are provided to help newcomers to javac
+navigate their way around the code base.</p>
+<ul>
+<li><a href="#funcblocks">Functional Blocks</a></li>
+<li><a href="#source">Source code</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#moreInfo">For more info &#8230;</a></li>
+</ul>
+<p>See also:</p>
+<ul>
+<li><cite><a href="../package-overview">Compiler Package
+Overview</a></cite> for an overview of the javac package
+structure</li>
+<li><cite><a href="../compilation-overview">Compilation
+Overview</a></cite> for an overview of the compilation
+pipeline</li>
+</ul>
+<!-- ********** Functional Blocks ********** -->
+<h2><a name="funcblocks" id="funcblocks">Functional blocks</a></h2>
+<p>javac can be considered as a number of functional blocks: some
+go towards the abstraction of a Java compiler, that can transform
+Java source files into Java class files, while others provide the
+environmental infrastructure to support the compiler.</p>
+<table summary="index of areas">
+<thead>
+<tr>
+<th style="width:45%">area</th>
+<th>block</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="5" valign="top"><b>environment</b><br />
+<br />
+provides compiler support<br />
+<br />
+<a href="http://docs.oracle.com/javase/7/docs/api/javax/tools/package-summary.html#package_description">
+Java Compiler API</a> (JSR 199)</td>
+<td><a href="#invocation">invocation</a></td>
+<td>how to invoke javac</td>
+</tr>
+<tr>
+<td><a href="#options">options</a></td>
+<td>option handling</td>
+</tr>
+<tr>
+<td><a href="#files">files</a></td>
+<td>file manager</td>
+</tr>
+<tr>
+<td><a href="#reporting">reporting</a></td>
+<td>log, diagnostics, etc</td>
+</tr>
+<tr>
+<td><a href="#utils">utils</a></td>
+<td>utility classes</td>
+</tr>
+<tr>
+<td rowspan="5" valign="top"><b>Java compiler</b><br />
+<br />
+transforms source files into class files<br />
+<br />
+<a href="http://docs.oracle.com/javase/specs/jls/se7/html/index.html">JLS</a>,
+<a href="http://docs.oracle.com/javase/specs/jvms/se7/html/index.html">JVMS</a>,
+<a href="http://docs.oracle.com/javase/7/docs/api/javax/lang/model/package-summary.html">
+Language Model API</a>, <a href="http://docs.oracle.com/javase/7/docs/api/javax/annotation/processing/package-summary.html">
+Annotation Processing API</a> (JSR 269), <a href="http://docs.oracle.com/javase/7/docs/jdk/api/javac/tree/index.html">
+Compiler Tree API</a></td>
+<td><a href="#tree">syntax tree</a></td>
+<td>AST, parser</td>
+</tr>
+<tr>
+<td><a href="#semantics">semantics</a></td>
+<td>semantic analysis of AST</td>
+</tr>
+<tr>
+<td><a href="#processing">processing</a></td>
+<td>annotation processing</td>
+</tr>
+<tr>
+<td><a href="#simplification">simplification</a></td>
+<td>simplify the AST</td>
+</tr>
+<tr>
+<td><a href="#codegen">code generation</a></td>
+<td>generating class files</td>
+</tr>
+</tbody>
+</table>
+<!-- ******************************** -->
+<h2>Environment</h2>
+<!-- ********** Invocation ********** -->
+<h3><a name="invocation" id="invocation">Invocation</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for invocation">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#javax.tools">javax.tools</a></td>
+<td>ToolProvider, JavaCompiler</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#com.sun.source">com.sun.source.util</a></td>
+<td>JavacTask</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#top">com.sun.tools.javac</a></td>
+<td>Main</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#api">com.sun.tools.javac.api</a></td>
+<td>JavacTool</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#main">com.sun.tools.javac.main</a></td>
+<td>Main, JavaCompiler</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>These are the classes for running javac. You can invoke javac in
+three ways:</p>
+<dl>
+<dt>Main</dt>
+<dd>Simple, direct command line functionality.</dd>
+<dt>Java Compiler API (JSR 199)</dt>
+<dd>Access via classes in the <code>javax.tools</code>
+package.</dd>
+<dt>Compiler Tree API</dt>
+<dd>Cast a <code>javax.tools.CompilationTask</code> to a
+<code>com.sun.source.util.JavacTask</code>.</dd>
+</dl>
+<p>All the invocation paths go through
+<code>com.sun.tools.javac.main.JavaCompiler</code>, which is the
+main compiler driver. <!-- ********** Options ********** --></p>
+<h3><a name="options" id="options">Option Handling</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for option handling">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#main">com.sun.tools.javac.main</a></td>
+<td>OptionName, JavacOption, RecognizedOptions</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#api">com.sun.tools.javac.api</a></td>
+<td>JavacTool</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#com.sun.source">com.sun.source.util</a></td>
+<td>Options</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Currently, there are different option decoding paths for Main
+and for the Compiler/Tree API. (This is not good). This is being
+rationalized, with <code>OptionName</code>,
+<code>JavacOption</code> and <code>RecognizedOptions</code> being
+combined into a single new enum <code>Option</code>. 
+<!-- ********** Files ********** --></p>
+<h3><a name="files" id="files">FileManager</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for file manager">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#javax.tools">javax.tools</a></td>
+<td>JavaFileManager, FileObject, JavaFileObject</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#file">com.sun.tools.javac.file</a></td>
+<td>JavacFileManager, Paths</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#nio">com.sun.tools.javac.nio</a></td>
+<td>JavacPathFileManager</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>JavaFileManager</code> provides a very simple abstract
+file system, sufficient for the needs of javac.</p>
+<p>The implementation of JavaFileManager in the
+<code>javac.file</code> package uses <code>java.io.File</code> and
+<code>java.util.jar</code> API, and is currently the standard
+(default) file manager.</p>
+<p>The implementation of JavaFileManager in the
+<code>javac.nio</code> package uses <code>java.nio.file.Path</code>
+and is recommended for future use by anyone wanting to have javac
+access files via an abstract file system. 
+<!-- ********** Reporting ********** --></p>
+<h3><a name="reporting" id="reporting">Reporting</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for reporting">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#javax.tools">javax.tools</a></td>
+<td>Diagnostic, DiagnosticListener</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#util">com.sun.tools.javac.util</a></td>
+<td>AbstractLog, Log, DiagnosticFormatter <span style="font-family: sans-serif">and subtypes</span>, JCDiagnostic</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The <code>Log</code> provides the primary mechanism for
+reporting diagnostics, and these days provides a flexible reporting
+mechanism, based on configurable, pluggable formatters.</p>
+<p>To facilitate testing, there is a <em>raw diagnostics</em> mode
+which can print out the basic details of a diagnostic, in a form
+which is safe for use in golden files.</p>
+<p>For more information, see <a href="diagnostics.html">javac
+diagnostics</a>. <!-- ********** Utils ********** --></p>
+<h3><a name="utils" id="utils">Utils</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for utils">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#util">com.sun.tools.javac.util</a></td>
+<td>Context, List, Name, NameTable, ...</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The root of all information for a compilation is a
+<code>Context</code>. Originally, it was one per compilation;
+currently, if annotation processing is involved, it is one context
+per annotation processing round and one for the final compilation,
+although an increasing amount of information is migrated between
+contexts. It is a goal to get back to one context per
+compilation.</p>
+<p>javac uses its own implementation of List, which provides
+simple, fast, immutable lists.</p>
+<p><code>Name</code> and <code>NameTable</code> provide simple
+interned strings. <!-- ******************************** --></p>
+<h2>Java Compiler</h2>
+<!-- ********** Syntax tree ********** -->
+<h3><a name="tree" id="tree">Syntax Tree</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for syntax tree">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#com.sun.source">com.sun.source.tree</a></td>
+<td>Tree <span style="font-family: sans-serif">and
+subtypes</span></td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#tree">com.sun.tools.javac.tree</a></td>
+<td>JCTree <span style="font-family: sans-serif">and
+subtypes</span>, TreeInfo</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#parser">com.sun.tools.javac.parser</a></td>
+<td>Scanner, JavacParser, etc</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The <code>Scanner</code> class maps source text into a stream of
+tokens. The <code>JavacParser</code> class converts the stream of
+tokens into one or more syntax trees.</p>
+<p>The classes in the <code>com.sun.source.tree</code> package
+provide public read access to the syntax trees.</p>
+<p>The trees have a &#8220;minimalist&#8221; API design.
+Expressions and declarations point to semantic information derived
+from the tree. Use utility classes and visitors to process trees. 
+<!-- ********** Semantics ********** --></p>
+<h3><a name="semantics" id="semantics">Semantics &#8211; The data
+model</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for the semantic model">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#javax.lang.model">javax.lang.model.element</a></td>
+<td>Element <span style="font-family: sans-serif">and
+subtypes</span></td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#javax.lang.model">javax.lang.model.type</a></td>
+<td>TypeMirror <span style="font-family: sans-serif">and
+subtypes</span></td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#javax.lang.model">javax.lang.model.util</a></td>
+<td>Elements, Types, <span style="font-family: sans-serif">etc.</span></td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#code">com.sun.tools.javac.code</a></td>
+<td>Symbol, Type, Annotations, Attribute, TypeAttribute, Types</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A <code>Symbol</code> provides semantic information about a
+declaration. Each subtype of <code>Symbol</code> implements a
+corresponding subtype of <code>Element</code>.</p>
+<p>A <code>Type</code> provides semantic information about an
+expression. Each subtype of <code>Type</code> implements a
+corresponding subtype of <code>TypeMirror</code>.</p>
+<p>An <code>Attribute</code> provides semantic information about an
+annotation. <span style="font-size:smaller">Note: They should not
+be confused with class file attributes, which are completely
+different.</span></p>
+<p>The <code>Types</code> class provides utility methods for types
+and symbols.</p>
+<h3><a name="semantics2" id="semantics2">Semantics &#8211; Creating
+symbol tables</a></h3>
+<!-- <h3><a name="semantics2">Semantics: 2</a></h3> -->
+<div class="classes">
+<table class="classes" summary="major classes for creating symbol tables">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#code">com.sun.tools.javac.comp</a></td>
+<td>Enter, MemberEnter, Annotate</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>Enter</code> and <code>MemberEnter</code> scan trees for
+class and member declarations, and initialize symbols.</p>
+<p><code>Annotate</code> scans trees for annotations on class and
+member declarations, to add information to the symbols prior to
+annotation processing.</p>
+<h3><a name="semantics3" id="semantics3">Semantics &#8211; Code
+analysis</a></h3>
+<!-- <h3><a name="semantics3">Semantics: 3</a></h3> -->
+<div class="classes">
+<table class="classes" summary="major classes for code analysis">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#comp">com.sun.tools.javac.comp</a></td>
+<td>Attr, Check, Infer, Resolve, Flow</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>Attr</code>, <code>Check</code>, <code>Infer</code> and
+<code>Resolve</code> analyze all names and expressions within the
+program.</p>
+<p><code>Flow</code> performs static program flow analysis. It
+checks the following:</p>
+<ul>
+<li><em>Reachability</em>: can a statement be executed?</li>
+<li><em>Definite Assignment</em>: has a variable been
+initialized?</li>
+<li><em>Definite Unassignment</em>: has a variable not been
+initialized?</li>
+</ul>
+<!-- ********** Processing ********** -->
+<h3><a name="processing" id="processing">Annotation
+Processing</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for annotation processing">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#javax.annotation.processing">javax.annotation.processing</a></td>
+<td>AbstractProcessor, ProcessingEnvironment, RoundEnvironment</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#model">com.sun.tools.javac.model</a></td>
+<td>JavacElements, JavacTypes, etc</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#processing">com.sun.tools.javac.processing</a></td>
+<td>JavacProcessingEnvironment</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Annotation processing occurs after symbols have been entered
+(<code>Enter</code>, <code>MemberEnter</code>) but before method
+analysis (<code>Attr</code>, <code>Flow</code>).</p>
+<p>Annotation processing gives users the opportunity to execute
+code that can analyze method signatures and generate additional
+types to be used in the compilation.</p>
+<p>If new files are generated by the user code, the compilation is
+conceptually restarted. 
+<!-- ********** Code Simplification ********** --></p>
+<h3><a name="simplification" id="simplification">Code
+Simplification</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for code simplification">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#comp">com.sun.tools.javac.comp</a></td>
+<td>Lower, TransTypes</td>
+</tr>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#tree">com.sun.tools.javac.tree</a></td>
+<td>TreeTranslator</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>Lower</code> converts &#8220;syntactic sugar&#8221;
+constructions into simpler code. This includes inner classes, class
+literals, assertions, foreach loops, strings in switch, etc., which
+can all be represented by code not using those constructs.</p>
+<p><code>TransTypes</code> eliminates (erases) generics from the
+program.</p>
+<p><code>Lower</code> and <code>TransTypes</code> use
+<code>TreeTranslator</code> to rewrite trees. 
+<!-- ********** Code generation ********** --></p>
+<h3><a name="codegen" id="codegen">Code Generation</a></h3>
+<div class="classes">
+<table class="classes" summary="major classes for code generation">
+<thead>
+<tr>
+<th style="width:45%">package</th>
+<th>classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><a href="../package-overview/#jvm">com.sun.tools.javac.jvm</a></td>
+<td><i>all</i></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The <code>Gen</code> and <code>Code</code> classes generate
+bytecodes for the class file <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.7.3">
+<code>Code</code> attribute</a>.</p>
+<p>The <code>Pool</code> class is used to model the class file
+<a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4">
+constant pool</a>.</p>
+<p>The <code>CRTable</code> and <code>CRTable</code> classes are
+used for mapping source positions to bytecodes.</p>
+<p>Class files are written out, via the file manager, using
+<code>ClassWriter</code>. 
+<!-- ******************************** --></p>
+<h2><a name="source" id="source">Source code</a></h2>
+<dl>
+<dt>Master repository for JDK 8</dt>
+<dd><a href="//hg.openjdk.java.net/jdk8/jdk">http://hg.openjdk.java.net/jdk8/jdk8</a>/<a href="//hg.openjdk.java.net/jdk8/jdk8/langtools">langtools</a></dd>
+<dt>Integration repository for JDK 8</dt>
+<dd><a href="//hg.openjdk.java.net/jdk8/tl">http://hg.openjdk.java.net/jdk8/tl</a>/<a href="//hg.openjdk.java.net/jdk8/tl/langtools">langtools</a></dd>
+</dl>
+<!-- ******************************** -->
+<h2><a name="testing" id="testing">Testing</a></h2>
+<p>Developer tests are in the <em>langtools</em> repository,
+<em>test</em> directory. Tests are normally run with the <a href="/jtreg">jtreg</a> test harness, although all tests can be run
+either stand-alone or using TestNG (depending on the nature of the
+test.)</p>
+<p style="margin: 0px 20px"><span style="background-color: gold; font-style: italic">All the tests should
+pass, all the time, on all platforms.</span></p>
+<p>See <cite><a href="/jtreg/writetests.html">Writing jtreg
+tests</a></cite> and <cite><a href="/groups/compiler/tests.html">Guidelines for tests in the
+&#8220;langtools&#8221; repository</a></cite></p>
+<p>TCK tests are <a href="//openjdk.java.net/groups/conformance/JckAccess/index.html">licensed
+separately</a>.</p>
+<h2><a name="moreInfo" id="moreInfo">For more info &#8230;</a></h2>
+<ul>
+<li><a href="//openjdk.java.net/groups/compiler/">OpenJDK
+Compiler Group</a></li>
+<li>Related projects: <a href="/projects/coin">Coin</a>, <a href="/projects/jigsaw">Jigsaw</a>, <a href="/projects/lambda">Lambda</a>, <a href="/projects/type-annotations">Type Annotations</a></li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

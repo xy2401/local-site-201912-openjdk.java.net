@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>SCTP with Sun's JDK6</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h2>Using the SCTP API from OpenJDK with Sun's JDK6.</h2>
+<p><b>WARNING:</b> The suggestion below and instructions of how to
+have the SCTP implementation run with Sun's JDK6 are unsupported.
+The implementation uses Sun proprietary APIs that may be removed or
+changed in the future (albeit unlikely at this point in the 1.6
+lifecycle). Also, Sun's JDK6 is built with RHAS 2.1A and an old
+gcc. JDK7 is built with Fedora 9 and a more modern gcc. Everything
+should work (in theory) but there are bound to to be older Linux
+distributions where Sun's JDK6 works but libsctp will not work.</p>
+<h2>Outline of the procedure</h2>
+<ol>
+<li>Take the java source code for the API and implementation from
+OpenJDK</li>
+<li>Make 2 minor edits to remove 1.7 specific APIs</li>
+<li>Compile with javac from Sun's JDK6</li>
+<li>Create a jar containing the built 1.6 version</li>
+<li>Copy the native library from OpenJDK to your "special" Sun JDK6
+binary</li>
+<li>Run this "special" JDK6 java with the scpt6.jar appended to the
+bootclasspath</li>
+</ol>
+<h2>Example</h2>
+<ol>
+<li>Take source from the latest <a href="//hg.openjdk.java.net/jdk7/tl/jdk">tl jdk repository</a>
+(once it includes the changes for <a href="http://bugs.sun.com/view_bug.do?bug_id=6915313">6915313</a>, which
+has been <a href="//hg.openjdk.java.net/jdk7/tl/jdk/rev/fc5578368a0c">integrated</a>).
+In this example <i>/repos/tl/sctpJDK6</i> is a <a href="//openjdk.java.net/guide/repositories.html#clone">cloned</a>
+tl jdk repository.
+<pre>
+    mkdir -p sctpOnly/jdk/src/solaris/classes/sun/nio/ch
+    mkdir -p sctpOnly/jdk/src/share/classes/sun/nio/ch
+    mkdir -p sctpOnly/jdk/src/share/classes/com/sun/nio/sctp
+
+    pushd sctpOnly/jdk/src/solaris/classes/sun/nio/ch
+    cp -r /repos/tl/sctpJDK6/src/solaris/classes/sun/nio/ch/Sctp* .
+    popd
+    pushd sctpOnly/jdk/src/share/classes/sun/nio/ch
+    cp /repos/tl/sctpJDK6/src/share/classes/sun/nio/ch/Sctp* .
+    popd
+    pushd sctpOnly/jdk/src/share/classes/com/sun/nio/sctp
+    cp /repos/tl/sctpJDK6/src/share/classes/com/sun/nio/sctp/* .
+    popd</pre>
+Now you have the complete java source code.</li>
+<li>Two minor edits to the java source are necessary to remove 1.7
+dependencies
+<ul>
+<li><a href="http://download.java.net/jdk7/docs/api/java/net/SocketOption.html">
+SocketOption</a> is a new interface in 1.7, <a href="http://download.java.net/jdk7/docs/jre/api/nio/sctp/spec/com/sun/nio/sctp/SctpSocketOption.html">
+SctpSocketOption</a> extends this interface and is used to get/set
+SCTP specific socket options. The change here is to define the
+<code>SocketOption</code> interface methods directly in
+<code>SctpSocketOption</code>.
+<pre>
+    vi sctpOnly/jdk/src/share/classes/com/sun/nio/sctp/SctpSocketOption.java
+    diffs:
+    27d26
+    &lt; import java.net.SocketOption;
+    38c37,40
+    &lt; public interface SctpSocketOption&lt;T&gt; extends SocketOption&lt;T&gt; { }
+    ---
+    &gt; public interface SctpSocketOption&lt;T&gt; {
+    &gt;     String name();
+    &gt;     Class&lt;T&gt; type();
+    &gt; }
+                </pre></li>
+<li><a href="http://download.java.net/jdk7/docs/api/java/nio/channels/AlreadyBoundException.html">
+AlreadyBoundException</a> is a new Exception in 1.7. Throwing
+IllegalStateException should be sufficient in most cases, unless
+special handling is required in the situation where an address is
+already bound. In which case the implementation can determine this
+from the exception message, "Already Bound".
+<pre>
+    vi sctpOnly/jdk/src/solaris/classes/sun/nio/ch/SctpNet.java
+    diffs:
+    32d31
+    &lt; import java.nio.channels.AlreadyBoundException;
+    57c56
+    &lt;         throw new AlreadyBoundException();
+    ---
+    &gt;         throw new IllegalStateException("Already Bound");
+                </pre></li>
+</ul>
+</li>
+<li>Compile with javac from Sun's JDK6
+<pre>
+    mkdir jdk6classes
+    jdk6u17/bin/javac
+        -d jdk6classes
+        -sourcepath sctpOnly/jdk/src/share/classes:sctpOnly/jdk/src/solaris/classes
+        sctpOnly/jdk/src/share/classes/com/sun/nio/sctp/*.java </pre></li>
+<li>Create a jar containing the built 1.6 version, <i>sctp6.jar</i>
+<pre>
+    cd jdk6classes
+    jar -cvf sctp6.jar com sun </pre></li>
+<li>Copy the native library from OpenJDK to your "special" Sun JDK6
+binary. Subsitiute <i>amd</i> below for your platform architecture,
+e.g. <i>sparc</i>, <i>i386</i>.
+<pre>
+    cp jdk7/jre/lib/amd64/libsctp.so jdk6/jre/lib/amd64/</pre>
+<p style="color:red">Until the changes for 6915313 are promoted,
+estimated for b80, you cannot directly take the libsctp.so from any
+JDK7. You should use the following libraries:</p>
+<ul>
+<li><a href="../libs/i386/libsctp.so">Linux i386
+libsctp.so</a></li>
+<li><a href="../libs/amd64/libsctp.so">Linux amd64
+libsctp.so</a></li>
+<li><a href="../libs/sparc/libsctp.so">Solaris sparc
+libsctp.so</a></li>
+</ul>
+<p style="color:red"><b>Note:</b> This a temporary solution until
+the next promotion of JDK7.</p>
+</li>
+<li>Run this "special" JDK6 java with the scpt6.jar appended to the
+bootclasspath. You have two options here:
+<ul>
+<li>Patch the JDK6 with the sctp classes so that you can always
+access it without any extra command line arguments. You also need
+to add 'com/sun/nio' to the meta index (list of packages) in rt.jar
+<pre>
+    cd jdk6classes
+    jar -uvf JDK6/jre/lib/rt.jar com sun
+
+    vi JDK6/jre/lib/meta-index
+        ! rt.jar
+        com/sun/java/util/jar/pack/
+        java/
+        org/ietf/
+        com/sun/beans/
+        com/sun/java/browser/
+        com/sun/corba/
+        com/sun/media/
+        com/sun/awt/
+        com/sun/management/
+      + com/sun/nio/
+        sun/
+        com/sun/jmx/
+        com/sun/demo/ </pre>
+To compile your source you can either use the javac from JDK7 with
+<i>-source 1.6 -target 1.6</i>, or run the javac from your patched
+JDK6 with <i>-XDignore.symbol.file=true</i>. This flag is necessary
+because javac uses a symbol file to determine packages in the
+com/sun namespace and will not recognize the new sctp classes as
+they are not in this symbol file.</li>
+<li>Keep your JDK6 install relatively clean by appending the sctp
+classes to the boot classpath.
+<pre>
+    JDK6/bin/javac -Xbootclasspath/a:jdk6classes/sctp6.jar TestSCTP.java
+    JDK6/bin/java -Xbootclasspath/a:jdk6classes/sctp6.jar TestSCTP
+                </pre></li>
+</ul>
+</li>
+</ol>
+<h2>Running a simple SCTP application</h2>
+<p>To ensure that you have a correctly compiled and configured your
+"special" JDK6 compile and run this simple example.</p>
+<pre>
+    public class TestSCTP
+    {
+        public static void main(String[] args) throws Exception {
+            com.sun.nio.sctp.SctpChannel sc = com.sun.nio.sctp.SctpChannel.open();
+        }
+    }</pre>
+<p>If it compiles and runs without any errors, then congratulations
+you have been successfully. You can now start running your SCTP
+applications with JDK6.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

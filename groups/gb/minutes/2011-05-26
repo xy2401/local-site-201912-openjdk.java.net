@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK GB: 2011/5/26</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      PRE { font: inherit; }
+/**/
+</style></head><body><div id="main">
+<h1>Governing Board Minutes: 2011/5/26</h1>
+<p>The OpenJDK Governing Board met via conference call on Thursday,
+19 May 2011 at 15:00 UTC with the following agenda:</p>
+<ol>
+<li>Feedback on draft 9 of the Bylaws</li>
+<li>Ratification vote</li>
+<li>Bug database</li>
+<li>Summary of upcoming process work</li>
+</ol>
+<p>All Board members were present: Jason Gartner, Doug Lea, Adam
+Messinger, Mike Milinkovich, and Mark Reinhold.</p>
+<p>Two Observers were present at the start: John Duimovich and
+Andrew Haley. Georges Saab joined the call about ten minutes
+late.</p>
+<p>The intent of these minutes is to capture the conversational
+flow of the Board&#8217;s discussion and also to record decisions.
+If you are interested only in the latter then search for the word
+&#8220;AGREED&#8221; throughout the text.</p>
+<h2>1. Feedback on draft 9 of the Bylaws</h2>
+<p>Mark reported that there had been little feedback, so far, on
+draft 9 of the Bylaws.</p>
+<p>Mike asked if there had been any feedback beyond that on the
+gb-discuss mailing list; Mark said he&#8217;d received one comment
+privately. In reply Mike suggested that the Board should give more
+weight to public comments than to private comments. Andrew agreed,
+saying that we should encourage those sending private feedback to
+re-send it to the public list. Doug reminded the Board that some
+commenters prefer to remain anonymous since they don&#8217;t want
+it to be known that they&#8217;re thinking about becoming
+Contributors. Mark asked whether all private feedback should be
+ignored; Jason replied that since we&#8217;re doing all we can to
+be public and open, it&#8217;s only reasonable that people should
+provide feedback in the same manner.</p>
+<p>At the end of this discussion the general sense of the Board was
+that public feedback is strongly preferred but private feedback
+should not be ignored.</p>
+<p>Mark asked if the Board was concerned about the small amount of
+feedback received. Andrew noted that he was himself finding it
+difficult to set aside the time required to review the Bylaws in
+detail, so perhaps other reviewers just haven&#8217;t had the time
+yet. Adam thought it likely that the level of feedback reflects the
+reality of the OpenJDK Community: Most people would rather write
+code than worry about politics. Mike suggested reminding people,
+via e-mail, of the deadline for feedback; Mark agreed to send that
+later the same day.</p>
+<h2>2. Ratification vote</h2>
+<p>Mark presented the following graph of contributions over time,
+based upon the content of all the OpenJDK Mercurial repositories as
+of 2011/5/24:</p>
+<blockquote>
+<pre><code>16 |   94   89   73   57
+14 |   98   94   77   61
+12 |  103   99   83   67
+10 |  108  105   93   73
+ 8 |  114  112   98   78
+ 5 |  129  127  112   88
+ 4 |  135  131  116   94
+ 2 |  163  159  144  127
+ 1 |  180  176  158  143
+    --------------------
+       4y   3y   2y   1y</code></pre></blockquote>
+<p>In this graph the Y axis is the minimum number of unique
+nontrivial (i.e., non-merge, non-tag) changesets across all
+repositories. The X axis is time in years, going backwards from
+today (i.e., the leftmost column is the longest ago). The sample at
+(x, y) is the number of contributors who created at least y unique
+changesets over the past x years.</p>
+<p>The Board discussed various durations and changeset-count
+thresholds, trying to come up with a combination that would tend to
+admit only serious contributors while not going so far as to limit
+the electorate to just those &#8220;old hands&#8221; who have been
+contributing from the start. It was eventually</p>
+<blockquote>
+<p>AGREED: The Ratification Electorate will be composed of those
+Contributors who have created at least five unique nontrivial
+changesets in the OpenJDK Mercurial repositories in the two years
+preceding the start of the Ratification Vote.</p>
+</blockquote>
+<p>The discussion then turned to the mechanics of the vote. Mark
+suggested that the simplest thing to do is an e-mail-based vote,
+using a restricted mailing list to which only members of the
+Electorate are allowed to post. He then asked whether individual
+votes should be public or private. It was quickly agreed that votes
+should be public, at least once the vote is over. Adam then
+suggested that votes should be public from the moment they&#8217;re
+cast, since keeping them secret until the end could theoretically
+give Oracle an information advantage. Mark agreed with Adam and so
+did Jason, pointing out that someone who wants to control when
+their vote becomes visible can just wait until the very end of the
+voting period. Hence it was</p>
+<blockquote>
+<p>AGREED: Votes will be cast by sending e-mail to a public mailing
+list. Messages from anyone who is not a member of the Ratification
+Electorate will be discarded. Votes will be publicly visible at the
+time they are cast.</p>
+</blockquote>
+<h2>3. Bug database</h2>
+<p>Mike requested this agenda item in response to a related
+discussion on the <a href="//mail.openjdk.java.net/pipermail/discuss/2011-May/001840.html">
+general-discussion list</a>. He wanted to know who should be
+allowed to submit bug reports, observing that he does not know of
+any open-source community that restricts the general public from
+submitting bugs, and that submitting bugs is a great way for new
+people to get started in a community.</p>
+<p>Doug agreed with Mike, pointing out that some level of access
+control is inevitable, if only to combat spam and to conceal
+security bugs, but that otherwise he doesn&#8217;t want the system
+to have any hidden process obstructions such as those in the
+present closed system.</p>
+<p>Adam agreed that outsiders should be able to submit bugs, but
+such bugs might not necessarily become public right away if
+they&#8217;re security bugs. Allowing only Contributors to submit
+bugs would be setting the bar too high, but making it open to
+absolutely anyone might be setting the bar too low.</p>
+<p>Jason agreed on the need for a filtering process but said that
+otherwise the system should be as open as possible, arguing that we
+especially need to encourage &#8220;here&#8217;s a bug, and
+here&#8217;s a fix&#8221; reports from newcomers.</p>
+<p>Mark observed that the OpenJDK Community does not itself ship
+end-user binaries, and wondered whether this would cause confusion.
+If someone finds a bug in their JRE should they submit it to Red
+Hat, to Oracle, to IBM, or to OpenJDK? Mike argued that as a
+multi-vendor community we should want all bugs to come to OpenJDK.
+John explained that if IBM customers submit bugs to IBM that are
+really in OpenJDK then IBM would refile them in OpenJDK. Andrew
+said that in that kind of situation at Red Hat they generally ask
+the filer to resubmit the bug upstream.</p>
+<p>Mike argued that it should be possible to submit a bug without
+having to sign the OCA. Mark replied that he knew of no legal
+requirement for the OCA in that case.</p>
+<p>By the end of the discussion the general sense of the Board was
+that:</p>
+<ul>
+<li>
+<p>One shouldn&#8217;t have to be a Contributor in order to submit
+or update a bug;</p>
+</li>
+<li>
+<p>It&#8217;s okay to require a new bug submitter to agree to a
+terms-of-use document and provide e-mail contact information;
+and</p>
+</li>
+<li>
+<p>Some amount of filtering and triage to reduce spam and keep
+security bugs concealed is acceptable.</p>
+</li>
+</ul>
+<h2>4. Summary of upcoming process work</h2>
+<p>This topic was, yet again, deferred to the next meeting due to
+time constraints.</p>
+<p>At this point the Board adjourned.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

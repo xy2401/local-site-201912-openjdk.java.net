@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK GB: 2011/5/19</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      PRE { font: inherit; }
+/**/
+</style></head><body><div id="main">
+<h1>Governing Board Minutes: 2011/5/19</h1>
+<p>The OpenJDK Governing Board met via conference call on Thursday,
+19 May 2011 at 15:00 UTC with the following agenda:</p>
+<ol>
+<li>Status update on Oracle legal work</li>
+<li>Ratification vote</li>
+<li>Summary of upcoming process work</li>
+</ol>
+<p>All Board members were present: Jason Gartner, Doug Lea, Adam
+Messinger, Mike Milinkovich, and Mark Reinhold.</p>
+<p>One Observer was present at the start: John Duimovich. Andrew
+Haley joined the call about ten minutes late.</p>
+<p>The intent of these minutes is to capture the conversational
+flow of the Board&#8217;s discussion and also to record decisions.
+If you are interested only in the latter then search for the word
+&#8220;AGREED&#8221; throughout the text.</p>
+<h2>1. Status update on Oracle legal work</h2>
+<p>Adam reported that he had secured all the necessary
+Oracle-internal approvals needed for draft 9 of the Bylaws, and a
+related FAQ document, to be published. John Duimovich reported that
+IBM had also cleared them. Mark said that he would post the
+documents as soon as possible, most likely later the same day.</p>
+<p>Mike reminded the Board that, as <a href="//openjdk.java.net/groups/gb/minutes/2011-04-21">agreed
+previously</a>, the posting of these documents clears the way for
+the JDK 8 Project to be proposed using the existing <a href="//openjdk.java.net/projects/">interim governance rules</a>.
+Mark committed to submit the JDK 8 Project proposal as soon as
+practical.</p>
+<h2>2. Ratification vote</h2>
+<p>Mark outlined the timeline for finishing up the Bylaws: A
+two-week public review period, some indeterminate time needed make
+any revisions required in response to that review, and then a
+two-week ratification vote.</p>
+<p>Mark then stated that a key question for the ratification vote
+is, who gets to vote?</p>
+<p>The draft Bylaws require that revisions to the Bylaws be voted
+upon by OpenJDK Members, so it&#8217;s reasonable to say that
+OpenJDK Members should be the ones to vote upon ratification. The
+existing interim governance rules don&#8217;t define that role but
+the initial set of OpenJDK Members will, according to the <a href="//openjdk.java.net/groups/gb/bylaws/draft-openjdk-bylaws-09#_B">
+draft Bylaws</a>, be those Contributors previously voted into Group
+Membership. That set of individuals could, therefore, be considered
+the electorate to vote upon ratifying the new Bylaws.</p>
+<p>The trouble with this approach is that it would exclude many
+significant Contributors since, under the interim rules, few people
+bothered to nominate and elect others to Group Membership because
+there were few tangible benefits for doing so.</p>
+<p>Mark proposed that, in order to be as inclusive and meritocratic
+as possible, the electorate for the ratification vote be defined
+using an objective measure of actual contribution activity as
+recorded in the OpenJDK Mercurial repositories. In particular he
+proposed that anyone who has made at least ten distinct nontrivial
+commits into any OpenJDK repository be invited to vote upon the
+Bylaws.</p>
+<p>Adam wondered whether some other approach would be feasible,
+noting that what we&#8217;re looking for is a proxy to the eventual
+set of OpenJDK Members. We could, for example, use the two-week
+review period to get the existing Groups into proper order. Mark
+argued against this, observing that the current process for
+expanding Groups is fairly heavyweight and many Contributors are
+currently very busy working to finish up JDK 7. Adam asked whether
+we could use the new rules in the draft Bylaws to expand the
+existing Groups, but Mark countered that it&#8217;s better to treat
+the ratification vote as a very special case and make an extra
+effort to be as inclusive as possible.</p>
+<p>Doug observed that it will look bad if only Oracle employees
+vote in favor of ratifying the Bylaws. He doesn&#8217;t like that
+outcome, though he doesn&#8217;t think it&#8217;s likely. Andrew
+replied that we shouldn&#8217;t worry too much about that: If only
+Oracle employees vote in favor then the Board is going to have to
+do some thinking anyway and maybe make further changes. Jason
+agreed. John added that if that were to happen, it won&#8217;t be a
+surprise; we&#8217;ll be able to see it coming by paying attention
+to incoming feedback during the public-review period, and if there
+is significant feedback then we can delay the vote and revise the
+Bylaws further in response.</p>
+<p>Several variations of Mark&#8217;s initial proposal were
+considered. Doug suggested it might be better to restrict it to
+commits over the past year, with a lower threshold of five rather
+than ten. John said that the main goal should be to have a
+reasonable number of people voting; Andrew agreed, saying that he
+liked the idea of inviting a broad set of people to vote. Adam
+suggested that the formula defining the electorate should produce
+about 100 voters, if not more; this was generally agreed. John
+asked whether we should only consider people who have contributed
+into JDK 7; Andrew pointed out that many, if not most, external
+contributors have been focused on JDK 6.</p>
+<p>The Board informally asked Mark to do a more extensive analysis
+of the OpenJDK Mercurial logs, trying various time and commit-count
+thresholds to come up with a reasonable formula for defining an
+electorate of about 100 contributors.</p>
+<p>Mike suggested that the Board approve an explicit resolution to
+move forward with draft 9 of the Bylaws. It was then
+unanimously</p>
+<blockquote>
+<p>AGREED: The Board considers Draft 9 of the Bylaws to be ready
+for a ratification vote, assuming that no new issues are identified
+during the upcoming two-week public review period.</p>
+</blockquote>
+<h2>3. Summary of upcoming process work</h2>
+<p>This topic was, once again, deferred to the next meeting due to
+time constraints.</p>
+<p>At this point the Board adjourned.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

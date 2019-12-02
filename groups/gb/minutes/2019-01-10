@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK GB: 2019/1/10</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      PRE { font: inherit; }
+/**/
+</style></head><body><div id="main">
+<h1>OpenJDK Governing Board Minutes: 2019/1/10</h1>
+<p>The OpenJDK Governing Board met via conference call on Thursday,
+10 January 2019 at 15:00 UTC with the following agenda:</p>
+<ol>
+<li>FOSDEM '19 and OCW plan</li>
+<li>Any other business</li>
+</ol>
+<p>Three Board members were present: Georges Saab, Andrew Haley,and
+Mark Reinhold.</p>
+<p>The intent of these minutes is to capture the conversational
+flow of the Board's discussion and also to record decisions. If you
+are interested only in the latter then search for the word "AGREED"
+throughout the text.</p>
+<h2>1. FOSDEM '19 and OCW plan</h2>
+<p>After noting the three present Board members constituted
+<a href="https://openjdk.java.net/bylaws#votes">a quorum</a>,
+Georges wished everybody a Happy New Year.</p>
+<p>Observing that the agenda was short, Georges suggested that the
+Governing Board plan a panel discussion at <a href="https://fosdem.org/2019/">FOSDEM '19</a> (Brussels, 2 &amp; 3 Feb
+2019). Mark seconded saying that he had already submitted the usual
+<a href="https://fosdem.org/2019/schedule/event/openjdk_gb/">OpenJDK
+Governing Board Q&amp;A</a>. Andrew said he planned to be there.
+Georges suspected that Doug would attend via video conference as
+usual and IBM would also be represented.</p>
+<p>Mark provided status for the <a href="https://openjdk.java.net/workshop">OpenJDK Committers'
+Workshop</a> (OCW) saying that it would be immediately after FOSDEM
+on 4 February. The venue was unknown but expected to be around
+Brussels and convenient to those attending FOSDEM. At this point,
+attendance was likely to be "first come, first served" since there
+was no time for formal registration. Attendance fees (if any) would
+be cash collected at the door.</p>
+<p>Andrew believed that several of his colleagues would attend OCW
+and he was encouraging others to stay in Brussels for another day.
+Georges observed that the late organization presented a bit of a
+risk for those making travel plans. Andrew noted that some people
+were not comfortable with the idea of an "unconference" since it
+sounded a bit ramshackle. Mark said that unlike the OCW in August
+2018, there would be no prepared presentations. Andrew approved
+saying that the proximity of the OCW allowed FOSDEM to concentrate
+on technical presentations instead of internal, procedural OpenJDK
+issues. The FOSDEM organizers felt free to reject all proposals of
+that nature. Andrew thought this choice would make FOSDEM better
+for all.</p>
+<h2>2. Any other business</h2>
+<p>Andrew introduced the topic of OpenJDK Project Lead transitions,
+saying that the transition for the <a href="https://openjdk.java.net/projects/jdk8u/">OpenJDK 8 Updates
+Project</a> Lead was not going as quickly as he had hoped. His main
+concern was that various people in Oracle had suggested that he
+begin publishing information about any new processes he wished to
+adopt. However, since the hand-off had not occurred, he did not
+believe that was appropriate. Andrew thought it would be nice if
+Lead succession included some overlap time. Georges noted that
+there was no formal description of the succession process but there
+were some historical precedents. Andrew assured Georges that he was
+not suggesting the need for a formalized process. He would like the
+current Project Lead to publically name a successor well before the
+new Lead took ownership. He also requested examples of best
+practices for similar future transitions.</p>
+<p>Georges asked how succession applied to JDK 11 updates. Mark
+replied that JDK 8 Updates was a separate OpenJDK Project but that
+JDK 11 updates were part of the <a href="https://openjdk.java.net/projects/jdk-updates/">JDK Updates
+Project</a>. The <a href="https://openjdk.java.net/bylaws">Bylaws</a> do not define
+co-project or sub-project leads. While these roles could be
+formalized, he wished to avoid it. Continuing, Mark said that
+within the JDK Updates Project, each release can have its own lead
+maintainer. Agreeing with Mark's basic description, Andrew added
+that it was reasonable to assume that those working on the release
+would continue to do things as they always had. He did not see a
+need for a formal leadership-change process. Georges reminded the
+Board that the intent of the JDK Updates Project was to reduce
+overhead for the six month release cadence. The single Project
+reduces administrative overhead and eliminates the need for an
+OpenJDK Contributor to have a Committer and/or Reviewer Call For
+Votes (CFV) for every update release.</p>
+<p>To address Andrew's original concern regarding the JDK 8 Updates
+Project Lead transition, Mark agreed to ask the current leadership
+team to separate naming a successor from the actual hand-off. They
+should ask for nominations (or self-nominations) for the new Lead
+position then choose one of the nominees. Mark asked Andrew whether
+there was anybody else who might be interested in becoming the JDK
+11 Updates Lead. Andrew replied that he was considering eventually
+asking one of his senior associates to take on the position, since
+he has quite a few commitments, but that he would accept it for
+now.</p>
+<p>At this point, the Board adjourned.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>
