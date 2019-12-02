@@ -1,0 +1,350 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Hidden Classes</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Hidden Classes</h1><table class="head"><tr><td>Owner</td><td>Mandy Chung</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.lang.invoke</td></tr><tr><td>Discussion</td><td>valhalla dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>L</td></tr><tr><td>Duration</td><td>L</td></tr><tr><td>Created</td><td>2019/03/13 17:37</td></tr><tr><td>Updated</td><td>2019/11/25 06:34</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8220607">8220607</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Allow the JVM to define <em>hidden</em> classes that cannot be used directly by the bytecode of other classes. Hidden classes are intended to support frameworks that generate classes at run time and use them indirectly, via reflection. A hidden class may be defined as a member of an <a href="//openjdk.java.net/jeps/181">access control nest</a>, and may be weakly referenced by its class loader.</p>
+<h2 id="Goals">Goals</h2>
+<ol>
+<li>Allow frameworks to define classes as non-discoverable implementation
+details of the framework, so that they cannot be linked against by
+other classes nor discovered through reflection.</li>
+<li>Support extending an access control nest with non-discoverable classes.</li>
+<li>Support aggressive unloading of non-discoverable classes, so that
+frameworks have the flexibility to define as many as they need.</li>
+<li>Deprecate the non-standard API <code>sun.misc.Unsafe::defineAnonymousClass</code>,
+planning to deprecate-for-removal in a future JDK.</li>
+</ol>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>It is not a goal to support all the functionality of <code>sun.misc.Unsafe::defineAnonymousClass</code>, such as constant pool patching.</li>
+<li>It is not a goal to change the Java language in any way.</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Many language implementations on the JVM rely on dynamic class generation for flexibility and efficiency. For example, <code>javac</code> does not translate a lambda expression into a dedicated <code>class</code> file at compile time, but rather, emits bytecode that will <a href="https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/invoke/LambdaMetafactory.html">dynamically generate and instantiate a class</a> to yield the object corresponding to the lambda expression only when needed. On a similar note, runtimes for non-Java languages often implement the higher-order features of those languages by using <a href="https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/reflect/Proxy.html">dynamic proxies</a>, which also generate classes dynamically.</p>
+<p>Language implementers usually intend for a dynamically generated class to be logically part of the implementation of an existing (statically generated) class. This intention suggests various properties for dynamically generated classes:</p>
+<ul>
+<li>
+<p><strong><em>Discoverability</em></strong>.  Being independently discoverable by name is unnecessary; it undermines the goal that the dynamically generated class is merely an implementation detail of the statically generated class.</p>
+</li>
+<li>
+<p><strong><em>Access control</em></strong>.  It may be desirable to extend the access control context of the statically generated class to include the dynamically generated class.</p>
+</li>
+<li>
+<p><strong><em>Lifecycle</em></strong>.  Dynamically generated classes may only be needed for a limited time, and retaining them for the lifetime of the statically generated class might unnecessarily increase memory footprint.  Existing workarounds for this situation, such as per-class class loaders, are cumbersome and inefficient.</p>
+</li>
+</ul>
+<p>Unfortunately, the JVM APIs that define a class -- <code>ClassLoader::defineClass</code> and <code>Lookup::defineClass</code> -- are indifferent to whether the bytes of the class were generated dynamically or statically (i.e. at compile time). The APIs always define a <em>visible</em> class that <a href="https://docs.oracle.com/javase/specs/jvms/se13/html/jvms-5.html#jvms-5.3.2">will be used every time another class in the same loader hierarchy tries to link a class of that name</a>. Consequently, the class may be more discoverable or have a longer lifecycle than desired. In addition, the APIs can only define a class that will act as a member of a nest if the nest's host class knows the name of the class in advance; practically speaking, this prevents dynamically generated classes from being members of a nest.</p>
+<p>If the JVM APIs could define "hidden" classes that are not discoverable and have a limited lifecycle, then the myriad of JDK frameworks which generate classes dynamically would shift over to defining classes that way. This would improve the efficiency of language implementations which rely on the frameworks. For example:</p>
+<ul>
+<li><code>java.lang.reflect.Proxy</code> could define hidden classes to act as the proxy classes which implement proxy interfaces.</li>
+<li><code>java.lang.invoke.StringConcatFactory</code> could generate hidden classes to hold the constant-concatentation methods.</li>
+<li><code>java.lang.invoke.LambdaMetaFactory</code> could generate hidden nestmates to hold lambda bodies that access enclosing variables.</li>
+<li>Nashorn could generate weak hidden classes to hold the bytecode translated from JavaScript programs.</li>
+</ul>
+<h2 id="Description">Description</h2>
+<p>The <code>Lookup</code> API introduced in Java SE 7 allows a class to obtain a <em><a href="https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html">lookup object</a></em> that provides reflective access to classes, methods, and fields. Crucially, no matter what code ends up using a lookup object, the reflective access always occurs in the context of the class which originally obtained the lookup object -- the <em>lookup class</em>. In effect, a lookup object transmits the access rights of the lookup class to any code which receives the object.</p>
+<p>Java SE 9 enhanced the transmission capabilities of lookup objects by introducing a method <code>Lookup::defineClass(byte[])</code>. From the bytes supplied, this method defines a new class in the same context as the class which originally obtained the lookup object. That is, the newly-defined class has the same defining class loader, run-time package, and protection domain as the lookup class.</p>
+<p>This JEP proposes to extend the <code>Lookup</code> API to support defining a <strong><em>hidden class</em></strong> that can only be accessed by reflection. A hidden class is not discoverable by the JVM during bytecode linkage, or by programs making expert use of class loaders (e.g., <code>Class::forName</code>, <code>ClassLoader::loadClass</code>). Optionally, a hidden class can be created as a member of an access control nest, and can be weakly referenced by its defining class loader.</p>
+<p><strong><em>Hidden Classes</em></strong></p>
+<p>Whereas an ordinary class is created by calling <code>ClassLoader::defineClass</code>, a hidden class is created by calling <code>Lookup::defineHiddenClass</code>. This causes the JVM to derive a hidden class from the supplied bytes, link the hidden class, and return a lookup object that provides reflective access to the hidden class. The program should store the lookup object carefully, for it is the only way to obtain the <code>Class</code> object of the hidden class.</p>
+<p>The bytes supplied to <code>Lookup::defineHiddenClass</code> must be a <code>ClassFile</code> structure. The JVM's derivation of a hidden class from those bytes is identical to the derivation of an ordinary class by <code>ClassLoader::defineClass</code>.</p>
+<p><em>Name of a hidden class</em></p>
+<p>A hidden class is not anonymous; it has a name that is available by invoking <code>getName</code> on its <code>Class</code> object. The name is shown in diagnostics (such as the output of <code>java -verbose:class</code>), in JVM TI class loading events, in JFR events, and potentially in stack traces (see subsection below).</p>
+<p>The name of a hidden class is the concatenation of:</p>
+<ol>
+<li>The binary name whose internal form is given by <code>this_class</code> in the <code>ClassFile</code> structure;</li>
+<li>The <code>/</code> character;</li>
+<li>A non-empty suffix chosen by the JVM implementation.  This suffix must be an unqualified name as specified in JVMS 4.2.2 and unique.</li>
+</ol>
+<p>For example, suppose <code>this_class</code> is <code>com/example/Foo</code>, the internal form of the binary name <code>com.example.Foo</code>. The hidden class may be named <code>com.example.Foo/1234</code>.</p>
+<p>Although the name of a hidden class is visible in many places, it must never be used by another class.  For example, if a class (whether ordinary or hidden) names a hidden class as its declaring class or class member (via <code>InnerClasses</code> attribute), or as its nest host (via <code>NestHost</code> attribute), or as a member of its nest (via <code>NestMembers</code> attribute), the class may successfully be created.  At run time, any attempt to resolve a hidden class by name, it may result in a <code>LinkageError</code> which is no difference from resolving a symbolic reference to an ordinary class that cannot be found.</p>
+<p>A hidden class' name is disjoint from ordinary class names is accomplished
+for it to include a <code>/</code>.  It is not a binary name (JVMS 4.2.1),
+so it is forbidden to define an ordinary class with that name as
+the first argument to <code>ClassLoader::defineClass</code>.
+Invoking <code>cl.defineClass("com.example.Foo/1234", &lt;bytes&gt;, ...)</code> will fail
+because the first argument is not a binary name. On the other hand, if
+a <code>ClassFile</code> is manufactured with a <code>this_class</code> of <code>com/example/Foo/1234</code></p>
+<ul>
+<li>the internal form of the hidden class's name - then the corresponding
+binary name (and first argument to <code>ClassLoader::defineClass</code>) is
+<code>com.example.Foo.1234</code>, so an ordinary class will be defined with that name,
+disjoint from the hidden class.</li>
+</ul>
+<blockquote>
+<p>We acknowledge that not using binary names for the names of hidden
+classes is potentially a source of problems, but at the same time it
+is compatible with the longstanding practice of
+<code>Unsafe::defineAnonymousClass</code> (see
+https://mail.openjdk.java.net/pipermail/valhalla-dev/2019-August/006273.html).
+The use of <code>/</code> to indicate a hidden class is also aligned
+stylistically with the use of <code>/</code> in stack traces to "quality" a
+class by its defining module and loader (see
+StackTraceElement::toString). The error log below reveals two hidden
+classes, both in code of module <code>m1</code>: one hidden class has a method
+<code>test</code>, the other has a method <code>apply</code>.</p>
+<pre><code>java.lang.Error: thrown from hidden class com.example.Foo/0x0000000800b7a470
+    at m1/com.example.Foo/0x0000000800b7a470.toString(Foo.java:16)
+    at m1/com.example.Foo_0x0000000800b7a470$$Lambda$29/0x0000000800b7c040.apply(&lt;Unknown&gt;:1000001)
+    at m1/com.example.Foo/0x0000000800b7a470.test(Foo.java:11)</code></pre>
+</blockquote>
+<p><em>Hidden classes and class loaders</em></p>
+<p>Despite the fact that a hidden class has a corresponding <code>Class</code>
+object, and the fact that a hidden class's supertypes are created by
+class loaders, no class loader is involved in the creation of the
+hidden class itself. (Notice that this JEP never says a hidden class
+is "loaded".) No class loaders are recorded as initiating loaders of
+a hidden class, and no loading constraints are generated that involve
+hidden classes. Consequently, hidden classes are not known by any
+class loader: a symbolic reference in the run-time constant pool of a
+class <code>D</code> to a class <code>C</code> denoted by <code>N</code> will never resolve to a
+hidden class for any value of <code>D</code>, <code>C</code>, and <code>N</code>. The reflective
+methods <code>Class::forName</code>, <code>ClassLoader::findLoadedClass</code>, and
+<code>Lookup::findClass</code> will not find hidden classes.</p>
+<p>Notwithstanding this detachment from class loaders, a hidden class is
+deemed to have a defining class loader. This is necessary to resolve
+types used by the hidden class's own fields and methods. In
+particular, a hidden class has the same defining class loader,
+runtime package, and protection domain as the lookup class, which is
+the class that originally obtained the lookup object (the object on
+which <code>Lookup::defineHiddenClass</code> is invoked).</p>
+<p><em>Linking a hidden class</em></p>
+<p>The JVM links a hidden class immediately after deriving it. The class
+is verified (5.4.1) and prepared (5.4.2) as for an ordinary class,
+except that no loading constraints are imposed. After linking, a
+hidden class is initialized if the appropriate parameter of
+<code>Lookup::defineHiddenClass</code> was set. If the parameter was not set,
+then the hidden class will be initialized when reflective methods are
+used to instantiate it or access its members. (This is the same
+regime as initialization of ordinary classes, where
+<code>ClassLoader::defineClass</code> has the same parameter.)</p>
+<p><em>Using a hidden class</em></p>
+<p>Once created and linked, a hidden class can be used via the returned
+<code>Class</code> object. The hidden class can be instantiated and its members
+accessed as if it was an ordinary class, except for two restrictions:</p>
+<ol>
+<li>The <code>Class</code> object is not modifiable by <a href="https://docs.oracle.com/en/java/javase/12/docs/api/java.instrument/java/lang/instrument/Instrumentation.html#isModifiableClass(java.lang.Class)">instrumentation agents</a>,
+and cannot be redefined or retransformed by JVM TI agents.
+(However, JVM TI and JDI will be extended to support hidden
+classes, such as testing whether a class is hidden and including
+hidden classes in the list of all loaded classes.)</li>
+<li><code>getCanonicalName</code> returns null, indicating the hidden class has
+no canonical name. (The <code>Class</code> object for an anonymous class in the
+Java language has the same behavior.)</li>
+</ol>
+<p>It is important to realize that the only way for other classes to use
+a hidden class is indirectly, via the <code>Class</code> object. The hidden
+class cannot be used directly by bytecode instructions in other
+classes because it cannot be referenced nominally (that is, by name,
+"statically"). For example, suppose a framework learns of a hidden
+class named <code>com.example.Foo/1234</code>, and manufactures a class <code>D</code> that
+attempts to instantiate it. Code in <code>D</code> would contain a <code>new</code>
+instruction that points to a constant pool entry in <code>D</code> that denotes
+the name in internal form, <code>com/example/Foo/1234</code>. The JVM would
+resolve the constant pool entry by converting the name in internal
+form to a binary name, <code>com.example.Foo.1234</code>, and trying to load a
+class of that name. Since the hidden class is not named
+<code>com.example.Foo.1234</code>, class loading will fail. The hidden class is
+not truly anonymous, since its name is exposed, but it is effectively
+invisible.</p>
+<p>Without the ability of the constant pool to refer nominally to a
+hidden class, there is no way to use a hidden class as a superclass,
+field type, return type, or parameter type. This lack of usability is
+reminiscent of anonymous classes in the Java language, but hidden
+classes go further: an anonymous class can enclose other classes in
+order to let them access its members, but a hidden class cannot
+enclose other classes (their <code>ClassFile</code> attributes cannot name it).
+Even a hidden class is unable to use itself as a field type, return
+type, or parameter type in its own field and method declarations.</p>
+<p>Importantly, code in a hidden class can use the hidden class
+directly, without relying on the <code>Class</code> object. This is because
+bytecode instructions in a hidden class can refer to the hidden class
+symbolically (without concern for its name) rather than nominally.
+For example, a <code>new</code> instruction in a hidden class can instantiate
+the hidden class via a constant pool entry which refers directly to
+the <code>this_class</code> item in the current <code>ClassFile</code>. Other instructions,
+such as <code>getstatic</code>, <code>getfield</code>, <code>putstatic</code>, <code>putfield</code>,
+<code>invokestatic</code>, and <code>invokevirtual</code>, can access members of the hidden
+class via the same constant pool entry. Direct use inside the hidden
+class is important because it simplifies generation of hidden classes
+by language runtimes and frameworks.</p>
+<p>A hidden class generally has the same powers of reflection as an ordinary class: code in a hidden class may define ordinary classes and hidden classes (via <code>ClassLoader::defineClass</code> and <code>Lookup::defineHiddenClass</code>), and may reflectively manipulate ordinary classes and hidden classes (via their <code>Class</code> objects). A hidden class may even act as a lookup class, that is, code in a hidden class may obtain a lookup object on itself, which helps with hidden nestmates (see below).</p>
+<p><em>Hidden classes in stack traces</em></p>
+<p>Methods of hidden classes are not shown in stack traces by default.
+They represent implementation details of language runtimes, and are
+never expected to be useful to developers diagnosing application
+issues. However, they can be included in stack traces with
+<code>-XX:+UnlockDiagnosticVMOptions -XX:+ShowHiddenFrames</code>.</p>
+<p>There are three APIs which reify stack traces: <code>Throwable::getStackTrace</code>,
+<code>Thread::getStackTrace</code> and the newer <code>StackWalker</code> API introduced
+in Java SE 9. For the <code>Throwable::getStackTrace</code> and
+<code>Thread::getStackTrace</code> API, stack frames for hidden classes are
+omitted by default; they can be included with the same options
+as for stack traces above. For the <code>StackWalker</code> API, stack frames
+for hidden classes should be included by a JVM implementation
+only if <a href="https://docs.oracle.com/en/java/javase/12/docs/api/java.base/java/lang/StackWalker.Option.html#SHOW_HIDDEN_FRAMES">SHOW_HIDDEN_FRAMES</a> is
+set. This allows stack trace filtering to omit unnecessary
+information when developers are diagnosing application issues,
+as requested by <a href="https://bugs.openjdk.java.net/browse/JDK-8212620">JDK-8212620</a>.</p>
+<p><strong><em>Hidden nestmate classes</em></strong></p>
+<p>Introduced to the JVM in Java SE 11, a nest is a set of classes that
+allow access to each other's private members, without any of the
+backdoor accessibility-broadening methods usually associated with
+nested classes in the Java language. The set is defined statically:
+one class serves as the nest host, its <code>class</code> file enumerating the
+other classes that are nest members; in turn, the nest members
+indicate in their <code>class</code> files which class hosts the nest. While
+static membership works well for <code>class</code> files generated from Java
+source code, it is usually insufficient for <code>class</code> files generated
+dynamically by language runtimes. To help such runtimes, and to
+encourage the use of <code>Lookup::defineHiddenClass</code> over
+<code>Unsafe::defineAnonymousClass</code>, a hidden class can join a nest at
+run time; an ordinary class cannot.</p>
+<p>A hidden class can be created as a member of an existing nest by passing
+the <code>NESTMATE</code> enum constant to <code>Lookup::defineHiddenClass</code>. The nest
+which the hidden class joins is not determined by an argument to
+<code>Lookup::defineHiddenClass</code>. Instead, the nest to be joined is inferred
+from the lookup class, that is, from the class whose code initially obtained
+the lookup object: the hidden class is a member of the same nest as the
+lookup class (see below).</p>
+<p>In order for <code>Lookup::defineHiddenClass</code> to add hidden classes to the nest,
+the lookup object must have the proper permissions, namely <code>PRIVATE</code> and
+<code>MODULE</code> access. These permissions "prove" that the lookup object was obtained
+by the lookup class with the intent of allowing other code to expand the nest.</p>
+<p>The JVM disallows "nested nests".  A member of one nest cannot serve as
+the host of another nest, regardless of whether nest membership is defined
+statically or dynamically.</p>
+<p>The lookup class's membership of a nest may be indicated statically (via <code>NestHost</code>)
+if the lookup class is an ordinary class; or may have been set dynamically
+if the lookup class is a hidden class.   Static nest membership is validated
+lazily.  It is important for a language runtime or framework library to add
+hidden classes to the nest of a lookup class that may have a bad nest membership.
+As an example, consider the <em><a href="https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/invoke/LambdaMetafactory.html">LambdaMetaFactory</a></em> framework introduced in Java SE 8.  When the source code of
+a class <code>C</code> contains a lambda expression, the corresponding <code>C.class</code> file uses
+<code>LambdaMetaFactory</code> at run time to define a hidden class that holds the body of
+the lambda expression and implements the required functional interface.
+<code>C.class</code> may have a bad <code>NestHost</code> attribute but the execution of <code>C</code>
+never references the class <code>H</code> named in <code>NestHost</code> attribute.
+Since the lambda body may access <code>private</code> members of <code>C</code>, the hidden class
+needs to be able to access them too; accordingly, LambdaMetaFactory attempts
+to define the hidden class as a member of the nest hosted by <code>C</code>.
+If <code>C</code>'s static nest membership is valid, then <code>H</code> is <code>C</code>'s nest host and
+the hidden class is added as a member of the nest of <code>H</code> as nest host.
+If <code>C</code>'s static nest membership is invalid, then the hidden class is added
+as a member of the nest of <code>C</code> as nest host (<code>C</code> becomes the nest host of its own
+nest) and the error occurs during nest membership validation is not propagated.</p>
+<p>If a hidden class is created without the <code>NESTMATE</code> enum constant, then
+the hidden class is the host of its own nest. This aligns with the JVM policy
+that every class is either a member of a nest with another class as nest host
+or else is itself the nest host of a nest. The hidden class can create additional hidden
+classes as members of its nest: code in the hidden class first obtains
+a lookup object on itself, then invokes <code>Lookup::defineHiddenClass</code>
+on the object and passes the <code>NESTMATE</code> constant.</p>
+<p>The nest contains the lookup class, plus any members indicated statically
+(via <code>NestMembers</code>) if the lookup class is ordinary, plus any members already
+added dynamically.</p>
+<p>Given the <code>Class</code> object for a hidden class created as a member of a
+nest, <code>Class::getNestHost</code> and <code>Class::isNestmateOf</code> will work as
+expected. <code>Class::getNestMembers</code> can be called on the <code>Class</code> object
+of any class in the nest - whether member or host, whether ordinary
+or hidden - but returns only the members defined statically (that is,
+the ordinary classes enumerated by <code>NestMembers</code> in the host) along
+with the nest host.</p>
+<p><code>Class::getNestMembers</code> does not include the hidden classes added
+to the nest dynamically because hidden classes are non-discoverable
+and should only be of interest to the code that created them
+(which knows the nest membership already). This prevents a hidden class
+from leaking through the nest membership if intended to be private
+internals.</p>
+<p><strong><em>Weak classes</em></strong></p>
+<p>As specified in JLS 12.7, a class may be unloaded if and only if its
+defining loader may be reclaimed by the garbage collector. To
+maximize the chance of unloading a class, it is important to minimize
+references to its defining loader. This means minimizing reuse of
+class loaders, so language runtimes will often dedicate an entire
+class loader to defining one class (or perhaps a small handful of
+related classes). When all instances of the class are reclaimed, both
+the class and its defining loader can be reclaimed. However, the
+resulting large number of "per-class" loaders is demanding on memory,
+and using <code>ClassLoader::defineClass</code> is considerably slower than
+<code>Unsafe::defineAnonymousClass</code> according to microbenchmarks.</p>
+<p>A better way to loosen the relationship between a class and its
+defining loader is to introduce the notion of a weak class: a class
+that is weakly referenced by its defining loader. When all instances
+of the weak class are reclaimed and the weak class is no longer strongly
+reachable, so it may be unloaded even though its defining loader is
+still alive. Language runtimes that use weak classes will see an
+improvement in both footprint and performance.</p>
+<p>To capitalize on the loose connection between a hidden class and its
+defining loader, and to encourage the use of
+<code>Lookup::defineHiddenClass</code> over <code>Unsafe::defineAnonymousClass</code>, a
+hidden class can be created as a weak class; an ordinary class cannot.</p>
+<p>A hidden class can be created as a weak class via the <code>WEAK</code> class
+option to <code>Lookup::defineHiddenClass</code>. A hidden nestmate class can
+also be a weak class.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>There is no alternative to injecting a nestmate at run time besides keeping
+the existing workaround to generate package-private access bridges for
+the proxy class to access private members of a target class.   There is
+no alternative to hide a class from other classes if it is visible
+to a class loader.</p>
+<h2 id="Testing">Testing</h2>
+<p><code>LambdaMetaFactory</code>, <code>StringConcatFactory</code>, and Nashorn will be updated to use the new APIs. Performance testing will be run to ensure that no regression on lambda linkage and string concatenation.</p>
+<p>Unit tests for the new APIs will be developed.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>We assume that developers who currently use <code>Unsafe::defineAnonymousClass</code> will be able to migrate to <code>Lookup::defineHiddenClass</code> easily. Developers should be aware of four minor constraints on the functionality of hidden classes relative to VM-anonymous classes.</p>
+<p>(1) Protected access</p>
+<p>Surprisingly, a VM-anonymous class can access <code>protected</code> members of its host class even if the VM-anonymous class exists in a different run-time package and is not a subclass of the host class. In contrast, access control rules are applied properly for hidden classes: a hidden class can only access <code>protected</code> members of another class if the hidden class is in the same run-time package as, or a subclass of, the other class. There is no special access for a hidden class to the <code>protected</code> members of the lookup class.</p>
+<p>(2) Constant pool patching</p>
+<p>A VM-anonymous class can be defined with its constant pool entries already resolved to concrete values. This allows critical constants to be shared between a VM-anonymous class and the language runtime that defines it, and between multiple VM-anonymous classes. For example, a language runtime will often have <code>MethodHandle</code> objects in its address space that would be useful to newly-defined VM-anonymous classes. Instead of the runtime "serializing" the objects to constant pool entries in VM-anonymous classes, then generating bytecode in those classes to laboriously <code>ldc</code> the entries, the runtime can simply supply <code>Unsafe::defineAnonymousClass</code> with references to its live objects. The relevant constant pool entries in the newly-defined VM-anonymous class are pre-linked to those objects, improving performance and reducing footprint. In addition, this allows VM-anonymous classes to refer to each other: constant pool entries in a class file are <a href="https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/constant/package-summary.html">based on names</a>, so cannot refer to nameless VM-anonymous classes, but a language runtime can easily track the live <code>Class</code> objects for its VM-anonymous classes and supply them to <code>Unsafe::defineAnonymousClass</code>, thus pre-linking the new class's constant pool entries to other VM-anonymous classes. The <code>Lookup::defineHiddenClass</code> API will not have these capabilities because a <a href="https://bugs.openjdk.java.net/browse/JDK-8230501">future project</a> may offer pre-linking of constant pool entries to all classes uniformly.</p>
+<p>(3) Self-control of optimization</p>
+<p>VM-anonymous classes were designed on the assumption that only JDK code would define them.  Consequently, VM-anonymous classes have an unusual ability that was previously available only to classes in the JDK: control of their own optimization by the HotSpot JVM. Control is exerted through annotation attributes in a VM-anonymous class's defining bytes: <code>@ForceInline</code> or <code>@DontInline</code> causes HotSpot to always-inline or never-inline a method, while <code>@Stable</code> causes HotSpot to treat a non-null field as a foldable constant. However, very few of the VM-anonymous classes dynamically defined by JDK code have needed this ability. It is even possible that <a href="//openjdk.java.net/jeps/8209964">future enhancements in the Java SE Platform</a> will make these HotSpot optimizations obsolete. Accordingly, hidden classes will not have the ability to control their optimization, even when defined by JDK code. (This is not thought to present any risk to the migration of JDK code from defining VM-anonymous classes to defining hidden classes.)</p>
+<blockquote>
+<p>As a related matter, VM-anonymous classes can use annotation attributes to prevent their methods appearing in stack traces (<code>@Hidden</code>). Of course, this functionality is automatic for hidden classes, and may be <a href="https://bugs.openjdk.java.net/browse/JDK-8212620">offered to other classes</a> in future.</p>
+</blockquote>
+<p>Migration should take the following into account:</p>
+<ul>
+<li>To invoke private nestmate instance methods from code in the hidden class, use <code>invokevirtual</code> or <code>invokeinterface</code> instead of <code>invokespecial</code>. Generated bytecode that uses <code>invokespecial</code> to invoke a private nestmate instance method will fail verification. <code>invokespecial</code> should only be used to invoke private nestmate constructors.</li>
+</ul>
+<p>As noted earlier, invoking <code>getName</code> on the <code>Class</code> object of a hidden class may return a string that is not a binary name, such as a string containing a <code>/</code> character. User-level code is not expected to come into contact with such <code>Class</code> objects, but framework-level code that assumes every class has a binary name may need updating to handle hidden classes. Framework-level code that was previously updated to handle VM-anonymous classes will continue to work, since hidden classes use the same naming convention as VM-anonymous classes.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p><a href="//openjdk.java.net/jeps/181">JEP 181</a> introduces nest-based access
+control context where all classes and interfaces in a nest shares private
+access among the nestmates.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

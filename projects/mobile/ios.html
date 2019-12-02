@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK: iOS Platform Implementation Details</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>iOS Platform Implementation Details</h1>
+<p>The JDK 9 iOS port supports both x64 simulator and ARM 64-bit
+device execution. The x64 implementation uses the standard Hotspot
+JIT but the ARM 64-bit device implementation is restricted to the
+Zero interpreter. This is due to the fact that Apple does not allow
+dynamic code generation on iOS ARM platforms. This restriction
+prohibits using the Hotspot dynamically generated template
+interpreter since it is generated at runtime. To work around this
+limitation we rely on the Zero "C" interpreter for iOS device
+support.</p>
+<h3>Build Requirements</h3>
+<h4>Build machine</h4>
+<p>The iOS JDK 9 build requires a Mac System capable of running
+Xcode 7+. Xcode 7 requires at a minimum OSX 10.10.5 (Yosemite) in
+order to run.</p>
+<h4>Xcode</h4>
+<p>Our project currently requires Xcode 7.1 which can be downloaded
+from Apple at their developer site.</p>
+<pre>
+https://developer.apple.com/xcode/
+</pre>
+<h4>libffi (required for ARM builds only)</h4>
+<p>The Zero interpreter used in our iOS arm64 port requires a third
+party library for calling native functions. This library is libffi
+(Foreign Function Interface Library). We are currently working with
+version 3.2.1 of this library.</p>
+<p>The libffi 3.2.1 sources can be downloaded from here:</p>
+<pre>
+https://sourceware.org/libffi/
+</pre>
+<p>Download the bundle and untar it to a working directory, "cd"
+into that directory and then execute the following commands:</p>
+<pre>
+% xcodebuild -arch arm64
+% cd build_iphoneos-arm64
+% make prefix=`pwd` install
+</pre>
+<p>The "make install" will build the library and populate the
+include and lib directories in build_iphoneos-arm64 with the built
+libffi library artifacts needed to build the JDK.</p>
+<h4>libfreetype</h4>
+<p>The FreeType 2.6.2 sources can be downloaded from here:</p>
+<pre>
+http://freetype.org/download.html
+</pre>
+<p>To build an iOS x86_64 distribution, download the sources, cd to
+the top directory and run these commands:</p>
+<pre>
+./configure \
+--without-zlib \
+--without-png \
+--without-bzip2 \
+--host=x86_64-apple-darwin \
+--prefix=`pwd`/build_iphoneos-x86_64 \
+CFLAGS='-arch x86_64 -miphoneos-version-min=8.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/' \
+LDFLAGS='-miphoneos-version-min=8.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/ -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/lib -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/lib/system'
+make clean
+make
+make install
+</pre>
+<p>The output of the build will be stored in the
+build_iphoneos-x86_64 directory</p>
+<p>To build an iOS arm64 distribution, run these commands:</p>
+<pre>
+% ./configure \
+--without-zlib \
+--without-png \
+--without-bzip2 \
+--prefix=`pwd`/build_iphoneos-arm64 \
+--host=arm-apple-darwin \
+--enable-static=yes \
+--enable-shared=no \
+'CFLAGS=-arch arm64 -pipe -std=c99 -Wno-trigraphs -fpascal-strings -O2 -Wreturn-type -Wunused-variable -fmessage-length=0 -fvisibility=hidden -miphoneos-version-min=8.0 -I/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include/libxml2/ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/' \
+AR=/usr/bin/ar \
+'LDFLAGS=-arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/ -miphoneos-version-min=8.0'
+% make clean
+% make
+% make install
+</pre>
+<p>The output of the build will be stored in the
+build_iphoneos-drm64 directory</p>
+<h3>Building the JDK</h3>
+<p>Once you have the required tools and libraries built, download
+the mobile/dev sources, customize the build commands below to match
+your build system setup and run the build script.</p>
+<h4>Downloading the sources</h4>
+<pre>
+hg clone http://hg.openjdk.java.net/mobile/dev mobile-dev
+cd mobile-dev
+sh get_source.sh
+</pre>
+<h4>Build command for x86_64</h4>
+<pre>
+# !/bin/csh
+#
+# Customize the following paths to match your setup
+#
+setenv CUPS_DIR $HOME/jdk9mobile/cups/include
+setenv FREETYPE_DIR $HOME/jdk9mobile/freetype-2.6.2/build_iphoneos-x86_64
+setenv JDK_DIR /Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home
+#
+cd mobile-dev
+bash configure \
+--enable-option-checking=fatal \
+--build=x86_64-apple-darwin \
+--host=x86_64-macos-ios \
+--target=x86_64-macos-ios \
+--disable-warnings-as-errors \
+--enable-headless-only \
+--with-boot-jdk=$JDK_DIR \
+--with-jdk-variant=normal \
+--with-jvm-variants=minimal1 \
+--enable-static-build=yes \
+--with-extra-cflags="-arch x86_64 -Wno-implicit-function-declaration -Wno-unused-parameter -miphoneos-version-min=8.0.0" \
+--with-extra-cxxflags="-arch x86_64 -Wno-implicit-function-declaration -Wno-unused-parameter -miphoneos-version-min=8.0.0" \
+--with-extra-ldflags="-arch x86_64 -miphoneos-version-min=8.0.0 -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/lib -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/lib/system" \
+--with-cups-include=$CUPS_DIR \
+--with-sys-root=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
+--with-tools-dir=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/../../usr/bin \
+--with-debug-level=release \
+--disable-precompiled-headers \
+--with-freetype-lib=$FREETYPE_DIR/lib \
+--with-freetype-include=$FREETYPE_DIR/include/freetype2
+
+cd build/ios-x86_64-normal-minimal1-release
+make images
+</pre>
+<h4>Build command for arm64</h4>
+<pre>
+# !/bin/csh
+#
+# Customize the following paths to match your setup
+#
+setenv LIBFFI_DIR $HOME/jdk9mobile/libffi-3.2.1/build_iphoneos-arm64
+setenv CUPS_DIR $HOME/jdk9mobile/cups/include
+setenv FREETYPE_DIR $HOME/jdk9mobile/freetype-2.6.2/build_iphoneos-arm64
+setenv JDK_DIR /Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home
+#
+cd mobile-dev
+bash configure \
+--enable-option-checking=fatal \
+--build=x86_64-apple-darwin \
+--host=aarch64-macos-ios \
+--target=aarch64-macos-ios \
+--disable-warnings-as-errors \
+--enable-headless-only \
+--with-boot-jdk=$JDK_DIR \
+--with-jdk-variant=normal \
+--with-jvm-variants=zero \
+--enable-static-build=yes \
+--with-libffi-include=$LIBFFI_DIR/include \
+--with-libffi-lib=$LIBFFI_DIR/lib \
+--with-extra-cflags="-arch arm64 -Wno-implicit-function-declaration -Wno-unused-parameter -miphoneos-version-min=8.0.0" \
+--with-extra-cxxflags="-arch arm64 -Wno-implicit-function-declaration -Wno-unused-parameter -miphoneos-version-min=8.0.0" \
+--with-extra-ldflags="-arch arm64 -miphoneos-version-min=8.0.0 -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/lib -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/lib/system" \
+--with-cups-include=$CUPS_DIR \
+--with-sys-root=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk \
+--with-tools-dir=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin \
+--with-debug-level=release \
+--disable-precompiled-headers \
+--with-freetype-lib=$FREETYPE_DIR/lib \
+--with-freetype-include=$FREETYPE_DIR/include/freetype2
+
+cd build/ios-aarch64-normal-zero-release
+make images
+</pre>
+<h4>Sample Xcode Simulator Project</h4>
+<p>Once you have successfully built an iOS x86_64 JDK 9 binary
+image, you can take it for a test drive by running it under the
+Xcode simulator.</p>
+<p>To accomplish this, download the Sample HelloWorld project from
+the link below and follow the instructions.</p>
+<pre>
+<a href="samples/hello-ios-x86_64.tar.gz" type="application/x-gzip">Xcode iOS X86_64 Sample HelloWorld Project</a>
+</pre>
+<pre>
+
+RUNNING THE HELLO WORLD SAMPLE 
+
+% tar xzvf hello-ios-x86_64.tar.gz
+% setenv BUILD_DIR {mobile_dir}/build/ios-x86_64-normal-minimal1-release
+% cd hello-ios-x86_64
+% bash copy-jre.sh
+
+{mobile_dir} is the location where you installed the JDK 9 Mobile forest.
+</pre>
+<p>Once these steps are completed, open the
+hello-ios-x86_64/hello.xcodeproj in your Xcode program.</p>
+<p>In Xcode, select Build and then Run.</p>
+<p>This should bring up a Simulator with the Hello application.
+Click on the RunJava button which will start Java and display
+"Hello World" in the Xcode console.</p>
+<p>If you wish to update the Java runtime that's being used by the
+Hello application, use the remove-jre.sh script to remove it and
+re-execute the copy-jre.sh script to install a new Java
+runtime.</p>
+<h4>Known Issues &amp; Troubleshooting</h4>
+<h5>1. SIGSEGV or SIGBUS while running Java</h5>
+<p>If you are running under the Xcode IDE and are seeing SIGSEGV or
+SIGBUS while the VM is running, these may be perfectly normal.</p>
+<p>The quickest way of determining if this SEGV is expected is to
+allow the signal to be delivered to the VM. To do this, execute
+these two commands in the Xcode lldb window prior to launching the
+VM:</p>
+<pre>
+process handle -s false SIGSEGV
+process handle -s false SIGBUS
+</pre>
+<p>If the Java runtime functions normally after passing the signals
+to the process, then these signals are expected. If the VM crashes,
+then it's time for debugging.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

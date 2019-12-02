@@ -1,0 +1,546 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK Projects</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+         PRE { padding: 1ex; margin: 1ex 0; background: #eee; width: 40em;
+               font-size: inherit; }
+         DT { margin-top: 2ex; margin-bottom: 1ex; }
+         DT.subst {font-family: Luxi Mono, Courier New, monospace; 
+                    font-weight: bold; }
+/**/
+</style></head><body><div id="main">
+<h1>Projects</h1>
+<p>A <a href="/bylaws#project">Project</a> is a collaborative
+effort to produce a specific artifact, which may be a body of code,
+or documentation, or some other material. A Project must be
+sponsored by one or more <a href="../groups/">Groups</a>. A Project
+may have web content, one or more file repositories, and one or
+more <a href="//mail.openjdk.java.net">mailing lists</a>.</p>
+<p>The <a href="/bylaws">Bylaws</a> define several ways for the
+Community to expand via Projects. A step-by-step guide is provided
+here for the following common cases:</p>
+<ul>
+<li><a href="#project-author">Becoming an Author</a></li>
+<li><a href="#appointing-author">Appointing a Contributor to be an
+Author</a></li>
+<li><a href="#project-committer">Nominating a Contributor or Author
+to be a Committer</a></li>
+<li><a href="#project-reviewer">Nominating a Committer to be a
+Reviewer</a></li>
+<li><a href="#new-project">Proposing a New Project</a></li>
+</ul>
+<p>This page is a summary and interpretation of the <a href="/bylaws">Bylaws</a>. If there is a conflict between this page and
+the Bylaws then the Bylaws are considered authoritative.</p>
+<h2><a name="project-author" id="project-author">Becoming an
+Author</a></h2>
+<p>Any <a href="/bylaws#contributor">Contributor</a> may request
+the <a href="/bylaws#author">Author</a> role by contacting the
+relevant <a href="/bylaws#project-lead">Project Lead</a>. <a href="#author-refs">References</a> to at least two <a href="/contribute/">sponsored contributions</a> to the Project are
+required. An Author receives the following privileges above those
+of a Contributor:</p>
+<ul>
+<li>
+<p>An OpenJDK username, which allows write access to the
+code-review server and (eventually) other infrastructure services,
+and</p>
+</li>
+<li>
+<p>The ability to create Mercurial changesets directly, with the
+Author's OpenJDK username recorded as the author of the Mercurial
+changeset. This is a more efficient process than the indirect one,
+where a patch must be sent to an existing Committer and the
+<a href="/guide/producingChangeset.html#changesetComment">changeset
+comment</a> lists the Contributor's e-mail address in the
+<code>Contributed-by:</code> line.</p>
+</li>
+</ul>
+<p>An Author who is not a Committer still requires the assistance
+of a Committer to push changesets, but the Author role is
+nonetheless a step above being an unregistered Contributor.</p>
+<p>Project Leads are encouraged to <a href="#appointing-author">grant</a> the Author role only to Contributors
+who appear likely to continue to contribute for some time so that
+they will eventually be nominated to the Committer role.</p>
+<p>The following is the minimal message.</p>
+<pre><code>To: <b>&lt;OpenJDK Project Lead&gt;</b>
+Subject: <b>&lt;project name&gt;</b> Author request for: <b>&lt;full name&gt;</b>
+
+<b>&lt;contributor's e-mail&gt;</b>
+
+<b>&lt;contributor's references&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;OpenJDK Project lead&gt;</dt>
+<dd>The Project Lead as identified by the <a href="/census">Census</a>.</dd>
+<dt class="subst">&lt;project name&gt;</dt>
+<dd>The short name for the Project as listed on the left side-bar
+of the main <a href="//openjdk.java.net">OpenJDK
+page</a>.</dd>
+<dt class="subst">&lt;full name&gt;</dt>
+<dd>The full name of the Contributor (not e-mail address, OpenJDK
+username, etc.).</dd>
+<dt class="subst">&lt;contributor's e-mail&gt;</dt>
+<dd>The Contributor's e-mail address.</dd>
+<dt class="subst">&lt;<a name="author-refs" id="author-refs">contributor's references</a>&gt;</dt>
+<dd>A brief description of qualifications, including references to
+past contributions to the Project. The references should be in the
+form of URLs to specific Mercurial changesets containing the
+Contributor's e-mail address in the <code>Contributed-by:</code>
+line of the <a href="/guide/producingChangeset.html#changesetComment">changeset
+comment</a>. At least two references should be provided.</dd>
+</dl>
+<p>The new Author will receive an e-mail invitation to register in
+OpenJDK, at which time a user name will be assigned. Once the
+invitation has been accepted, the <a href="/census">Census</a> will
+be updated. This user name should be used as the Author name in all
+future Mercurial changesets.</p>
+<p>Under normal circumstances, expect at most one week between the
+time the Project Lead is contacted and an invitation is
+received.</p>
+<h2><a name="appointing-author" id="appointing-author">Appointing a
+Contributor to be an Author</a></h2>
+<p>The <a href="/census">Project Lead</a> may appoint any <a href="/bylaws#contributor">Contributor</a> who has made at least two
+<a href="/contribute/">sponsored contributions</a> to the Project
+to be a Author by notifying the <a href="mailto:registrar.at.openjdk.dot.java.dot.net">registrar</a>. The
+registrar will contact the new Author to obtain additional
+information, and will update the Census.</p>
+<p>The following is the minimal message.</p>
+<pre><code>To: registrar at openjdk dot java dot net
+Subject: New <b>&lt;project name&gt;</b> Author: <b>&lt;full name&gt;</b>
+
+<b>&lt;author's e-mail&gt;</b>
+
+<b>&lt;contributor's qualifications&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;project name&gt;</dt>
+<dd>The short name for the Project as listed on the left side-bar
+of the main <a href="//openjdk.java.net">OpenJDK
+page</a>.</dd>
+<dt class="subst">&lt;full name&gt;</dt>
+<dd>The full name of the nominated Contributor (not e-mail address,
+OpenJDK username, etc.).</dd>
+<dt class="subst">&lt;author's e-mail&gt;</dt>
+<dd>The e-mail address of the newly appointed Author.</dd>
+<dt class="subst">&lt;contributor's qualifications&gt;</dt>
+<dd>A brief description of qualifications, including <a href="#author-refs">references</a>.</dd>
+</dl>
+<p>Under normal circumstances, expect at most one week between the
+time the registrar is contacted and an invitation is received.</p>
+<h2><a name="project-committer" id="project-committer">Nominating a
+Contributor or Author to be a Committer</a></h2>
+<p>Any <a href="/bylaws#committer">Committer</a> may nominate a
+<a href="/bylaws#contributor">Contributor</a> to be a new
+Committer. Becoming an Author may be helpful in establishing
+credibility to become a Committer, but it is not required.</p>
+<p>As a rough guide, a Contributor should make at least eight
+significant contributions to that Project before being
+nominated.</p>
+<dl>
+<dt><a name="committer-nominate" id="committer-nominate"></a><i>Step 1: Nominate</i></dt>
+<dd>
+<p>Send a call-for-votes to the Project's OpenJDK <a href="//mail.openjdk.java.net">mailing list</a>. The voting method
+for approval is <a href="/bylaws#lazy-consensus">Lazy Consensus</a>
+and only current <a href="/census">Committers</a> are eligible to
+vote.</p>
+<pre><code>To: <b>&lt;OpenJDK project mailing list&gt;</b>
+Subject: CFV: New <b>&lt;project name&gt;</b> Committer: <b>&lt;full name&gt;</b>
+
+I hereby nominate <b>&lt;full name&gt;</b> to <b>&lt;project name&gt;</b> Committer.
+
+<b>&lt;contributor description&gt;</b>
+
+Votes are due by <b>&lt;deadline&gt;</b>.
+
+Only current <b>&lt;project name&gt;</b> Committers [1] are eligible to vote
+on this nomination.  Votes must be cast in the open by replying 
+to this mailing list.
+
+For Lazy Consensus voting instructions, see [2].
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://openjdk.java.net/census
+[2] http://openjdk.java.net/projects/#committer-vote</code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;OpenJDK project mailing list&gt;</dt>
+<dd>The primary <a href="//mail.openjdk.java.net/mailman/listinfo">OpenJDK mailing
+list</a> for the project.</dd>
+<dt class="subst">&lt;full name&gt;</dt>
+<dd>The full name of the nominated Contributor (not e-mail address,
+OpenJDK username, etc.).</dd>
+<dt class="subst">&lt;project name&gt;</dt>
+<dd>The short name for the Project as listed on the left side-bar
+of the main <a href="//openjdk.java.net">OpenJDK
+page</a>.</dd>
+<dt class="subst">&lt;<a name="committer-refs" id="committer-refs">contributor description</a>&gt;</dt>
+<dd>
+<p>Describe the Contributor's past contributions to the Project,
+and any relevant qualifications including references to past
+contributions. The references should be in the form of a list of
+URLs to specific Mercurial changesets or a Mercurial HTML query
+which produces the list. For example, the following is a query for
+OpenJDK user, <code>iris</code> to one of the OpenJDK 9 Project
+Master repositories:</p>
+<pre>
+<code>http://hg.openjdk.java.net/jdk9/jdk9/jdk/search/?rev=iris&amp;revcount=100</code></pre></dd>
+<dt class="subst">&lt;deadline&gt;</dt>
+<dd>Insert a date and time, with time zone, two weeks after the
+call-for-votes is sent.</dd>
+<dt class="subst">&lt;nominator&gt;</dt>
+<dd>Nominating Committer's name.</dd>
+</dl>
+</dd>
+<dt><a name="committer-vote" id="committer-vote"></a><i>Step 2:
+Vote</i></dt>
+<dd>
+<p>Committers vote by replying to the proposal with the first line
+of the message body in the following form:</p>
+<pre><code>Vote: <b>&lt;vote&gt;</b></code></pre>
+<p>where <code><b>&lt;vote&gt;</b></code> is one of
+<code><b>yes</b></code>, <code><b>veto</b></code>, or
+<code><b>abstain</b></code>. A justification for the vote may be
+provided on subsequent lines, and is required in order for a
+<code><b>veto</b></code> vote to be valid. Multiple votes are
+allowed but only the most recent vote will be counted. Votes must
+be cast in the open, on the mailing list to which the
+call-for-votes was originally sent; votes sent as private replies
+will not be counted.</p>
+<p>The following is a minimum affirmative reply.</p>
+<pre><code>To: <b>&lt;OpenJDK project mailing list&gt;</b>
+Subject: Re: CFV: New <b>&lt;project name&gt;</b> Committer: <b>&lt;full name&gt;</b>
+
+Vote: yes</code></pre></dd>
+<dt><a name="committer-announce" id="committer-announce"></a><i>Step 3: Announce Result</i></dt>
+<dd>
+<p>Once all Project Members have voted or the deadline has passed
+then the result must be announced to the mailing list where the
+call-for-votes and voting took place. If the announcement is
+approval then it must also be sent to the <a href="mailto:registrar.at.openjdk.dot.java.dot.net">registrar</a>. The
+registrar will contact the new Committer to obtain additional
+information, if necessary, and will update the Census.</p>
+<p>This is a typical announcement of approval:</p>
+<pre><code>To: <b>&lt;OpenJDK mailing list&gt;</b>
+CC: registrar at openjdk dot java dot net
+Subject: Result: New <b>&lt;project name&gt;</b> Committer: <b>&lt;full name&gt;</b>
+
+Voting for <b>&lt;full name&gt;</b> [1] is now closed.
+
+Yes: <b>&lt;number of "yes" votes&gt;</b>
+Veto: 0
+Abstain: <b>&lt;number of "abstain" votes&gt;</b>
+
+According to the Bylaws definition of Lazy Consensus, this is
+sufficient to approve the nomination.
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://mail.openjdk.java.net/<b>&lt;reference to original CFV&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;reference to original CFV&gt;</dt>
+<dd>Find the original call-for-votes in the OpenJDK mail archives
+and provide a link to it.</dd>
+</dl>
+</dd>
+</dl>
+<h2><a name="project-reviewer" id="project-reviewer">Nominating a
+Committer to be a Reviewer</a></h2>
+<p><i>This role is relevant only to Projects that require formal
+change review before a Mercurial push. The <a href="/census">Census</a> notes which Projects have this
+requirement.</i></p>
+<p>Any <a href="/bylaws#reviewer">Project Reviewer</a> may nominate
+any of the Project's Committers to be a Project Reviewer of the
+same Project. A Project Lead is automatically considered to be a
+Reviewer, and remains a Reviewer after leaving the Project Lead
+role.</p>
+<p>As a rough guide, a Committer should author and push at least 32
+significant changesets to the Project before being nominated to be
+a Reviewer.</p>
+<dl>
+<dt><a name="reviewer-nominate" id="reviewer-nominate"></a><i>Step
+1: Nominate</i></dt>
+<dd>
+<p>Send a call-for-votes to the Project's OpenJDK <a href="//mail.openjdk.java.net">mailing list</a>. The voting method
+for approval is <a href="/bylaws#three-vote-consensus">Three-Vote
+Consensus</a> and only current <a href="/census">Reviewers</a> are
+eligible to vote.</p>
+<pre><code>To: <b>&lt;OpenJDK project mailing list&gt;</b>
+Subject: CFV: New <b>&lt;project name&gt;</b> Reviewer: <b>&lt;full name&gt;</b>
+
+I hereby nominate <b>&lt;full name&gt;</b> to <b>&lt;project name&gt;</b> Reviewer.
+
+<b>&lt;committer description&gt;</b>
+
+Votes are due by <b>&lt;deadline&gt;</b>.
+
+Only current <b>&lt;project name&gt;</b> Reviewers [1] are eligible to vote
+on this nomination.  Votes must be cast in the open by replying
+to this mailing list.
+
+For Three-Vote Consensus voting instructions, see [2].
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://openjdk.java.net/census
+[2] http://openjdk.java.net/projects/#reviewer-vote</code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;OpenJDK project mailing list&gt;</dt>
+<dd>The primary <a href="//mail.openjdk.java.net/mailman/listinfo">OpenJDK mailing
+list</a> for the project.</dd>
+<dt class="subst">&lt;full name&gt;</dt>
+<dd>The full name of the nominated Committer (not e-mail address,
+OpenJDK name, etc.).</dd>
+<dt class="subst">&lt;project name&gt;</dt>
+<dd>The short name for the Project as listed on the left side-bar
+of the main <a href="//openjdk.java.net">OpenJDK
+page</a>.</dd>
+<dt class="subst">&lt;committer description&gt;</dt>
+<dd>Describe the Committer's past contributions to the Project, and
+any relevant qualifications including <a href="#committer-refs">references</a>.</dd>
+<dt class="subst">&lt;deadline&gt;</dt>
+<dd>Insert a date and time, with time zone, two weeks after the
+call-for-votes is sent.</dd>
+<dt class="subst">&lt;nominator&gt;</dt>
+<dd>Nominating Reviewer's name.</dd>
+</dl>
+</dd>
+<dt><a name="reviewer-vote" id="reviewer-vote"></a><i>Step 2:
+Vote</i></dt>
+<dd>
+<p>Reviewers vote by replying to the proposal with the first line
+of the message body in the following form:</p>
+<pre><code>Vote: <b>&lt;vote&gt;</b></code></pre>
+<p>where <code><b>&lt;vote&gt;</b></code> is one of
+<code><b>yes</b></code>, <code><b>veto</b></code>, or
+<code><b>abstain</b></code>. A justification for the vote may be
+provided on subsequent lines, and is required in order for a
+<code><b>veto</b></code> vote to be valid. Multiple votes are
+allowed but only the most recent vote will be counted. Votes must
+be cast in the open, on the mailing list to which the
+call-for-votes was originally sent; votes sent as private replies
+will not be counted.</p>
+<p>The following is a minimum affirmative reply.</p>
+<pre><code>To: <b>&lt;OpenJDK project mailing list&gt;</b>
+Subject: Re: CFV: New <b>&lt;project name&gt;</b> Reviewer: <b>&lt;full name&gt;</b>
+
+Vote: yes</code></pre></dd>
+<dt><a name="reviewer-announce" id="reviewer-announce"></a><i>Step
+3: Announce Result</i></dt>
+<dd>
+<p>Once all Reviewers have voted or the deadline has passed then
+the result must be announced to the mailing list where the
+call-for-votes and voting took place. If the announcement is
+approval then it must also be sent to the <a href="mailto:registrar.at.openjdk.dot.java.dot.net">registrar</a>. The
+registrar will contact the new Reviewer to obtain additional
+information, if necessary, and will update the Census.</p>
+<p>This is a typical announcement of approval:</p>
+<pre><code>To: <b>&lt;OpenJDK mailing list&gt;</b>
+CC: registrar at openjdk dot java dot net
+Subject: Result: New <b>&lt;project name&gt;</b> Reviewer: <b>&lt;full name&gt;</b>
+
+Voting for <b>&lt;full name&gt;</b> [1] is now closed.
+
+Yes: <b>&lt;number of "yes" votes&gt;</b>
+Veto: 0
+Abstain: <b>&lt;number of "abstain" votes&gt;</b>
+
+According to the Bylaws definition of Three-Vote Consensus, this is
+sufficient to approve the nomination.
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://mail.openjdk.java.net/<b>&lt;reference to original CFV&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;reference to original CFV&gt;</dt>
+<dd>Find the original call-for-votes in the OpenJDK mail archives
+and provide a link to it.</dd>
+</dl>
+</dd>
+</dl>
+<h2><a name="new-project" id="new-project">Proposing a New
+Project</a></h2>
+<p>Any <a href="/bylaws#contributor">Contributor</a> may propose
+the creation of a new Project.</p>
+<dl>
+<dt><a name="new-project-discuss" id="new-project-discuss"></a><i>Step 0: Discuss [optional]</i></dt>
+<dd>
+<p>It is recommended that any proposal for a new Project be
+discussed publicly before being proposed for a vote. Send an e-mail
+describing the motivation, goals, and initial Lead of the proposed
+Project to the <a href="mailto:discuss.at.openjdk.dot.java.dot.net">general discussion
+list</a>. Include any suggested initial Authors, Committers, and
+Reviewers, if known. (Reviewers are only relevant if the Project
+will require formal change review.) Describe existing bodies of
+code, if any, that will be used as the Project's starting point.
+The proposing Contributor should be an active participant in any
+subsequent discussion and should refine the proposal as necessary
+in response to comments.</p>
+<p>The header for the Project proposal e-mail is as follows:</p>
+<pre><code>To: discuss at openjdk dot java dot net
+Subject: Call for Discussion: New Project: <b>&lt;project name&gt;</b></code></pre>
+<p>Where <code><b>&lt;project name&gt;</b></code> is the suggested
+short name of the Project as it would appear on the left side-bar
+of the main <a href="//openjdk.java.net">OpenJDK page</a>.</p>
+<p>At least one <a href="/bylaws#group-lead">Group Lead</a> must
+declare that their Group is a sponsor of the proposed Project.
+(Unlike the interim guidelines which required Group Members to vote
+for sponsorship, a Group's Lead has the authority to declare that
+the Group is a sponsor of the Project.)</p>
+</dd>
+<dt><a name="new-project-propose" id="new-project-propose"></a><i>Step 1: Propose</i></dt>
+<dd>
+<p>Send a combined motion for the creation of the Project and the
+appointment of its initial Lead to the <a href="mailto:announce.at.openjdk.dot.java.dot.net">announcement
+list</a>. The e-mail should contain the Project name, description,
+initial Lead name and qualifications, sponsoring Groups, and
+suggested initial Authors, Committers, Reviewers, if any. The
+voting method is <a href="/bylaws#lazy-consensus">Lazy
+Consensus</a> and only current <a href="/census#members">OpenJDK
+Members</a> are eligible to vote.</p>
+<p>The format for the call-for-votes e-mail is as follows:</p>
+<pre><code>To: announce at openjdk dot java dot net
+Subject: CFV: New Project: <b>&lt;project name&gt;</b>
+
+I hereby propose the creation of the <b>&lt;project name&gt;</b> Project with
+<b>&lt;lead name&gt;</b> as the Lead and <b>&lt;group list&gt;</b> as the sponsoring 
+Group(s).
+
+<b>&lt;project description&gt;</b>
+
+<b>&lt;lead description&gt;</b>
+
+<b>&lt;list of suggested initial authors, committers, and reviewers&gt;</b>
+
+Votes are due by <b>&lt;deadline&gt;</b>.
+
+Only current OpenJDK Members [1] are eligible to vote on this 
+motion.  Votes must be cast in the open on the discuss list.
+Replying to this message is sufficient if your mail program
+honors the Reply-To header.
+
+For Lazy Consensus voting instructions, see [2].
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://openjdk.java.net/census#members
+[2] http://openjdk.java.net/projects/#new-project-vote</code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;project name&gt;</dt>
+<dd>The name of the proposed Project as it would appear on the left
+side-bar of the main <a href="//openjdk.java.net">OpenJDK
+page</a>.</dd>
+<dt class="subst">&lt;project description&gt;</dt>
+<dd>Describe the Project's deliverable.</dd>
+<dt class="subst">&lt;lead name&gt;</dt>
+<dd>The full name of the proposed Project Lead (not e-mail address,
+OpenJDK name, etc.)</dd>
+<dt class="subst">&lt;lead description&gt;</dt>
+<dd>Describe the proposed Lead's relevant qualifications.</dd>
+<dt class="subst">&lt;group list&gt;</dt>
+<dd>A comma-separated list containing at least one Group whose Lead
+has agreed to sponsor the Project.</dd>
+<dt class="subst">&lt;list of suggested initial authors,
+committers, and reviewers&gt;</dt>
+<dd>Provide the full names (not e-mail address, OpenJDK name, etc.)
+of people which the prospective Project Lead may choose to appoint
+as initial Authors, Committers, and Reviewers (if necessary).</dd>
+<dt class="subst">&lt;deadline&gt;</dt>
+<dd>Insert a date and time, with time zone, two weeks after the
+call-for-votes is sent.</dd>
+<dt class="subst">&lt;nominator&gt;</dt>
+<dd>The proposing Contributor's name.</dd>
+</dl>
+<p>The Bylaws specify separate votes on the creation of a new
+Project, by the OpenJDK Members, and the appointment of its initial
+Lead, by the Group Leads of the sponsoring Groups. Any such Group
+Lead may therefore request that the two motions be voted upon
+independently, though this is not expected to be the common
+case.</p>
+</dd>
+<dt><a name="new-project-vote" id="new-project-vote"></a><i>Step 2:
+Vote</i></dt>
+<dd>
+<p>Eligible voters cast their vote by sending e-mail to the
+<a href="mailto:discuss.at.openjdk.dot.java.dot.net">general
+discussion list</a>. Replying to the proposal will achieve this
+automatically for those people whose mail programs honor the
+<code>Reply-To</code> header. The first line of the message body
+should be in the following form:</p>
+<pre><code>Vote: <b>&lt;vote&gt;</b></code></pre>
+<p>where <code><b>&lt;vote&gt;</b></code> is one of
+<code><b>yes</b></code>, <code><b>veto</b></code>, or
+<code><b>abstain</b></code>. A justification for the vote may be
+provided on subsequent lines, and is required in order for a
+<code><b>veto</b></code> vote to be valid. Multiple votes are
+allowed but only the most recent vote will be counted. Votes must
+be cast in the open, on the <a href="mailto:discuss.at.openjdk.dot.java.dot.net">general discussion
+list</a>; votes sent as private replies will not be counted.</p>
+<p>The following is a minimum affirmative reply:</p>
+<pre><code>To: discuss at openjdk dot java dot net
+Subject: Re: CFV: New Project: <b>&lt;project name&gt;</b>
+
+Vote: yes</code></pre></dd>
+<dt><a name="new-project-announce" id="new-project-announce"></a><i>Step 3: Announce Results</i></dt>
+<dd>
+<p>Once all OpenJDK Members have voted or the deadline has passed,
+the proposing Contributor must send the results to the <a href="mailto:announce.at.openjdk.dot.java.dot.net">announcement
+list</a>. If the announcements are of approval then they must also
+be sent to the <a href="mailto:registrar.at.openjdk.dot.java.dot.net">registrar</a>.</p>
+<p>This is a typical announcement of approval:</p>
+<pre><code>To: announce at openjdk dot java dot net
+CC: registrar at openjdk dot java dot net
+Subject: Result: New Project: <b>&lt;project name&gt;</b>
+
+Voting on the <b>&lt;project name&gt;</b> Project with initial Lead
+<b>&lt;lead name&gt;</b> [1] is now closed.
+
+Yes: <b>&lt;number of "yes" votes&gt;</b>
+Veto: 0
+Abstain: <b>&lt;number of "abstain" votes&gt;</b>
+
+According to the Bylaws definition of Lazy Consensus, this is 
+sufficient to approve the new Project and its initial Lead.
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://mail.openjdk.java.net/<b>&lt;reference to original CFV&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;reference to original CFV&gt;</dt>
+<dd>Find the original call-for-votes in the OpenJDK mail archives
+and provide a link to it.</dd>
+</dl>
+</dd>
+<dt><a name="new-project-appoint" id="new-project-appoint"></a><i>Step 4: Appoint</i></dt>
+<dd>
+<p>The registrar will send an e-mail questionnaire to the new
+Project Lead to collect information necessary to launch the Project
+on OpenJDK. In addition to information for web pages, file
+repositories, and mailing list(s), the Lead will be asked to select
+the initial Authors, Committers, and Reviewers (if necessary). The
+registrar will issue registration invitations as appropriate and
+will update the Census.</p>
+</dd>
+</dl>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

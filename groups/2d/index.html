@@ -1,0 +1,351 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>2D Graphics Group</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>The 2D Graphics Group</h1>
+<p>The 2D Graphics <a href="/groups/index.html">group</a> is
+centered around people interested in the creation and maintenance
+of the 2D API and implementation.</p>
+<h2>Introduction</h2>
+<p class="p1">The Java 2D<span class="Apple-converted-space">&#160;</span>API and its implementation is
+often not easily separable from other parts of the Java
+platform.</p>
+<p class="p1">Generally it implements geometry, text and image APIs
+and renders these to screen and printer devices using software, or
+hardware accelerated means, depending on implementation and/or
+application or user specified system properties.</p>
+<p class="p1">Very briefly, the core of the API is the class
+java.awt.Graphics2D. It provides methods for the rendering
+operations, as well as controlling the state of the Graphics
+instance.</p>
+<p class="p1">There's a large supporting cast of classes in the
+packages</p>
+<ul>
+<li><code>java.awt</code></li>
+<li><code>java.awt.color</code></li>
+<li><code>java.awt.font</code></li>
+<li><code>java.awt.geom</code></li>
+<li><code>java.awt.image</code></li>
+<li><code>java.awt.print</code> (Java 2D printing to a printer
+graphics)</li>
+<li><code>javax.imageio</code> (aka Image I/O)</li>
+<li><code>javax.print</code> (aka the Java Printing Service, works
+with java.awt.print)</li>
+</ul>
+<p class="p2">Image I/O provides the means to load and save sampled
+images where the in-process image use Java2D's image format.</p>
+<p class="p2"><code>javax.print</code> is tightly integrated with
+the java.awt.print package which is the 2D API for rendering to
+printer graphics devices.</p>
+<p class="p2">There is a wealth of information on the Java 2D API
+for application developers. e.g. See:</p>
+<ul>
+<li><span class="p1"><a href="http://java.sun.com/javase/technologies/desktop/desktop-documentation.jsp">
+&#160;</a></span><a href="http://java.sun.com/javase/technologies/desktop/desktop-documentation.jsp">http://java.sun.com/javase/technologies/desktop/desktop-documentation.jsp</a></li>
+<li><span class="Apple-converted-space">&#160;</span><a href="http://javadesktop.org">http://javadesktop.org</a></li>
+</ul>
+<h2 class="p2"><br />
+Group policies.</h2>
+<h3>Source code conventions</h3>
+All source code should follow the standard Java source code
+conventions as well as jcheck rules. Some of the most common ones
+to remember are :
+<ul>
+<li>All lines &lt;= 80 chars</li>
+<li>No tabs, indents are always 4 spaces.</li>
+<li>if blocks should use { .. } even for one line</li>
+</ul>
+Consult <a href="http://www.oracle.com/technetwork/java/codeconvtoc-136057.html">Code
+Conventions for the Java(TM) Programming Language</a> for the full
+list.<br />
+<h3>Regression tests</h3>
+<p>Tests should be provided unless clearly infeasible. Automated
+tests are desirable. SQE rarely run manual tests. Don't give up
+easily. There are tests that render to a BufferedImage and analyse
+the resulting contents to see if they behaved correctly, so writing
+automated tests is possible in more cases than immediately
+apparent.</p>
+<h3>Code Reviews</h3>
+<p>Code reviews are one of the most important mechanisms we have
+for integrating and shipping good, solid, compatible code. Reviews
+are also an invaluable source of education for all of us, and a
+great mechanism for ensuring consistent code quality, as we all
+read and learn from reading each other's code.</p>
+<p>The standard requirement in Java SE is for one (or more)
+reviewer prior to code freeze and two (or more) reviewers
+thereafter. The Java client groups have standardized on two
+reviewers at all times with few exceptions.</p>
+<p>The choice of which people review the code is up to the
+individual engineer and depends upon each specific situation, but
+some general guidelines are:</p>
+<ul>
+<li>At least one reviewer should have some familiarity with this
+technology and/or area of the code</li>
+<li>Two reviewers should be looking at everything, so if one
+reviewer is chosen for only a segment of any particular change, you
+should get other reviewers to review the sections that are left
+with only one reviewer.</li>
+</ul>
+<p>It is the responsibility of the implementing engineer to contact
+the reviewers, respond to their concerns, and make the final code
+adhere to changes agreed upon by the engineer and the
+reviewers.</p>
+<p>It is the responsibility of the reviewers to provide timely
+reviews, and understand (to the extent possible) and agree to the
+changes that the engineer has implemented; when the code is putback
+to the workspace, <strong>the reviewers are also taking
+responsibility for these changes</strong>. We can only have good
+reviews, and good resulting code, if the reviewers take their jobs
+seriously and review the changes thoroughly. Given the costs and
+hassles of maintaining backward-compatible code indefinitely, we
+cannot risk code going in that is only cursorily reviewed; it is
+far easier and cheaper to catch flaws in the review process than it
+is to fix them in bugs and escalations later on.</p>
+<p>The most common exceptions to the two reviewer policy would be
+for</p>
+<ul>
+<li>Documentation updates that do not affect the specification</li>
+<li>Identical backports previously reviewed by two reviewers</li>
+<li>Trivial test only changes.</li>
+</ul>
+<p>The general process for reviews is as follows:</p>
+<ul>
+<li>Webrev: You should run a webrev of your changes against the
+parent workspace.</li>
+<li>Identify reviewers : use the appropriate tool/mailing list to
+contact reviewers</li>
+<li>Provide a description of the bug, the fix, and what testing has
+been done.</li>
+<li>Respond to reviewers concerns</li>
+<li>Push a fix to the appropriate repo, listing all reviewers.</li>
+</ul>
+<h2 class="p2"><br />
+Regarding Java 2D's source code.</h2>
+<p class="p1">All of the Java 2D's code is in the "jdk" repository,
+so all references below are relative to the root of the "jdk"
+workspace.</p>
+<p>Aside from the information below developers may find it useful
+to consult <a href="2dawtfiles.html">Distinguishing 2D and AWT
+source files.</a>.</p>
+<p class="p1">Most of the relevant sources have a java and native
+component.</p>
+<p class="p2">The Java 2D-related java code is can be browsed from
+Netbeans by opening the "awt2d" project. This project also contains
+the files belonging to AWT - see the README file in the "awt2d"
+project directory. (note that with some effort the native code can
+be worked on from Netbeans<span class="Apple-converted-space">&#160;</span>as well, see the README
+mentioned above)</p>
+<p class="p2">All sources are either 'share' or 'windows' or
+'solaris', the latter of which in fact includes Linux(TM) and is so
+named for historical reasons and because in practice the
+Solaris(TM) code and the Linux code are usually so close that a few
+ifs or ifdefs suffice to distinguish them. This is partially
+explained by observing that for 2D, Solaris and Linux are just both
+platforms for X11.</p>
+<p class="p2">Most of 2D's code is in 'share'. Even the OpenGL
+code.There is a still significant but lesser amount of code that is
+specific to X11 or Win32/GDI.<span class="Apple-converted-space">&#160;</span> But here for brevity we just
+point out the shared locations.</p>
+<p class="p2">These all are under <code>"src/share"</code>. The
+Java classes are located corresponding to the package hierarchy.
+E.g. java.awt.Graphics2D is in:</p>
+<ul>
+<li><code>src/share/classes/java/awt/Graphics2D.java</code></li>
+</ul>
+<p class="p2">Implementation (non-public) classes are generally in
+a package starting with "sun.". E.g.:</p>
+<ul>
+<li><code>src/share/classes/sun/awt</code></li>
+<li><code>src/share/classes/sun/awt/geom</code></li>
+<li><code>src/share/classes/sun/awt/image</code></li>
+<li><code>src/share/classes/sun/font</code></li>
+<li><code>src/share/classes/sun/java2d</code></li>
+<li><code>src/share/classes/sun/print</code></li>
+</ul>
+<p class="p2">There are exceptions, notably:</p>
+<ul>
+<li><code>src/share/classes/com/sun/imageio</code></li>
+</ul>
+<p class="p2">Java 2D also has a substantial amount of native code.
+This is located in similar manner :</p>
+<ul>
+<li><code>src/share/native/sun/awt/image</code></li>
+<li><code>src/share/native/font</code></li>
+<li><code>src/share/native/java2d</code></li>
+</ul>
+<p class="p1">(Note that the platform-specific native code is
+naturally in the corresponding
+<code>src/[platform]/native/..</code> directory)</p>
+<p class="p2">The shared code location contains essentially
+complete implementations of everything since 2D has its own code
+for everything needed to implement the API.</p>
+<p class="p1">The relevant jdk workspace make files are structured
+in the following way:</p>
+<p>A more fine grained break down of 2D files, particularly versus
+AWT component files, can be found <a href="2dawtfiles.html">here</a>.</p>
+<ul>
+<li><code>make/java/awt</code> - builds most API classes</li>
+<li><code>make/javax/imageio</code> - builds ImageIO</li>
+<li><code>make/javax/print</code> - builds most of the printing
+implementation</li>
+<li><code>make/sun/awt</code> - builds much of the 2D
+implementation</li>
+<li><code>make/sun/cmm</code> - builds much the color management
+system</li>
+<li><code>make/sun/dcpr</code> - builds the graphics
+rasteriser</li>
+<li><code>make/sun/font</code> - builds the 2D font implementation
+and rasteriser</li>
+<li><code>make/sun/jpeg</code> - builds the IJG JPEG library</li>
+</ul>
+<p class="p2">One can also build the 2d source tree from the
+"awt2d" Netbeans project (both native and java).</p>
+<h2 class="p2"><br />
+Non-open Java 2D source code.</h2>
+<p class="p2">Some parts of Java 2D were not part of the initial
+OpenJDK source release, or are different than in the commercial
+releases from Sun and its licensees. We want to remove these so
+that the full OpenJDK can be built entirely from sources. We call
+this "removing encumbrances", a reference to the legal term
+"encumbered".</p>
+<p class="p2">Generally the reason for this is that the code was
+licensed by Sun from a 3rd party.</p>
+<p class="p2">Here's a summary of the major source code
+encumbrances that were identified and the current state.</p>
+<ol>
+<li>
+<h3 class="p1">Native code color management system</h3>
+<p class="p1">The Color Management System - a C library - and
+several color profile files were licensed for use in JDK 1.2. To
+replace this "Little CMS" (lcms) was identified as a suitable
+replacement open source library. There is a pluggable layer, so
+that for now the commercial version can use the old CMS and OpenJDK
+can use lcms.</p>
+<p class="p1"><code>src/share/classes/sun/java2d/cmm</code>
+contains the pluggable layer. CMSManager.java is the class called
+by 2D code that needs to invoke color operations. On first load
+CMSManager uses the java.util.ServiceLoader class to locate an
+implementation of the PCMM interface.</p>
+<p class="p1">Glue code for LittleCMS that implements that
+interface is in:</p>
+<ul>
+<li><code>src/share/classes/sun/java2d/cmm/lcms</code></li>
+</ul>
+<p class="p1">In turn it loads the native lcms library.</p>
+<p class="p1">The source code for OpenJDK's copy of this is in:</p>
+<ul>
+<li><code>src/share/native/sun/java2d/cmm/lcms</code></li>
+</ul>
+<p class="p1">Color profiles are located in:</p>
+<ul>
+<li><code>src/share/lib/cmm/lcms</code></li>
+</ul>
+<p class="p2"><strong>Status :</strong> This was resolved before
+launch. Most bugs were resolved by JDK 7 GA, once we upgraded to
+LittleCMS 2.0 The only outstanding one is : not in the OpenJDK.
+These are non-essential because the Sun JRE doesn't require
+them.</p>
+<ul>
+<li><a href="http://bugs.sun.com/view_bug.do?bug_id=6523402">6523402</a>: Some
+quality problems with GRAY, PYCC and CIEXYZ color spaces with lcms
+library</li>
+</ul>
+</li>
+<li>
+<h3 class="p1">Font rasteriser</h3>
+<p class="p1">The font rasteriser is a native library licensed for
+use by Java 2D in JDK 1.2. To replace it in the OpenJDK we
+identified freetype as the most viable cross-platform alternative.
+It is already used by the native desktops on Linux and
+OpenSolaris.</p>
+<p class="p2">Similarly to the CMS case, there is a pluggable layer
+so that the commercial JDK can use the licensed rasteriser whilst
+OpenJDK uses freetype. The file</p>
+<ul>
+<li><code>src/share/classes/sun/font/FontScaler.java</code></li>
+</ul>
+was created as an internal interface to the rasterisers, and
+OpenJDK hardwires its implementation in
+<ul>
+<li>
+<code>src/share/classes/sun/font/FreetypeFontScaler.java</code></li>
+</ul>
+<p class="p2"><strong>Status :</strong> This work is complete and
+has been in OpenJDK since Aug. 2007</p>
+</li>
+<li>
+<h3 class="p1"><strong>Antialiasing graphics
+rasteriser.</strong></h3>
+<p class="p1">The current default rasteriser is the Marlin
+rasteriser, developed from the Pisces sources as a more mature and
+fully featured rasteriser that can compete with Ductus on
+single-threaded performance and completely obsolete it in
+multi-threaded performance. This rasteriser completes the
+open-source work for the Antialiasing graphics rasteriser and will
+eventually allow us to deprecate and delete the other
+implementations over time. As well, Marlin resolves the
+"improvements needed" issues with the Pisces rasteriser noted
+below.</p>
+<p class="p1">The Ductus rasteriser is a small set of Java classes
+backed by a native library used to perform path stroking and
+filling. It was licensed for use in JDK 1.2, and needed an open
+source replacement. It is still shipped in Oracle distributions,
+but is no longer the default rasteriser in those deployments as of
+JDK9.</p>
+<p class="p2">The Pisces renderer was identified as a replacement
+early on since it was already open source and it could be adapted
+to the JDK relatively easily, selecting only the parts needed. The
+initial Pisces integration resolved the open source conflict but
+required improvements. Specifically:</p>
+<ul>
+<li>Performance is not as good as the library it replaces.</li>
+<li>Fixed point is used with little or no overflow protection</li>
+<li>Support for the STROKE_CONTROL hint</li>
+</ul>
+<p class="p1">
+<code>src/share/classes/sun/java2d/pipe/RenderingEngine</code>
+defines the pluggable layer. The class uses reflection and the
+<code>-Dsun.java2d.renderer=&lt;classname&gt;</code> system
+property to locate an implementation of this abstract class.</p>
+<p class="p2">The complete Marlin sources and the class that
+implements this interface is in:</p>
+<ul>
+<li><code>src/share/classes/sun/java2d/marlin/</code></li>
+</ul>
+<p class="p2">The partial Pisces sources and the class that
+implements this interface is in:</p>
+<ul>
+<li><code>src/share/classes/sun/java2d/pisces/</code></li>
+</ul>
+<p class="p1"><strong>Status :</strong> This is fully resolved now
+with the new default Marlin rasteriser, though the proprietary
+Ductus rasteriser is still shipped with Oracle distributions as an
+alternative.</p>
+</li>
+</ol>
+<h2>Community</h2>
+<ul>
+<li><strong>Mailing lists</strong>
+<ul>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/2d-dev">2d-dev</a> -
+2D OpenJDK development mailing list</li>
+</ul>
+</li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

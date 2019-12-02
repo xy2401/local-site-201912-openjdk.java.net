@@ -1,0 +1,75 @@
+
+@import url('.fonts/dejavu.css');
+
+BODY { margin: 2em 2em;
+       font-family: DejaVu Sans, Bitstream Vera Sans, Luxi Sans, Verdana, Arial, Helvetica;
+       font-size: 10pt; line-height: 1.4; }
+
+PRE, CODE, TT { font-family: DejaVu Sans Mono, Bitstream Vera Sans Mono, Luxi Mono,
+                Courier New, monospace; }
+PRE { font-size: smaller; }
+A { text-decoration: none; }
+A:link { color: #437291; }
+A:visited { color: #666666; }
+A[href]:hover { color: #e76f00; }
+A IMG { border-width: 0px; }
+IMG { background: white; }
+
+BODY { width: 54em; }
+#main { width: 42em; padding-right: 2em; }
+#sidebar { font-size: 7pt; width: 11em;
+           padding-right: 2em; margin-left: 0em; }
+#footer { padding-top: 4em; text-align: center; font-size: 7pt; }
+
+#main { float: right; }
+#footer { clear: both; }
+
+DIV.links, DIV.buttons, DIV.about { padding-top: .5ex; padding-right: 0em;
+  line-height: 1.3; }
+DIV.links DIV.link { margin-left: 1em; text-indent: -1em; }
+DIV.about { font-weight: bold; color: #555; }
+DIV.buttons IMG { display: block; padding-top: 1.5ex; }
+
+#footer, #footer A, #footer A:link, #footer A:visited, DIV.links { color: #888; }
+
+P { padding: 0pt; margin: 1ex 0em; }
+P:first-child, PRE:first-child { margin-top: 0pt; }
+H1 { font-size: 13pt; font-weight: bold;
+     padding: 0pt; margin: 2ex .5ex 1ex 0pt; }
+H1:first-child, H2:first-child { margin-top: 0ex; }
+H2 { font-size: 11pt; font-weight: bold;
+     padding: 0pt; margin: 2ex 0pt 1ex 0pt; }
+H3 { font-size: 10pt; font-weight: bold; font-style: italic;
+     padding: 0pt; margin: 1ex 0pt 1ex 0pt; }
+H4 { font-size: 9pt; font-weight: bold;
+     padding: 0pt; margin: 1ex 0pt 1ex 0pt; }
+
+
+IMG.openjdk-logo { padding-top: 25px; margin-top: 1em; margin-bottom: 1em; }
+
+UL, OL { margin-top: 1ex; margin-bottom: 1ex; margin-right: 2em; }
+UL { padding-left: 2em; list-style-type: square; }
+UL UL { margin-top: 0ex; margin-bottom: 0ex; }
+LI  { margin-top: 0pt; margin-bottom: 0pt; }
+UL.spread > LI, OL.spread > LI { margin-top: 1ex; margin-bottom: 1ex; }
+UL.spread > LI > UL > LI:first-child { margin-top: 1ex; }
+
+#openjdk-sidebar-logo { width: 91px; height: 25px; margin-bottom: 1ex; }
+
+DIV.orange-box { border: 2px solid #e76f00;
+                 margin: 2ex 1em; padding: 1ex 1em 0 1em; }
+
+INPUT#searchBox { border: 1px solid gray; padding-left: 1px; padding-right: 1px;
+                  font-family: monospace; font-size: 7pt; }
+DIV.search { padding: .5ex 0ex 1ex 0ex; }
+
+BLOCKQUOTE { margin: 1.5ex 0em 1.5ex 2em; }
+
+DIV.last-update { font-size: 8pt; margin-top: 4ex; text-align: right; }
+
+TABLE.risk-matrix { width: auto; overflow: visible; margin-left: 2em; }
+TABLE.risk-matrix TH, TABLE.risk-matrix TD { padding-left: 2em; }
+TABLE.risk-matrix TH { text-align: left; }
+TABLE.risk-matrix TD { text-align: center; vertical-align: baseline; }
+TABLE.risk-matrix TD:nth-child(1), TABLE.risk-matrix TD:nth-child(2) { text-align: left; }
+TABLE.risk-matrix TH:first-child, TABLE.risk-matrix TD:first-child { padding-left: 0; }

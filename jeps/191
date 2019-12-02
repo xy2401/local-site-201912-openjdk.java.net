@@ -1,0 +1,305 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 191: Foreign Function Interface</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 191: Foreign Function Interface</h1><table class="head"><tr><td>Author</td><td>Charles Oliver Nutter</td></tr><tr><td>Owner</td><td>John Rose</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>tools</td></tr><tr><td>JSR</td><td><a href="https://jcp.org/en/jsr/detail?id=TBD">TBD</a></td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>L</td></tr><tr><td>Created</td><td>2014/01/28 20:00</td></tr><tr><td>Updated</td><td>2017/02/22 07:28</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046181">8046181</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Define a Foreign Function Interface that can bind native functions, such
+as those found in shared libraries and operating-system kernels, to Java
+methods, and also directly manage blocks of native memory.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Provide a foreign function interface at the Java level, similar to
+<a href="https://github.com/twall/jna">JNA (Java Native Access)</a> or <a href="https://github.com/jnr">JNR (Java Native Runtime)</a>.</p>
+</li>
+<li>
+<p>Optimize calls to native functions and management of native memory at
+the JVM level (optional).</p>
+</li>
+<li>
+<p>Support a future JSR for a standard Java FFI.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>Mechanisms for explicitly defining the managed and unmanaged
+structure of standard Java objects.</p>
+</li>
+<li>
+<p>Other CPU-related improvements to Java object management such as
+cache line control, GPU/vectorization, etc.</p>
+</li>
+<li>
+<p>Direct modifications or improvements to JNI itself. These may come
+during the JSR process, however, and JVM enhancements for FFI may
+require internal changes.</p>
+</li>
+</ul>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>Success will be having an FFI API at the Java level sufficient for
+implementing large-scale native-backed features like NIO, advanced
+filesystem metadata, process management, and the like. This FFI API
+should ideally become preferred over writing JNI backends for each
+platform when a new native-level feature is required.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>The enhancement of the JDK (and of Java in general) by adding
+native-level features (new filesystem structures, different I/O channels,
+new crypto backends) has been stymied by the need to write JNI code to
+back those features for every new platform. The expertise necessary to
+write proper JNI is orthogonal to the expertise needed to write good Java
+code or call native libraries, but JNI has been the only path toward
+bridging those two worlds. This API will provide a tool enabling any JDK
+developer with understanding of Java and of a specific native library to
+bind that library as a JDK API in furtherance of JDK and Java features.</p>
+<p>This JEP should make it easier to add new OS, hardware, and native
+library-level features to Java and the JDK as well as provide a standard
+Java FFI for use in the wider Java world.</p>
+<h2 id="Description">Description</h2>
+<p>For years, Java and JDK developers have had only one trusted way to add
+native-level features to Java applications: the
+<a href="https://en.wikipedia.org/wiki/Java_Native_Interface">Java Native Interface (JNI)</a>.
+This interface governs the boundary between the managed
+environment of the JVM and the unmanaged environment of native code,
+providing explicit protocols for data marshaling, object lifecycle
+management, upcalls back into Java, and native JVM tooling and management
+APIs. JNI provides a strict, unmistakable demarcation between managed and
+native code; it also makes that boundary incredibly painful to cross,
+even for the most trivial cases.</p>
+<p>The following aspects of JNI are most painful to developers:</p>
+<ul>
+<li>
+<p>Requiring developers to write C code means they have to have
+expertise of a world completely different from Java. In many cases,
+the native binding required is a trivial function call with no side
+effects and little to no data-marshaling complications, but in every
+case JNI requires developers to be C programmers.</p>
+</li>
+<li>
+<p>Using JNI requires expertise usually not found in typical C and Java
+developers, since the developer must have at least some understanding
+of how the JVM manages memory and code (object lifecycles, GC
+complications, Java class layout, the JVM lifecycle). JNI makes it
+possible to do the right thing, but much easier to do the wrong
+thing.</p>
+</li>
+<li>
+<p>Beyond simply writing C code, developers must be able to build that
+code for each platform they wish to support, or provide appropriate
+tooling for end-users to do the same. This is required despite the
+fact that the JDK itself is provided across dozens of platforms and
+platform-specific experts have already done significant work to make
+the JVM run and access native code on those platforms. This
+requirement makes JNI more detrimental to write-once, run-anywhere
+than an FFI API, since the latter will be much more likely to work
+across many platforms with only a single binary, and fixing
+incompatibilities will usually still only require a new build and
+release of that one binary.</p>
+</li>
+<li>
+<p>Even after crafting perfect JNI code and providing builds for every
+platform, the performance of JNI-based libraries is usually very poor
+compared to the same library bound into a native application. This
+stems from the inescapable rigidity of JNI's managed/unmanaged
+demarcation and the complete inability of the JVM's own optimizations
+to see through JNI calls. In many cases, JNI downcalls to trivial
+functions could be done directly from jitted Java code, since they do
+not require memory gymnastics and do not interfere with JVM
+internals. JNI's guarantees make it impossible to make native calls
+as lightweight as they could be.</p>
+</li>
+<li>
+<p>Finally, JNI acts as an opaque boundary for security. The JDK only
+knows about permission to load a specific library; it does not know
+what calls the functions in that library might use or whether the
+code in that library could compromise the stability or security of
+the JVM.  This invites mistakes from JNI developers who are not
+expert C programmers or who simply don't understand the JVM-level
+aspects of security.</p>
+</li>
+</ul>
+<p>All the difficulties of JNI would be addressed by providing a built-in
+FFI API at the JDK level. An FFI would be easier for Java developers to
+write, not require as much knowledge of JVM internals, favor correct
+implementation or fast-fail over latent bugs, and eliminate the
+requirement for per-platform build expertise.</p>
+<p>The JDK FFI API will provide the following to JDK developers:</p>
+<ol>
+<li>
+<p>A metadata system to describe native library calls (call protocol,
+argument list structure, argument types, return type) and native
+memory structure (size, layout, typing, lifecycle).</p>
+</li>
+<li>
+<p>Mechanisms for discovering and loading native libraries. These
+capabilities may be provided by current <code>System.loadLibrary</code> or may
+include additional enhancements for locating platform or
+version-specific binaries appropriate to the host system.</p>
+</li>
+<li>
+<p>Mechanisms for binding, based on metadata, a given library/function
+coordinate to a Java endpoint, likely via a user-defined interface
+backed by plumbing to make the native downcall.</p>
+</li>
+<li>
+<p>Mechanisms for binding, based on metadata, a specific memory
+structure (layout, endianness, logical types) to a Java endpoint,
+either via a user-defined interface or a user-defined class, in both
+cases backed by plumbing to manage a real block of native memory.</p>
+</li>
+<li>
+<p>Appropriate support code for marshaling Java data types to native
+data types and vice-versa. This will in some cases require the
+creation of FFI-specific types to support bit widths and numeric
+signs that Java can't represent.</p>
+</li>
+</ol>
+<p>Optionally, this JEP will build additional support for the above features
+via:</p>
+<ol>
+<li>
+<p>JVM-level awareness of FFI downcalls. This could include: JIT
+optimization of those calls, JVM/GC-level awareness of native
+memory, protection against illegal native memory accesses (SEGV
+faults), and mechanisms to opt out of JNI safeguards known to be
+unnecessary in specific cases (safepoint boundaries, blocking call
+guarantees, object lifecycle management, etc.).</p>
+</li>
+<li>
+<p>Tooling at either build time or run time for reflectively gathering
+function and memory metadata from native libraries. This would aid
+the initial binding of a library by providing a way to generate that
+binding at the Java level rather than requiring hand-implementation
+and tweaking for each platform. Prior work here includes the ffi-gen
+library for (J)Ruby, which uses clang (LLVM C compiler) metadata
+APIs for generaing Ruby FFI code.</p>
+</li>
+<li>
+<p>The JVM security subsystem should understand specific
+library/fuction coordinates. It should be possible to set up
+security policies that allow binding only specific functions in
+specific libraries, rather than just the coarse-grained
+library-level permissions that exist today.</p>
+</li>
+</ol>
+<p>The level of abstraction for the JDK FFI is TBD; at minimum, it must be
+able to:</p>
+<ol>
+<li>
+<p>Load a library;</p>
+</li>
+<li>
+<p>Invoke a function at some offset in that library;</p>
+</li>
+<li>
+<p>Pass bit-appropriate arguments to that library (width, endianness)
+and receive bit-appropriate values back (typing is not relevant at
+this level, beyond describing bit width and structure); and</p>
+</li>
+<li>
+<p>Minimally manage native memory: allocation, deallocation, access,
+and passing to/receiving from native calls.</p>
+</li>
+</ol>
+<p>There will, no doubt, be further discussion on how far to go with this
+API.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>The need for a Java FFI has spawned several libraries. Among these,
+<a href="https://github.com/twall/jna">Java Native Access (JNA)</a> is the most pervasively used, and
+<a href="https://github.com/jnr">Java Native Runtime (JNR)</a> is perhaps the most comprehensive and
+advanced. JNR is likely to form the basis for this JEP, since it implements
+various levels of abstraction, provides function and memory metadata, abstracts
+away library and function binding, and has been in heavy use by at least
+the <a href="http://jruby.org">JRuby project</a> (and its users) for at least the last five
+years.</p>
+<h2 id="Testing">Testing</h2>
+<p>In order to test this API, we will need to add representative native
+endpoints (as C code) to provide sufficient coverage of all call
+protocols, type marshaling, and memory management features. Many of these
+capabilities may exist in current JDK and Java test suites. The JNR
+library also has an existing suite of tests that could (will) be
+incorporated into JDK.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>JNR's original author has recently gone on hiatus from open-source
+development. However, he believes he will be able to assist us in this
+effort.</p>
+<p>JNR's license may or may not be compatible with the OpenJDK Community's
+standard licensing terms, but it is negotiable.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>No known dependencies on other JEPs or JSRs. Not known to block any other
+JEPs or JSRs.</p>
+<h2 id="Impact">Impact</h2>
+<ul>
+<li>
+<p>Compatibility: FFI will increase the work required to guarantee the
+cross-platform compatibility of the JDK. However, the JDK's supported
+platforms already support FFI via JNR.</p>
+</li>
+<li>
+<p>Security: FFI opens up the potential for user-level code to access
+untrusted native functions and read or write normally-inaccessible
+areas of native memory. This capability is no more extreme than that
+provided by existing APIs (<code>sun.misc.Unsafe</code>, et al). It will be
+possible to explicitly define security controls based on
+library/function coordinates; this capability represents an
+improvement over coarse-grained <code>System.loadLibrary</code> controls.</p>
+</li>
+<li>
+<p>Performance/scalability: Performance of native bindings should
+improve, if those bindings are written to use FFI. It is an open
+question whether existing JNI-based features should be rewritten to
+use FFI, and in what timeframe that should happen.</p>
+</li>
+<li>
+<p>Portability: There are obvious portability concerns, but no more than
+exist in current builds of the JDK.  JDK code that uses FFI will
+still need testing across supported platforms to ensure
+functionality.</p>
+</li>
+<li>
+<p>Documentation: Ideally this API will become the preferred way to bind
+native code and memory, and so developer documentation should provide
+everything needed for JDK developers to use this API instead of JNI.</p>
+</li>
+<li>
+<p>TCK: A future Java FFI JSR will obviously need additions to the TCK,
+but ideally this will be little more than the testing provided by the
+JDK-level FFI.</p>
+</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

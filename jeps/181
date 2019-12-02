@@ -1,0 +1,275 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 181: Nest-Based Access Control</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 181: Nest-Based Access Control</h1><table class="head"><tr><td>Author</td><td>John Rose</td></tr><tr><td>Owner</td><td>David Holmes</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>11</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;runtime</td></tr><tr><td>Discussion</td><td>valhalla dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Karen Kinnear, Mikael Vidstedt, Vladimir Kozlov</td></tr><tr><td>Endorsed by</td><td>Mikael Vidstedt</td></tr><tr><td>Created</td><td>2013/03/19 20:00</td></tr><tr><td>Updated</td><td>2018/10/26 21:17</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046171">8046171</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Introduce <em>nests</em>, an access-control context that aligns with the existing notion of nested types in the Java programming language. Nests allow classes that are logically part of the same code entity, but which are compiled to distinct class files, to access each other's private members without the need for compilers to insert accessibility-broadening bridge methods.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>This JEP is not concerned with large scales of access control, such as modules.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Many JVM languages support multiple classes in a single source file
+(such as Java's nested classes), or translate non-class source
+artifacts to class files.  From a user perspective, however, these are
+generally considered to be all in "the same class", and therefore
+users expect them to share a common access control regime.  To
+preserve these expectations, compilers frequently have to broaden
+the access of <code>private</code> members to <code>package</code>, through the
+addition of access bridges: an invocation of a private member is
+compiled into an invocation of a compiler-generated package-private method in the
+target class, which in turn accesses the intended private member.
+These bridges subvert encapsulation, slightly increase the size of a deployed application,
+and can confuse users and tools.  A formal notion of a group of
+class files forming a <em>nest</em>, where <em>nest mates</em> share a common access
+control mechanism, allows the desired result to be directly achieved in a
+simpler, more secure, more transparent manner.</p>
+<p>The notion of a common access control context arises in other places
+as well, such as the host class mechanism in
+<code>Unsafe.defineAnonymousClass()</code>, where a dynamically loaded class can
+use the access control context of a host.  A formal notion of nest
+membership would put this mechanism on firmer ground (but actually
+providing a supported replacement for <code>defineAnonymousClass()</code> would
+be a separate effort.)</p>
+<h2 id="Description">Description</h2>
+<p>The Java Language Specification allows classes and interfaces to be
+nested within each other.  Within the scope of a top-level declaration
+(JLS 7.6), any number of types can appear nested. These nested types
+have unrestricted access to each other (JLS 6.6.1), including to
+private fields, methods, and constructors.  We can describe a
+top-level type, plus all types nested within it, as forming a <em>nest</em>,
+and two members of a nest are described as <em>nestmates</em>.</p>
+<p>The private access is complete (undifferentiated, flat) within the whole declaration of the
+containing top-level type.  (One can think of this as a top-level type
+defining a sort of "mini-package", within which extra access is
+granted, even beyond that provided to other members of the same Java
+package.)</p>
+<p>Today private access between nestmates is not permitted by the JVM access rules.
+To provide the permitted access a Java source code compiler has to introduce a level
+of indirection. For example, an invocation of a private member is compiled into an invocation
+of a compiler-generated package-private, bridging method in the target class, which in turn invokes
+the intended private method. These access bridges are generated only as needed to satisfy
+the member accesses requested within the nest.</p>
+<p>A further consequence of the lack of JVM support for private access within a nest, is that core reflection
+also denies access. A reflective method invocation (using <code>java.lang.reflect.Method.invoke</code>)
+from one nestmate to another throws <code>IllegalAccessError</code> (unless access control has been disabled). This is surprising
+given that reflective invocations should behave the same as source level invocations.
+Similarly, the <code>MethodHandle</code> API rejects a direct "lookup" of a private nestmate method, but provides special support through <code>Lookup.in</code> to allow
+the source level invocation semantics to be expressed.</p>
+<p>By codifying the notion of nestmates and the associated access rules
+within the JVM, we simplify the job of Java source code compilers, tighten the existing
+access checks and remove surprising behaviour from the core reflection and <code>MethodHandle</code> APIs.
+We also allow for future enhancements to take advantage of the "nest" notion. For example:</p>
+<ul>
+<li>In <a href="//cr.openjdk.java.net/~briangoetz/valhalla/specialization.html">generic specialization</a>, each specialized type could be created as a nestmate of the generic type.</li>
+<li>A safe and supported replacement for the <code>Unsafe.defineAnonymousClass()</code> API could create the new class as a
+nestmate of an existing class.</li>
+<li>The concept of "sealed classes" could be effected by only allowing subclasses that are nestmates.</li>
+<li>Truly private nested types could be effected (presently private nested types are defined with package-access).</li>
+</ul>
+<p>The current set of proposed JVMS changes can be found <a href="//cr.openjdk.java.net/~dlsmith/nestmates.html">here</a>.</p>
+<h3 id="Nest-Class-File-Attributes">Nest Class File Attributes</h3>
+<p>The existing classfile format defines the <code>InnerClasses</code> and <code>EnclosingMethod</code> attributes  (JVMS 4.7.6 and 4.7.7)
+to allow Java source code compilers, like <code>javac</code>, to reify the source level nesting relationship.
+Each nested type is compiled to its own class file, with different class files "linked" by
+the value of these attributes. While these attributes are enough for the JVM to
+determine nestmate-ness, they are not directly suitable for access control and are inherently tied to
+a single Java language concept.</p>
+<p>To allow for a broader, more general, notion of nestmates beyond simply Java language nested types, and for the
+sake of efficient access control checking, it is proposed to modify the class file format to
+define two new attributes. One nest member (typically the top-level class) is designated as the <em>nest host</em>, and contains an attribute (<code>NestMembers</code>) to
+identify the other statically known nest members. Each of the other nest members has an attribute (<code>NestHost</code>) to identify
+its nest host.</p>
+<h3 id="JVM-Access-Control-for-Nestmates">JVM Access Control for Nestmates</h3>
+<p>We will adjust the JVM's access rules by adding something like the following clause to JVMS 5.4.4:</p>
+<blockquote>
+<p>A field or method <em>R</em> is accessible to a class or interface
+<em>D</em> if and only if any of the following conditions are true:</p>
+<ul>
+  <li> ... </li>
+  <li> R is private and is declared in a different class or
+  interface C, and C and D, are nestmates. </li>
+</ul>
+</blockquote>
+<p>For types <em>C</em> and <em>D</em> to be nestmates they must have the same
+nest host.  A type <em>C</em> claims to be a member of the nest hosted by <em>D</em>, if it
+lists <em>D</em> in its <code>NestHost</code> attribute. The membership is
+validated if <em>D</em> also lists <em>C</em> in its <code>NestMembers</code> attribute. <em>D</em> is implicitly a member of the nest that it hosts.</p>
+<p>A class with no <code>NestHost</code> or <code>NestMembers</code> attribute, implicitly forms a nest with itself as the nest host, and sole nest member.</p>
+<p>The loosened access rules would affect access checks during the following activities:</p>
+<ul>
+<li>Resolving fields and methods (JVMS 5.4.3.2, etc.)</li>
+<li>Resolving method handle constants (JVMS 5.4.3.5)</li>
+<li>Resolving call site specifiers (JVMS 5.4.3.6)</li>
+<li>Checking Java language access by instances of <code>java.lang.reflect.AccessibleObject</code></li>
+<li>Checking access during queries to <code>java.lang.invoke.MethodHandles.Lookup</code></li>
+</ul>
+<p>With the change to the access rules, and with suitable adjustments to
+byte code rules, we can allow simplified rules for generating invocation bytecodes:</p>
+<ul>
+<li><code>invokespecial</code> for private nestmate constructors,</li>
+<li><code>invokevirtual</code> for private non-interface, nestmate instance methods,</li>
+<li><code>invokeinterface</code> for private interface, nestmate instance methods; and</li>
+<li><code>invokestatic</code> for private nestmate, static methods</li>
+</ul>
+<p>This relaxes the existing constraint that private interface methods must be invoked using <code>invokespecial</code> (JVMS 6.5)
+and more generally allows <code>invokevirtual</code> to be used for private method invocation, rather than adding to the complex usage rules surrounding <code>invokespecial</code>.
+Similar changes can be made to the semantics of <code>MethodHandle</code> invocation (which mirrors the invocation byte code constraints).</p>
+<h3 id="Nest-Membership-Validation">Nest Membership Validation</h3>
+<p>Nest membership must be validated before an access check relying on nestmate access can proceed. This may happen as late as the time of access of the member, or
+as early as verification time of the class, or somewhere in-between, such as JIT compilation of a method.
+Nest membership validation requires loading of the nest host class if it has not already been loaded. To avoid potentially unnecessary class loading,
+nest membership validation should be performed as late as possible i.e. at the time of the access check. This mitigates the impact of the incompatibility introduced by requiring
+that the nest host class be present if nestmate access is relied upon.</p>
+<p>To preserve integrity of the nest it is proposed that, at least initially, it is prohibited to modify the nest classfile attributes using any form of class transformation or class redefinition.</p>
+<h3 id="Nestmate-Reflection-API">Nestmate Reflection API</h3>
+<p>As we are introducing new classfile attributes it is customary to provide a means to inspect/query those attributes using core reflection.
+This is currently envisaged as three methods in <code>java.lang.Class</code>: <code>getNestHost</code>, <code>getNestMembers</code>, and <code>isNestmateOf</code>.</p>
+<h3 id="Affected-Specifications-and-APIs">Affected Specifications and APIs</h3>
+<p>The proposed changes, while conceptually simple, affect all specifications and API's that explicitly, or implicitly, involve access control, or relate to method invocation modes. These include:</p>
+<ul>
+<li>The Java Virtual Machine Specification (<a href="//cr.openjdk.java.net/~dlsmith/nestmates.html">proposed changes</a>)
+<ul>
+<li>Classfile attribute changes</li>
+<li>Access control rule changes</li>
+<li>Invocation bytecode rule changes</li>
+</ul>
+</li>
+<li>Core reflection
+<ul>
+<li><code>Method</code> invocation rules</li>
+<li><code>Field</code> access rules</li>
+</ul>
+</li>
+<li><code>MethodHandle</code> lookup rules</li>
+<li>Class transformation/re-definition: JVM TI and <code>java.lang.instrument</code> API, JDWP and JDI (<code>com.sun.jdi.VirtualMachine</code>)
+<ul>
+<li>Prohibit modification of the nest related classfile attributes</li>
+</ul>
+</li>
+<li>Pack200 Specification
+<ul>
+<li>Recognize the new classfile attributes</li>
+</ul>
+</li>
+</ul>
+<h3 id="Impact-on-Java-Source-Code-Compilers">Impact on Java Source Code Compilers</h3>
+<p>The proposed changes simplify the rules for mapping Java source constructs to class files, and so have a number of affects on a Java source code compiler that chooses to utilize them:</p>
+<ul>
+<li>Proper generation of the nest related classfile attributes</li>
+<li>Elision of the previously needed access bridge methods and generation of direct member access instructions for private nestmate members</li>
+<li>Issuing of the correct/appropriate invocation bytecodes</li>
+<li>The ability to change other synthetic methods to be private rather than package-private (or even eliminate them, or replace them with shared-but-private method handle constants)</li>
+</ul>
+<p>The <code>javac</code> compiler will be updated to fully utilize nestmates when generating the latest version classfiles. (Older versions will be generated as they are today using access bridges etc.)</p>
+<h3 id="Impact-on-Other-Tools">Impact on Other Tools</h3>
+<p>Any tool that operates on classfiles, or which generates or processes bytecodes is potentially impacted by these changes. At a minimum such tools must tolerate the presence of the new classfile attributes and allow for the change in bytecode rules. For example:</p>
+<ul>
+<li>The <code>javap</code> classfile inspection tool,</li>
+<li>The Pack200 implementation, and</li>
+<li>The <a href="http://asm.ow2.org">ASM bytecode manipulation framework</a>, which is also used internally in the JDK.</li>
+</ul>
+<h3 id="Open-Issues">Open Issues</h3>
+<p>The extra complexity of access checking is something that has to be examined. In particular issues surrounding the resolution of the nest host class and the errors that can arise. We have already encountered and addressed a problem where a compiler thread needed to load a nest host class - which is not permitted in the compiler thread. We need to ensure the implementation is able to handle these conditions, and ensure that the specification is not impacted by their introduction.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>We can continue generating bridge methods in the Java compiler, as
+needed.  This is a hard process to predict.  For example, Project
+Lambda had difficulty resolving method handle constants in the
+presence of inner classes, leading to a new type of bridge method.
+Because compiler-generated bridge methods are tricky and unpredictable, they
+are also buggy and hard to analyze by various tools, including
+decompilers and debuggers.</p>
+<p>The initial proposal considered using the existing <code>InnerClasses</code> and
+<code>EnclosingMethod</code> attributes to establish nestmate-ship. But
+introducing specific nestmate related attributes both makes nestmates
+more general than only relating to language-level nested types, and
+permits a more efficient implementation. Additionally, if we had opted for
+eager nest membership validation checks it would have changed the semantics
+of the existing attributes and that would have been a compatibility issue.
+While the <code>javac</code> compiler will likely keep the "inner classes" and "nest members"
+attributes aligned, this is a compiler choice, and the JVM will treat them completely independently.</p>
+<p>There was discussion about how best to express the nesting relationship
+through the classfile attributes before settling on the current approach.
+One suggestion, for a de-centralised approach, was for each nest to be identified
+by a UUID. That discussion <a href="//mail.openjdk.java.net/pipermail/valhalla-spec-experts/2016-February/000101.html">concluded as follows</a>:</p>
+<blockquote>
+<p>There are two parts to such a proposall:</p>
+<ol>
+<li>
+<p>New naming convention for nests, based on UUIDs.  This is a new concept in the JVM, and would require new infrastructure to manage (generate, transcode, verify, reflect, debug). That means new bugs and new attack surfaces.  In the absence of a decisive benefit, it's better to reuse existing name spaces, and (in particular) the JVM's type name dictionary.</p>
+</li>
+<li>
+<p>Unidirectional links.  The UUID, being a pure identity with no content, does not contain a list of its nest members.  The nest members point to the nest (via the UUID).  Any class can inject itself into a nest (in the same package) simply by mentioning the appropriate UUID.  Unidirectional linkage means that there is no way to enumerate a nest.  This complicates  some optimizations (based on sealed types).  Security and seal-ability of nests is reduced to that of packages.  PRIVATE becomes just an alias for default-scope access control.</p>
+</li>
+</ol>
+<p>Sorry, but neither part of this is appealing to me, compared with the current proposal.</p>
+</blockquote>
+<h2 id="Testing">Testing</h2>
+<p>We will need an extensive set of JVM tests to verify the new access rules and adjustments to the byte code semantics to support nestmates.</p>
+<p>Similarly we will need additional tests for core reflection, method handles, var-handles, and external access API's like JDWP, JVM TI and JNI.</p>
+<p>Since no language changes are proposed here, no new language compliance tests are needed.</p>
+<p>Adequate functional tests for nestmates will arise naturally from language compliance tests, after the <code>javac</code> compiler is modified to take advantage of nestmate access.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The new rules will have to be associated with a new class file version number, as we need to ensure that a Java source compiler only generates bytecodes relying
+on the new attributes and rules, when targeting a JVM that understands them. A corollary to that is that a JVM will only recognize and act upon the new attributes, if they appear in a classfile with a suitable version number. A new classfile version imposes a burden on the tools in the broader Java ecosystem, but we do not expect Nestmates to be the sole technology, in the targeted JDK release, that will be relying on a new class file version number.</p>
+<p>Loosening access presents little conformance risk. All Java language accesses that compile and run today, will compile and run with the nestmate changes, with no changes to the source code. Code that disables access checking (via <code>setAccessible</code>) for reflective access to nestmates today, will continue to run correctly with the nestmate changes - but can be updated to not disable access checking.</p>
+<p>Compliance tests that check for prohibited behaviour can fail is some cases.  For example:</p>
+<ul>
+<li>Direct reflective access to private nest methods currently fails (unless access checking is disabled) but will "unexpectedly" succeed with these changes applied.</li>
+<li>A test that <code>invokeinterface</code> can't be used for a private interface method will now fail because with these changes it can be used.</li>
+</ul>
+<p>There is little or no risk to user compatibility, since the proposal
+loosens access.  However, if users have "discovered" and exploited
+access bridge methods, they will be unable to do so after the bridges are
+dropped.  Such a risk is very small, since bridge methods do not have
+stable names in the first place.</p>
+<p>There is little or no risk to system integrity, since the proposed
+rules confer new access only within a single runtime package.  By
+removing the need for bridge methods, potential access between
+distinct top-level classes will be systematically decreased.</p>
+<p>Nest membership validation requires the presence of the nest-host class, even if that class is itself unused (except as a container for the nest members). This can have impact in three areas:</p>
+<ol>
+<li>
+<p>The order of class loading can change as the nest host may be needed for an access check earlier than when any direct use of the nest host occurs. This is not expected to be a problem as the class is only loaded, not initialized, and dependencies on class loading order (as distinct from class initialization order) are very rare.</p>
+</li>
+<li>
+<p>This can impact tests/applications that strip out unused classes from their distributed forms, and the nest host is unused. By leaving nest membership validation until the time that a nestmate access check is needed we aim to minimize the impact of this issue, but in some cases the end user will have to change the way they distribute their code. We think this is a very small risk as it isn't common to use a top-level class purely as a stateless container, containing only static nested types, where the nested types will rely on private access to each other.</p>
+</li>
+<li>
+<p>Resolution of the nest host also introduces class loading (and the potential for associated exceptions) into the JVM's access checking logic. This is primarily a concern for JVM implementors. Care must be taken to ensure all paths that can lead to a VM access check either preclude the possibility of loading a nest host, or else can cope with it. Similarly for the potential exceptions that can occur. From the user perspective there is very little risk due to this as Java code rarely makes assumptions about when and where class loading may occur, and exceptions will only occur if there are badly formed class files.</p>
+</li>
+</ol>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

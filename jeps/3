@@ -1,0 +1,402 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 3: JDK Release Process</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 3: JDK Release Process</h1><table class="head"><tr><td>Owner</td><td>Mark Reinhold</td></tr><tr><td>Type</td><td>Process</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Active</td></tr><tr><td>Discussion</td><td>jdk dash dev at openjdk dot java dot net</td></tr><tr><td>Created</td><td>2018/06/19 16:58</td></tr><tr><td>Updated</td><td>2018/08/09 18:12</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8205352">8205352</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Define the process by which contributors in the OpenJDK Community produce
+time-based, rapid-cadence JDK feature releases.</p>
+<h2 id="Quick-reference">Quick reference</h2>
+<p>This table is provided here for easy access; the terminology it uses is
+defined below.</p>
+<blockquote style="white-space: nowrap">
+  <table summary="Phase action summary" id="phase-action-summary">
+    <tbody><tr><th></th><th>Candidates</th><th>Fix</th><th>Drop</th><th>Defer</th><th>Enhance?</th></tr>
+    <tr id="rdp-1">
+      <td><span style="font-weight: bold">RDP 1</span></td>
+      <td><a href="http://j.mp/jdk-rdp-1">Current P1&#8211;P3<br />Targeted P1&#8211;P3</a></td>
+      <td>Current P1&#8211;P3<br />Targeted P1&#8211;P3 if time<br />P1&#8211;P5 doc/test bugs</td>
+      <td>All P4&#8211;P5<br />Targeted P1&#8211;P3</td>
+      <td>Current P1&#8211;P2,<br />&#8194;with&#160;<a href="#Bug-Deferral-Process">approval</a>
+          </td>
+      <td>With<br /><a href="#Late-Enhancement-Request-Process">approval</a>
+          </td>
+    </tr>
+    <tr id="rdp-2">
+      <td><span style="font-weight: bold">RDP 2</span></td>
+      <td><a href="http://j.mp/jdk-rdp-2">Current P1&#8211;P2<br />Targeted P1&#8211;P2</a></td>
+      <td>Current P1&#8211;P2,<br />&#8194;with <a href="#Fix-Request-Process">approval</a>
+          <br />P1&#8211;P5 doc/test bugs</td>
+      <td>All P3&#8211;P5<br />Targeted P1&#8211;P2</td>
+      <td>Current P1&#8211;P2,<br />&#8194;with&#160;<a href="#Bug-Deferral-Process">approval</a>
+          </td>
+      <td>With<br /><a href="#Late-Enhancement-Request-Process">approval</a>
+          </td>
+    </tr>
+    <tr id="rc">
+      <td><span style="font-weight: bold">RC</span></td>
+      <td><a href="http://j.mp/jdk-rc">Current P1<br />Targeted P1</a></td>
+      <td>Current P1,<br />&#8194;with <a href="#Fix-Request-Process">approval</a>
+          </td>
+      <td>All P2&#8211;P5<br />Targeted P1</td>
+      <td>Current P1,<br />&#8194;with&#160;<a href="#Bug-Deferral-Process">approval</a>
+          </td>
+      <td>No</td>
+    </tr>
+  </tbody></table>
+</blockquote>
+<h2 id="Overview">Overview</h2>
+<p>Ongoing JDK development takes place in the <em>main-line</em> Mercurial
+repository of the <a href="//openjdk.java.net/projects/jdk">JDK Project</a>, <a href="//hg.openjdk.java.net/jdk/jdk/"><code>jdk/jdk</code></a>.  This
+repository is always open for new work.</p>
+<p>Every six months, in June and December, we initiate the release cycle for
+the next JDK feature release, hereinafter referred to as JDK&#160;$N.  We
+fork the main-line repository into a <em>stabilization repository</em>,
+<code>jdk/jdk$N</code>, and use that repository for the remaining work needed to
+stabilize the release.  That work proceeds over the next three months in
+three phases, described below:</p>
+<ul>
+<li>Rampdown Phase One <a href="#rdp-1">(RDP 1)</a>
+<span style="float: right; padding-right: 3em;">
+[&#8202;<a href="http://j.mp/jdk-rdp-1">candidate bugs</a>&#8202;]
+</span></li>
+<li>Rampdown Phase Two <a href="#rdp-2">(RDP 2)</a>
+<span style="float: right; padding-right: 3em;">
+[&#8202;<a href="http://j.mp/jdk-rdp-2">candidate bugs</a>&#8202;]
+</span></li>
+<li>Release-Candidate Phase <a href="#rc">(RC)</a>
+<span style="float: right; padding-right: 3em;">
+[&#8202;<a href="http://j.mp/jdk-rc">candidate bugs</a>&#8202;]
+</span></li>
+</ul>
+<p>The durations of the phases can vary from release to release, but as an
+example the phases for <a href="//openjdk.java.net/projects/jdk/11">JDK 11</a> are four weeks for RDP&#160;1,
+three weeks for RDP&#160;2, and five weeks for RC.</p>
+<p>Each successive phase narrows the set of bugs that we examine, and
+subjects actions taken on those bugs to an increasingly-higher level of
+review.  This ensures that, in each phase, we fix the bugs that need to
+be fixed at that time.  It also ensures that we understand why we&#8217;re not
+fixing some bugs that perhaps ought to be fixed but, for good reason, are
+better left to a future release.  The phases thus make use of two
+approval processes, also described below:</p>
+<ul>
+<li><a href="#Bug-Deferral-Process">Bug-Deferral Process</a>
+<span style="float: right; padding-right: 3em;">
+[&#8202;<a href="http://j.mp/jdk-defer-pending">pending requests</a>&#8202;]
+</span></li>
+<li><a href="#Fix-Request-Process">Fix-Request Process</a>
+<span style="float: right; padding-right: 3em;">
+[&#8202;<a href="http://j.mp/jdk-fix-pending">pending requests</a>&#8202;]
+</span></li>
+</ul>
+<p>The overall feature set is frozen at RDP&#160;1.  No further JEPs will be
+targeted to the release after that point.</p>
+<p>Late, low-risk enhancements that add small bits of missing functionality
+or improve usability are permitted with approval in RDP&#160;1 and
+RDP&#160;2, especially when justified by developer feedback or
+JCP&#160;EG support, but the bar is very high in RDP&#160;1 and
+extraordinarily high in RDP&#160;2.  You can request approval for a late
+enhancement via a third process:</p>
+<ul>
+<li><a href="#Late-Enhancement-Request-Process">Late-Enhancement Request Process</a>
+<span style="float: right; padding-right: 3em;">
+[&#8202;<a href="http://j.mp/jdk-enhancement-pending">pending requests</a>&#8202;]
+</span></li>
+</ul>
+<h2 id="Candidate-bugs">Candidate bugs</h2>
+<p>Each phase is driven by a list of <em>candidate bugs</em>.  The candidate bugs
+in each phase are at or above that phase&#8217;s <em>priority threshold</em>, which
+starts at P3 for RDP&#160;1 and then increases to P2 for RDP&#160;2 and
+P1 for RC.  Each candidate bug is either</p>
+<ul>
+<li>
+<p>A <em id="current-bug">current bug</em>, discovered in an
+early-access build of JDK&#160;$N and reported against that release
+via the <em>Affects Version</em> field, or</p>
+</li>
+<li>
+<p>A <em id="targeted-bug">targeted bug</em>, reported against some past
+release but targeted, via the <em>Fix Version</em> field, to JDK&#160;$N.</p>
+</li>
+</ul>
+<p>A <em id="Critical-bugs">critical</em> bug is a current bug whose
+priority is either P1 or P2 (in RDP&#160;1 and RDP&#160;2) or P1 (in RC).</p>
+<p>Queries for the candidate bugs for each phase are defined in JBS.  To
+summarize:</p>
+<blockquote style="white-space: nowrap">
+  <table summary="Candidate bug summary" id="candidate-bug-summary">
+    <tbody><tr><th></th><th>Priority</th><th>Critical</th><th>Query</th></tr>
+    <tr>
+      <td><span style="font-weight: bold">RDP 1</span></td>
+      <td style="text-align: center;">&#8805; P3</td>
+      <td style="text-align: center;">&#8805; P2</td>
+      <td><a href="http://j.mp/jdk-rdp-1">j.mp/jdk-rdp-1</a></td>
+    </tr>
+    <tr>
+      <td><span style="font-weight: bold">RDP 2</span></td>
+      <td style="text-align: center;">&#8805; P2</td>
+      <td style="text-align: center;">&#8805; P2</td>
+      <td><a href="http://j.mp/jdk-rdp-2">j.mp/jdk-rdp-2</a></td>
+    </tr>
+    <tr>
+      <td><span style="font-weight: bold">RC</span></td>
+      <td style="text-align: center;">= P1</td>
+      <td style="text-align: center;">= P1</td>
+      <td><a href="http://j.mp/jdk-rc">j.mp/jdk-rc</a></td>
+    </tr>
+  </tbody></table>
+</blockquote>
+<h2 id="Actions-in-a-phase">Actions in a phase</h2>
+<p>In each phase we aim to <em>fix</em>, <em>drop</em>, or <em>defer</em> each candidate bug.
+If you&#8217;re responsible for a candidate bug then please take one of the
+following actions:</p>
+<ul>
+<li>
+<p><strong id="Fix">Fix</strong>&#8193;If the bug is current then
+develop a fix and either integrate it when ready (in RDP&#160;1) or
+request approval to integrate it via the <a href="#Fix-Request-Process">fix-request process</a>
+(RDP&#160;2 and RC).  In RDP&#160;1, if the bug is targeted and if
+time permits, develop and integrate a fix when ready.</p>
+</li>
+<li>
+<p><strong id="Drop">Drop</strong>&#8193;If the bug is targeted, but
+not critical, then drop it from the release by either</p>
+<ul>
+<li>
+<p>Clearing the <em>Fix Version</em> field, or</p>
+</li>
+<li>
+<p>Setting the <em>Fix Version</em> field to $N&#160;+&#160;1 if you&#8217;re
+reasonably confident that you&#8217;ll fix the bug in the next release,
+or</p>
+</li>
+<li>
+<p>Setting the <em>Fix Version</em> field to <code>tbd</code> if you&#8217;ve determined
+that the fix will not make the next release but might make some
+later release.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong id="Defer">Defer</strong>&#8193;If the bug is critical but
+cannot be fixed in time, or is too risky to fix, then request
+approval to defer the bug from the release via the <a href="#Bug-Deferral-Process">bug-deferral
+process</a>.</p>
+</li>
+</ul>
+<p>In any case, do not change the priority of a bug in order to remove it
+from the candidate list.  The priority of a bug should reflect the
+importance of fixing it independent of any particular release, as has
+been standard practice for the JDK for many years.</p>
+<h3 id="Non-candidate-bugs">Non-candidate bugs</h3>
+<p>If you&#8217;re responsible for a non-candidate bug that&#8217;s targeted to
+JDK&#160;$N via the <em>Fix Version</em> field then please drop it by either
+clearing that field, or setting it to $N&#160;+&#160;1, or setting it to
+<code>tbd</code>, as above.  There&#8217;s no need to defer such bugs via the deferral
+process.</p>
+<h3 id="Test-and-documentation-bugs">Test and documentation bugs</h3>
+<p>Bugs of any priority whose fixes only affect tests, or test-problem
+lists, or documentation may be fixed in RDP&#160;1 and RDP&#160;2.  If
+you have a fix for such a bug then you don&#8217;t need to request approval in
+order to integrate it, but please do make sure that the issue has a
+<a href="//openjdk.java.net/guide/changePlanning.html#noreg"><code>noreg-self</code> or <code>noreg-doc</code> label</a>, as appropriate.</p>
+<h2 id="Bug-Deferral-Process">Bug-Deferral Process</h2>
+<p>This process applies from <a href="#rdp-1">RDP 1</a> until the end of the release.</p>
+<h3 id="Requesting-a-deferral">Requesting a deferral</h3>
+<p>If you own a bug that will not be fixed in the current phase of
+development then you can request a deferral as follows: Update the JBS
+issue to add a comment whose first line is &#8220;Deferral Request&#8221;. In that
+comment briefly describe the reason for the deferral (<em>e.g.</em>,
+insufficient time, complexity or risk of fix, <em>etc.</em>). Add the label
+<code>jdk$N-defer-request</code> to the issue, substituting the actual release
+version number for <code>$N</code>.</p>
+<p>Deferrals will not be granted for TCK issues identified by the label
+<code>tck-red-$N</code>, except possibly when new TCK tests are involved.  Deferrals
+are unlikely for bugs that prevent release testing.</p>
+<h3 id="Reviewing-deferral-requests">Reviewing deferral requests</h3>
+<p>The <a href="//openjdk.java.net/projects/jdk/leads">Area Leads, relevant Group Leads, and the JDK Project Lead</a>
+will review the <a href="http://j.mp/jdk-defer-pending">pending deferral
+requests</a> on a regular basis, several
+times per week.  One of them will take one of the following actions:</p>
+<ul>
+<li>
+<p>Approve the request by adding the label <code>jdk$N-defer-yes</code>.</p>
+</li>
+<li>
+<p>Reject the request by adding the label <code>jdk$N-defer-no</code>, along with a
+comment describing the reason for this action.</p>
+</li>
+<li>
+<p>Request more information by adding the label <code>jdk$N-defer-nmi</code>
+(&#8220;<code>nmi</code>&#8221; = &#8220;needs more information&#8221;), along with a comment describing
+what information is requested.</p>
+</li>
+<li>
+<p>In any case, <strong>do not</strong> remove the <code>jdk$N-defer-request</code> label.</p>
+</li>
+</ul>
+<p>JBS query for pending requests:
+<a href="http://j.mp/jdk-defer-pending"><code>j.mp/jdk-defer-pending</code></a></p>
+<h3 id="Responding-to-actions-taken-on-your-deferral-request">Responding to actions taken on your deferral request</h3>
+<ul>
+<li>
+<p>If you&#8217;re asked to provide more information for a deferral request
+then please do so in a new comment in the issue, and then remove the
+<code>jdk$N-defer-nmi</code> label so that we see that it&#8217;s ready for re-review.</p>
+</li>
+<li>
+<p>If your request is approved then no further action on your part is
+required.</p>
+</li>
+</ul>
+<h2 id="Fix-Request-Process">Fix-Request Process</h2>
+<p>This process applies from <a href="#rdp-2">RDP 2</a> until the end of the release.</p>
+<h3 id="Requesting-approval-to-integrate-a-fix">Requesting approval to integrate a fix</h3>
+<p>Before you spend too much time on a fix for a P1 or P2 bug, seek advice
+from a Group or Area Lead, on an appropriate mailing list, to make sure
+that fixing the bug in this release is actually a reasonable idea.</p>
+<p>When you are nearly ready with a fix then update the JBS issue to add a
+comment whose first line is &#8220;Fix Request&#8221;.  In that comment briefly
+describe why it&#8217;s important to fix this bug, explain the nature of the
+fix, estimate its risk, describe its test coverage, and indicate who has
+reviewed it.  If you have a webrev for the fix then include a link to
+that in the comment; otherwise, attach the patch for the fix to the JBS
+issue.  Add the label <code>jdk$N-fix-request</code> to the issue, substituting the
+actual release version number for <code>$N</code>.</p>
+<h3 id="Reviewing-fix-requests">Reviewing fix requests</h3>
+<p>The <a href="//openjdk.java.net/projects/jdk/leads">Area Leads, relevant Group Leads, and the JDK Project Lead</a>
+will review the <a href="http://j.mp/jdk-fix-pending">pending fix requests</a> on a
+regular basis, at least weekly to start and more frequently as we
+approach the GA date.  In case of an urgent situation you are welcome to
+contact an appropriate reviewer directly in order to solicit a prompt
+review.</p>
+<p>A reviewer will take one of the following actions:</p>
+<ul>
+<li>
+<p>Approve the request by adding the label <code>jdk$N-fix-yes</code>, along with a
+comment recording their approval whose first line is &#8220;Fix request
+approved&#8221;.</p>
+</li>
+<li>
+<p>Reject the request by adding the label <code>jdk$N-fix-no</code>, along with a
+comment describing the reason for this action whose first line is
+&#8220;Fix request rejected&#8221;.</p>
+</li>
+<li>
+<p>Request more information by adding the label <code>jdk$N-fix-nmi</code> (&#8220;<code>nmi</code>&#8221;
+= &#8220;needs more information&#8221;), along with a comment describing what
+information is requested whose first line is &#8220;Fix request NMI&#8221;.</p>
+</li>
+<li>
+<p>In any case, <strong>do not</strong> remove the original <code>jdk$N-fix-request</code>
+label.</p>
+</li>
+</ul>
+<p>JBS query for pending fix requests:
+<a href="http://j.mp/jdk-fix-pending"><code>j.mp/jdk-fix-pending</code></a></p>
+<h3 id="Responding-to-actions-taken-on-your-fix-request">Responding to actions taken on your fix request</h3>
+<ul>
+<li>
+<p>If you&#8217;re asked to provide more information for a fix request then
+please do so in a new comment in the issue, and then remove the
+<code>jdk$N-fix-nmi</code> label so that we see that it&#8217;s ready for re-review.</p>
+</li>
+<li>
+<p>If your request is approved then proceed to complete the fix and
+integrate it.</p>
+</li>
+<li>
+<p>If your request is rejected then you may appeal that decision to the
+Project Lead.</p>
+</li>
+<li>
+<p>In any case, <strong>do not</strong> remove the original <code>jdk$N-fix-request</code>
+label.</p>
+</li>
+</ul>
+<h2 id="Late-Enhancement-Request-Process">Late-Enhancement Request Process</h2>
+<p>This process applies from <a href="#rdp-1">RDP 1</a> until the end of the
+<a href="#rdp-2">RDP&#160;2</a>.</p>
+<h3 id="Requesting-approval-for-a-late-enhancement">Requesting approval for a late enhancement</h3>
+<p>If you wish to integrate an enhancement in RDP&#160;1 or RDP&#160;2 then
+you can request approval as follows: Update the JBS issue to add a
+comment whose first line is &#8220;Late Enhancement Request&#8221;.  In that comment
+describe the risk level, a brief justification that quotes actual
+developer feedback if possible, and your best estimate of the date by
+which you&#8217;ll integrate it.  Add the label <code>jdk$N-enhancement-request</code> to
+the issue, substituting the actual release version number for <code>$N</code>.</p>
+<p>Enhancements to tests and documentation during RDP&#160;1 and RDP&#160;2
+do not require approval, as long as the relevant issues are identified
+with a <a href="//openjdk.java.net/guide/changePlanning.html#noreg"><code>noreg-self</code> or <code>noreg-doc</code> label</a>, as appropriate.</p>
+<h3 id="Reviewing-enhancement-requests">Reviewing enhancement requests</h3>
+<p>The JDK Project Lead or a delegate, in case of absence, will review the
+<a href="http://j.mp/jdk-enhancement-pending">pending enhancement requests</a> on a
+regular basis, several times per week. They will take one of the
+following actions:</p>
+<ul>
+<li>
+<p>Approve the request by adding the label <code>jdk$N-enhancement-yes</code>.</p>
+</li>
+<li>
+<p>Reject the request by adding the label <code>jdk$N-enhancement-no</code>, along
+with a comment describing the reason for this action.</p>
+</li>
+<li>
+<p>Request more information by adding the label <code>jdk$N-enhancement-nmi</code>
+(&#8220;<code>nmi</code>&#8221; = &#8220;needs more information&#8221;), along with a comment describing
+what information is requested.</p>
+</li>
+<li>
+<p>In any case, <strong>do not</strong> remove the <code>jdk$N-enhancement-request</code> label.</p>
+</li>
+</ul>
+<p>JBS query for pending requests:
+<a href="http://j.mp/jdk-enhancement-pending"><code>j.mp/jdk-enhancement-pending</code></a></p>
+<h3 id="Responding-to-actions-taken-on-your-enhancement-request">Responding to actions taken on your enhancement request</h3>
+<ul>
+<li>
+<p>If you&#8217;re asked to provide more information for an enhancement
+request then please do so in a new comment in the issue, and then
+remove the <code>jdk$N-enhancement-nmi</code> label so that we see that it&#8217;s
+ready for re-review.</p>
+</li>
+<li>
+<p>If your request is approved then update the issue&#8217;s due date to the
+expected completion date.</p>
+</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

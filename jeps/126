@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 126: Lambda Expressions &amp; Virtual Extension Methods</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 126: Lambda Expressions &amp; Virtual Extension Methods</h1><table class="head"><tr><td>Author</td><td>Joseph D. Darcy</td></tr><tr><td>Owner</td><td>Brian Goetz</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>8</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;javac</td></tr><tr><td>JSRs</td><td><a href="https://jcp.org/en/jsr/detail?id=269">269 MR</a>, <a href="https://jcp.org/en/jsr/detail?id=335">335</a></td></tr><tr><td>Discussion</td><td>lambda dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>XL</td></tr><tr><td>Duration</td><td>XL</td></tr><tr><td>Blocks</td><td><a href="101">JEP 101: Generalized Target-Type Inference</a></td></tr><tr><td></td><td><a href="107">JEP 107: Bulk Data Operations for Collections</a></td></tr><tr><td></td><td><a href="109">JEP 109: Enhance Core Libraries with Lambda</a></td></tr><tr><td></td><td><a href="155">JEP 155: Concurrency Updates</a></td></tr><tr><td>Reviewed by</td><td>Brian Goetz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2011/11/01 20:00</td></tr><tr><td>Updated</td><td>2015/01/09 17:52</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046116">8046116</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Add lambda expressions (closures) and supporting features, including
+method references, enhanced type inference, and virtual extension
+methods, to the Java programming language and platform.</p>
+<h2 id="Goals">Goals</h2>
+<p>The primary features of lambda expressions and virtual extension
+methods, along with their set of secondary supporting features,
+further several platform goals:</p>
+<ul>
+<li>Simplifying the creation and consumption of more abstract,
+higher-performance libraries</li>
+<li>Supporting smoother library evolution with migration compatibility</li>
+</ul>
+<p>Besides adding a now-common feature to the Java programming language,
+lambda expressions open up possibilities for improved multicore support
+by enabling internal iteration idioms.</p>
+<p>The supporting language features around lambda include <em>virtual extension
+methods</em>, which will allow interfaces to be evolved in a source and binary
+compatible fashion.</p>
+<p>In addition to language changes, coordinated libraries and JVM changes
+will occur as well.</p>
+<p>Note that the active and ongoing
+<a href="//openjdk.java.net/projects/lambda/">Project Lambda</a> OpenJDK project
+pre-dates the JEP process, as does the corresponding JSR,
+<a href="http://www.jcp.org/en/jsr/proposalDetails?id=335">JSR 335</a>, which is targeted
+for Java SE 8 (<a href="http://www.jcp.org/en/jsr/proposalDetails?id=336">JSR 336</a>).</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>The language features of function types and general control
+abstraction are <em>not</em> goals of adding lambda expressions to Java.
+However, the intention is to not preclude the addition of such
+features in the future.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Many other commonly used object-oriented programming languages,
+including those hosted on the JVM (for example Groovy, Ruby, and
+Scala) and hosted on other virtual machines (C# on the CLR), include
+support for closures.  Therefore, Java programmers are increasingly
+familiar with the language feature and the programming models it
+enables.</p>
+<p>Of particular interest is enabling the idiom of <em>internal iteration</em>.
+Arrays and collections currently support <em>external iteration</em>, where
+the control logic of an iteration lives outside of the data structure
+being traversed.  For example, a <code>for</code>-each loop over an array or a
+collection is an example of external iteration.  The semantics of the
+<code>for</code> loop in Java mandates strict serial iteration, which means that
+the only means the programmer has of iterating over a standard
+collection will not allow the use of all the available cores.</p>
+<p>With internal iteration, the data structure is passed a piece of code
+to execute, as a lambda expression, and the data structure is
+responsible for partitioning the computation and reporting the
+results.  Since the data structure is familiar with its own internal
+details it can potentially choose a better scheduling of the
+computation by tuning options such as</p>
+<ul>
+<li>Alternate execution order</li>
+<li>Concurrent execution using thread pools</li>
+<li>Parallel execution using partitioning and work stealing.  The
+<a href="http://download.oracle.com/javase/7/docs/api/java/util/concurrent/ForkJoinPool.html">fork/join framework</a>,
+added in Java SE 7, is one such candidate parallel execution framework and
+offers performance-robust partitioning of work over a wide range of core
+counts.</li>
+</ul>
+<p>A prototypical example of the internal iteration style is a sequence
+of filter-map-reduce operations such as:</p>
+<pre><code>int maxFooWeight =
+    collection.filter( /* isFoo Predicate as a lambda */)
+              .map(    /* Map a Foo to its weight with a lambda */)
+              .max();  /* Reduction step */</code></pre>
+<p>The lambda expressions are expressions with concise syntax to
+represent the desired operation.  This style is in lieu of one or more
+explicit <code>for</code> loops which would unnecessary constrain the iteration
+order over the collection.  In addition, a well-designed algorithm can
+not only execute these sets of operations in parallel, but can also
+aggregate the three operations into a single parallel pass.</p>
+<p>Project Lambda also includes virtual extension methods, which will
+address the long-standing limitation of not being able to add methods
+to widely-used interfaces because of source compatibility concerns.</p>
+<p>By adding extension methods to the existing collection interfaces,
+such as <code>java.util.Collection</code> and <code>java.util.List</code>, existing
+implementations of those types can participate in the new programming
+idiom.  Implementations of those types in the JDK (and elsewhere) can
+override the default implementations of the extension methods from the
+superinterfaces to provide higher-performance or otherwise specialized
+implementations.</p>
+<h2 id="Description">Description</h2>
+<p>The in-progress <a href="//openjdk.java.net/projects/lambda/">OpenJDK project page for Project Lambda</a> and
+<a href="http://www.jcp.org/en/jsr/proposalDetails?id=335">corresponding JSR</a>
+have the most up-to-date
+information about the details of the effort.</p>
+<p>The platform components impacted by the overall Project Lambda effort include:</p>
+<ul>
+<li>The specification of the Java programming language</li>
+<li>The specification of the Java virtual machine</li>
+<li>The reference implementation of the language changes in <code>javac</code></li>
+<li>Class file changes to support compilation of lambda expressions and virtual
+extension methods</li>
+<li>(Possible) JVM enhancements to improve execution of lambdas</li>
+<li>JVM changes to support virtual extension methods</li>
+<li>Core API changes to add virtual extension methods</li>
+<li>Core API changes to support use of lambda expressions</li>
+<li>Updates to the JDK libraries to use the new extension methods</li>
+<li>Updates to the reflective APIs, such as core reflection and
+<code>javax.lang.model</code>, to expose lambda and extension method related
+information</li>
+<li>Updates to class file tools like <code>javap</code> and <code>pack200</code>/<code>unpack200</code> to
+understand new JVM attributes</li>
+<li>(Possible) serialization updates, including IIOP serialization</li>
+<li>Enhancements to javadoc to indicate which interfaces can be used for
+lambdas</li>
+<li>Language runtime in <code>java.lang.*</code> to support the translation of lambda
+expressions and virtual extension methods</li>
+</ul>
+<h2 id="Alternatives">Alternatives</h2>
+<p><a href="//openjdk.java.net/projects/lambda/">Project Lambda</a> started
+with a <a href="//cr.openjdk.java.net/~mr/lambda/straw-man/">straw-man proposal</a> and has
+gone through several "State of the Lambda"
+<a href="//cr.openjdk.java.net/~briangoetz/lambda/lambda-state-3.html">iterations</a>
+which have evolved both the syntax and feature set of the project.</p>
+<p>The work on lambda expression portion of Project Lambda is informed
+by numerous previous efforts, including but not limited to:</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/closures/">BGGA</a>,</li>
+<li><a href="http://docs.google.com/View?docid=k73_1ggr36h">CICE</a></li>
+<li><a href="http://docs.google.com/View?docid=ddhp95vd_0f7mcns">FCM</a></li>
+<li><a href="http://doi.acm.org/10.1145/263699.263715">Pizza</a></li>
+</ul>
+<p>The feature set of Project Lambda is judged to better address the
+needs of evolving the Java platform than the earlier proposals.</p>
+<p>The design of <a href="http://www.wiki.jvmlangsummit.com/images/7/71/2011_Goetz_Extension.pdf">virtual extension methods</a>
+is likewise informed by a large body of prior work in the programming language
+community including:</p>
+<ul>
+<li>multiple inheritance in C++</li>
+<li>static <a href="http://msdn.microsoft.com/en-us/library/bb383977.aspx">extension methods in C#</a></li>
+<li>traits in <a href="http://projectfortress.java.net/">Fortress</a></li>
+<li><a href="http://www.scala-lang.org/node/126">traits in Scala</a></li>
+<li><a href="http://www.bracha.org/mwp.html">mixins in Strongtalk</a></li>
+</ul>
+<p>Compared to other language environments, the Java language has always
+had much more <em>predictable</em> semantics, built-in primitive types are of
+a known size, exceptions are thrown at precise locations, the order of
+execution of expressions is precisely defined, and so on.  Loosening
+the semantics of the built-in <code>for</code> and <code>while</code> loops to allow
+auto-parallelization attempts was judged to be neither desirable nor
+sufficient to meet the goals of supporting multi-core.</p>
+<h2 id="Testing">Testing</h2>
+<p>In addition to unit/regression tests, as a new language feature JCK
+tests will also be developed.</p>
+<p>The utility of the feature will also be validated through usage in the
+JDK platform libraries.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>As a large effort touching many aspects of the platform, there is the
+possibility for unforeseen complications and interactions to arise.</p>
+<p>By starting early and planning for several iterations of, say, the
+supporting libraries work, the impact of those complications should be
+mitigated.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>The currently preferred implementation approach for lambda expressions relies
+on <code>invokedynamic</code> and method handles introduced by
+<a href="http://jcp.org/en/jsr/detail?id=292">JSR 292</a>.  Therefore,
+acceptable performance of lambda depends on acceptable performance
+of method handles, amongst other factors.</p>
+<p>There is expected to be feedback between the libraries work (JEPs 107
+and 109) and the language features.</p>
+<h2 id="Impact">Impact</h2>
+<ul>
+<li>Other JDK components: The impact of other JDK components is outlined in the
+description section.</li>
+<li>Compatibility: Virtual extension methods are intended to allow source
+compatible evolution of interfaces.add virtual extension methods</li>
+<li>Security: Security review will be needed on aspect of the runtime
+implementation of lambdas.</li>
+<li>Performance/scalability: Performance of lambda-friendly idioms versus
+traditional idioms should be tracked.</li>
+<li>Documentation: User guides and supporting documentation needs to be
+written.</li>
+<li>TCK: As a large platform feature, language and library TCKs need to be
+developed.</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

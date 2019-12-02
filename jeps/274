@@ -1,0 +1,611 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 274: Enhanced Method Handles</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 274: Enhanced Method Handles</h1><table class="head"><tr><td>Owner</td><td>Michael Haupt</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.lang.invoke</td></tr><tr><td>Discussion</td><td>mlvm dash dev at openjdk dot java dot net</td></tr><tr><td>Reviewed by</td><td>Alex Buckley, Paul Sandoz, Vladimir Ivanov</td></tr><tr><td>Endorsed by</td><td>John Rose</td></tr><tr><td>Created</td><td>2015/07/01 06:43</td></tr><tr><td>Updated</td><td>2017/05/17 01:03</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8130227">8130227</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enhance the <code>MethodHandle</code>, <code>MethodHandles</code>, and <code>MethodHandles.Lookup</code>
+classes of the <code>java.lang.invoke</code> package to ease common use cases and
+enable better compiler optimizations by means of new <code>MethodHandle</code>
+combinators and lookup refinement.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>In the <code>MethodHandles</code> class in the <code>java.lang.invoke</code> package, provide new
+<code>MethodHandle</code> combinators for loops and try/finally blocks.</p>
+</li>
+<li>
+<p>Enhance the <code>MethodHandle</code> and <code>MethodHandles</code> classes with new
+<code>MethodHandle</code> combinators for argument handling.</p>
+</li>
+<li>
+<p>Implement new lookups for interface methods and, optionally, super
+constructors in the <code>MethodHandles.Lookup</code> class.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>With the exception of possibly-required native functionality, VM-level
+extensions and enhancements, specifically compiler optimizations, are a
+non-goal.</p>
+</li>
+<li>
+<p>Extensions at the Java language level are explicitly out of scope.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>In a thread on the <code>mlvm-dev</code> mailing list
+(<a href="//mail.openjdk.java.net/pipermail/mlvm-dev/2015-February/006288.html">part 1</a>,
+<a href="//mail.openjdk.java.net/pipermail/mlvm-dev/2015-March/006300.html">part 2</a>)
+developers have discussed possible extensions to the <code>MethodHandle</code>,
+<code>MethodHandles</code>, and <code>MethodHandles.Lookup</code> classes in the
+<code>java.lang.invoke</code> package to make the realization of common use cases
+easier, and also to allow for use cases that are deemed important but are
+currently not supported.</p>
+<p>The extensions proposed below not only allow for more concise usage of
+the <code>MethodHandle</code> API, but they also reduce the amount of <code>MethodHandle</code>
+instances created in some cases. This, in turn, will facilitate better
+optimizations on behalf of the VM's compiler.</p>
+<h3 id="Combinators-for-More-Statements">Combinators for More Statements</h3>
+<p><strong>Loops.</strong> The <code>MethodHandles</code> class provides no abstractions for loop
+construction from <code>MethodHandle</code> instances. There should be a means for
+constructing loops from <code>MethodHandle</code>s representing the loop's body, as well as
+initialization and condition, or count.</p>
+<p><strong>Try/finally blocks.</strong> <code>MethodHandles</code> also provides no abstraction for
+try/finally blocks. A method to construct such blocks from method handles
+representing the <code>try</code> and <code>finally</code> parts should be provided.</p>
+<h3 id="Better-Argument-Handling">Better Argument Handling</h3>
+<p><strong>Argument spreading.</strong> With <code>MethodHandle.asSpreader(Class&lt;?&gt; arrayType, int arrayLength)</code>, there exists an operation to create a method handle that will
+spread the contents of a <em>trailing</em> array argument to a number of arguments. An
+additional <code>asSpreader</code> method should be provided, allowing to expand a number
+of arguments contained in an array anywhere in a method signature to a number of
+distinct arguments.</p>
+<p><strong>Argument collection.</strong> The method <code>MethodHandle.asCollector(Class&lt;?&gt; arrayType, int arrayLength)</code> produces a handle that collects the <em>trailing</em>
+<code>arrayLength</code> arguments into an array. There is no means for achieving the same
+for a number of arguments elsewhere in a method signature. There should be an
+additional <code>asCollector</code> method that supports this.</p>
+<p><strong>Argument folding.</strong> The folding combinator, <code>foldArguments(MethodHandle target, MethodHandle combinator)</code>, does not allow to control the position in the
+argument list at which folding should start. A position argument should be
+added; the number of arguments to fold is implicitly given as the number of
+arguments the <code>combinator</code> accepts.</p>
+<h3 id="More-Lookup-Functions">More Lookup Functions</h3>
+<p><strong>Non-abstract methods in interfaces.</strong> Currently, a use case such as this one
+will fail at run-time at the indicated position:</p>
+<pre><code>interface I1 {
+    default void m() { System.err.println("I1.m"); }
+}
+
+interface I2 {
+    default void m() { System.err.println("I2.m"); }
+}
+
+class C implements I1, I2 {
+    public void m() { I2.super.m(); System.err.println("C.m"); }
+}
+
+public class IfcSuper {
+    public static void main(String[] args) throws Throwable {
+        C c = new C();
+        MethodHandles.Lookup l = MethodHandles.lookup();
+        MethodType t = MethodType.methodType(void.class);
+        // This lookup will fail with an IllegalAccessException.
+        MethodHandle di1m = l.findSpecial(I1.class, "m", t, C.class);
+        ci1m.invoke(c);
+    }
+}</code></pre>
+<p>It should, however, be possible to construct <code>MethodHandle</code>s that bind to
+non-abstract methods in interfaces.</p>
+<p><strong>Class lookup.</strong> Finally, the lookup API should allow for looking up <em>classes</em>
+from different contexts, which is currently not possible. In the <code>MethodHandles</code>
+area, all required access checks are done at lookup time (as opposed to
+run-time, as is the case with reflection). Classes are passed in terms of their
+<code>.class</code> instance. To facilitate lookups with a certain control over the
+context, e.g., across module boundaries, there should be a lookup method that
+delivers a <code>Class</code> instance with the right restrictions for further use in
+<code>MethodHandle</code> combinators.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Combinators-for-Loops">Combinators for Loops</h3>
+<p><strong>Most Generic Loop Abstraction</strong></p>
+<p>The core abstractions for loops include an initialization of the loop, a
+predicate to check, and a body to evaluate. The most generic <code>MethodHandle</code>
+combinator for creating a loop, to be added to <code>MethodHandles</code>, is as follows:</p>
+<pre><code>MethodHandle loop(MethodHandle[]... clauses)</code></pre>
+<p>Constructs a method handle representing a loop with several loop variables that
+are updated and checked upon each iteration. Upon termination of the loop due to
+one of the predicates, a corresponding finalizer is run and delivers the loop's
+result, which is the return value of the resulting handle.</p>
+<p>Intuitively, every loop is formed by one or more "clauses", each specifying a
+local iteration value and/or a loop exit. Each iteration of the loop executes
+each clause in order. A clause can optionally update its iteration variable; it
+can also optionally perform a test and conditional loop exit. In order to
+express this logic in terms of method handles, each clause will determine four
+actions:</p>
+<ul>
+<li>
+<p>Before the loop executes, the initialization of an iteration variable or
+loop invariant local.</p>
+</li>
+<li>
+<p>When a clause executes, an update step for the iteration variable.</p>
+</li>
+<li>
+<p>When a clause executes, a predicate execution to test for loop exit.</p>
+</li>
+<li>
+<p>If a clause causes a loop exit, a finalizer execution to compute the loop's
+return value.</p>
+</li>
+</ul>
+<p>Some of these clause parts may be omitted according to certain rules, and useful
+default behavior is provided in this case. See below for a detailed description.</p>
+<p>Each clause function, with the exception of clause initializers, is able to
+observe the entire loop state, because it will be passed <em>all</em> current
+iteration variable values, as well as all incoming loop parameters. Most clause
+functions will not need all of this information, but they will be formally
+connected as if by <code>dropArguments</code>.</p>
+<p>Given a set of clauses, there is a number of checks and adjustments performed to
+connect all the parts of the loop. They are spelled out in detail in the steps
+below. In these steps, every occurrence of the word "must" corresponds to a
+place where <code>IllegalArgumentException</code> may be thrown if the required
+constraint is not met by the inputs to the loop combinator. The term
+"effectively identical", applied to parameter type lists, means that they must
+be identical, or else one list must be a proper prefix of the other.</p>
+<p><em>Step 0: Determine clause structure.</em></p>
+<ul>
+<li>
+<p>The clause array (of type <code>MethodHandle[][]</code> must be non-<code>null</code> and contain
+at least one element.</p>
+</li>
+<li>
+<p>The clause array may not contain <code>null</code>s or sub-arrays longer than four
+elements.</p>
+</li>
+<li>
+<p>Clauses shorter than four elements are treated as if they were padded by
+<code>null</code> elements to length four. Padding takes place by appending elements to
+the array.</p>
+</li>
+<li>
+<p>Clauses with all <code>null</code>s are disregarded.</p>
+</li>
+<li>
+<p>Each clause is treated as a four-tuple of functions, called "init", "step",
+"pred", and "fini".</p>
+</li>
+</ul>
+<p><em>Step 1A: Determine iteration variables.</em></p>
+<ul>
+<li>
+<p>Examine init and step function return types, pairwise, to determine each
+clause's iteration variable type.</p>
+</li>
+<li>
+<p>If both functions are omitted, use <code>void</code>; else if one is omitted, use the
+other's return type; else use the common return type (they must be
+identical).</p>
+</li>
+<li>
+<p>Form the list of return types (in clause order), omitting all occurrences of
+<code>void</code>.</p>
+</li>
+<li>
+<p>This list of types is called the "common prefix".</p>
+</li>
+</ul>
+<p><em>Step 1B: Determine loop parameters.</em></p>
+<ul>
+<li>
+<p>Examine init function parameter lists.</p>
+</li>
+<li>
+<p>Omitted init functions are deemed to have <code>null</code> parameter lists.</p>
+</li>
+<li>
+<p>All init function parameter lists must be effectively identical.</p>
+</li>
+<li>
+<p>The longest parameter list (which is necessarily unique) is called the
+"common suffix".</p>
+</li>
+</ul>
+<p><em>Step 1C: Determine loop return type.</em></p>
+<ul>
+<li>
+<p>Examine fini function return types, disregarding omitted fini functions.</p>
+</li>
+<li>
+<p>If there are no fini functions, use <code>void</code> as the loop return type.</p>
+</li>
+<li>
+<p>Otherwise, use the common return type of the fini functions; they must all
+be identical.</p>
+</li>
+</ul>
+<p><em>Step 1D: Check other types.</em></p>
+<ul>
+<li>
+<p>There must be at least one non-omitted pred function.</p>
+</li>
+<li>
+<p>Every non-omitted pred function must have a <code>boolean</code> return type.</p>
+</li>
+</ul>
+<p>(Implementation Note: Steps 1A, 1B, 1C, 1D are logically independent of each
+other, and may be performed in any order.)</p>
+<p><em>Step 2: Determine parameter lists.</em></p>
+<ul>
+<li>
+<p>The parameter list for the resulting loop handle will be the "common
+suffix".</p>
+</li>
+<li>
+<p>The parameter list for init functions will be adjusted to the "common
+suffix". (Note that their parameter lists are already effectively identical
+to the common suffix.)</p>
+</li>
+<li>
+<p>The parameter list for non-init (step, pred, and fini) functions will be
+adjusted to the common prefix followed by the common suffix, called the
+"common parameter sequence".</p>
+</li>
+<li>
+<p>Every non-init, non-omitted function parameter list must be effectively
+identical to the common parameter sequence.</p>
+</li>
+</ul>
+<p><em>Step 3: Fill in omitted functions.</em></p>
+<ul>
+<li>
+<p>If an init function is omitted, use a constant function of the appropriate
+<code>null</code>/zero/<code>false</code>/<code>void</code> type. (For this purpose, a constant <code>void</code> is
+simply a function which does nothing and returns <code>void</code>; it can be obtained
+from another constant function by type conversion via <code>MethodHandle.asType type</code>.)</p>
+</li>
+<li>
+<p>If a step function is omitted, use an identity function of the clause's
+iteration variable type; insert dropped argument parameters before the
+identity function parameter for the non-<code>void</code> iteration variables of
+preceding clauses. (This will turn the loop variable into a local loop
+invariant.)</p>
+</li>
+<li>
+<p>If a pred function is omitted, the corresponding fini function must also be
+omitted.</p>
+</li>
+<li>
+<p>If a pred function is omitted, use a constant <code>true</code> function. (This will
+keep the loop going, as far as this clause is concerned.)</p>
+</li>
+<li>
+<p>If a fini function is omitted, use a constant <code>null</code>/zero/<code>false</code>/<code>void</code>
+function of the loop return type.</p>
+</li>
+</ul>
+<p><em>Step 4: Fill in missing parameter types.</em></p>
+<ul>
+<li>
+<p>At this point, every init function parameter list is effectively identical
+to the common suffix, but some lists may be shorter. For every init function
+with a short parameter list, pad out the end of the list by dropping
+arguments.</p>
+</li>
+<li>
+<p>At this point, every non-init function parameter list is effectively
+identical to the common parameter sequence, but some lists may be shorter.
+For every non-init function with a short parameter list, pad out the end of
+the list by dropping arguments.</p>
+</li>
+</ul>
+<p><em>Final observations.</em></p>
+<ul>
+<li>
+<p>After these steps, all clauses have been adjusted by supplying omitted
+functions and arguments.</p>
+</li>
+<li>
+<p>All init functions have a common parameter type list, which the final loop
+handle will also have.</p>
+</li>
+<li>
+<p>All fini functions have a common return type, which the final loop handle
+will also have.</p>
+</li>
+<li>
+<p>All non-init functions have a common parameter type list, which is the
+common parameter sequence, of (non-<code>void</code>) iteration variables followed by
+loop parameters.</p>
+</li>
+<li>
+<p>Each pair of init and step functions agrees in their return types.</p>
+</li>
+<li>
+<p>Each non-init function will be able to observe the current values of all
+iteration variables, by means of the common prefix.</p>
+</li>
+</ul>
+<p><em>Loop execution.</em></p>
+<ul>
+<li>
+<p>When the loop is called, the loop input values are saved in locals, to be
+passed (as the common suffix) to every clause function. These locals are
+loop invariant.</p>
+</li>
+<li>
+<p>Each init function is executed in clause order (passing the common suffix)
+and the non-<code>void</code> values are saved (as the common prefix) into locals.
+These locals are loop varying (unless their steps are identity functions, as
+noted above).</p>
+</li>
+<li>
+<p>All function executions (except init functions) will be passed the common
+parameter sequence, consisting of the non-<code>void</code> iteration values (in clause
+order) and then the loop inputs (in argument order).</p>
+</li>
+<li>
+<p>The step and pred functions are then executed, in clause order (step before
+pred), until a pred function returns <code>false</code>.</p>
+</li>
+<li>
+<p>The non-<code>void</code> result from a step function call is used to update the
+corresponding loop variable. The updated value is immediately visible to all
+subsequent function calls.</p>
+</li>
+<li>
+<p>If a pred function returns <code>false</code>, the corresponding fini function is
+called, and the resulting value is returned from the loop as a whole.</p>
+</li>
+</ul>
+<p>The semantics of a <code>MethodHandle</code> <code>l</code> returned from <code>loop</code> are as follows:</p>
+<pre><code>l(arg*) =&gt;
+{
+    let v* = init*(arg*);
+    for (;;) {
+        for ((v, s, p, f) in (v*, step*, pred*, fini*)) {
+            v = s(v*, arg*);
+            if (!p(v*, arg*)) {
+                return f(v*, arg*);
+            }
+        }
+    }
+}</code></pre>
+<p>Based on this most generic abstraction of loops, several convenient combinators
+should be added to <code>MethodHandles</code>. They are discussed in the following.</p>
+<p><strong>Simple while and do-while Loops</strong></p>
+<p>These combinators will be added to <code>MethodHandles</code>:</p>
+<pre><code>MethodHandle whileLoop(MethodHandle init, MethodHandle pred, MethodHandle body)
+
+MethodHandle doWhileLoop(MethodHandle init, MethodHandle body, MethodHandle pred)</code></pre>
+<p>The semantics of invoking the <code>MethodHandle</code> object <code>wl</code> returned from
+<code>whileLoop</code> are as follows:</p>
+<pre><code>wl(arg*) =&gt;
+{
+    let r = init(arg*);
+    while (pred(r, arg*)) { r = body(r, arg*); }
+    return r;
+}</code></pre>
+<p>For a <code>MethodHandle</code> <code>dwl</code> returned from <code>doWhileLoop</code>, the semantics are as
+follows:</p>
+<pre><code>dwl(arg*) =&gt;
+{
+    let r = init(arg*);
+    do { r = body(r, arg*); } while (pred(r, arg*));
+    return r;
+}</code></pre>
+<p>This scheme imposes some restrictions on the signatures that the three
+constituent <code>MethodHandle</code>s can have:</p>
+<ol>
+<li>
+<p>The return type of the initializer <code>init</code>, is also the return type of the
+body <code>body</code> and of the entire loop, as well as the type of the first
+argument of the predicate <code>pred</code> and the body <code>body</code>.</p>
+</li>
+<li>
+<p>The return type of the predicate <code>pred</code> must be <code>boolean</code>.</p>
+</li>
+</ol>
+<p><strong>Counting Loops</strong></p>
+<p>For convenience, the following loop combinators will also be provided:</p>
+<ul>
+<li>
+<p><code>MethodHandle countedLoop(MethodHandle iterations, MethodHandle init, MethodHandle body)</code></p>
+<p>A <code>MethodHandle</code> <code>cl</code> returned from <code>countedLoop</code> has the following
+semantics:</p>
+<pre><code>cl(arg*) =&gt;
+{
+    let end = iterations(arg*);
+    let r = init(arg*);
+    for (int i = 0; i &lt; end; i++) {
+        r = body(i, r, arg*);
+    }
+    return r;
+}</code></pre>
+</li>
+<li>
+<p><code>MethodHandle countedLoop(MethodHandle start, MethodHandle end, MethodHandle init, MethodHandle body)</code></p>
+<p>A <code>MethodHandle</code> <code>cl</code> returned from this variant of <code>countedLoop</code> has the
+following semantics:</p>
+<pre><code>cl(arg*) =&gt;
+{
+    let s = start(arg*);
+    let e = end(arg*);
+    let r = init(arg*);
+    for (int i = s; i &lt; e; i++) {
+        r = body(i, r, arg*);
+    }
+    return r;
+}</code></pre>
+</li>
+</ul>
+<p>In these two cases, the type of the first argument of <code>body</code> must be <code>int</code>, and
+the return types of <code>init</code> and <code>body</code> as well as the second argument of <code>body</code>
+must be the same.</p>
+<p><strong>Iteration Over Data Structures</strong></p>
+<p>Furthermore, a loop combinator for iteration is helpful:</p>
+<ul>
+<li>
+<p><code>MethodHandle iteratedLoop(MethodHandle iterator, MethodHandle init, MethodHandle body)</code></p>
+<p>A <code>MethodHandle</code> <code>it</code> returned from <code>iteratedLoop</code> has the following
+semantics:</p>
+<pre><code>it(arg*) =&gt;
+{
+    let it = iterator(arg*);
+    let v = init(arg*);
+    for (T t : it) {
+        v = body(t, v, a);
+    }
+    return v;
+}</code></pre>
+</li>
+</ul>
+<p><strong>Remarks</strong></p>
+<p>More convenience loop combinators are conceivable.</p>
+<p>While the semantics of <code>continue</code> can easily be emulated by returning from the
+body, it is an open question how the semantics of <code>break</code> can be emulated. This
+could be achieved by using a dedicated exception (e.g.,
+<code>LoopMethodHandle.BreakException</code>).</p>
+<h3 id="Combinator-for-try/finally-Blocks">Combinator for <code>try</code>/<code>finally</code> Blocks</h3>
+<p>To facilitate the construction of functionality with try/finally semantics from
+<code>MethodHandle</code>s, the following new combinator will be introduced to
+<code>MethodHandles</code>:</p>
+<p><code>MethodHandle tryFinally(MethodHandle target, MethodHandle cleanup)</code></p>
+<p>The semantics of invoking a <code>MethodHandle</code> <code>tf</code> returned from <code>tryFinally</code> are
+as follows:</p>
+<pre><code>tf(arg*) =&gt;
+{
+    Throwable t;
+    Object r;
+    try {
+        r = target(arg*);
+    } catch (Throwable x) {
+        t = x;
+        throw x;
+    } finally {
+        r = cleanup(t, r, arg*);
+    }
+    return r;
+}</code></pre>
+<p>That is, the return type of the resulting <code>MethodHandle</code> will be that of the
+<code>target</code> handle. Both the <code>target</code> and the <code>cleanup</code> must have matching argument
+lists, with the extension for <code>cleanup</code> that it accepts one <code>Throwable</code>
+argument and the - possibly intermediate - result. In case an exception was
+thrown during the execution of <code>target</code>, this argument will hold that exception.</p>
+<h3 id="Combinators-for-Argument-Handling">Combinators for Argument Handling</h3>
+<p>As additions to the existing API in <code>MethodHandles</code>, the following methods will
+be introduced:</p>
+<ul>
+<li>
+<p>Addition to the class <code>MethodHandle</code> - new instance method:</p>
+<pre><code>MethodHandle asSpreader(int pos, Class&lt;?&gt; arrayType, int arrayLength)</code></pre>
+<p>In the signature of the result, at position <code>pos</code>, expect <code>arrayLength</code>
+arguments of type <code>arrayType</code>. In the result, insert an array consuming
+<code>arrayLength</code> arguments of <code>this</code> <code>MethodHandle</code>. If the signature of <code>this</code>
+does not have enough arguments at that position, or if the position does not
+exist in the signature, raise an appropriate exception.</p>
+<p>For example, if the signature of <code>this</code> is
+<code>(Ljava/lang/String;IIILjava/lang/Object;)V</code>, calling
+<code>asSpreader(int[].class, 1, 3)</code> will lead to the resulting signature
+<code>(Ljava/lang/String;[ILjava/lang/Object;)V</code>.</p>
+</li>
+<li>
+<p>Addition to the class <code>MethodHandle</code> - new instance method:</p>
+<pre><code>MethodHandle asCollector(int pos, Class&lt;?&gt; arrayType, int arrayLength)</code></pre>
+<p>In the signature of <code>this</code>, at position <code>pos</code>, expect an array argument.  In
+the signature of the result, at position <code>pos</code>, there will be <code>arrayLength</code>
+arguments of the type of that array. All arguments before <code>pos</code> are not
+affected. All arguments after <code>pos</code> are shifted to the right by
+<code>arrayLength</code>. It is expected that the arguments to be spread are available
+in the array at run-time; in case they are not, an
+<code>ArrayIndexOutOfBoundsException</code> is thrown.</p>
+<p>For example, if the signature of <code>this</code> is
+<code>(Ljava/lang/String;[ILjava/lang/Object;)V</code>, calling
+<code>asCollector(int[].class, 1, 3)</code> will lead to the resulting signature
+<code>(Ljava/lang/String;IIILjava/lang/Object;)V</code>.</p>
+</li>
+<li>
+<p>Addition to the class <code>MethodHandles</code> - new static method:</p>
+<pre><code>MethodHandle foldArguments(MethodHandle target, int pos, MethodHandle combiner)</code></pre>
+<p>The resulting <code>MethodHandle</code> will, when invoked, act like the existing
+method <code>foldArguments(MethodHandle target, MethodHandle combiner)</code> with the
+difference that the already existing method implies a folding position of
+<code>0</code>, while the proposed new method allows for specifying a folding position
+other than <code>0</code>.</p>
+<p>For example, if the <code>target</code> signature is <code>(ZLjava/lang/String;ZI)I</code>, and
+the <code>combiner</code> signature is <code>(ZI)Ljava/lang/String;</code>, calling
+<code>foldArguments(target, 1, combiner)</code> will lead to the resulting signature
+<code>(ZZI)I</code>, and the second and third (<code>boolean</code> and <code>int</code>) arguments will be
+folded into a <code>String</code> upon each invocation.</p>
+</li>
+</ul>
+<p>These new combinators will be implemented using existing abstractions and API.
+If required, non-public API will be modified.</p>
+<h3 id="Lookups">Lookups</h3>
+<p>The implementation of the method <code>MethodHandles.Lookup.findSpecial(Class&lt;?&gt; refc, String name, MethodType type, Class&lt;?&gt; specialCaller)</code> will be modified to
+allow for finding <code>super</code>-callable methods on interfaces. While this is not a
+change of the API as such, its documented behaviour changes significantly.</p>
+<p>Also, the <code>MethodHandles.Lookup</code> class will be extended with the following two
+methods:</p>
+<ul>
+<li>
+<p><code>Class&lt;?&gt; findClass(String targetName)</code></p>
+<p>This retrieves an instance of <code>Class&lt;?&gt;</code> representing the desired target
+class identified by the <code>targetName</code>. The lookup applies the restrictions
+defined by the implicit access context. In case the access is not possible,
+the method raises an appropriate exception.</p>
+</li>
+<li>
+<p><code>Class&lt;?&gt; accessClass(Class&lt;?&gt; targetClass)</code></p>
+<p>This attempts to access the given class, applying the restrictions defined
+by the implicit access context. In case the access is not possible, the
+method raises an appropriate exception.</p>
+</li>
+</ul>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>As this is a <em>purely additive API extension</em>, no code that existing clients of
+the <code>MethodHandle</code> API use will be negatively affected. The proposed extensions
+also do not rely on any other ongoing development.</p>
+<p>Unit tests for all of the above API extensions will be provided.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>This JEP is related to
+<a href="//openjdk.java.net/jeps/193">JEP 193 (Variable Handles)</a>,
+and a certain amount of overlap is possible since
+<code>VarHandle</code>s depend on the <code>MethodHandle</code> API. This will be addressed in
+collaboration with the owner of JEP 193.</p>
+<p>The <a href="https://bugs.openjdk.java.net/browse/JDK-8075779">JBS issue on JSR 292 enhancements for maintenance releases</a>
+can be considered a starting point for this JEP, which distills from that
+issue those points upon which agreement has been reached.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

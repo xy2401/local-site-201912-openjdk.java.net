@@ -1,0 +1,413 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 270: Reserved Stack Areas for Critical Sections</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 270: Reserved Stack Areas for Critical Sections</h1><table class="head"><tr><td>Owner</td><td>Frederic Parain</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;runtime</td></tr><tr><td>Discussion</td><td>hotspot dash runtime dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Karen Kinnear, Mikael Vidstedt</td></tr><tr><td>Created</td><td>2014/06/16 16:35</td></tr><tr><td>Updated</td><td>2018/06/11 07:38</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046936">8046936</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Reserve extra space on thread stacks for use by critical sections, so
+that they can complete even when stack overflows occur.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Provide a mechanism to mitigate the risk of deadlocks caused by the
+corruption of critical data such as <code>java.util.concurrent</code> locks
+(such as <code>ReentrantLock</code>) caused by a <code>StackOverflowError</code> being
+thrown in a critical section.</p>
+</li>
+<li>
+<p>The solution must be mostly JVM-based in order not to require
+modifications to <code>java.util.concurrent</code> algorithms or published
+interfaces, or existing library and application code.</p>
+</li>
+<li>
+<p>The solution must not be limited to the <code>ReentrantLock</code> case, and
+should be applicable to any critical section in privileged code.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>The solution doesn't aim to provide robustness against stack
+overflows to non-privileged code.</p>
+</li>
+<li>
+<p>The solution doesn't aim to avoid <code>StackOverflowError</code>s, but rather
+to mitigate the risk that a such an error is thrown inside a critical
+section and thereby corrupts some data structures.</p>
+</li>
+<li>
+<p>The proposed solution is a trade-off between solving some well-known
+corruption cases while preserving performance, with reasonable
+resource cost and relatively low complexity.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p><code>StackOverflowError</code> is an asynchronous exception that can be thrown by
+the Java Virtual Machine whenever the computation in a thread requires a
+larger stack than is permitted (JVM spec &#167;2.5.2 and
+&#167;2.5.6). The Java Language Specification permits a
+<code>StackOverflowError</code> to be thrown synchronously by method invocation (JLS
+&#167;11.1.3). The HotSpot VM uses this property to implement a
+"stack-banging" mechanism on method entry.</p>
+<p>The stack-banging mechanism is a clean way to report that a stack
+overflow has occurred while preserving the JVM's integrity, but it
+doesn't provide a safe way for the application to recover from this
+situation. A stack overflow could occur in the middle of a sequence of
+modifications which, if not complete, could leave a data structure in an
+inconsistent state.</p>
+<p>For instance, when a <code>StackOverflowError</code> is thrown in a critical section
+of the <code>java.util.concurrent.locks.ReentrantLock</code> class, the lock status
+can be left in an inconsistent state, leading to potential deadlocks. The
+<code>ReentrantLock</code> class uses an instance of <code>AbstractSynchronizerQueue</code> to
+implement its critical section. The implementation of its <code>lock()</code> method
+is:</p>
+<pre><code>final void lock() {
+    if (compareAndSetState(0, 1))
+        setExclusiveOwnerThread(Thread.currentThread());
+    else
+        acquire(1);
+}</code></pre>
+<p>The method tries to change the status word with an atomic operation. If
+the modification is successful then the owner is set by invoking a setter
+method, otherwise the slow path is invoked. The problem is that if a
+<code>StackOverflowError</code> is thrown after the status word has been changed and
+before the owner has been effectively set then the lock becomes unusable:
+Its status word indicates it is locked but no owner has been set, so no
+thread can unlock it. Because stack-size checks are performed at
+method-invocation time (in HotSpot, at least), a <code>StackOverflowError</code> can
+be thrown either when <code>Thread.currentThread()</code> is invoked or when
+<code>setExclusiveOwnerThread()</code> is invoked. In either case it leads to a
+corruption of the <code>ReentrantLock</code> instance, and all threads trying to
+acquire this lock will be blocked forever.</p>
+<p>This particular problem caused some serious issues in JDK 7 because
+parallel class loading was implemented using a <code>ConcurrentHashMap</code> and,
+at that time, the <code>ConcurrentHashMap</code> code used <code>ReentrantLock</code>
+instances. If a <code>ReentrantLock</code> instance was corrupted because of a
+<code>StackOverflowError</code> then the class-loading mechanism itself could
+deadlock. (This happened in stress tests
+(<a href="https://bugs.openjdk.java.net/browse/JDK-7011862">JDK-7011862</a>), but
+could also happen in the field.)</p>
+<p>The implementation of the <code>ConcurrentHashMap</code> class was completely
+changed in June 2013. The new implementation uses <code>synchronized</code>
+statements rather than <code>ReentrantLock</code> instances, so JDK 8 and later
+releases are not subject to class-loading deadlock due to corrupted
+<code>ReentrantLock</code>s. However, any code using <code>ReentrantLock</code> can still be
+impacted and cause deadlock. Such issues have already been reported on
+the <code>concurrency-interest@cs.oswego.edu</code> mailing list.</p>
+<p>The problem is not limited to the <code>ReentrantLock</code> class.</p>
+<p>Java applications or libraries often rely on the consistency of data
+structures to work properly. Any modification of those data structures is
+a critical section: Before the execution of the critical section the data
+structures are consistent, and after its execution the data structures
+are consistent too. During its execution, however, the data structure
+could go through transient inconsistent states.</p>
+<p>If a critical section is made of a single Java method containing no other
+method invocation, the current stack overflow mechanism works well:
+Either the available stack is sufficient and the method executes without
+trouble, or it is not sufficient and so a <code>StackOverflowError</code> is thrown
+before the first bytecode of the method is executed.</p>
+<p>The problem occurs when a critical section is made of several methods,
+for instance a method A which invokes a method B. The available stack can
+be sufficient to let method A start its execution. Method A starts to
+modify a data structure and then invokes method B, but the remaining
+stack is not sufficient to execute B, causing a <code>StackOverflowError</code> to
+be thrown. Because method B and the remainder of method A have not been
+executed, the consistency of the data structure might have been
+compromised.</p>
+<h2 id="Description">Description</h2>
+<p>The main idea of the proposed solution is to reserve some space on the
+execution stack for critical sections, to allow them to complete their
+execution where regular code would have been interrupted by a stack
+overflow. The assumption is that critical sections are relatively small
+and do not require enormous space on the execution stack to complete
+successfully. The goal is not to rescue a faulty thread which hits its
+stack limit, but rather to preserve shared data structures that could be
+corrupted if the <code>StackOverflowError</code> is thrown in a critical section.</p>
+<p>The main mechanism will be implemented in the JVM. The only modification
+required in the Java source code is the annotation that must be used to
+identify the critical sections. This annotation, currently named
+<code>jdk.internal.vm.annotation.ReservedStackAccess</code>, is a runtime method annotation that can
+be used by any class of privileged code (see paragraph below about the
+accessibility of this annotation).</p>
+<p>In order to prevent the corruption of shared data structures, the JVM
+will try to delay the throwing of a <code>StackOverflowError</code> until the thread
+in question has exited all of its critical sections. Each Java thread has
+a new zone defined in its execution stack, called the reserved zone. This
+zone can be used only if the Java thread has a method annotated with
+<code>jdk.internal.vm.annotation.ReservedStackAccess</code> in its current call stack. When a stack
+overflow condition is detected by the JVM, and the thread has an
+annotated method in its call stack, the JVM grants temporary access to
+the reserved zone until no more annotated methods are present in the call
+stack. When access to the reserved zone is revoked, a delayed
+<code>StackOverflowError</code> is thrown. If the thread has no annotated method in
+its call stack when the stack overflow condition is detected then the
+<code>StackOverflow</code> is thrown immediately (this is current JVM behavior).</p>
+<p>Note that the reserved stack space is usable by annotated methods but
+also by methods invoked, directly or transitively, from them. The nesting
+of annotated methods is naturally supported, but there's a single shared
+reserved zone per thread; that is, the invocation of an annotated method
+does not add a new reserved zone. The sizing of the reserved zone must be
+done according to the worst case of all annotated critical sections.</p>
+<p>By default, the <code>jdk.internal.vm.annotation.ReservedStackAccess</code> annotation is applicable
+only to privileged code (code loaded by the bootstrap or the extension
+class loader). Both privileged code and non-privileged code can be
+annotated with this annotation but by default the JVM will ignore it for
+non-privileged code. The rationale behind this default policy is that the
+reserved stack space for critical sections is a shared resource among all
+critical sections. If any arbitrary code is able to use this space then
+it is not a reserved space anymore, and this would defeat the whole
+solution. A JVM flag is available, even in product builds, to relax this
+policy and allow any code to be able to benefit from this feature.</p>
+<h3 id="Implementation">Implementation</h3>
+<p>In the HotSpot VM, each Java thread has two zones defined at the end of
+its execution stack: the yellow zone and the red zone. Both memory areas
+are protected against all accesses.</p>
+<p>If, during its execution, a thread tries to use the memory in the yellow
+zone, a protection fault is triggered, the protection of the yellow zone
+is temporarily removed, and a <code>StackOverflowError</code> is created and
+thrown. Before unwinding the thread execution stack to propagate the
+<code>StackOverflowError</code>, the protection of the yellow zone is restored.</p>
+<p>If the thread tries to use the memory in its red zone, the JVM
+immediately branches to JVM error-reporting code, leading to the
+generation of an error report and a crash dump of the JVM process.</p>
+<p>The new zone defined by the proposed solution is placed just before the
+yellow zone. This reserved zone will behave like regular stack space if
+the thread has a <code>ReservedStackAccess</code>-annotated method in its call
+stack, and like the yellow zone otherwise.</p>
+<p>During the setup of the execution stack of a Java thread, the reserved
+zone is protected the same way as the yellow and the red zones. If,
+during its execution, the thread hits its reserved zone, a <code>SIGSEGV</code>
+signal is generated and the signal handler applies the following
+algorithm:</p>
+<ul>
+<li>
+<p>If the address of the fault is in the red zone, generate a JVM error
+report and a crash dump.</p>
+</li>
+<li>
+<p>If the address of the fault is in the yellow zone, create and throw a
+<code>StackOverflowError</code>.</p>
+</li>
+<li>
+<p>If the address of the fault is in the reserved zone, perform a stack
+walk to check if there's a method annotated with
+<code>jdk.internal.vm.annotation.ReservedStackAccess</code> on the call stack. If not, create and
+throw a <code>StackOverflowError</code>. If an annotated method is found, remove
+the protection of the critical zone and store in the C++ <code>Thread</code>
+object the stack pointer of the outermost activation (frame) related
+to an annotated method.</p>
+</li>
+</ul>
+<p>If the protection of the reserved zone has been removed to allow a
+critical section to complete its execution, the protection must be
+restored and the delayed <code>StackOverflowError</code> thrown as soon as the
+thread exits the critical section. The HotSpot interpreter has been
+modified to check if the registered outermost annotated method is being
+exited. The check is performed on every frame-activation removal by
+comparing the value of the stack pointer being restored with the value
+stored in the C++ <code>Thread</code> object. If the restored stack pointer is above
+the stored value (stacks grow downward), a call to the runtime is
+performed to change the memory protection and reset the stack pointer
+value in the <code>Thread</code> object before jumping to the <code>StackOverflowError</code>
+generation code. The two compilers have been modified to perform the same
+check on method exit, but only for <code>ReservedStackAccess</code> annotated
+methods or methods with annotated methods in-lined in their compiled
+code.</p>
+<p>When an exception is thrown, the control flow doesn't go through the
+regular method-exit code, so there's a possibility that the protection of
+the reserved zone will not be restored correctly if the exception is
+propagated above the annotated method. To prevent this situation, the
+protection of the reserved zone is restored and the stack pointer value
+stored in the C++ <code>Thread</code> object is reset each time an exception starts
+being propagated. In this scenario, the delayed <code>StackOverflowError</code> is
+not thrown. The rationale is that the thrown exception is more important
+than the delayed <code>StackOverflowError</code> because it indicates a cause and a
+point where normal execution has been interrupted.</p>
+<p>Throwing a <code>StackOverflowError</code> is the Java way to notify the application
+that a thread reached its stack limits. However, exceptions and errors
+are sometime caught by Java code and the notification is lost or not
+handled correctly, which can make the investigation of the issue really
+hard. To ease troubleshooting of stack overflow errors in presence of a
+reserved stack area, the JVM provides two other notifications when access
+to the reserved stack area is granted: One is a warning printed by the
+JVM (on the same stream as all other JVM messages), and the second is a
+JFR event. Note that even if the delayed <code>StackOverflowError</code> is not
+thrown because another exception has been thrown in a critical section,
+the JVM warning and the JFR event are generated and are available for
+troubleshooting.</p>
+<p>The reserved-stack feature is controlled by two JVM flags, one to
+configure the size of the reserved zone (all threads use the same size),
+and one to allow non-privileged code to use the feature. Setting the size
+of the reserved zone to zero disables the feature entirely. When
+disabled, interpreted code and compiled code do not perform the check on
+method exit.</p>
+<p>Memory cost of this solution: For each thread the cost is the virtual
+memory of its reserved zone, as part of its stack space. The option to
+implement the reserved zone in a different memory area, as an alternate
+stack, has been considered. It would, however, significantly increase
+the complexity of any stack-walking code, so this option has been
+rejected.</p>
+<p>Performance cost: measurements done with
+<a href="http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/src/test/loops/">JSR-166 tests</a>
+on <code>ReentrantLock</code>s didn't show any significant impact on performance on
+x86 platforms.</p>
+<h3 id="Performance">Performance</h3>
+<p>Here's how this solution could impact performance.</p>
+<p>The most costly operation in this solution is the stack walking performed
+when looking for an annotated method in the call stack. This operation is
+performed only when the JVM has detected a potential stack
+overflow. Without this fix, the JVM would throw a
+<code>StackOverflowError</code>. So even if the operation is relatively costly, it
+is better than the current behavior since it will prevent data
+corruptions. The most frequently-executed part of this solution is the
+check performed when an annotated method exits, to check if the
+protection of the reserved zone has to be re-enabled or not. The
+performance-critical version of this check is in the compiler. The
+current implementation adds the following code sequence to the compiled
+code of an annotated method:</p>
+<pre><code>0x00007f98fcef5809: cmp    rsp,QWORD PTR [r15+0x298]
+0x00007f98fcef5810: jle    0x00007f98fcef583c
+0x00007f98fcef5816: mov    rdi,r15
+0x00007f98fcef5819: test   esp,0xf
+0x00007f98fcef581f: je     0x00007f98fcef5837
+0x00007f98fcef5825: sub    rsp,0x8
+0x00007f98fcef5829: call   0x00007f9910f62670  ;   {runtime_call}
+0x00007f98fcef582e: add    rsp,0x8
+0x00007f98fcef5832: jmp    0x00007f98fcef583c
+0x00007f98fcef5837: call   0x00007f9910f62670  ;   {runtime_call}</code></pre>
+<p>This code is for the x86_64 platform. In fast cases (no need to re-enable
+protection of the reserved zone) it adds two instructions including a
+small jump. The version for x86_32 is bigger because it doesn't have the
+address of the <code>Thread</code> object always available in a register. The
+feature is also implemented for Solaris/SPARC.</p>
+<h3 id="Open-issues">Open issues</h3>
+<p>The default size of the reserved zone is still an open issue. This size
+will depend on the longest critical zone in JDK code that uses the
+<code>ReservedStackAccess</code> annotation and will also depend on the platform
+architecture. We could also consider different defaults depending upon
+whether the JVM is running on a high-end server or in a
+virtual-memory-constrained environment.</p>
+<p>To mitigate the sizing issue a debug/troubleshooting feature has been
+added. This feature is enabled by default on debug builds and available
+as a diagnostic JVM option in product builds. When activated, it is run
+when the JVM is about to throw a <code>StackOverflowError</code>: It walks the call
+stack and if one or more methods annotated with the
+<code>ReservedStackAccess</code> annotation are found, their names are printed with
+a warning message on the JVM standard output. The name of the JVM flag
+controlling this feature is <code>PrintReservedStackAccessOnStackOverflow</code>.</p>
+<p>The default size of the reserved area is one page (4K) and experiments
+have shown that this is sufficient to cover the critical sections of
+<code>java.util.concurrent</code> locks that have been annotated so far.</p>
+<p>The reserved stack area is not fully supported on Windows
+platforms. During the development of the feature on Windows, a bug was
+found in the way the stack's special zones are controlled
+(<a href="https://bugs.openjdk.java.net/browse/JDK-8067946">JDK-8067946</a>). This
+bug prevents the JVM from granting access to the reserved stack area. As
+a consequence, when a stack overflow condition is detected on Windows,
+and an annotated method is on the call stack, the JVM warning is printed,
+the JFR event is fired, and a <code>StackOverflowError</code> is thrown
+immediately. There's no change in the behavior of the JVM for the
+application. However, the JVM warning and the JFR event can help
+troubleshooting, indicating that a potentially-harmful situation
+occurred.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Several alternative approaches have been considered and some of them have
+been implemented and tested. Here's a list of those approaches.</p>
+<p>Language-based solutions:</p>
+<ul>
+<li>
+<p><code>try</code>/<code>catch</code>/<code>finally</code> constructs: They don't solve anything, since
+there's no guarantee that the <code>finally</code> clause will not trigger a
+stack overflow too.</p>
+</li>
+<li>
+<p>New constructs such as:</p>
+<pre><code>new CriticalSection(
+       () -&gt; {
+           // do critical section code
+        }).enter();</code></pre>
+<p>This construct might require significant work in <code>javac</code> and the
+JVM, and its usage is likely to have high impact on performance
+compared to the reserved stack area, even when not run in a
+stack-overflow condition.</p>
+</li>
+</ul>
+<p>Code-transformation solutions:</p>
+<ul>
+<li>
+<p>Avoid method calls (because stack overflow checks are performed at
+method invocation time) by forcing the JIT to inline all called
+methods: Inlining could require the loading and initialization of
+classes not used by the application, forcing inlining could conflict
+with compiler rules (code size, inlining depth), and inlining is not
+applicable to all code patterns (e.g., reflection).</p>
+</li>
+<li>
+<p>Code refactoring to avoid method calls at source level: Refactoring
+would require the modification of already-complex code
+(<code>java.util.concurrent</code>), and this kind of refactoring would break
+encapsulation.</p>
+</li>
+</ul>
+<p>Stack-based solutions:</p>
+<ul>
+<li>
+<p>Extended stack banging: Bang the stack further before entering a
+critical section: This solution has a performance cost, even when not
+in a stack-overflow condition, and it is hard to maintain with nested
+critical sections.</p>
+</li>
+<li>
+<p>Extensible stacks: Build stacks from several non-contiguous memory
+chunks, adding a new chunk when a stack overflow is detected: This
+solution adds significant complexity to the JVM to manage
+non-contiguous stacks (including all the logic currently based on
+pointer comparisons in stack management); it could also require us to
+copy/move some section of the stack, and it puts more pressure on the
+memory-allocation backend due to fragmentation issues.</p>
+</li>
+</ul>
+<h2 id="Testing">Testing</h2>
+<p>This change comes with a reliable unit test able to reproduce the
+<code>java.util.concurrent.lock.ReentrantLock</code> corruption caused by a stack
+overflow.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>The reserved stack area relies on the "yellow pages" mechanism. This
+mechanism is currently partly broken on Windows
+<a href="https://bugs.openjdk.java.net/browse/JDK-8067946">JDK-8067946</a>, so the
+reserved stack area is not fully supported in this platform.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

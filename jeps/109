@@ -1,0 +1,299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 109: Enhance Core Libraries with Lambda</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 109: Enhance Core Libraries with Lambda</h1><table class="head"><tr><td>Authors</td><td>Stuart Marks, Mike Duigou</td></tr><tr><td>Owner</td><td>Stuart Marks</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>8</td></tr><tr><td>Component</td><td>core-libs</td></tr><tr><td>JSR</td><td><a href="https://jcp.org/en/jsr/detail?id=335">335</a></td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>L</td></tr><tr><td>Blocks</td><td><a href="107">JEP 107: Bulk Data Operations for Collections</a></td></tr><tr><td></td><td><a href="155">JEP 155: Concurrency Updates</a></td></tr><tr><td>Depends</td><td><a href="126">JEP 126: Lambda Expressions &amp; Virtual Extension Methods</a></td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2011/09/28 20:00</td></tr><tr><td>Updated</td><td>2015/02/13 19:41</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046099">8046099</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enhance the Java core library APIs using the new lambda language feature
+to improve the usability and convenience of the library.</p>
+<h2 id="Goals">Goals</h2>
+<p>The primary goal is to modernize the general library APIs by adding
+the use of Lambda in suitable locations. Most implementations will
+be provided as extension methods upon existing classes. We will target
+high-traffic areas of the library and add Lambda APIs where we think
+it will have the most benefit. Ideally, Lambda would appear in the
+API wherever a programmer familiar with Lambda would expect it to be.
+Alternatively, we'd like mainstream programmers to stumble over Lambda
+APIs in the library and think, "Oh cool, they added a Lambda here, and
+that lets me solve my problem more easily."</p>
+<p>A secondary goal is to inform the design of Lambda language feature by
+using Lambda in library APIs, calling them from real code, evaluating
+the results, and providing feedback to the Lambda language/compiler team.</p>
+<p>Goals can be summarized as follows:</p>
+<ul>
+<li>Introduce a new idiom, lambda functions, to the existing libraries;</li>
+<li>Improve utility and convenience of libraries with lambda functions;</li>
+<li>Demonstrate best practices for extension methods; and</li>
+<li>Demonstrate innovation and evolution of the familiar core libraries.</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>It is not a goal to use Lambda in every possible place it could be used,
+nor will the scope extend beyond core libraries. For example, client,
+XML, and CORBA are not covered by this effort.</p>
+<p>Very little new functionality will be added to the core classes with this
+enhancement -- only new ways of doing familiar tasks.</p>
+<p>There are no specific goals for the proportion of APIs that are upgraded
+to use Lambda, that is, nothing like "we will add Lambda to xx% of the
+library."</p>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>Success will be evaluated based upon the degree to which the new APIs and
+features are adopted by developers. For complete success use of the Lambda
+features will become the default idiom for using the core libraries by Java
+developers.</p>
+<h2 id="Motivation">Motivation</h2>
+<blockquote>
+<p>"Language design is library design.<br />
+Library design is language design." -- Andrew R. Koenig</p>
+</blockquote>
+<p>Java 8 will include a new language feature called Lambda. Having this feature
+in the language is useful, but with just language changes for Lambda, the
+platform is incomplete. It will make the platform much more valuable to have
+Lambda support added to appropriate areas of the library API.</p>
+<p>In the past several years, a variety of new programming languages have emerged
+and are gaining popularity. Most of these languages have some kind of block,
+closure, or first-class function construct. While Java is still the
+<a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">#1 programming language</a>, the common view is that it hasn't kept up with
+recent developments in programming languages. This is well recognized as a
+motivation for the Lambda language feature itself. However, it's also necessary
+to consider library APIs that support the use of Lambda. The alternative
+languages all have libraries, and their APIs are tuned to work well -- smoothly
+and idiomatically -- with the closures or function objects provided by the
+language.</p>
+<p>Similarly, with Java, we expect that as time progresses the use of Lambda will
+become widespread and various coding idioms will develop around this feature.
+The Java library APIs will need to be enhanced to support idiomatic usage with
+Lambda alongside their current, conventional usage.</p>
+<h2 id="Description">Description</h2>
+<p>This project has two phases:</p>
+<ol>
+<li>
+<p>A survey phase to identify candidates for Lambda API enhancements; and</p>
+</li>
+<li>
+<p>A scoping and implementation phase to prioritize and select a subset of the
+candidates and to implement them.</p>
+</li>
+</ol>
+<h3 id="Candidate-Survey">Candidate Survey</h3>
+<p>There are several approaches to discovering candidate sites for adding
+Lambda-based APIs. One approach is to examine other systems with similar
+language features and to look at their libraries and see how they use closures
+and functions.</p>
+<p>Consider Ruby for instance. The Ruby language supports a  variety of first
+class function-like constructs. These are useful in and of themselves, in that
+they enable programmers to use a functional style of programming, to create
+higher order functions, to compose functions, etc. In addition, since the Ruby
+class library was developed along with a language that supports first-class
+functions, many APIs in the class library make use of them. We can look through
+the <a href="http://www.ruby-doc.org/docs/ProgrammingRuby/html/index.html">Ruby class libraries</a> to find examples that we can use as inspiration
+for potential  enhancements to the Java libraries. Some of these examples from
+Ruby's  class library include the following:</p>
+<ul>
+<li>
+<p>The Integer class has <em>times</em>, <em>upto</em>, <em>downto</em>, and <em>step</em> methods that
+support a variety of arithmetic iteration constructs. This removes the
+need to have a variety of such iteration constructs defined in the
+language.</p>
+</li>
+<li>
+<p>The File class has a variation of the <em>open</em> method that takes a
+block. The file is opened, passed to the block, and is closed when the
+block returns.  This helps avoid resource leaks, and it reduces the need
+to have special execute-around constructs in the language (such as Java
+7's try-with-resources construct).</p>
+</li>
+<li>
+<p>The HTTP API classes have several methods that take blocks. For example,
+the HTTPResponse class has an <em>each</em> method that calls a block that takes
+(header, value) pairs.</p>
+</li>
+<li>
+<p>In the Tk binding for Ruby, the widget creation method <em>new</em> takes a block
+that is executed in the context of the newly created widget, which
+provides a convenient and concise way of initializing the widget.</p>
+</li>
+</ul>
+<p>It's clear that there are many opportunities for using Lambda outside the
+collections classes. There is no requirement to implement Lambda-based APIs
+everywhere that Ruby does, but given Ruby's popularity and mindshare it seems
+reasonable to look to Ruby's class library for initial ideas. It might also be
+reasonable to look examine other systems, such as Groovy, Scala, Python,
+Clojure, and Smalltalk to find similar inspiration for Lambda use in  library APIs.</p>
+<p>Another approach is to look through existing Java code -- both within the
+library and outside, e.g. from the Qualitas Corpus -- and do pattern matching
+or synthesis to discover candidates. A set of techniques might be as follows:</p>
+<ul>
+<li>
+<p>Run through the APIs and add an <em>each()</em> or <em>forEach()</em> method to anything
+that plausibly contains a collection of something, or that can be iterated
+over, even if it's not a collection. For example, a <em>forEachLine()</em> method
+might be added to java.nio.file.Files that calls a Lambda for each line in
+that file.</p>
+</li>
+<li>
+<p>Look for opportunities to use the execute-around idiom. For example, files
+must be closed after use, locks must be unlocked after use, etc.</p>
+</li>
+<li>
+<p>Look for classes that implement Iterable and consider whether a Lambda would
+be useful to invert the flow of control.</p>
+</li>
+<li>
+<p>Look for for-loops and while-loops in code and consider Lambda for inverting
+the flow of control.</p>
+</li>
+<li>
+<p>Identify abstract classes with one or two abstract methods, and consider
+adding constructors or factories that takes lambdas. Also consider this
+for interfaces. The pattern is where implementation is to be "filled in"
+via overriding; consider how to convert this into passing a Lambda as a
+parameter.</p>
+</li>
+</ul>
+<h3 id="Scoping-and-Implementation">Scoping and Implementation</h3>
+<p>The resulting set of candidates will probably be too long to implement in the
+JDK 8 time frame. They will need to be prioritized and then truncated to fit
+into the available schedule, with a given set of resources (people) allocated
+to the project. Prioritization can be according to subjective importance of the
+library, but it would be good to have some usage data to back it up. For
+example, it might be useful to do a survey over the Qualitas Corpus to
+determine which areas of the library are the most heavily used.</p>
+<h3 id="Language-Design-Issues">Language Design Issues</h3>
+<p>During API development using Lambda, the following issues should be considered
+and relevant information should be fed back to the Lambda language design team.</p>
+<ol>
+<li>
+<p>Exception transparency: do you find a need to write lambda expressions
+that can throw checked exceptions? do you need extra sets of SAM types
+that have 'throws' clauses, maybe generic 'throws E'? is the result
+extremely tedious?</p>
+</li>
+<li>
+<p>Variance: Utility methods for functional interfaces will probably make
+heaver use of wildcards than anything else in the API; is this extremely
+tedious? Would it be useful to have better/less verbose variance support?</p>
+</li>
+<li>
+<p>Unboxed overriding: Would it be useful in the design of functional
+interfaces to allow primitive/void return types to override reference
+return types, such as <code>Predicate&lt;T&gt; &lt;: Function&lt;T, Boolean&gt;</code> for example?</p>
+</li>
+<li>
+<p>Abstract class functional interfaces: In the previous item about abstract
+classes for, is it the case that there are so many useful candidates that
+it would be nice to directly support abstract classes as functional
+interfaces, rather than having to manually define a subclass?</p>
+</li>
+<li>
+<p>Generic-method functional interfaces: Do you find it useful to have a
+functional interface that has a generic method, like: <code>interface MapFactory { &lt;K,V&gt; Map&lt;K,V&gt; make(); }</code>. Note the significant point here
+is that it is the <em>method</em> that is generic, not the <em>interface</em>. This is
+not currently supported; the benefit is that new type arguments can be
+inferred for every invocation, which may be useful in some applications.</p>
+</li>
+<li>
+<p>Chaining inference: In expressions like 'foo().bar(23)', the type
+arguments for 'foo' are inferred independently of the 'bar(23)' part of
+the expression.  We plan to improve the use of context in inference for
+many cases, but we're still looking for some experience that would
+justify taking it this far.</p>
+</li>
+<li>
+<p>Method reference disambiguation: Do you find a need to explicitly
+disambiguate method references (when the method is overloaded or there's
+a static/instance clash), either by writing a full signature or giving up
+and using a lambda expression instead?</p>
+</li>
+</ol>
+<h2 id="Testing">Testing</h2>
+<p>Tests will need to be developed for each new API that is added to the system.
+New APIs are largely independent of each other, so it should be simple to test
+them individually. Furthermore, the API enhancements are likely to consist
+largely of adding new methods that do not impact other APIs in the same class.
+So, testing of these new APIs should be fairly straightforward and should not
+impact existing tests that use current APIs.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>Adding an additional programming idiom increases the complexity for new users.
+If Lambda APIs are added piecemeal all over the system, they may tend to
+diverge in style. It would probably be beneficial to do a survey first and to
+develop a consistent style that is applied across the library.</p>
+<p>One point that mitigates risk is that since the API enhancements are largely
+independent of each other, it is possible to change scope without too much
+project impact. That is, consider the scope to be a prioritized list of API
+enhancements. A line will be drawn at a certain point depending upon project
+schedule and staffing. If this line needs to move for any reason, this should
+have no impact on work already done, and little replanning should be necessary
+because the items are largely independent of each other. For the same reason,
+it should also be possible to reprioritize the list without too much effort,
+should new information become available while the project is underway.</p>
+<p>Using these new APIs intermixed with the existing APIs has the prospect of
+making user code bases more complicated to maintain.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>This work depends only on the actual lambda implementation.</p>
+<p>Even this is a fairly soft dependency, as lambdas are expressed as SAMs in the
+API. It's possible to add functional-interface-based APIs even before lambda
+has been integrated, though it won't be possible for callers to use
+lambda at that point.</p>
+<h2 id="Impact">Impact</h2>
+<ul>
+<li>
+<p>JCP: These are all changes to the public API, so they will end up
+modifying JCP-controlled specifications. These change to existing core
+library classes should be small enough not to require their own JSR; they
+should be covered under the platform JSR. The new classes required
+(functional interfaces) will be designed and reviewed by the JSR 335
+EG. Of course, the appropriate review processes must all be followed.</p>
+</li>
+<li>
+<p>Other JDK components: Lambda implementation</p>
+</li>
+<li>
+<p>Compatibility: API changes are unlikely to introduce incompatibilities.</p>
+</li>
+<li>
+<p>Documentation: There will probably need to be some new tutorials to show
+how Lambda can be used with the new library constructs, or to have a
+series of small examples illustrating common usage. It may be that
+Lambdas are difficult to discern when looking through javadoc, so it
+might be useful or necessary to have some new javadoc syntax or possibly
+different javadoc output formatting to highlight in some unique way the
+APIs that use lambda. An additional possibility is to make sure that the
+javadoc for each of the new Lambda-accepting APIs includes an example of
+its use.</p>
+</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

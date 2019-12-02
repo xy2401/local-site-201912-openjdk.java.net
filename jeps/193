@@ -1,0 +1,508 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 193: Variable Handles</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 193: Variable Handles</h1><table class="head"><tr><td>Author</td><td>Doug Lea</td></tr><tr><td>Owner</td><td>Paul Sandoz</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.lang</td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>L</td></tr><tr><td>Relates to</td><td><a href="266">JEP 266: More Concurrency Updates</a></td></tr><tr><td>Reviewed by</td><td>Dave Dice, Paul Sandoz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/01/06 20:00</td></tr><tr><td>Updated</td><td>2017/08/17 16:45</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046183">8046183</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Define a standard means to invoke the equivalents of various
+<code>java.util.concurrent.atomic</code> and <code>sun.misc.Unsafe</code> operations upon
+object fields and array elements, a standard set of fence operations for
+fine-grained control of memory ordering, and a standard
+reachability-fence operation to ensure that a referenced object remains
+strongly reachable.</p>
+<h2 id="Goals">Goals</h2>
+<p>The following are required goals:</p>
+<ul>
+<li>
+<p>Safety. It must not be possible to place the Java Virtual Machine in a
+corrupt memory state.  For example, a field of an object can only be updated
+with instances that are castable to the field type, or an array element can
+only be accessed within an array if the array index is within the array
+bounds.</p>
+</li>
+<li>
+<p>Integrity. Access to a field of an object follows the same access rules as
+with <code>getfield</code> and <code>putfield</code> byte codes in addition to the constraint that
+a <code>final</code> field of an object cannot be updated.  (Note: such safety and
+integrity rules also apply to <code>MethodHandles</code> giving read or write access to
+a field.)</p>
+</li>
+<li>
+<p>Performance. The performance characteristics must be the same as or similar
+to equivalent <code>sun.misc.Unsafe</code> operations (specifically, generated
+assembler code should be almost identical modulo certain safety checks that
+cannot be folded away).</p>
+</li>
+<li>
+<p>Usability. The API must be better than the <code>sun.misc.Unsafe</code> API.</p>
+</li>
+</ul>
+<p>It is desirable, but not required, that the API be as good as the
+<code>java.util.concurrent.atomic</code> API.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>As concurrent and parallel programming in Java continue to expand, programmers
+are increasingly frustrated by not being able to use Java constructs to arrange
+atomic or ordered operations on the fields of individual classes; for example,
+atomically incrementing a <code>count</code> field.  Until now the only ways to achieve
+these effects were to use a stand-alone <code>AtomicInteger</code> (adding both space
+overhead and additional concurrency issues to manage indirection) or, in some
+situations, to use atomic <code>FieldUpdater</code>s (often encountering more overhead
+than the operation itself), or to use the unsafe (and unportable and
+unsupported) <code>sun.misc.Unsafe</code> API for JVM intrinsics.  Intrinsics are faster,
+so they have become widely used, to the detriment of safety and portability.</p>
+<p>Without this JEP, these problems are expected to become worse as atomic APIs
+expand to cover additional access-consistency policies (aligned with the recent
+C++11 memory model) as part of Java Memory Model revisions.</p>
+<h2 id="Description">Description</h2>
+<p>A variable handle is a typed reference to a variable, which supports read and
+write access to the variable under a variety of access modes.  Supported
+variable kinds include instance fields, static fields and array elements.  Other
+variable kinds are being considered and may be supported such as array views,
+viewing a byte or char array as a long array, and locations in off-heap regions
+described by <code>ByteBuffer</code>s.</p>
+<p>Variable handles require library enhancements, JVM enhancements, and
+compiler support.  Additionally, it requires minor updates to the Java Language
+Specification and the Java Virtual Machine Specification.  Minor language
+enhancements, that enhance compile-time type checking and complement existing
+syntax, are also considered.</p>
+<p>The resulting specifications are expected to be extensible in natural ways to
+additional primitive-like value types or additional array-like types, if they
+are ever added to Java.  This is not, however, a general-purpose transaction
+mechanism for controlling accesses and updates to multiple variables.
+Alternative forms for expressing and implementing such constructs may be
+explored in the course of this JEP, and may be the subject of further JEPs.</p>
+<p>Variable handles are modelled by a single abstract class,
+<code>java.lang.invoke.VarHandle</code>, where each variable access mode is
+represented by a <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/MethodHandle.html#sigpoly">signature-polymorphic</a> method.</p>
+<p>The set of access modes represents a minimal viable set and are designed to be
+compatible with C/C++11 atomics without depending on a revised update to the
+Java Memory Model.  Additional access modes will be added if required.  Some
+access modes may not be applicable for certain variable types and, if so, when
+invoked on an associated <code>VarHandle</code> instance will throw an
+<code>UnsupportedOperationException</code>.</p>
+<p>The access modes are grouped into the following categories:</p>
+<ol>
+<li>
+<p>read access modes, such as reading a variable with volatile memory
+ordering effects;</p>
+</li>
+<li>
+<p>write access modes, such as updating a variable with release memory
+ordering effects;</p>
+</li>
+<li>
+<p>atomic update access modes, such as a compare-and-set on a variable
+with volatile memory order effects for both read and writing;</p>
+</li>
+<li>
+<p>numeric atomic update access modes, such as get-and-add with plain
+memory order effects for writing and acquire memory order effects
+for reading.</p>
+</li>
+<li>
+<p>bitwise atomic update access modes, such as get-and-bitwise-and
+with release memory order effects for writing and plain memory
+order effects for reading.</p>
+</li>
+</ol>
+<p>The later three categories are commonly referred to as read-modify-write
+modes.</p>
+<p>The signature-polymorphic characteristic of the access mode methods enables
+variable handles to support many variable kinds and variable types using just
+one abstract class.  This avoids an explosion of variable kind and type-specific
+classes.  Furthermore, even though the access mode method signatures are
+declared as a variable argument array of <code>Object</code>, such signature-polymorphic
+characteristics ensure there will be no boxing of primitive value arguments and
+no packing of arguments into an array.  This enables predictable behaviour and
+performance at runtime for the HotSpot interpreter and C1/C2 compilers.</p>
+<p>Methods to create <code>VarHandle</code> instances are located in the same area as that to
+produce <code>MethodHandle</code> instances which access equivalent or similar variable
+kinds.</p>
+<p>Methods to create <code>VarHandle</code> instances for instance and static field variable
+kinds are located in <code>java.lang.invoke.MethodHandles.Lookup</code> and are created
+by a process of looking up the field within the associated receiving class.
+For example, such lookup to obtain a <code>VarHandle</code> for a field named <code>i</code> of type
+<code>int</code> on a receiver class <code>Foo</code> might be performed as follows:</p>
+<pre><code>class Foo {
+    int i;
+
+    ...
+}
+
+...
+
+class Bar {
+    static final VarHandle VH_FOO_FIELD_I;
+
+    static {
+        try {
+            VH_FOO_FIELD_I = MethodHandles.lookup().
+                in(Foo.class).
+                findVarHandle(Foo.class, "i", int.class);
+        } catch (Exception e) {
+            throw new Error(e);
+        }
+    }
+}</code></pre>
+<p>The lookup of a <code>VarHandle</code> that accesses a field will, before producing and
+returning the <code>VarHandle</code>, perform the exact same access control checks (on
+behalf of the lookup class) as those performed by the lookup up of a
+<code>MethodHandle</code> that gives read and write access to that same field (see the
+<code>find{,Static}{Getter,Setter}</code> methods in the <code>MethodHandles.Lookup</code> class).</p>
+<p>Access mode methods will throw <code>UnsupportedOperationException</code> when invoked
+under the following conditions:</p>
+<ul>
+<li>
+<p>Write access mode methods for a <code>VarHandle</code> to a final field.</p>
+</li>
+<li>
+<p>Numeric-based access mode methods (<code>getAndAdd</code> and <code>addAndGet</code>) for a
+reference variable type or a non-numeric type (such as <code>boolean</code>).</p>
+</li>
+<li>
+<p>Bitwise-based access mode methods for a reference variable type or
+the <code>float</code> and <code>double</code> types (the latter restriction may be removed
+in a future revision)</p>
+</li>
+</ul>
+<p>A field need not be marked as <code>volatile</code> for an associated <code>VarHandle</code> to
+perform volatile access.  In effect, the <code>volatile</code> modifier, if present, is
+ignored.  This is different to the behaviour of
+<code>java.util.concurrent.atomic.Atomic{Int, Long, Reference}FieldUpdater</code> where
+corresponding fields have to be marked as volatile.  This can be too restrictive
+in certain cases where it is known certain volatile accesses are not always
+required.</p>
+<p>Methods to create <code>VarHandle</code> instances for array-based variable types are
+located in <code>java.lang.invoke.MethodHandles</code> (see the
+<code>arrayElement{Getter, Setter}</code> methods in the <code>MethodHandles</code> class).  For
+example, a <code>VarHandle</code> to an array of <code>int</code> may be created as follows:</p>
+<pre><code>VarHandle intArrayHandle = MethodHandles.arrayElementVarHandle(int[].class);</code></pre>
+<p>Access mode methods will throw <code>UnsupportedOperationException</code> when invoked
+under the following conditions:</p>
+<ul>
+<li>
+<p>Numeric-based access mode methods (<code>getAndAdd</code> and <code>addAndGet</code>) for an
+array component reference variable type or a non-numeric type (such as <code>boolean</code>)</p>
+</li>
+<li>
+<p>Bitwise-based access mode methods for a reference variable type or
+the <code>float</code> and <code>double</code> types (the latter restriction may be removed
+in a future revision)</p>
+</li>
+</ul>
+<p>All primitive types and references types are supported for the variable type
+of variable kinds that are instance fields, static fields and array elements.
+Other variable kinds may support all or a subset of those types.</p>
+<p>Methods to create <code>VarHandle</code> instances for array-view-based variable types are
+also located in <code>java.lang.invoke.MethodHandles</code>.  For example, a <code>VarHandle</code>
+to view an array of <code>byte</code> as an unaligned array of <code>long</code> may be created as
+follows:</p>
+<pre><code>VarHandle longArrayViewHandle = MethodHandles.byteArrayViewVarHandle(
+        long[].class, java.nio.ByteOrder.BIG_ENDIAN);</code></pre>
+<p>Although similar mechanisms can be achieved using <code>java.nio.ByteBuffer</code>, it
+requires that a <code>ByteBuffer</code> instance be created wrapping a <code>byte</code> array.  This
+does not always guarantee reliable performance due to the fragility of
+escape analysis and that accesses have to go through the <code>ByteBuffer</code> instance.
+In the case of unaligned access all but the plain access mode methods will
+throw <code>IllegalStateException</code>.  For aligned access certain volatile operations,
+depending on the variable type are possible.  Such <code>VarHandle</code> instances may be
+utilized to vectorize array access.</p>
+<p>The number of arguments, the argument types, and return type of access mode
+methods are governed by variable kind, the variable type and the characteristics
+of the access mode.  <code>VarHandle</code> creation methods (such as those previously
+described) will document the requirements.  For example, a <code>compareAndSet</code> on
+the previously-looked up <code>VH_FOO_FIELD_I</code> handle requires 3 arguments, an
+instance of receiver <code>Foo</code> and two <code>int</code>s for the expected and actual values:</p>
+<pre><code>Foo f = ...
+boolean r = VH_FOO_FIELD_I.compareAndSet(f, 0, 1);</code></pre>
+<p>In contrast, a <code>getAndSet</code> requires 2 arguments, an instance of receiver <code>Foo</code>
+and one <code>int</code> that is the value to be set:</p>
+<pre><code>int o = (int) VH_FOO_FIELD_I.getAndSet(f, 2);</code></pre>
+<p>Access to array elements will require an additional argument, of type <code>int</code>,
+between the receiver and value arguments (if any), that corresponds to the array
+index of the element to be operated upon.</p>
+<p>For predictable behaviour and performance at runtime <code>VarHandle</code> instances
+should be held in static final fields (as required for instances of
+<code>Atomic{Int, Long, Reference}FieldUpdater)</code>.  This ensures that constant folding
+will occur for access mode method invocations, such as folding away method
+signature checks and/or argument cast checks.</p>
+<blockquote>
+<p>Note: Future HotSpot enhancements might support constant folding for
+<code>VarHandle</code>, or <code>MethodHandle</code>, instances held in non-static final fields,
+method arguments, or local variables.</p>
+</blockquote>
+<p>A <code>MethodHandle</code> may be produced for a <code>VarHandle</code> access mode method by using
+<code>MethodHandles.Lookup.findVirtual</code>.  For example, to produce a <code>MethodHandle</code>
+to the "compareAndSet" access mode for a particular variable kind and type:</p>
+<pre><code>Foo f = ...
+MethodHandle mhToVhCompareAndSet = MethodHandles.publicLookup().findVirtual(
+        VarHandle.class,
+        "compareAndSet",
+        MethodType.methodType(boolean.class, Foo.class, int.class, int.class));</code></pre>
+<p>The <code>MethodHandle</code> can then be invoked with a variable kind and type compatible
+<code>VarHandle</code> instance as the first parameter:</p>
+<pre><code>boolean r = (boolean) mhToVhCompareAndSet.invokeExact(VH_FOO_FIELD_I, f, 0, 1);</code></pre>
+<p>Or <code>mhToVhCompareAndSet</code> can be bound to the <code>VarHandle</code> instance and then
+invoked:</p>
+<pre><code>MethodHandle mhToBoundVhCompareAndSet = mhToVhCompareAndSet
+        .bindTo(VH_FOO_FIELD_I);
+boolean r = (boolean) mhToBoundVhCompareAndSet.invokeExact(f, 0, 1);</code></pre>
+<p>Such a <code>MethodHandle</code> lookup using <code>findVirtual</code> will perform an <code>asType</code> transformation
+to adjust arguments and return values.  The behaviour is equivalent to a <code>MethodHandle</code>
+produced using <code>MethodHandles.varHandleInvoker</code>, the analog of MethodHandles.invoker`:</p>
+<pre><code>MethodHandle mhToVhCompareAndSet = MethodHandles.varHandleExactInvoker(
+        VarHandle.AccessMode.COMPARE_AND_SET,
+        MethodType.methodType(boolean.class, Foo.class, int.class, int.class));
+
+boolean r = (boolean) mhToVhCompareAndSet.invokeExact(VH_FOO_FIELD_I, f, 0, 1);</code></pre>
+<p>Thus a <code>VarHandle</code> may be used in erased or reflective scenarios by a
+wrapping class, for example replacing the <code>Unsafe</code> usages within the
+<code>java.util.concurrent.Atomic*FieldUpdater/Atomic*Array</code> classes.
+(Although further work is required such that the updaters are granted
+access to the look up fields in the declaring class.)</p>
+<p>The source compilation of an access mode method invocation will follow the same
+rules as for signature-polymorphic method invocation to
+<code>MethodHandle.invokeExact</code> and  <code>MethodHandle.invoke</code>.  The following additions
+will be required to the Java Language Specification:</p>
+<ol>
+<li>Make reference to the signature-polymorphic access mode methods in the
+<code>VarHandle</code> class.</li>
+<li>Allow signature-polymorphic methods to return types other than Object,
+indicating that the return type is not polymorphic (and would otherwise be
+declared via a cast at the call site).  This makes it easier invoke
+write-based access methods that return void and invoke <code>compareAndSet</code> that
+returns a <code>boolean</code> value.</li>
+</ol>
+<p>It would be desirable, but not a requirement, that source compilation of a
+signature-polymorphic method invocation be enhanced to perform target typing of
+the polymorphic return type such that an explicit cast is not required.</p>
+<blockquote>
+<p>Note: a syntax and runtime support for looking up a <code>MethodHandle</code> or a
+<code>VarHandle</code> leveraging the syntax of method references, such as
+<code>VarHandle VH_FOO_FIELD_I = Foo::i</code> is desirable but not in scope for this JEP.</p>
+</blockquote>
+<p>The runtime invocation of an access mode method invocation will follow similar
+rules as for signature-polymorphic method invocation to
+<code>MethodHandle.invokeExact</code> and  <code>MethodHandle.invoke</code>.  The following additions
+will be required to the Java Virtual Machine Specification:</p>
+<ol>
+<li>Make reference to the signature-polymorphic access mode methods in the
+<code>VarHandle</code> class.</li>
+<li>Specify <code>invokevirtual</code> byte code behaviour of invocation to access mode
+signature-polymorphic methods.  It is anticipated that such behaviour can
+be specified by defining a transformation from the access mode method
+invocation to a <code>MethodHandle</code> which is then invoked using <code>invokeExact</code>
+with the same parameters (see previous use of
+<code>MethodHandles.Lookup.findVirtual</code>).</li>
+</ol>
+<p>It is important that the <code>VarHandle</code> implementations for the supported variable
+kinds, types and access modes are reliably efficient and meet the performance
+goals.  Leveraging signature-polymorphic methods helps in terms of avoiding
+boxing and array packing.  Implementations will:</p>
+<ul>
+<li>
+<p>Reside in the <code>java.lang.invoke</code> package where HotSpot treats final fields
+of classes in that package as really final, which enables constant folding
+when the <code>VarHandle</code> itself is referenced in a static final field;</p>
+</li>
+<li>
+<p>Leverage the JDK internal annotations <code>@Stable</code> for constant folding of
+values that change only once, and <code>@ForceInline</code> to ensure methods get
+inlined even if normal inlining thresholds are reached; and</p>
+</li>
+<li>
+<p>Use <code>sun.misc.Unsafe</code> for underlying enhanced volatile access.</p>
+</li>
+</ul>
+<p>A couple of HotSpot intrinsics are necessary, some of which are enumerated as
+follows:</p>
+<ul>
+<li>An intrinsic for <code>Class.cast</code>, which has already been added (see
+<a href="https://bugs.openjdk.java.net/browse/JDK-8054492">JDK-8054492</a>).  Before this intrinsic was added a constant
+folded <code>Class.cast</code> would leave behind  redundant checks that may cause
+unnecessary de-optimizations.</li>
+</ul>
+<ul>
+<li>
+<p>An intrinsic for an <code>acquire-get</code> access mode that can synchronize with an
+intrinsic for a <code>set-release</code> access mode (see
+<code>sun.misc.Unsafe.putOrdered{Int, Long, Object}</code>) when concurrently accessing
+variables.</p>
+</li>
+<li>
+<p>Intrinsics for array bounds checks <a href="https://bugs.openjdk.java.net/browse/JDK-8042997">JDK-8042997</a>.  Static
+methods can be added  <code>java.util.Arrays</code> that perform such checks and accept
+a function that is invoked to return an exception to be thrown or string
+message, to be included in an exception to be thrown, if the check fails.
+Such intrinsics enable better comparisons using unsigned values (since an
+array length is always positive) and better hoisting of range checks outside
+of unrolled loops over the array elements.</p>
+</li>
+</ul>
+<p>In addition further improvements to range checks by HotSpot have been
+implemented (<a href="https://bugs.openjdk.java.net/browse/JDK-8073480">JDK-8073480</a>) or are needed (<a href="https://bugs.openjdk.java.net/browse/JDK-8003585">JDK-8003585</a>
+to strength reduce range checks in say the fork/join framework or in say
+<code>HashMap</code> or <code>ConcurrentHashMap</code>).</p>
+<p>The <code>VarHandle</code> implementations should have minimal dependencies on other
+classes within the <code>java.lang.invoke</code> package to avoid increasing startup time
+and to avoid cyclic dependencies occurring during static initialization.  For
+example, <code>ConcurrentHashMap</code> is used by such classes and if <code>ConcurrentHashMap</code>
+is modified to use <code>VarHandles</code> it needs to be ensured no cyclic dependencies
+are introduced.  Other more subtle cycles are possible with the use of
+<code>ThreadLocalRandom</code> and its use of <code>AtomicInteger</code>.  It is also is
+desirable that the C2 HotSpot compilation time is not unduly increased
+for methods containing <code>VarHandle</code> method invocations.</p>
+<h3 id="Memory-fences">Memory fences</h3>
+<p>Fenced operations are defined as static methods on the <code>VarHandle</code> class and represents a minimal
+viable set for fine grained control of memory ordering.</p>
+<pre><code>/**
+    * Ensures that loads and stores before the fence will not be
+    * reordered with loads and stores after the fence.
+    *
+    * @apiNote Ignoring the many semantic differences from C and
+    * C++, this method has memory ordering effects compatible with
+    * atomic_thread_fence(memory_order_seq_cst)
+    */
+   public static void fullFence() {}
+
+   /**
+    * Ensures that loads before the fence will not be reordered with
+    * loads and stores after the fence.
+    *
+    * @apiNote Ignoring the many semantic differences from C and
+    * C++, this method has memory ordering effects compatible with
+    * atomic_thread_fence(memory_order_acquire)
+    */
+   public static void acquireFence() {}
+
+   /**
+    * Ensures that loads and stores before the fence will not be
+    * reordered with stores after the fence.
+    *
+    * @apiNote Ignoring the many semantic differences from C and
+    * C++, this method has memory ordering effects compatible with
+    * atomic_thread_fence(memory_order_release)
+    */
+   public static void releaseFence() {}
+
+   /**
+    * Ensures that loads before the fence will not be reordered with
+    * loads after the fence.
+    */
+   public static void loadLoadFence() {}
+
+   /**
+    * Ensures that stores before the fence will not be reordered with
+    * stores after the fence.
+    */
+   public static void storeStoreFence() {}</code></pre>
+<p>A full fence is stronger (in terms of ordering guarantees) than an acquire fence
+which is stronger than a load load fence.  Likewise a full fence is stronger than
+a release fence which is stronger than a store store fence.</p>
+<h3 id="Reachability-fence">Reachability fence</h3>
+<p>The reachability fence is defined as a static method on
+<code>java.lang.ref.Reference</code>:</p>
+<pre><code>class java.lang.ref.Reference {
+   // add:
+
+   /**
+    * Ensures that the object referenced by the given reference
+    * remains &lt;em&gt;strongly reachable&lt;/em&gt; (as defined in the {@link
+    * java.lang.ref} package documentation), regardless of any prior
+    * actions of the program that might otherwise cause the object to
+    * become unreachable; thus, the referenced object is not
+    * reclaimable by garbage collection at least until after the
+    * invocation of this method. Invocation of this method does not
+    * itself initiate garbage collection or finalization.
+    *
+    * @param ref the reference. If null, this method has no effect.
+    */
+   public static void reachabilityFence(Object ref) {}
+
+}</code></pre>
+<p>See <a href="https://bugs.openjdk.java.net/browse/JDK-8133348">JDK-8133348</a>.</p>
+<p>It is currently out of scope to provide an annotation, <code>@Finalized</code> say, to
+be declared on a method, which at either compile or runtime results in as if the
+method body was wrapped as follows:</p>
+<pre><code>try {
+    &lt;method body&gt;
+} finally {
+    Reference.reachabilityFence(this);
+}</code></pre>
+<p>It is anticipated that such functionality could be supported by a compile-time
+annotation processor.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Introducing new forms of "value type" were considered that support volatile
+operations.  However, this would be inconsistent with properties of other types,
+and would also require more effort for programmers to use.   Reliance upon
+<code>java.util.concurrent.atomic</code> <code>FieldUpdater</code>s was also considered, but their
+dynamic overhead and usage limitations make them unsuitable.</p>
+<p>Several other alternatives, including those based on field references, have been
+raised and dismissed as unworkable on syntactic, efficiency, and/or usability
+grounds over the many years that these issues have been discussed.</p>
+<p>Syntax enhancements were considered in a previous version of this JEP but were
+deemed too "magical", with the overloaded use of the <code>volatile</code> keyword scoping
+to floating interfaces, one for references and one for each supported primitive
+type.</p>
+<p>Generic types extending from <code>VarHandle</code> were considered in a previous version
+of this JEP but such an addition, with enhanced polymorphic signatures for
+generic types and special treatment of boxed type variables, was considered
+immature given a future Java release with value types and generics over
+primitives with <a href="//openjdk.java.net/jeps/218">JEP 218</a>, and improved arrays with
+<a href="//cr.openjdk.java.net/~jrose/pres/201207-Arrays-2.pdf">Arrays 2.0</a>.</p>
+<p>An implementation-specific <code>invokedynamic</code> approach was also considered in a
+previous version of this JEP.  This required that compiled method calls with
+and without <code>invokedynamic</code> were carefully aligned to be the same in terms of
+semantics.  In addition the use of <code>invokedynamic</code> in core classes such as say
+<code>ConcurrentHashMap</code> will result in cyclic dependencies.</p>
+<h2 id="Testing">Testing</h2>
+<p>Stress tests will be developed using the <a href="//openjdk.java.net/projects/code-tools/jcstress/">jcstress</a> harness.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>A prototype implementation of <code>VarHandle</code> has been performance-tested with
+nano-benchmarks and fork/join benchmarks, where the fork/join library's use of
+<code>sun.misc.Unsafe</code> was replaced with <code>VarHandle</code>.  No major performance issues
+have been observed so far, and the HotSpot compiler issues identified do not
+seem onerous (folding cast checks and improving array bounds checks).  We are
+therefore confident of the feasibility  of this approach.  However, we expect
+that it will require more experimentation to ensure the compilation techniques
+are reliable in the performance-critical contexts where these constructs are
+most often needed.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>The classes in <code>java.util.concurrent</code> (and other areas identified in the
+JDK) will be migrated from <code>sun.misc.Unsafe</code> to <code>VarHandle</code>.</p>
+<p>This JEP does <em>not</em> depend on <a href="//openjdk.java.net/jeps/188">JEP 188: Java Memory Model Update</a>.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

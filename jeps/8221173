@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Elastic Metaspace</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Elastic Metaspace</h1><table class="head"><tr><td>Owner</td><td>Thomas Stuefe</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;runtime</td></tr><tr><td>Created</td><td>2019/03/20 18:22</td></tr><tr><td>Updated</td><td>2019/11/27 08:31</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8221173">8221173</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Promptly return unused Metaspace memory to the Operating System and reduce Metaspace memory footprint.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>A more elastic Metaspace</li>
+<li>Reduced Metaspace memory footprint</li>
+<li>A cleaner implementation which is cheaper to maintain</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>Getting rid of the class space.</li>
+<li>Changing the way Metaspace is allocated (caller code should not have to change)</li>
+<li>Changing the life cycle of Metaspace objects</li>
+</ul>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<ul>
+<li>
+<p>Metaspace shall recover from allocation spikes much more readily: we should see a significant reduction in unused-but-committed memory after Metaspace memory is released.</p>
+</li>
+<li>
+<p>In scenarios not involving class unloading we should see a small to moderate decrease in committed Metaspace. Under no circumstances should we require more Metaspace.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<h2 id="Preface">Preface</h2>
+<p>Class metadata live in non-java-heap, native memory. Their lifetime is bound to that of the loading class loader.</p>
+<p>At the lowest level, memory is reserved from the OS, piecemeal committed and handed out in chunks of varying (larger) sizes to the class loader. From that point on, these chunks are owned by the class loader. From them the class loader does simple pointer bump allocation to serve metadata allocation requests.</p>
+<p>If the current chunk is exhausted - its leftover space too small to serve an incoming metadata allocation - a new chunk is handed to the class loader and allocation continues from that new chunk. The current chunk is "retired" and the leftover space squirreled away for possible later reuse.</p>
+<p>When the class loader is unloaded the metaspace it accumulated over its lifetime can be freed: all its chunks are returned to the Metaspace allocator. They are added to a freelist and may be reused for future class loading. It is attempted to return memory to the OS; however, this heavily depends on Metaspace fragmentation and rarely works.</p>
+<h2 id="Goal:-make-Metaspace-more-elastic">Goal: make Metaspace more elastic</h2>
+<p>Allocating memory for class metadata from Metaspace incurs overhead. With the current Metaspace allocator the overhead-to-payload ratio can get excessive.</p>
+<p>Two waste areas stick out:</p>
+<p><em>Waste in free lists</em></p>
+<p>The size of the free lists can get very excessive. We have seen ratios of up to 70% waste (70% of committed Metaspace memory idling in free lists) after class unloading. Even though there is a mechanism in place to reclaim free metaspace memory and return it to the OS, it is largely ineffective and easily defeated by metaspace fragmentation. Metaspace fragmentation in this case means interleaved placement of chunks from class loaders which have different life spans.</p>
+<p><em>Intra-chunk waste for active allocations</em></p>
+<p>Class loaders get assigned a chunk of Metaspace memory; they allocate from it via pointer-bump allocation. Typically, at some point the class loader will stop loading classes and has no further need for Metaspace memory; the remaining space in its current chunk is wasted.</p>
+<p>Space wasted this way typically amounts to about 5-20% of committed Metaspace. Note that the more small class loaders exist - loaders only loading few or a single class each - the higher this percentage becomes. Typical examples include loaders for Reflection delegator classes and for hidden classes backing Lambdas.</p>
+<p>A second waste point is leftover space in retired chunks: when the free space left in a chunk is too small to satisfy an allocation, the class loader requests a new chunk; an attempt is made to reuse the leftover space of the old chunk, but often fails.</p>
+<p>Space wasted this way typically amounts to about 1-3% of committed Metaspace.</p>
+<h2 id="Description">Description</h2>
+<p>We propose the following implementation changes (which are already implemented as a prototype [1]):</p>
+<h2 id="A-Commit-chunks-on-demand-and-uncommit-free-chunks">A) Commit chunks on demand and uncommit free chunks</h2>
+<p>Currently memory is committed up-front, in a coarse-grained fashion, in the lowest allocation layer. A chunk is living in completely committed memory and remains so for its whole life time, regardless whether it is in use or not.</p>
+<h3 id="Proposal">Proposal</h3>
+<p>Chunks shall be individually committable (also in parts where it makes sense) and uncommittable. Chunks in free lists should be uncommitted and would not count towards the working set size of the VM process.</p>
+<p>Chunks in use by a class loader could be committed lazily and in parts. That way large chunks can get handed to class loaders but the full price would not have to be paid up front.</p>
+<h3 id="Commit-granules">Commit granules</h3>
+<p>Where today Metaspace is committed bottom-to-top with a high water mark, in this proposal the Metaspace would become "checkered", consisting of committed and uncommitted ranges.</p>
+<p>A consideration is fragmentation of virtual memory resulting from this. In order to keep virtual memory fragmentation at bay, memory needs to be committed and uncommitted in a sufficiently coarse - and tunable - granularity.</p>
+<p>This JEP proposes to section the Metaspace memory into homogeneous units for the purpose of committing and uncommitting ("commit granules"). A commit granule can only be committed and uncommitted as a whole. The underlying mapped region shall keep track of the commit state of the granules it contains. Upper layers can request committing and uncommitting ranges of commit granules.</p>
+<p>The size of these commit granules shall be tunable and by default large enough to keep virtual memory fragmentation manageable.</p>
+<h2 id="B-Replace-hard-wired-chunk-geometry-with-a-buddy-allocation-scheme">B) Replace hard-wired chunk geometry with a buddy allocation scheme</h2>
+<p>The current chunk allocation scheme knows three kinds of chunks, sized 1K/4K/64K respectively, and so-called humongous chunks which are individually sized and larger than 64K. Since JDK-8198423 chunks can be combined and split (e.g. 16 4K chunks can form one 64K chunk).</p>
+<p>The current allocation scheme has a number of disadvantages:</p>
+<ul>
+<li>
+<p>Ideally, upon returning a chunk to the free list, the chunk would be combined with free neighbors as much as possible to form large contiguous free memory ranges which then could get uncommitted. However, due to the odd chunk geometry, this remains difficult even after JDK-8198423.</p>
+</li>
+<li>
+<p>Since there are only three chunk sizes to choose from (disregarding humongous chunks) there is a higher chance of intra-chunk waste. For example, a class loader needing to store a data item of 5K size will require a 64K chunk.</p>
+</li>
+<li>
+<p>Chunks have headers, and these headers precede the chunk payload area. They must be present even if the chunk is in a free list. Hence, the page containing the chunk header cannot be uncommitted. This means even if we were to uncommit chunk payload areas, they always would be preceded by a single committed page, increasing virtual memory fragmentation and wasting memory.</p>
+</li>
+</ul>
+<h3 id="Proposal:">Proposal:</h3>
+<p><em>Replace the current scheme with a power-2-based buddy allocator.</em></p>
+<p>In the buddy allocator scheme, chunks are sized in power-of-two steps from a minimum size up to a maximum size (these chunk sizes apply to both class and non-class space).</p>
+<p>The maximum chunk size shall be large enough to serve any possible Metaspace allocation ("root chunk"). The memory range of a VirtualSpaceNode would consist of a series of n root chunks. Its borders would be aligned to root chunk size.</p>
+<p>The minimum chunk size shall be small enough to house the majority of InstanceKlass instances in class space (1K for a 64bit VM).</p>
+<p><em>Remove humongous chunks:</em> Since root chunks would be large enough for the largest possible metadata allocation, and chunks can get committed on demand, there is no need for humongous chunks anymore. That significantly reduces code complexity.</p>
+<p><em>Split chunk headers from payload:</em> chunk headers are to be housed in a separate chunk header pool. Separating chunk headers from their chunks would mean chunks could get fully uncommitted without affecting the headers. Two neighboring uncommitted chunks would then form a single contiguous memory mapping on the OS layer, reducing virtual memory fragmentation.</p>
+<p><em>Let Chunks grow in place if possible:</em> in a power-2 buddy allocation scheme, chunks have a good chance to grow in place if they are too small to house a new Metaspace allocation: if the chunk is followed by an empty buddy chunk, they can be fused to one chunk.</p>
+<p>Advantages:</p>
+<ul>
+<li>
+<p>Much better defragmentation, also in long running VMs with many class load/unload cycles. More efficient coalescation of free chunks, allowing for larger contiguous memory ranges. Together with the separation of chunk headers from their payload this is a good preparation for uncommitting larger memory areas while keeping virtual memory fragmentation to a minimum.</p>
+</li>
+<li>
+<p>More chunk sizes to choose from would result in less intrachunk waste. The fact that chunks can grow in place is a nice bonus.</p>
+</li>
+<li>
+<p>Code clarity: the buddy allocator is a simple standard algorithm which is well known and understood. This improves maintainability. It is also cheap to implement.</p>
+</li>
+</ul>
+<h2 id="Example:-stepping-through-memory-allocation">Example: stepping through memory allocation</h2>
+<p>Given the new allocation scheme, allocation requires the following steps (leaving out small details like handling of leftover space from retired chunks):</p>
+<ul>
+<li>
+<p>A class loader requests n words of Metaspace memory.</p>
+</li>
+<li>
+<p>The loader attempts to allocate from its current chunk via pointer-bump. This may lead to committing memory if the allocation spans the boundary of an uncommitted commit granule. If committing memory fails (hitting limit or GC threshold), allocation fails.</p>
+</li>
+<li>
+<p>If the chunk is too small to house the allocation, first an attempt is made to grow it in-place by fusing it with its buddy chunk, if that buddy chunk happens to be free.</p>
+</li>
+<li>
+<p>Failing that, an attempt is made to take a new chunk from the global free lists.</p>
+</li>
+<li>
+<p>If only a larger chunk is available in the global free lists, it is taken from its corresponding list and split in power-of-two-steps to produce the desired output chunk. The resulting splinter chunks are re-added to their corresponding freelist.</p>
+</li>
+<li>
+<p>If no free chunk is found in the free lists, a new root chunk is retrieved from the underlying memory region. Note that this chunk does not necessarily have to be committed. Again, this chunk is split in buddy style fashion to produce the result chunk, and any splinter chunks are added to the free list.</p>
+</li>
+</ul>
+<h2 id="Example:-bulk-deallocation">Example: bulk-deallocation</h2>
+<ul>
+<li>
+<p>A class loader is collected, its metadata to be released</p>
+</li>
+<li>
+<p>All chunks owned by this class loader are returned to the Metaspace allocator.</p>
+</li>
+<li>
+<p>For each returned chunk, an attempt is made to fuse it with its buddy chunk, should that be free. That process is repeated until a buddy chunk is encountered which is not free, or until the resulting chunk is a root chunk. The resulting chunk is put into its corresponding free list.</p>
+</li>
+<li>
+<p>Chunks surpassing a certain - tunable - size threshold will be uncommitted. Obviously, that threshold has to be a multiple of the commit granule size.</p>
+</li>
+<li>
+<p>Alternatively, or in combination with the last point, when a Metaspace is purged after a GC, free chunks larger than a given threshold can be uncommitted.</p>
+</li>
+</ul>
+<h2 id="Memory-overhead">Memory overhead</h2>
+<p>Memory overhead of the old implementation and the proposed new one - as implemented in the current prototype - is roughly equivalent and in any case very miniscule compared to the size of the Metaspace itself.</p>
+<p>A bitmap per memory region storing the state of commit granules. For a 1 GB Metaspace, this would amount to 2 KB.</p>
+<p>The buddy allocator needs to keep state. Two extra fields per chunk header are used for this, increasing chunk header size by 16 bytes. For a typical application allocating about 10000 chunks, this amounts to increase amounts to about 156KB.</p>
+<p>We do not need the Occupancy Bitmaps anymore. That reduces memory costs by 128 KB per GB Metaspace.</p>
+<h2 id="Tunable-parameters">Tunable parameters</h2>
+<ul>
+<li>Commit granule size
+<ul>
+<li>Defaults to 64K</li>
+</ul>
+</li>
+<li>Whether new root chunks should be fully committed</li>
+<li>Initial chunk commit size: to what extend new chunks given to class loaders should be committed</li>
+<li>Uncommit chunk size: size beyond which free chunks are to be uncommitted</li>
+</ul>
+<h2 id="Alternatives">Alternatives</h2>
+<p>A recurring idea popping up is to get rid of the Metaspace allocator altogether and replace it with a simple malloc() based one. A variant of that idea would be to use an existing general purpose allocator (e.g. dlmalloc()) atop of pre-allocated space.</p>
+<p>These ideas have the following drawbacks:</p>
+<ol>
+<li>
+<p>Using malloc(): we would not be able to allocate contiguous space for Compressed Class Space</p>
+</li>
+<li>
+<p>Using malloc(): we would be very dependent on the libc implementation, e.g. be subject to the process break or being limited by an inconveniently placed Java heap. The same argument goes for any other third-party allocation library we would use.</p>
+</li>
+<li>
+<p>Most importantly, a custom Metaspace allocator can be specifically geared toward Metadata allocation. Since the lifetime of Metadata is scoped to its loading class loader, we can bulk-delete it when the class loader dies and do not have to track every single allocation individually. We can also use the fact that we know the typical allocation sizes (e.g. InstanceKlass allocations will be between 512 bytes and 1 KB) to tailor the Metaspace allocator toward these sizes. Any general purpose allocator has to be efficient over a whole range of allocation sizes. The Metaspace allocator does not.</p>
+</li>
+</ol>
+<h2 id="Testing">Testing</h2>
+<p>A side effect of a new Metaspace implementation would be better isolation of sub components which makes for better testability. This will result in more and better gtests.</p>
+<p>Extensive function- and performance tests will be part of this work.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>It is assumed that the consensus is not to re-implement Metaspace in a completely different way. Were that to happen, e.g. a hypothetical switch back to PermGen-in-Java-heap or a re-implementation using platform malloc, this proposal would be moot.</p>
+<p>Should virtual memory fragmentation become an issue, the uncommit chunk size can be increased or uncommitting switched off completely. We even may monitor metaspace memory fragmentation and automatically tune the uncommit chunk size. With uncommitting shut off the behaviour is roughly comparable to the current implementation.</p>
+<p>Note however that our current prototype shows only a very modest increase in virtual memory fragmentation with the default commit granule size of 64K, so we do not expect this to be a problem.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<ul>
+<li>TBD -</li>
+</ul>
+<p>[1] See jdk/sandbox repository, "stuefe-new-metaspace-branch": http://hg.openjdk.java.net/jdk/sandbox/shortlog/b537e6386306</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

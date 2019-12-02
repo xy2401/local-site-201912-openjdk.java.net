@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 250: Store Interned Strings in CDS Archives</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 250: Store Interned Strings in CDS Archives</h1><table class="head"><tr><td>Author</td><td>Jiangli Zhou</td></tr><tr><td>Owner</td><td>Ioi Lam</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;runtime</td></tr><tr><td>Discussion</td><td>hotspot dash dev at openjdk dot java dot net</td></tr><tr><td>Relates to</td><td><a href="254">JEP 254: Compact Strings</a></td></tr><tr><td>Reviewed by</td><td>Karen Kinnear, Mikael Vidstedt</td></tr><tr><td>Endorsed by</td><td>Mikael Vidstedt</td></tr><tr><td>Created</td><td>2014/09/24 23:49</td></tr><tr><td>Updated</td><td>2018/01/08 19:37</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8059092">8059092</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Store interned strings in class-data sharing (CDS) archives.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Reduce memory consumption by sharing the <code>String</code> objects and
+underlying <code>char</code> array objects amongst different JVM processes.</p>
+</li>
+<li>
+<p>Only support shared strings for the G1 GC.  Shared strings require a
+pinned region, and G1 is the only HotSpot GC that supports pinning.</p>
+</li>
+<li>
+<p>Only support 64-bit platforms with compressed object and class
+pointers.</p>
+</li>
+<li>
+<p>No significant degradation (&lt; 2-3%) on startup time, string-lookup
+time, GC pause time, or runtime performance using the usual
+benchmarks.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>Reducing startup time is not a goal.</p>
+</li>
+<li>
+<p>Other types of GCs (besides G1) will not be supported.</p>
+</li>
+<li>
+<p>32-bit platforms will not be supported.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Currently, when CDS stores classes into the archive, the
+<code>CONSTANT_String</code> items in the constant pools are represented by UTF-8
+strings.  When the class is loaded, the UTF-8 strings are converted into
+<code>java.lang.String</code> objects on demand.  This potentially wastes memory,
+since each character in each interned string takes up three bytes or more
+(two bytes in the <code>String</code>, 1-3 bytes in the UTF-8).</p>
+<p>Also, because the strings are created dynamically, they cannot easily be
+shared across JVM processes.</p>
+<h2 id="Description">Description</h2>
+<p>At dump time, a designated string space is allocated within the Java heap
+during heap initialization.  Pointers to the interned <code>String</code> objects
+and their underlying <code>char</code>-array objects are modified, as if those objects
+are from the designated space, when writing out the interned string table
+and the <code>String</code> objects.</p>
+<p>The string table is compressed and then stored in the archive at dump
+time.  The compression technique for the string table is the same as for
+the shared symbol table (see <a href="https://bugs.openjdk.java.net/browse/JDK-8059510">JDK-8059510</a>). The regular narrow
+oop encoding and decoding is used to access the shared <code>String</code> objects
+from the compressed-string table.</p>
+<p>On 64-bit platforms with compressed oop pointers, the narrow oops are
+encoded using offsets (with or without scaling) from the narrow oop base.
+Currently there are four different encoding modes: 32-bit unscaled, zero
+based, disjoint heap based, and heap based.  Depending on the heap size
+and the heap minimum base, an appropriate encoding mode is selected.  The
+narrow-oop encoding mode (including the encoding shift) must be the same
+at both dump time and run time, so that the oop pointers within the
+shared string space remain valid at run time.  The shared-string space
+can be considered relocatable, with restrictions, at runtime.  It is not
+required to be mapped at the same address as at dump time, but it should
+be at the same offset from the narrow oop base at dump time and run time.
+The heap size is not required to be the same at dump time and run time,
+as long as the same encoding mode is used.  The offset of the string
+space and the oop-encoding mode (and shift) should be stored in the
+archive for run-time validation.  If the encoding mode changes, it will
+invalidate the encoding of the oop pointer to the <code>char</code> array from each
+shared <code>String</code>.  In such cases the shared-string data is ignored while
+the rest of the shared data can still be used by the VM.  A warning
+indicating that shared strings are not used due to incompatible GC
+configuration will be reported by the VM.</p>
+<p>At run time, the string space is mapped as part of the Java heap at the
+same offset from the oop encoding base as at dump time.  The mapping
+starts at the lowest page-aligned address of the string space saved in
+the archive.  The mapped string space contains the shared <code>String</code> and
+<code>char</code>-array objects.  All G1 regions which overlap this mapped space
+will be marked as pinned; these G1 regions are unavailable for run-time
+allocation.  There may be unused space wasted in a region that partially
+overlaps, but there should be at most one such region, at the end of the
+mapping.  No patching is required for the oop pointers within the string
+space since the same narrow oop encoding is used.  The shared-string
+space is writable, but the GC should not write to the oops in the space
+in order to preserve shareability across different processes.  An
+application that attempts to lock one of these shared strings, and thus
+writes to the shared space, will get a private copy of the page, and
+therefore lose the benefit of sharing that particular page.  Such cases
+are rare.</p>
+<p>The shared-string table is distinct from the regular string table at
+runtime.  Both tables are searched when looking up interned strings.  The
+shared-string table is a read-only table at run time; no entries can be
+added or removed from it.</p>
+<p>The G1 string-deduplication table is a separate hash table containing the
+<code>char</code> arrays for deduplication at runtime.  When a string is interned
+and added to the <code>StringTable</code>, the string is deduplicated and the
+underlying <code>char</code> array is added to the deduplication table if it is not
+there already.  The deduplication table is not stored into the archive.
+The deduplication table is populated during VM startup using the
+shared-string data.  As an optimization, the work is done in the
+<code>G1StringDedupThread</code> (in <code>G1StringDedupThread::run()</code>, after
+<code>initialize_in_thread()</code>) to reduce startup time.  The shared strings'
+hash values are precomputed and stored in the strings at dump time to
+avoid the deduplication code writing the hash values at runtime.</p>
+<h2 id="Testing">Testing</h2>
+<p>Testing for this feature will cover the following areas:</p>
+<ul>
+<li>
+<p>Basic operation of this feature;</p>
+</li>
+<li>
+<p>Modes that are incompatible with this feature, such as non-G1 GC and
+uncompressed object/class pointers;</p>
+</li>
+<li>
+<p>Variation of ordinary-object-pointer encoding between dump time and
+run time;</p>
+</li>
+<li>
+<p>Invalid string-file format;</p>
+</li>
+<li>
+<p>Selected string operations when using this feature, such as interning
+and string comparison; and</p>
+</li>
+<li>
+<p>Ensure that this feature does not cause heap corruption using GC
+diagnostic modes.</p>
+</li>
+</ul>
+<h2 id="Dependences">Dependences</h2>
+<p>The serviceability agent needs to be updated to add support for the
+shared-string table (see <a href="https://bugs.openjdk.java.net/browse/JDK-8079830">JDK-8079830</a>).</p>
+<p>With the change proposed by <a href="https://bugs.openjdk.java.net/browse/JDK-8054307">JDK-8054307</a>, the underlying <code>char</code>
+array will be changed to be a <code>byte</code> array.  The code that copies
+interned strings to the string space and perform deduplication will need
+to reflect that if and when JDK-8054307 is integrated.  The impact should
+be minimal.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 1: JDK Enhancement-Proposal &amp; Roadmap Process</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 1: JDK Enhancement-Proposal &amp; Roadmap Process</h1><table class="head"><tr><td>Owner</td><td>Mark Reinhold</td></tr><tr><td>Type</td><td>Process</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Active</td></tr><tr><td>Discussion</td><td>discuss at openjdk dot java dot net</td></tr><tr><td>Created</td><td>2011/06/23 20:00</td></tr><tr><td>Updated</td><td>2018/03/30 15:46</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046185">8046185</a></td></tr></table><div class="markdown"><blockquote>
+<p><strong>NOTE:</strong> Much of this document is superseded by the
+<a href="//cr.openjdk.java.net/~mr/jep/jep-2.0-02.html">JEP 2.0 Process Proposal</a>, in which JEPs are created
+and maintained as a custom "JEP" issue type in the
+<a href="https://bugs.openjdk.java.net">JDK Bug System</a>.  Please
+see <a href="//cr.openjdk.java.net/~mr/jep/jep-2.0-02.html">the proposal</a> for details.  That proposal will
+eventually be folded into this document.</p>
+</blockquote>
+<h2 id="Summary">Summary</h2>
+<p>This document defines a process for collecting, reviewing, sorting, and
+recording the results of proposals for enhancements to the JDK and for
+related efforts, such as process and infrastructure improvements.</p>
+<h2 id="Goals">Goals</h2>
+<p>The primary goal of this process is to produce a regularly-updated list
+of proposals to serve as the long-term Roadmap for JDK Release Projects
+and related efforts.  The Roadmap should extend at least three years into
+the future so as to allow sufficient time for the most complex proposals
+to be investigated, defined, and implemented.</p>
+<p>A secondary goal of this process is to define a uniform format and a
+central archive for enhancement proposals so that they are easy for
+all interested parties to find, read, comment upon, and contribute to.
+Proposal documents evolve as work upon them progresses so that, in the
+end, a completed proposal serves as an authoritative, though not
+necessarily self-contained, record of what was changed and why.</p>
+<p><a id="who">This process is open to every OpenJDK Committer.</a>
+Decisions about specific proposals will be made in a transparent manner
+but are ultimately up to the OpenJDK Lead.</p>
+<p><a id="jcp">This process does not in any way supplant the Java Community
+Process.</a> The JCP remains the governing body for all standard Java SE
+APIs and related interfaces.  If a proposal accepted into this process
+intends to revise existing standard interfaces, or to define new ones,
+then a parallel effort to design, review, and approve those changes must
+be undertaken in the JCP, either as part of a Maintenance Review of an
+existing JSR or in the context of a new JSR.</p>
+<h2 id="Overview">Overview</h2>
+<p>An <em>enhancement</em> is an effort to design and implement a nontrivial change
+to the JDK code base or to do some other kind of work whose goals,
+progress, and result are worth communicating broadly.  A JDK Enhancement
+Proposal (hereinafter "JEP") should be drafted for any work that meets at
+least one of the following criteria:</p>
+<ul>
+<li>
+<p>It requires two or more weeks of engineering effort,</p>
+</li>
+<li>
+<p>It makes a significant change to the JDK, or to the processes and
+infrastructure by which it is developed, or</p>
+</li>
+<li>
+<p>It is in high demand by developers or customers.</p>
+</li>
+</ul>
+<p>The <em>JDK Roadmap</em> is the list of JEPs that have been judged as candidates
+for current and future JDK Release Projects by the OpenJDK Lead.  The
+JEPs in the Roadmap are ordered according to their dependences upon other
+JEPs and their suggested start dates, if any.</p>
+<p>That a particular JEP appears in the Roadmap means only that it is the
+proposal of record from a technical perspective.  There is no guarantee
+that anyone will work on it, much less that its end result will appear
+in any JDK Release Project.</p>
+<p>It's up to individual Committers, often in consultation with their
+employing organizations, to figure out who will work on which JEPs.</p>
+<p>It's up to Group Leads, Area Leads, and the OpenJDK Lead to ascertain
+whether sufficient Committers and other Contributors have signed up to
+do all of the work required to complete a JEP so that it may considered
+to be <em>funded</em>.  This work includes not just design and implementation
+but also, as appropriate, QA test development, TCK test development,
+documentation, and any other activities that might be necessary.</p>
+<p>If a JEP defines a feature to be integrated into the JDK then, once it
+is funded, it can be targeted to a specific JDK Release Project by the
+OpenJDK Lead.</p>
+<h2 id="Making-decisions-and-building-consensus">Making decisions and building consensus</h2>
+<p>The OpenJDK Lead ultimately decides which JEPs to accept for inclusion
+into the Roadmap.  The JDK is, however, a very large and complex system;
+no one person can hope to understand every area and component in
+complete, expert-level detail.  The OpenJDK Lead therefore relies upon
+the demonstrated expertise of Reviewers, Group Leads, and Area Leads when
+evaluating incoming proposals.</p>
+<blockquote>
+<p>NOTE: "Area Lead" is not a term defined in the proposed OpenJDK
+Community Bylaws.  The Area Leads are OpenJDK Members who have
+cross-Group expertise and responsibilities.  They are appointed,
+informally, by the OpenJDK Lead.</p>
+</blockquote>
+<p>Much of the work behind a successful JEP will, then, involve building
+consensus for the proposal by convincing some Reviewers to review it and
+some Group or Area Leads to endorse it.</p>
+<p>This process does not mandate any particular method for reaching that
+goal.  It is expected, however, that the typical new proposal will start
+as an idea explored informally and shaken out within a specific Group,
+then drafted as a JEP for further review and comment, then endorsed by
+that Group's Lead and later the relevant Area Lead, and then submitted
+for acceptance by the OpenJDK Lead.  Discussions along the way will
+usually take place in e-mail, but review meetings may be useful for
+particularly large or contentious proposals.  The results of any such
+meetings should be reported to the JEP's discussion list for the record.</p>
+<p>Endorsement of a JEP by a Group or Area Lead is meant to be a reasonably
+strong statement.  It should be considered as equivalent to the statement
+"I will argue that this JEP should be funded."</p>
+<p>When a Reviewer reviews a JEP or when a Group or Area Lead endorses a JEP
+then that fact is recorded in the JEP itself.  One may consider the list
+of JEPs endorsed by a Group Lead to be the Roadmap for that Group and,
+likewise, the list of JEPs endorsed by an Area Lead to be the Roadmap for
+that Area.</p>
+<h2 id="Wacky-ideas">Wacky ideas</h2>
+<p>This process is explicitly open to aggressive, outside-the-box, and even
+completely wacky ideas.  Such ideas often require significant up-front
+research, experimentation, and socialization before they're ready to be
+proposed as enhancements to the JDK itself.  The work of refining an idea
+can be carried out in one or more exploratory research proposals.  The
+end result of a research JEP is not working code in the JDK but rather a
+documented deeper understanding of the problem being addressed and its
+solution space, hopefully with enough detail to support a concrete
+enhancement proposal.</p>
+<h2 id="Process-states">Process states</h2>
+<p>A successful JEP passes through the following states:</p>
+<ul>
+<li>
+<p>Draft --- In circulation by the author for initial review and
+consensus-building</p>
+</li>
+<li>
+<p>Posted --- Entered into the JEP Archive by the author for wider
+review</p>
+</li>
+<li>
+<p>Submitted --- Declared by the author to be ready for evaluation</p>
+</li>
+<li>
+<p>Candidate --- Accepted for inclusion in the Roadmap by the OpenJDK
+Lead</p>
+</li>
+<li>
+<p>Funded --- Judged by a Group or Area Lead to be fully funded</p>
+</li>
+<li>
+<p>Completed --- Finished and delivered</p>
+</li>
+</ul>
+<p>The author of a proposal can move it forward from Draft to Posted and
+from Posted to Submitted.  The author can also move it backward, from
+Funded to either Candidate or Posted, and from Candidate to Posted.</p>
+<p>The author of a proposal can move it from any state except Completed or
+Rejected to</p>
+<ul>
+<li>Withdrawn --- Withdrawn by the author; may be re-drafted later</li>
+</ul>
+<p>A Group Lead, an Area Lead, or the OpenJDK Lead can move a proposal from
+Candidate to Funded and from Funded to Completed.</p>
+<p>The OpenJDK Lead can move a proposal forward from Submitted to Candidate,
+and from Submitted, Candidate, or Funded to</p>
+<ul>
+<li>Rejected --- Identified as an idea that's not worth pursuing, or as
+an idea that's so unlikely to be funded that it's not
+worth maintaining in the Roadmap</li>
+</ul>
+<p>Long-lived Informational and Process JEPs, such as the JEP you are
+reading right now, can be in one additional state:</p>
+<ul>
+<li>Active -- Approved for publication by the OpenJDK Lead</li>
+</ul>
+<h2 id="Proposal-format">Proposal format</h2>
+<p>JEP documents are written in plain text, using the
+<a href="http://daringfireball.net/projects/markdown/basics">Markdown lightweight markup language</a>.  Their exact format is
+defined in <a href="https://bugs.openjdk.java.net/browse/JDK-8046186">JEP 2</a>.  A sample JEP draft is available <a href="//cr.openjdk.java.net/~mr/jep/draft-mcimadamore-inference-01.md">here</a>.</p>
+<p>Common data about a JEP is written at the top of the file in an
+RFC-822-like format.  Lines preceded with "+" are required in order to
+submit a proposal.  <a href="https://bugs.openjdk.java.net/browse/JDK-8046186">JEP 2</a> describes the header lines in detail, but
+here is a summary:</p>
+<pre><code>+Title: &lt;title&gt;
++Author: &lt;author's full name&gt;
+ Organization: &lt;employer name&gt;
++Created: YYYY/MM/DD
++Type: Feature | Research | Infrastructure | Process
+ State: &lt;see above&gt;
++Exposure: Open | Closed
++Component: &lt;area&gt;/&lt;component&gt;
++Scope: SE | JDK | Implementation
+ JSR: &lt;number, if an active JSR&gt;
+ RFE: &lt;number of primary RFE, if any&gt; (&lt;secondary RFE&gt; ...)
++Discussion: &lt;mailing-list address&gt;
+ Start: YYYY/QN
+ Depends: &lt;draft names or JEP numbers&gt;
+ Blocks: &lt;draft names or JEP numbers&gt;
+ Effort: XS | S | M | L | XL
+ Duration: XS | S | M | L | XL
++Template: 1.0</code></pre>
+<p>This line is added or amended when a Reviewer is satisfied with a JEP:</p>
+<pre><code>Reviewed-by: &lt;reviewer's full name&gt;, ...</code></pre>
+<p>This line is added or amended when a Group or Area Lead endorses a JEP:</p>
+<pre><code>Endorsed-by: &lt;endorser's full name&gt;, ...</code></pre>
+<p>This line is added when a proposal is posted:</p>
+<pre><code>JEP: &lt;number&gt;</code></pre>
+<p>A Group or Area Lead adds this line when moving a proposal to the Funded
+state:</p>
+<pre><code>Funded-by: &lt;org or individual name(s)&gt;</code></pre>
+<p>When a funded proposal describing a feature intended for a JDK Release
+Project is targeted to a specific release then the OpenJDK Lead adds this
+line:</p>
+<pre><code>Release: &lt;number&gt;</code></pre>
+<h2 id="Mechanics">Mechanics</h2>
+<p>The JEP Archive is published at
+<a href="//openjdk.java.net/jeps">http://openjdk.java.net/jeps</a>.</p>
+<p>To submit a JEP for posting send a completed <a href="2">template</a> in e-mail, as
+a text/plain attachment, to
+<a href="mailto:jep%20dash%20submit%20at%20openjdk%20dot%20java%20dot%20net">jep dash submit at openjdk dot java dot net</a>.
+An actual human will sanity-check your JEP, allocate a number for it,
+and post it to the archive.</p>
+<p>After your JEP has been posted you can update it yourself by cloning the
+JEP repository at
+<a href="//hg.openjdk.java.net/jep/jeps">http://hg.openjdk.java.net/jep/jeps</a>,
+editing its file, and committing and then pushing your changes.  When
+committing a change to an existing JEP please start the first line of the
+commit message with the unadorned JEP number followed by a colon.  When
+you push your change a server-side repository hook will update the
+affected public web pages.</p>
+<p>For example, to fix a typo in a hypothetical JEP 42:</p>
+<pre><code>$ hg clone http://hg.openjdk.java.net/jep/jeps
+destination directory: jeps
+requesting all changes
+adding changesets
+adding manifests
+adding file changes
+added 54 changesets with 60 changes to 23 files
+updating to branch default
+23 files updated, 0 files merged, 0 files removed, 0 files unresolved
+$ cd jeps
+$ emacs jep-42.md ...
+$ hg ci -m "42: Fix typo"
+$ hg push ssh://hg.openjdk.java.net/jep/jeps
+searching for changes
+remote: adding changesets
+remote: adding manifests
+remote: adding file changes
+remote: added 1 changesets with 1 changes to 1 files
+remote: snapshot taken
+remote: changes published to http://openjdk.java.net/jeps
+remote: notifying jep-changes@openjdk.java.net
+$</code></pre>
+<h2 id="Acknowledgements">Acknowledgements</h2>
+<p>Thanks to Brian Goetz, Paul Hohensee, Georges Saab, Dalibor Topic, and
+Mikael Vidstedt for comments on drafts of this document.  Acknowledgement
+is also due to the Python community, from whose <a href="http://python.org/dev/peps/pep-0001/">PEP process</a> many
+useful ideas were adopted.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 352: Non-Volatile Mapped Byte Buffers</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 352: Non-Volatile Mapped Byte Buffers</h1><table class="head"><tr><td>Owner</td><td>Andrew Dinn</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Targeted</td></tr><tr><td>Release</td><td>14</td></tr><tr><td>Component</td><td>core-libs</td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Vladimir Kozlov</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2018/07/19 15:36</td></tr><tr><td>Updated</td><td>2019/07/18 18:50</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8207851">8207851</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Add new JDK-specific file mapping modes so that the <code>FileChannel</code> API can be
+used to create <code>MappedByteBuffer</code> instances that refer to non-volatile memory.</p>
+<h2 id="Goals">Goals</h2>
+<p>This JEP proposes to upgrade <code>MappedByteBuffer</code> to support
+access to non-volatile memory (NVM). The only API change required is a
+new enumeration employed by <code>FileChannel</code> clients to request mapping of a
+file located on an NVM-backed file system rather than a conventional,
+file storage system. Recent changes to the <code>MappedByteBufer</code> API mean that
+it supports all the behaviours needed to allow direct memory updates and
+provide the durability guarantees needed for higher level, Java client
+libraries to implement persistent data types (e.g. block file systems,
+journaled logs, persistent objects, etc.). The implementations of
+<code>FileChannel</code> and <code>MappedByteBuffer</code> need revising to be aware of this new
+backing type for the mapped file.</p>
+<p>The primary goal of this JEP is to ensure that clients can access and
+update NVM from a Java program efficiently and coherently. A key element
+of this goal is to ensure that individual writes (or small groups of
+contiguous writes) to a buffer region can be committed with minimal
+overhead i.e. to ensure that any changes which might still be in cache
+are written back to memory.</p>
+<p>A second, subordinate goal is to implement this commit behaviour using
+a restricted, JDK-internal API defined in class <code>Unsafe</code>, allowing it to
+be re-used by classes other than <code>MappedByteBuffer</code> that may need to
+commit NVM.</p>
+<p>A final, related goal is to allow buffers mapped over NVM to be tracked
+by the existing monitoring and management APIs.</p>
+<p>N.B. It is already possible to map a NVM device file to a <code>MappedByteBuffer</code> and
+commit writes using the current <code>force()</code> method, for example using Intel's
+<code>libpmem</code> library as device driver or by calling out to <code>libpmem</code> as a
+native library. However, with the current API both those implementations
+provide a &#8220;sledgehammer&#8221; solution. A force cannot discriminate between
+clean and dirty lines and requires a system call or JNI call to
+implement each writeback. For both those reasons the existing capability
+fails to satisfy the efficiency requirement of this JEP.</p>
+<p>The target OS/CPU platform combinations for this JEP are Linux/x64 and Linux/AArch64. This restriction is imposed for two reasons. This feature will only work on OSes that support the <code>mmap</code> system call <code>MAP_SYNC</code> flag, which allows synchronous mapping of non-volatile memory. That is true of recent Linux releases. It will also only work on CPUs that support cache line writeback under user space control. x64 and AArch64 both provide instructions meeting this requirement.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>The goals of this JEP do not extend beyond providing access to and
+durability guarantees for NVM. In particular, it is not a goal of this
+JEP to cater for other important behaviours such as atomic update of NVM,
+isolation of readers and writers, or consistency of independently
+persisted memory states.</p>
+<p>Recent Windows/x64 releases do support the mmap <code>MAP_SYNC</code> flag. However, the goal of providing this capability for that OS/CPU combination (or any other possible other platforms) is deferred to a later update.</p>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>The efficiency goal is hard to quantify precisely. However, the cost of
+persisting data to memory should be significantly lowered relative to
+two existing alternatives. Firstly, it should significantly improve on
+the cost incurred by writing the data to conventional file storage
+synchronously, i.e., including the usual delays required to ensure that
+individual writes are guaranteed to hit disk. Secondly, the
+cost should also be significantly lower than that incurred by writing to
+NVM using a driver-based solution reliant on system calls such as <code>libpmem</code>.
+Costs might reasonably be expected to be lowered by an order of
+magnitude relative to synchronous file writes and by a factor of two
+relative to using system calls.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>NVM offers the opportunity for application programmers to create and
+update program state across program runs without incurring the
+significant copying and/or translation costs that output to and input
+from a persistent medium normally implies. This is particularly
+significant for transactional programs, where regular persistence of
+in-doubt state is required to enable crash recovery.</p>
+<p>Existing C libraries (such as Intel's <code>libpmem</code>) provide C programs with
+highly efficient access to NVM at the base level. They also build on
+this to support simple management of a variety of persistent data types.
+Currently, use of even just the base library from Java is costly because of the
+frequent need to make system calls or JNI calls to invoke the primitive
+operation which ensures memory changes are persistent. The same problem
+limits use of the higher-level libraries and is exacerbated by the fact
+that the persistent data types provided in C are allocated in memory not
+directly accessible from Java. This places Java applications and
+middleware (for example, a Java transaction manager) at a severe
+disadvantage compared with C or languages which can link into C
+libraries at low cost.</p>
+<p>This proposal attempts to remedy the first problem by allowing efficient
+writeback of NVM mapped to a <code>ByteBuffer</code>. Since <code>ByteBuffer</code>-mapped memory
+is directly accessible to Java this allows the second problem to be
+addressed by implementing client libraries equivalent to those provided
+in C to manage storage of different persistent data types.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Preliminary-Changes">Preliminary Changes</h3>
+<p>This JEP makes use of two related enhancements to the Java SE API:</p>
+<ol>
+<li>
+<p>Support implementation-defined Map Modes (<a href="https://bugs.openjdk.java.net/browse/JDK-8221397">JDK-8221397</a>)</p>
+</li>
+<li>
+<p><code>MappedByteBuffer::force</code> method to specify range
+(<a href="https://bugs.openjdk.java.net/browse/JDK-8221696">JDK-8221696</a>)</p>
+</li>
+</ol>
+<h3 id="Proposed-JDK-Specific-API-Changes">Proposed JDK-Specific API Changes</h3>
+<ol>
+<li>Expose new <code>MapMode</code> enumeration values via a public API in a new module</li>
+</ol>
+<p>A new module, <code>jdk.nio.mapmode</code>, will export a single new package of the same name. A public extension enumeration <code>ExtendedMapMode</code> will be added to this package:</p>
+<pre><code>package jdk.nio.mapmode;
+. . .
+public class ExtendedMapMode {
+    private ExtendedMapMode() { }
+
+    public static final MapMode READ_ONLY_SYNC = . . .
+    public static final MapMode READ_WRITE_SYNC = . . .
+}</code></pre>
+<p>The new enumeration values are used when calling the <code>FileChannel::map</code> method to create, respectively, a read-only or read-write <code>MappedByteBuffer</code> mapped over an NVM device file. An <code>UnsupportedOperationException</code> will be thrown if these flags are passed on platforms which do not support mapping of NVM device files. On supported platforms, it is only appropriate to pass these new values as arguments when the target <code>FileChannel</code> instance is derived from a file opened via an NVM device. In any other case an <code>IOException</code> will be thrown.</p>
+<ol start="2">
+<li>Publish a <code>BufferPoolMXBean</code> tracking persistent <code>MappedByteBuffer</code> statistics</li>
+</ol>
+<p>The <code>ManagementFactory</code> class provides method <code>List&lt;T&gt; getPlatformMXBeans(Class&lt;T&gt;)</code> which can be used to retrieve a list of <code>BufferPoolMXBean</code> instances tracking <code>count</code>, <code>total_capacity</code> and <code>memory_used</code> for the existing categories of mapped or direct byte buffers. It will be modified to return an extra, new <code>BufferPoolMXBean</code> with name <code>"mapped - 'non-volatile memory'"</code>, which will track the above stats for all <code>MappedByteBuffer</code> instances currently mapped with mode <code>ExtendedMapMode.READ_ONLY_SYNC</code> or <code>ExtendedMapMode.READ_WRITE_SYNC</code>. The existing <code>BufferPoolMXBean</code> with name <code>mapped</code> will continue only to track stats for <code>MappedByteBuffer</code> instances currently mapped with mode <code>MapMode.READ_ONLY</code>, <code>MapMode.READ_WRITE</code> or <code>MapMode.PRIVATE</code>.</p>
+<h3 id="Proposed-Internal-JDK-API-Changes">Proposed Internal JDK API Changes</h3>
+<ol>
+<li>
+<p>Add new method <code>writebackMemory</code> to class <code>jdk.internal.misc.Unsafe</code></p>
+<p>public void writebackMemory(long address, long length)</p>
+</li>
+</ol>
+<p>A call to this method ensures that any modifications to memory in the address range starting at <code>address</code> and continuing up to (but not necessarily including) <code>address + length</code> are guaranteed to have been written back from cache to memory. The implementation must guarantee that all stores by the current thread that i) are pending at the point of call and ii) address memory in the target range are included in the writeback (i.e., there is no need for the caller to perform any memory fence operation before the call). It must also guarantee that writeback of all addressed bytes has completed before returning (i.e., there is no need for the caller to perform any memory fence operation after the call).</p>
+<p>The writeback memory operation will be implemented using a small number of intrinsics recognised by the JIT compiler. The goal is to implement writeback of each successive cache line in the specified address range using an intrinsic that translates to a processor cache line writeback instruction, reducing the cost of persisting data to the bare minimum. The envisaged design also employs a pre-writeback and post-writeback memory synchronizaton intrinsic. These may translate to a memory synchronization instruction or to a no-op depending upon the specific choice of instruction for the processor writeback (x64 has three possible candidates) and the ordering requirements that choice entails.</p>
+<p>N.B. A good reason for implementing this capability in class <code>Unsafe</code> is that it is likely to be of more general use, say for alternative data persistence implementations employing non-volatile memory.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Two alternatives were tested in the <a href="https://github.com/jhalliday/pmem/">original prototype</a>.</p>
+<p>One option was to use <code>libpmem</code> in driver mode, i.e., 1) install <code>libpmem</code> as
+the driver for the NVM device, 2) map the file as per any  other
+<code>MappedByteBuffer</code>, and 3) rely on the <code>force</code> method to do the update.</p>
+<p>The second alternative was to use <code>libpmem</code> (or some fragment thereof) as
+a JNI native library to provide the required buffer mapping and
+writeback behaviour.</p>
+<p>Both options proved very unsatisfactory. The first suffered from the
+high cost of system calls and the overhead involved in forcing the whole
+mapped buffer rather than some subset of it. The second suffered from
+the high cost of the JNI interface. Successive iterations of the second
+approach (adding first registered natives and then implementing them as
+intrinsics) provided similar performance benefits to the current draft
+implementation</p>
+<p>A third alternative that was considered is to wait for Project Panama to provide access to foreign libraries and foreign datatypes mapped over NVRAM without incurring the overheads of JNI. While this is still considered to be a worthwhile option for the future it was decided that the current proposal is worth pursuing for two reasons: firstly, to allow users to experiment with the use of NVRAM from Java immediately, as it begins to become available; and secondly, to ease the transition involved in such a transition by supporting a model for use of NVRAM derived from the existing, familiar <code>MappedByteBuffer</code> API.</p>
+<h2 id="Testing">Testing</h2>
+<p>Testing will require an x64 or AArch64 host fitted with an NVM device
+and running a suitably up to date Linux kernel (4.16).</p>
+<p>Testing on AArch64 may not be possible until suitable NVM devices are available for this architecture. As an alternative testing may need to proceed by mapping volatile memory and using it to simulate the behaviour of an NVM device.</p>
+<p>Testing on both target architectures may be difficult; in particular, it may suffer from false positives. A failure in the writeback code can only be detected if it is possible to kill a JVM with those pending changes unflushed and then to detect that omission at restart.</p>
+<p>This situation may be difficult to arrange when employing a normal JVM
+exit (normal shutdown may end up causing those pending changes to be
+written back). Given that the JVM does not have total control over the
+operation of the memory system it may even prove difficult to detect a
+problem when an abnormal exit (say a <code>kill -KILL</code> termination) is performed.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>This implementation allows for management of NVM as an off-heap resource via a
+<code>ByteBuffer</code>. A related enhancement,
+<a href="https://bugs.openjdk.java.net/browse/JDK-8153111">JDK-8153111</a>, is looking at
+the use of NVM for heap data. It may also be necessary to consider use of NVM
+to store JVM metadata. These different modes of NVM management may turn out to
+be incompatible or, possibly, just inappropriate when used in in combination.</p>
+<p>The proposed API can only deal with mapped regions up to 2GB. It may be
+necessary to revise the proposed implementation so that it conforms to changes
+proposed in <a href="https://bugs.openjdk.java.net/browse/JDK-8180628">JDK-8180628</a> to
+overcome this restriction.</p>
+<p>The <code>ByteBuffer</code> API is mostly focused on position-relative (cursor) access which limits opportunities for concurrent updates to independent buffer regions. These require locking of the buffer during update as detailed in <a href="https://bugs.openjdk.java.net/browse/JDK-5029431">JDK-5029431</a>, which also implemented a remedy. The problem is mitigated to some degree by the provision of primitive value accessors which operate at an absolute index without reference to a cursor, permitting unlocked access; also by the option to use <code>ByteBuffer</code> slices and <code>MethodHandles</code> to perform concurrent puts/gets of primitive values.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

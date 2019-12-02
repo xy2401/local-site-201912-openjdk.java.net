@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Guidelines for tests in the repository</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>Guidelines for "langtools" tests</h1>
+<p>The "langtools" tests in the <em>test/langtools</em> directory
+of the main <em>jdk/jdk</em> repository are the most important set
+of freely available tests for the products in the langtools family.
+And the test base is growing fast: in OpenJDK 6, there were 1408
+tests; in OpenJDK 7, that number rose 36% to 1924 tests. In
+addition, many of the newer tests include hundreds or even
+thousands of individual test cases.</p>
+<p>With that in mind, it is important to have some guidelines for
+the tests that appear here. The following reflect the current
+practices for the langtools tests in the main OpenJDK repository.
+Other teams may choose to have different guidelines.</p>
+<dl>
+<dt><strong>1. The Golden Rule</strong></dt>
+<dd><span style="background-color:gold">All the tests<sup><a href="#g1">1</a>,<a href="#g2">2</a></sup> should pass, all the
+time<sup><a href="#g3">3</a></sup>, on all platforms<sup><a href="#g4">4</a></sup>, in all modes<sup><a href="#g5">5</a>,<a href="#g6">6</a></sup>.</span>
+<ol>
+<li><a name="g1" id="g1">except</a> tests with <a href="#ignore">@ignore</a>, which itself is strongly discouraged</li>
+<li><a name="g2" id="g2">not just javac tests</a></li>
+<li><a name="g3" id="g3">at the time of checkin, and after</a></li>
+<li><a name="g4" id="g4">including Windows and Mac OS/X</a></li>
+<li><a name="g5" id="g5">jtreg modes: agentvm and othervm</a></li>
+<li><a name="g6" id="g6">including with assertions enabled for
+langtools packages</a></li>
+</ol>
+</dd>
+<dt><strong>2. Write tests</strong></dt>
+<dd>Most code changes require corresponding tests to exercise the
+new or updated functionality. The exceptions are listed in <a href="//openjdk.java.net/guide/">The OpenJDK Developers' Guide</a>,
+under "Change Planning and Guidelines: <a href="//openjdk.java.net/guide/changePlanning.html#bug">Fixing a
+Bug</a>", step 6.</dd>
+<dt><strong>3. Legal stuff</strong></dt>
+<dd>All the tests are Open Source, using GPL2. (Note: <em>not</em>
+GPL2 with the "Classpath" exception.) Most test files should
+include the appropriate header. The primary exception is "<a href="#gold">golden file tests</a>".</dd>
+<dt><strong>4. No binary files</strong></dt>
+<dd>Some binary files currently exist: they need to be removed
+eventually. To provide a test with a class file that has particular
+characteristics, consider providing a source file, compiling it,
+and then mutating the resulting class file as necessary. In
+isolated cases, it may be appropriate to store an extended series
+of bytes as data within a Java source file, provided that such data
+is well commented.</dd>
+<dt><strong>5. No new shell scripts</strong></dt>
+<dd>Shell scripts are hard to maintain across all platforms, and
+are slower to execute. Write Java code instead. In many cases, in
+older versions of the langtools tests, shell scripts were used to
+write golden file tests. jtreg now provides improved support for
+such tests, so shell tests should no longer be necessary for that
+reason. Also, see the following for utilities to simplify writing
+shell-like functionality in Java:
+<ul>
+<li><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/ProcessBuilder.html">
+java.lang.ProcessBuilder</a></li>
+<li><a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/Files.html">
+java.nio.file.Files</a></li>
+<li>test/tools/javac/lib/ToolBox.java</li>
+</ul>
+</dd>
+<dt><strong>6. No unnecessary use of Runtime.exec</strong></dt>
+<dd>Creating child processes is (relatively) slow, so avoid use of
+<code>Runtime.exec</code> unless it is important to the execution
+of the test. Tests that exec java should normally honor/propogate
+test VM options, so that options like
+<code>-Xbootclasspath/p:</code> and options to run jcov continue to
+work as expected in the child JVM.</dd>
+<dt><strong>7. No manual tests</strong></dt>
+<dd>i.e. no use of <code>/manual</code> in test descriptions. Some
+tests may have a mode in which they can be run directly: that is
+different, and is OK.</dd>
+<dt><strong>8. No external dependencies</strong></dt>
+<dd>No external dependencies on anything except the version of JDK
+being tested, and jtreg. Some tests refer to the langtools source
+code, and that is OK. jtreg itself may provide access to other
+facilities, like JUnit.</dd>
+<dt><strong>9. Tests should be fast</strong></dt>
+<dd>Generally, tests should take under a minute or so to run. Tests
+that take a long time need to be justified in terms of need and
+test cases covered. The current standard deviation of test
+execution time is under 3 seconds. That means that tests taking
+longer than 30 seconds are already 10 standard deviations from the
+mean (i.e. very atypical.) Slow tests that need to override the
+default timeout should generally specify a value that is double the
+expected execution time on a typical developer platform.</dd>
+<dt><strong><a name="gold" id="gold">10. Golden file
+tests</a></strong></dt>
+<dd>Golden file tests (tests whose success depends on generating
+output to be matched a reference, or golden, file) are occasionally
+necessary. If the reference file contains references to line
+numbers in a source file, then that source file does not need a
+copyright block. Instead, it should contain the marker string
+"<code>/nodynamiccopyright/</code>" as an explicit indication that
+no copyright or other legal header should be added, because to do
+so would break the test. If the source file contains a jtreg test
+description, the marker string should normally appear after
+"<code>@test</code>", on the same line.</dd>
+<dt><strong>11. Negative compiler tests</strong></dt>
+<dd>Negative compiler tests (tests using
+<code>@compile/fail</code>) should always use a golden file. This
+is to protect against a false-positive test result caused by javac
+crashing. The preferred directive for negative compiler tests is:
+<pre>
+@compile/fail/ref=<em>FILE</em>.out -XDrawDiagnostics ...</pre>
+The use of <code>-XDrawDiagnostics</code> isolates the test from
+changes in the resource file, and removes other elements, like
+directory names, that are specific to the instance of the test
+run.</dd>
+<dt><strong>12. JDK, and -Xbootclasspath/p:</strong></dt>
+<dd>Tests should all work as expected when testing a full JDK
+build. They should also work when testing an incremental build,
+using options such as <code>-Xbootclasspath/p:</code>.</dd>
+<dt><strong>13. Organization</strong></dt>
+<dd>The tests in <code>langtools/test/tools/javac</code> need some
+attention and TLC, when it comes to their organization. While that
+happens, no new tests should be added directly into the
+<code>javac</code> directory: instead, they should be added to a
+suitable sub-directory. By default, the hierarchy under the
+<code>javac</code> directory should mirror the package hierarchy
+under <code>com.sun.tools.javac</code>. For example, tests for
+<code>com.sun.tools.javac.<strong>file</strong>.JavacFileManager</code>
+should be placed in
+<code>langtools/test/tools/javac/<strong>file</strong></code>.
+Additional sub-directories may be created as needed to group the
+files of a test or to group related tests. Try and come up with
+helpful names for tests before you fall back on using the bug
+number.</dd>
+<dt><strong>14. Whitespace and style</strong></dt>
+<dd>Tests should follow the standard white space rules and coding
+conventions as is the case for any OpenJDK source code. Code should
+not contain tabs, and indentation should be in multiples of 4
+spaces. Lines should be terminated with Unix-style newlines
+('<code>\n</code>'), and not have extraneous spaces before the
+newline character. It may be appropriate for some tests to test a
+tool's ability to handle source code that does not conform to these
+guidelines: in such cases, it is suggested and recommended that
+such code should be generated on the fly, as part of the test. New
+tests should use the standard Java coding conventions generally
+encouraged by modern IDEs. Modifications to existing tests should
+use the prevailing style of the code being modified. If a test
+warrants breaking these guidelines, the reason should be clearly
+documented in the test.</dd>
+<dt><strong><a name="ignore" id="ignore">15. Disabling/ignoring
+tests</a></strong></dt>
+<dd>Sometimes a test may fail, and it may be desirable to avoid
+running the test until the underlying cause can be addressed. Such
+tests should be marked with <code>@ignore</code> followed by the
+bug number and description of the reason why the test has been so
+marked. If a test contains multiple test cases within it, a test
+may provide a way of identifying test cases that should not be run,
+such as an <code>@ignore</code> annotation on a test method. In
+such situations, the line should end with a bug number and
+description of why the test case has been so marked. The general
+intent is that it should be possible to write scripts that search
+for files containing lines that match the regular expression
+<code>(?i)@ignore.*([0-9]{7}):&#160;+(.*)</code> in order to report
+on tests or test cases that have been disabled.</dd>
+</dl>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

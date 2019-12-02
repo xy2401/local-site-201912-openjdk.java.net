@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title xmlns:xi="http://www.w3.org/2001/XInclude">JDK 7</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+/**/
+
+    TABLE.milestones TD { vertical-align: top; }
+    TABLE.milestones TH { text-align: left; padding-left: 1em; }
+    TABLE.milestones TD { padding-left: 1em; }
+    TABLE.milestones TR.milestone TD:first-child { font-weight: bold; padding-left: 0em; }
+    TABLE.milestones TR.milestone TD { padding-top: 1ex; white-space: nowrap; }
+    TABLE.milestones TR.milestone:first-child TD { padding-top: 0ex; }
+    TABLE.milestones TD.feature { padding-left: 1em; }
+    TABLE.milestones TD.comment { font-style: italic; font-weight: bold; }
+
+    DIV.note { background: #fee3c2;
+               margin: 1.5ex 4em 1.5ex 2em; padding: .5ex 1em; }
+
+    /*
+    BLOCKQUOTE { margin: 1.5ex 0em 1.5ex 2em; }
+    H1 { font-size: 12.5pt; font-weight: bold;
+         padding: 0pt; margin: 2ex .5ex 1ex 0pt; }
+    H1:first-child, H2:first-child { margin-top: 0ex; }
+    H2 { font-size: 10pt; font-weight: bold;
+         padding: 0pt; margin: 1.5ex 0pt 1ex 0pt; }
+    BODY { width: 42em; }
+    */
+         
+/**/
+</style><style type="text/css">
+/**/
+        DIV.jdk7nav { font-size: 8pt; float: right; margin-right: 2em; padding-top: .75ex; }
+        DIV.jdk7top { font-size: 12.5pt; font-weight: bold; }
+        DIV.jdk7top + H1 { margin-top: .0ex; }
+/**/
+</style></head><body><div id="main">
+<div class="jdk7nav">&#171; <a href="..">home</a> &#183; <a href="../features">features</a> &#183; milestones &#183; <a href="../builds">builds</a> &#183; <a href="../calendar">calendar</a>
+&#187;</div>
+<div class="jdk7top">JDK 7</div>
+<h1>Milestones</h1>
+<p>The JDK 7 development schedule is divided into a sequence of
+milestone cycles, most five to ten builds in length, with builds
+occuring roughly once each week. There will be no formal beta or
+early-access releases, as in the past. Major features and other
+potentially-destabilizing changes will targeted for integration
+early in a specific milestone.</p>
+<p>Here is the current high-level milestone schedule, with the
+<a href="../features">features</a> targeted to each cycle:</p>
+<blockquote>
+<table summary="milestones" class="milestones">
+<tr class="milestone">
+<td>M1</td>
+<td>2009/01/02 &#8211; 2009/02/19 (b48) <span style="padding-left: 1em;">7 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa99999">Gervill sound synthesizer</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa535996">Use
+the Windows Vista IPv6 stack</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m1/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M2</td>
+<td>2009/02/20 &#8211; 2009/04/02 (b53) <span style="padding-left: 1em;">5 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f250">JSR 203:
+More new I/O APIs for the Java platform (NIO.2)</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f584">Method
+to close a URLClassLoader</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m2/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M3</td>
+<td>2009/04/03 &#8211; 2009/05/14 (b59) <span style="padding-left: 1em;">6 builds</span></td>
+<td class="comment">JavaOne Preview</td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f650">Create
+new platform APIs for 6u10 graphics features</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f353">JSR 292:
+Support for dynamically-typed languages (InvokeDynamic)</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f244">Nimbus
+look-and-feel for Swing</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f405">SCTP
+(Stream Control Transmission Protocol)</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f639">SDP
+(Sockets Direct Protocol)</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f352">Upgrade
+class-loader architecture</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m3/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M4</td>
+<td>2009/06/05 &#8211; 2009/07/23 (b66) <span style="padding-left: 1em;">7 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m4/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M5</td>
+<td>2009/07/24 &#8211; 2009/11/12 (b76) <span style="padding-left: 1em;">10 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f515">Concurrency and collections updates
+(jsr166y)</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f73">Elliptic-curve cryptography (ECC)</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f652">Swing
+JLayer component</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m5/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M6</td>
+<td>2009/11/27 &#8211; 2010/02/18 (b84) <span style="padding-left: 1em;">8 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m6/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M7</td>
+<td>2010/02/26 &#8211; 2010/04/15 (b89) <span style="padding-left: 1em;">5 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m7/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M8</td>
+<td>2010/04/16 &#8211; 2010/06/03 (b96) <span style="padding-left: 1em;">7 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m8/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M9</td>
+<td>2010/06/04 &#8211; 2010/07/29 (b103) <span style="padding-left: 1em;">7 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa535991">Strict class-file checking</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f653">XRender
+pipeline for Java 2D</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m9/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M10</td>
+<td>2010/07/30 &#8211; 2010/09/09 (b109) <span style="padding-left: 1em;">6 builds</span></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m10/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M11</td>
+<td>2010/09/10 &#8211; 2010/12/23 (b123) <span style="padding-left: 1em;">14 builds</span></td>
+<td class="comment">Feature Complete</td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa539110">JDBC
+4.1</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f618">JSR 334:
+Small language enhancements (Project Coin)</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa535895">Locale enhancement</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa537814">NIO.2 filesystem provider for zip/jar
+archives</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa538265">Separate user locale and user-interface
+locale</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa534339">TLS
+1.2</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f497">Unicode
+6.0</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m11/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M12</td>
+<td>2010/12/31 &#8211; 2011/02/17 (b130) <span style="padding-left: 1em;">7 builds</span></td>
+<td class="comment">Developer Preview</td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#f568">Update
+the XML stack</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m12/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+<tr class="milestone">
+<td>M13</td>
+<td>2011/02/18 &#8211; 2011/06/02 (b145) <span style="padding-left: 1em;">15 builds</span></td>
+<td class="comment">Last scheduled build</td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="../features#fa530068">Enhanced MBeans</a></td>
+</tr>
+<tr>
+<td colspan="5" class="feature"><a href="//cr.openjdk.java.net/jdk7/m13/changes/" style="font-size: smaller">(ALL CHANGES)</a></td>
+</tr>
+</table>
+</blockquote>
+<p>One or more release-candidate builds will be declared after the
+last scheduled build, aiming for the General Availability release
+on 2011/7/28.</p>
+<div class="last-update">Last update: 2011/7/28 08:19 -0700</div>
+<div class="jdk7nav">&#171; <a href="..">home</a> &#183; <a href="../features">features</a> &#183; milestones &#183; <a href="../builds">builds</a> &#183; <a href="../calendar">calendar</a>
+&#187;</div>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

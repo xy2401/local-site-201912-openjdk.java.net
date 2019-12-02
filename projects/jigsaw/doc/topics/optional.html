@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Project Jigsaw: Optional Modules</title><link rel="shortcut icon" href="../../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../../page.css" /><script type="text/javascript" src="../../../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>Optional Module</h1>
+When a module optionally requires some other module, the second
+module is referred to as the <em>optional module</em>. If the
+optional module is available then it is resolved and, linked
+normally. If it is not available, however, then no exception is
+thrown and no error is reported. This allows a module to include
+optional functionality that requires the optional module(s) but the
+module can still be used in the absence of the optional module. See
+the <a href="../draft-java-module-system-requirements-12#optional-modules">optional
+module requirement</a>.
+<p>For example, the <code>java.util.Properties</code> class
+provides the <a href="http://download.java.net/jdk7/docs/api/java/util/Properties.html#loadFromXML">
+<code>loadFromXML</code></a> and <a href="http://download.java.net/jdk7/docs/api/java/util/Properties.html#storeToXML">
+<code>storeToXML</code></a> methods to load and store properties in
+a simple XML format. The implementation of these two methods
+depends on the JAXP API (XML module) while the rest of the
+Properties class does not require XML module to be present. To
+declare XML module as an optional module, this enables the
+<code>Properties</code> class be used in the absence of XML module
+when these two methods are not referenced.</p>
+<h3>module-info Declaration</h3>
+The <code>optional</code> flag in the <code>require</code>
+statement indicates that it is an optional module.
+<pre>
+   module P {
+       require optional M;
+   }
+</pre>
+Module <code>P</code> can be used in the absence of module
+<code>M</code> if the functionality requiring module <code>M</code>
+is not used. The implementation must be carefully crafted to make
+sure that there is no reference to any type in module
+<code>M</code> when the optional functionality is not used at
+runtime and no type in module <code>M</code> will be loaded at
+class loading time (see the <a href="#guideline">guideline of using
+optional module</a> section below).
+<h3>Proposed APIs</h3>
+<h4><a name="isModulePresent" id="isModulePresent">1. Test if a
+module is present</a></h4>
+<pre>
+   package java.lang.reflect;
+   public class Module {
+       /**
+        * Tests if a module of the given module name
+        * has been resolved and linked with this module's context.
+        *
+        * @param mn a module's name
+        */
+       public boolean isModulePresent(String mn);
+
+       /**
+        * Checks if a module of the given module name
+        * has been resolved and linked with this module's context.
+        *
+        * @param mn a module's name
+        * @throws ModuleNotPresentException if the module of the
+        * given name is not present in this module's context.
+        */
+       public boolean requireModulePresent(String mn);
+   }
+</pre>
+<p>To access any class from a module, that module must be visible
+from the context of the caller's module. A module <code>M</code>
+that is present from the context of module <code>P</code> isn't
+necessarily present from the context of another module loaded by
+the running application. The <code>isModulePresent</code> method
+does not throw <code>ModuleNotPresentException</code> and can be
+used in cases where there is a fall-back when the optional module
+is not present.</p>
+<h4>2. ModuleNotPresentException</h4>
+When the optional functionality is used but its required module is
+absent, <code>ClassNotFoundException</code> will be thrown when any
+class in the optional module is referenced. It would be helpful to
+throw a well-defined exception,
+<code>ModuleNotPresentException</code> that indicates that this
+functionality requires the optional module which is not present.
+<pre>
+   package java.lang.module;
+   
+   /**
+    * Thrown when a module is not present in the context of another module.
+    */
+   public class ModuleNotPresentException extends RuntimeException {
+       ...
+   }
+</pre>
+Typically, an optional functionality should first check if a
+specific module is present using the
+<code>requireModulePresent</code> method; if it's absent, a
+<code>ModuleNotPresentException</code> as in the <a href="#OptionalModuleExample"><code>"foo"</code> module example</a>.
+<h4>3. @RequireOptionalModule Annotation</h4>
+<code>@RequireOptionalModule</code> annotation can be used to
+annotate functionality (method or class) that requires an optional
+module. This annotation is intended for developer tools such as
+javadoc and javac to determine the sources of optional
+dependencies.
+<p>For example, <code>p.P.callIfMIsPresent</code> is the only
+method in module <code>P</code> that requires module
+<code>M</code>. If <code>M</code> is not installed, module
+<code>P</code> can be used as long as the
+<code>callIfMIsPresent</code> method is not called at runtime.</p>
+<pre>
+   package p;
+   public Class P {
+       @RequireOptionalModule(modules={"M"})
+       public void callIfMIsPresent() {
+           this.class.getModule().requireModulePresent("M");
+           ...
+       } 
+   }
+</pre>
+<h3>JDK Optional Dependenceies</h3>
+There are different kinds of optional dependencies.
+<h4>1. APIs that throw <code>ModuleNotPresentException</code></h4>
+These methods will throw <code>ModuleNotPresentException</code> if
+its optional dependency is not satisfied. These methods are
+annotated with <code>@RequireOptionalModule</code> annotation.
+<ol>
+<li><code>java.util.Properties.loadFromXML</code> and
+<code>storeToXML</code> methods</li>
+<li><code>java.util.prefs.Preferences.importPreferences</code>,
+<code>java.util.prefs.AbstractPreferences.exportNode</code> and
+<code>exportSubtree</code> methods</li>
+<li><code>SecurityManager.checkAwtEventQueueAccess,
+checkSystemClipboardAccess, checkTopLevelWindow</code></li>
+</ol>
+TODO: The <a href="http://download.java.net/jdk7/docs/api/javax/management/remote/rmi/package-summary.html">
+JMX RMI connector using RMI-IIOP protocol</a> requires
+CORBA/RMI-IIOP when the protocol part of the given
+<code>JMXServiceURL</code> is <code>"iiop"</code>.
+<p><em><code>javax.management.remote.JMXConnector.connect()</code>
+and/or <code>RMIConnector.connect</code> should be updated to throw
+<code>ModuleNotPresentException</code> instead. If the application
+uses the "iiop" protocol but is not configured properly (the corba
+module is absent), currently <code>IOException</code> is
+thrown</em>.</p>
+<h4>2. Optional dependencies satisfied by its input arguments</h4>
+The following APIs do not require the optional module to be present
+unless its input arguments specify it, in which case the optional
+module must be present to construct the arguments.
+<ol>
+<li>The <a href="http://download.java.net/jdk7/docs/api/javax/management/monitor/package-summary.html">
+JMX Monitor API</a> is specified to use the Java Beans introspector
+for complex types other than <code>CompositeData</code> or arrays.
+<code>java.beans.Introspector</code> is only used when the input
+attribute for monitoring is a Java Beans with a custom
+<code>java.beans.BeanInfo</code>. In which case,
+<code>java.beans</code> classes are guaranteed to be present.</li>
+<li>An applet can specify the JNDI properties as applet's
+parameter. In which case, the applet will set the
+<code>javax.naming.Context.APPLET</code> environment property to
+the applet's instance and JNDI will call the
+<code>java.applet.Applet.getParameter</code> method for
+constructing the <code>InitialContext</code>.</li>
+<li><code>java.text.Bidi(AttributedCharacterIterator)</code>
+constructor allows to run through an input paragraph of text with
+optional attributes whose key is an
+<code>java.awt.TextAttribute</code> instance. These attribute keys
+represent its base direction, bidi embedding level, and whether to
+convert European digits to other Unicode digit shape.
+(RUN_DIRECTION, BIDI_EMBEDDING, NUMERIC_SHAPING).</li>
+</ol>
+When these APIs are called under the circumstances described above,
+the <code>"desktop"</code> module is guaranteed to be present for
+constructing the arguments and the application should be configured
+properly. The module for these API will need to declare the
+optional dependency in its <code>module-info</code> but these APIs
+are not annotated with <code>@RequireOptionalModule</code>
+annotation as they can be called when the optional module is
+absent.
+<h4>3. APIs that fall back to the default implementation when the
+optional module is absent</h4>
+<code>ResourceBundle</code> is a good example that falls back to
+use the default locale if the resource bundle for a locale is
+packaged in a different module. Security provider is another
+example where the default provider and the interface are in one
+module whereas other provider implementation is in another module.
+This kind of optional dependencies can potentially be adjusted to
+use the <a href="./services.html">services mechanism</a>.
+<p>These APIs are not annotated with
+<code>@RequireOptionalModule</code> annotation as they can be
+called when the optional module is absent.</p>
+<h3><a name="guideline" id="guideline">Guideline of Using Optional
+Module</a></h3>
+<em>This section is intended to illustrate the class loading issue
+with optional module that should be used with caution and to serve
+as a starting point for further discussion of the best coding
+practice.</em>
+<p>When module <code>P</code> optionally requires module
+<code>M</code>, module <code>P</code>'s implementor must make sure
+that no type from module <code>M</code> will be loaded at runtime
+when the optional functionality is not used. A <a href="#isModulePresent">simple API</a> will be provided so that running
+code can test whether any particular optional module has been
+linked in so that any reference to the classes in the optional
+module is conditional.</p>
+<p>Besides direct reference to a type in the code (either symbolic
+reference or via reflection), there are other events that will
+cause other classes being loaded:</p>
+<ol>
+<li>linking a class that has a direct superclass or a direct
+superinterface</li>
+<li>bytecode verification that may load additional classes for
+performing verification</li>
+<li>serialization and deserialization</li>
+<li>reflection that may cause loading of some other referenced
+classes depending on the implementation</li>
+</ol>
+<p>To use optional module, the code must be carefully written to
+avoid classes in the optional modules from being loaded in these
+events. One simple rule is not to reference any optional type in
+the class declaration (e.g. superclass or superinterface), the
+parameter types or return type in any method, and field types. To
+avoid optional types being loaded for bytecode verification, it is
+not impossible to reference to the optional types statically but
+non-trivial. It is recommended not to do symbolic reference to
+optional type or isolate all uses of optional types in a helper
+class that such helper class is loaded via reflection.</p>
+<p><a name="OptionalModuleExample" id="OptionalModuleExample"></a>
+<b>Optional Module Example</b></p>
+<p>For example, a "foo" module provides an optional functionality
+that can save a <code>Foo</code> instance in XML format that
+requires the <code>jdk.jaxp</code> module to be present.</p>
+<pre>
+   module foo {
+       require optional jdk.jaxp;
+   }
+
+   package com.foo;
+   import javax.xml.transform.*;
+   public class Foo {
+       ...  // other functionality
+
+       public void save(OutputStream os) {
+           // ModuleNotPresentException will be thrown
+           // if jdk.jaxp module is not present
+           this.class.getModule().requireModulePresent("jdk.jaxp");
+
+           // In this example, it's okay to directly call
+           // XMLUtils.save method as its return type and 
+           // argument types are known.  In other cases where the
+           // verifier has to load classes from the optional module
+           // for verification, such method call must be done through
+           // reflection.
+           XMLUtils.save(this, os);
+       }
+
+       class XMLUtils {
+           public static void save(Foo foo, OutputStream os) {
+               // use TransformerFactory etc.
+               ...
+           }
+       }
+   }
+</pre>
+<p><code>com.foo.XMLUtils</code> is a helper class defining static
+method to aid <code>Foo</code> class to save the <code>Foo</code>
+instance in XML format. References to the <code>javax.xml.**</code>
+classes in the <code>jdk.jaxp</code> module are isolated in this
+helper class. As its return type and argument types are known to
+the calling class, it can be called directly. In other cases where
+the verifier has to load classes from the optional module for
+verification, such method call must be done through reflection.</p>
+<h3>Open Questions for Further Discussion</h3>
+<ol>
+<li>For a library or application to support different versions of a
+module, some dependencies may be relative to specific versions of a
+module. Developers are used to call <code>Class.forName</code> as
+the tradition way to determine if an API is supported. In the
+modular world, the <code>isModulePresent</code> method tests if a
+given module is present. The presence of a module of a specific
+name implies the presence of a class only if that class is exported
+by that module of that version. If that class is removed in the
+next version (i.e. incompatible change), the application will need
+to be modified to handle <code>ClassNotFoundException</code> case
+if it supports to link with that new version:
+<pre> 
+    if (module.isModulePresent("M")) {
+        try {
+            // Version2Class only exists in version 2.*
+            // m.M.Version2Class will be loaded if it exists
+            Class&lt;?&gt; c = Class.forName("m.M.Version2Class");
+            ...
+        } catch (ClassNotFoundException e) {
+            // version &lt; 2.0 or &gt;= 3.0
+            ...
+        } 
+    }
+</pre>
+<p>Some alternatives:<br />
+a. Test for module and/or its version (e.g. isModulePresent("M @
+[2.0,3.0]"))<br />
+b. Another method to test if a class is exported in a given module
+(e.g. isClassExported("M", "m.M.Version2Class"))</p>
+<p>Developers of module P would want to avoid modifying the source
+code if possible. The application would not need to be modified if
+it tests for the presence of a specified class. The above example
+can be replaced with the following:</p>
+<pre> 
+    if (ld.isClassExported("M", "m.M.Version2Class")) {
+        // m.M.Version2Class exists but it's not loaded 
+        ...
+    }  else {
+        // version &lt; 2.0 or &gt;= 3.0
+        ...
+    }
+</pre>
+On the other hand, <code>Class.forName</code> achieves the same
+effect except that it throws a checked CNFE. Need use cases to
+determine if the new isClassExported is needed or the test to check
+the presence of a module of a given version range is adequate.</li>
+<li>Can/should the compiler use the annotation to check that the
+references to classes within the optional module are referenced
+correctly to avoid unexpected verification errors?</li>
+</ol>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

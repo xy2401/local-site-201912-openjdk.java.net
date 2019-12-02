@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 309: Dynamic Class-File Constants</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 309: Dynamic Class-File Constants</h1><table class="head"><tr><td>Author</td><td>Brian Goetz</td></tr><tr><td>Owner</td><td>Lois Foltan</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>11</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;runtime</td></tr><tr><td>Discussion</td><td>amber dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="303">JEP 303: Intrinsics for the LDC and INVOKEDYNAMIC Instructions</a></td></tr><tr><td>Reviewed by</td><td>Mark Reinhold</td></tr><tr><td>Endorsed by</td><td>Mark Reinhold</td></tr><tr><td>Created</td><td>2017/03/20 20:26</td></tr><tr><td>Updated</td><td>2018/09/10 18:57</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8177279">8177279</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Extend the Java class-file format to support a new constant-pool form,
+<code>CONSTANT_Dynamic</code>.  Loading a <code>CONSTANT_Dynamic</code> will delegate creation
+to a bootstrap method, just as linking an <code>invokedynamic</code> call site
+delegates linkage to a bootstrap method.</p>
+<h2 id="Goals">Goals</h2>
+<p>We seek to reduce the cost and disruption of creating new forms of
+materializable class-file constants, which in turn offers language
+designers and compiler implementors broader options for expressivity
+and performance.  We do so by creating a single new constant-pool form
+that can be parameterized with user-provided behavior, in the form of
+a bootstrap method with static arguments.</p>
+<p>We will also adjust the link-time handshake between the JVM
+and bootstrap methods, so as to adapt the bootstrap API used by
+<code>invokedynamic</code> to apply also to dynamic constants.</p>
+<p>Based on experience with <code>invokedynamic</code> we will make adjustments to
+the bootstrapping handshake of both <code>invokedynamic</code> and dynamic
+constants, loosening certain restrictions on the processing of
+argument lists to bootstrap methods.</p>
+<p>This work requires some prototyping of JDK library support for a
+representative sample of a few kinds of constant types, notably variable
+handles <a href="193">(JEP 193)</a>.  In support of such prototyping, this work will
+coordinate with other work on basic language support for constant
+expressions (<a href="303">JEP 303</a>).</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>This JEP aims to support arbitrary constants in the constant pool.
+Although there are proposals for still other uses of bootstrap methods,
+such as method recipes, this JEP concentrates on one use.</p>
+<p>The success of this JEP does not depend on support from the Java
+language or the Java compiler backend, although it is more likely to
+succeed if it is used by the compiler backend.</p>
+<p>Although large aggregate constants are a weak point in Java's
+translation strategy, this JEP cannot solve for aggregates until
+there are better ways to encapsulate them in constant forms, such
+as frozen arrays or primitive-specialized lists.</p>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>As a minimal requirement, it should be practical to expose constant-pool
+forms to describe primitive class mirrors (<code>int.class</code>), <code>null</code>, <code>enum</code>
+constants, and most forms of <code>VarHandle</code> in terms of <code>CONSTANT_Dynamic</code>.</p>
+<p>Dynamic constants must be usable in any context which currently
+allows general constant pool constants, such as <code>CONSTANT_String</code>
+and <code>CONSTANT_MethodType</code>.  Thus, they must be valid operands to
+the <code>ldc</code> instruction and must be allowed as static parameters
+to bootstrap methods.</p>
+<p>The bootstrap-method handshake should support complex constants
+which contain thousands of component arguments, lifting the current
+limit of 251 constant arguments.  As a stretch goal, there should
+also be a way for the bootstrap method to more accurately control
+linkage errors produced by resolving bootstrap method arguments.</p>
+<p>At the end of the work we should also have cause to believe that this
+mechanism can be made to work for a wide variety of library types,
+such as derived method handles, small immutable collections (lists,
+maps, sets), numerics, regular expressions, string formatters, or
+simple data classes.</p>
+<p>Followup work should be identified and documented. See "Possible
+extensions" below.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Section 4.4 of the Java Virtual Machine Specification describes the
+format of the constant pool.  Adding new constant-pool forms, such as
+the support for <code>MethodHandle</code> and <code>MethodType</code> introduced in Java 7,
+is a significant endeavor, and sends ripples through the ecosystem, as
+it affects all code that parses or interprets class files.  This
+presents a very high bar to creating new constant-pool forms.</p>
+<p>With <code>invokedynamic</code>, the value of storing complex data in the
+constant pool is multiplied, since the static argument list for an
+<code>invokedynamic</code> bootstrap is a sequence of constants.  Designers of
+<code>invokedynamic</code> protocols (such as the <code>LambdaMetafactory</code> added in
+Java 8) routinely struggle with the need to encode behavior in terms
+of the existing constant set&#8212;which in turn necessitates additional
+error-prone validation and extraction logic in the bootstrap itself.
+Richer, more flexible, more highly-typed constants remove friction
+from the development of <code>invokedynamic</code> protocols, which in turn
+facilitates the movement of complex logic from run time to linkage
+time, improving program performance and simplifying compiler logic.</p>
+<h2 id="Description">Description</h2>
+<p>Just as the linkage of an <code>invokedynamic</code> call site involves an upcall
+from the JVM to Java-based linkage logic, we can apply this same trick
+to the resolution of a constant-pool entry.  A <code>CONSTANT_Dynamic</code>
+constant-pool entry encodes the bootstrap method to perform the
+resolution (a <code>MethodHandle</code>), the type of the constant (a <code>Class</code>),
+and any static bootstrap arguments (an arbitrary sequence of
+constants, barring cycles in the constant pool between dynamic
+constants.)</p>
+<p>We add a new constant-pool form, <code>CONSTANT_Dynamic</code> (new constant tag
+17), which has two components following its tag byte: the index of a
+bootstrap method, in the same format as the index found in a
+<code>CONSTANT_InvokeDynamic</code>, and a <code>CONSTANT_NameAndType</code>, which
+encodes the expected type.</p>
+<p>Behaviorally, a <code>CONSTANT_Dynamic</code> constant is resolved by executing
+its bootstrap method on the following parameters: 1. a local <code>Lookup</code>
+object, 2. the <code>String</code> representing the name component of the
+constant, 3. the <code>Class</code> representing the expected constant type,
+and 4. any remaining bootstrap arguments.  As with <code>invokedynamic</code>,
+multiple threads can race to resolve, but a unique winner will be
+chosen and any other contending answers discarded.  Instead of
+returning a <code>CallSite</code> object, as the <code>invokedynamic</code> instruction
+requires, the bootstrap method would return a value which would be
+immediately converted to the required type.</p>
+<p>As with <code>invokedynamic</code>, the name component is an additional channel,
+besides the type, for passing expression information to the bootstrap
+method.  It is expected that just as <code>invokedynamic</code> instructions find
+uses for the name component (e.g., a method name or some ad-hoc
+descriptor) dynamic constants will also find uses for the name (e.g.,
+the name of a <code>enum</code> constant or the spelling of a symbolic constant).
+Putting the <code>CONSTANT_NameAndType</code> in both places makes for a more
+regular design.  In effect, <code>CONSTANT_Methodref</code> and
+<code>CONSTANT_Fieldref</code> constants are used to refer to named members of
+classes, while the analogous <code>CONSTANT_InvokeDynamic</code> and
+<code>CONSTANT_Dynamic</code> constants are used to refer to named entities
+with user-programmed bootstraps.</p>
+<p>The type component of the constant, with both <code>invokedynamic</code> and
+<code>CONSTANT_Dynamic</code>, determines the effective type of the call site or
+constant (respectively).  The bootstrap method does not contribute
+or constrain this type information, so that bootstrap methods may
+be (and often are) weakly typed whereas the bytecodes themselves
+are always strongly typed.</p>
+<p>To relax length restrictions on bootstrap specifiers, the language
+which defines the invocation of bootstrap methods will be adjusted
+(with complete backward compatibility) to allow variable arity
+(<code>ACC_VARARGS</code>) bootstrap methods to absorb, into their trailing
+arguments, all remaining static arguments, even if there are 2^16-1 of
+them.  (The class-file format already allows this, although there is no
+way to read over-long bootstrap argument lists.)  For consistency, the
+<code>invokeWithArguments</code> methods of <code>MethodHandle</code> will also be expanded
+in this way, if the target method has variable arity.  In this way the
+invocation of bootstrap methods can be specified in terms of the
+weakly typed methods <code>invokeWithArguments</code> and <code>invoke</code>, just as today
+it is specified in terms of <code>invoke</code> alone.</p>
+<p>Control of bootstrap linkage errors has proven to be a recurring
+source of bugs and RFEs from users of <code>invokedynamic</code> and the trend is
+likely to accelerate as bootstrap methods become more complex (as they
+must, with dynamic constants).  If we can find a way to offer fuller
+control over exceptions to bootstrap methods, and it can be done
+simply, we will consider delivering it as part of this JEP.
+Otherwise, it will go on the list of future enhancements.</p>
+<p>The draft Java Virtual Machine specification for <code>CONSTANT_Dynamic</code> can be
+found in <a href="https://bugs.openjdk.java.net/browse/JDK-8189199">JDK-8189199</a>,
+the CSR issue associated with the main development issue of this JEP.</p>
+<h3 id="Future-work">Future work</h3>
+<p>Possible future extensions include:</p>
+<ul>
+<li>Support for bulk-scale constants such as arrays or resource tables</li>
+<li>Further adjustments to the bootstrap-method handshake</li>
+<li>Other uses of bootstrap methods which may synergize with dynamic constants</li>
+<li>Attaching dynamic constants to the <code>ConstantValue</code> attribute of static fields</li>
+<li>Surfacing the lazy initialization of constants in the Java language</li>
+<li>Integrating new constants with special Java language rules for constant expressions</li>
+</ul>
+<p>A discussion of design choices can be found in
+<a href="https://bugs.openjdk.java.net/browse/JDK-8161256">JDK-8161256</a>, which
+deals with a number of related RFEs.  The present JEP was distilled from
+this larger list of features.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Many uses of <code>CONSTANT_Dynamic</code> can be replaced by equivalent
+<code>invokedynamic</code> calls. (The call would take zero arguments and be
+bound to a method handle that returns the desired constant.)  Such a
+workaround does not helps with a key requirement, however, which is
+to be able to pass synthetic constants as bootstrap arguments.</p>
+<p>Another alternative to <code>CONSTANT_Dynamic</code> is using <code>static final</code>
+fields to name the desired constants, and computing their values in
+the static initializer (<code>&lt;clinit&gt;</code>).  This approach requires extra
+metadata (a throwaway field definition per constant) and is not lazy
+enough to avoid bootstrap cycle problems.  Those problems are
+routinely solved by building private nested classes with decoupled
+static initializers, but that too requires extra metadata.  If
+languages evolve to use many such constants, there will be application
+bloat from the excessive metadata.</p>
+<p>Another approach is spinning static methods which perform the constant
+elaboration logic, and then calling them lazily from <code>invokedynamic</code>.
+Again, such throwaway methods are a metadata overhead which is large
+compared to <code>CONSTANT_Dynamic</code>.</p>
+<p>In practice the metadata overheads for simulating these features are
+too large.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>This feature is JVM-centric, and so does not depend on higher software
+layers.</p>
+<p>In order to ensure correct design, it requires at least experimental
+adoption by several use cases.  Library prototyping is a must, even if
+the prototypes are thrown away.</p>
+<p>As with <code>invokedynamic</code>, wide adoption requires use by the <code>javac</code> back
+end, which in turn may require language extensions.  As a basic first
+step, translation workarounds which require hidden static methods, such
+as translation of <code>int.class</code> or switch mapping tables should be examined
+and reformulated with new constants, if possible.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

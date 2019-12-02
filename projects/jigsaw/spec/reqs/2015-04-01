@@ -1,0 +1,582 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Java Platform Module System: Requirements</title><meta name="viewport" content="width=device-width, initial-scale=.6" /><link rel="stylesheet" type="text/css" href="//openjdk.java.net/.fonts/dejavu.css" /><style type="text/css">
+
+      HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,
+      BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,
+      IMG, INS, KBD, Q, S, SAMP, SMALL, STRIKE, STRONG, SUB, SUP, TT, VAR, B, U,
+      I, CENTER, DL, DT, DD, OL, UL, LI, FIELDSET, FORM, LABEL, LEGEND, TABLE,
+      CAPTION, TBODY, TFOOT, THEAD, TR, TH, TD, ARTICLE, ASIDE, CANVAS, DETAILS,
+      EMBED, FIGURE, FIGCAPTION, FOOTER, HEADER, HGROUP, MENU, NAV, OUTPUT, RUBY,
+      SECTION, SUMMARY, TIME, MARK, AUDIO, VIDEO {
+        margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit;
+        vertical-align: baseline; }
+      ARTICLE, ASIDE, DETAILS, FIGCAPTION, FIGURE, 
+      FOOTER, HEADER, HGROUP, MENU, NAV, SECTION { display: block; }
+      BLOCKQUOTE, Q { quotes: none; }
+      BLOCKQUOTE:before, BLOCKQUOTE:after, Q:before, Q:after {
+              content: ''; content: none; }
+      TABLE { border-collapse: collapse; border-spacing: 0; }
+
+      A { text-decoration: none; }
+      A:link { color: #437291; }
+      A:visited { color: #666666; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+
+      HTML { font-size: 20px; } /* baseline grid */
+      HTML > BODY { font-size: 14px; }
+      BODY {
+        background: white;
+        margin: 40px;
+        margin-bottom: 150%;
+        width: 560px;
+        line-height: 20px;
+        -webkit-text-size-adjust: 100%; /* iOS */
+        color: #222;
+      }
+
+      /* BODY { background: url("grid.png") repeat 0 5px; } */
+
+      BODY { font-family: "DejaVu Serif", "Bitstream Vera Serif",
+                          "Lucida Bright", "Bookman Old Style",
+                          Georgia, serif; }
+      CODE, TT, .jref, DIV.spec .open, TABLE.profiles {
+        font-family: "DejaVu Sans", "Bitstream Vera Sans",
+                     "Lucida Sans", Helvetica, sans-serif; }
+      PRE { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+                          Monaco, "Courier New", monospace; }
+
+      @media only screen
+      and (min-device-width: 320px) and (max-device-width: 480px) {
+        BODY { width: 90%; }
+      }
+
+      I, EM { font-style: italic; }
+      STRONG, TH { font-weight: bold; }
+      SPAN.open { font-weight: bold; font-size: 12px; }
+
+      P { text-indent: 40px; }
+      P:first-child, UL + P, OL + P, BLOCKQUOTE + P, TABLE + P, P.subsection,
+        P.br, P.intro, DIV.profiles-table + P { text-indent: 0; }
+      P.br { margin-top: 10px; }
+      P.intro { margin-top: 30px; }
+
+      P.subsection { margin-top: 20px; }
+      P.subsection SPAN.title { font-weight: bold; padding-right: 20px; }
+
+      UL, OL { margin: 10px 0; padding-left: 40px; }
+      LI { margin-bottom: 10px; }
+      UL.compact LI { margin-bottom: 0; }
+
+      PRE { padding: 0; margin: 10px 0 10px 20px; background: #eee; width: 45em; }
+      BLOCKQUOTE { margin: 10px 0; margin-left: 20px; }
+      LI BLOCKQUOTE { margin-left: 0; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+      .error { color: red; font-weight: bold; }
+      .warn { color: #ee0000; font-weight: bold; }
+
+
+      H1 + P, H2 + P, H3 + P, PRE + P, BLOCKQUOTE + P { text-indent: 0; }
+      P.small { font-size: 11px; line-height: 16px; }
+
+      BLOCKQUOTE {
+        background: #e8e8e8;
+        padding: 10px;
+        font-size: 11px; line-height: 16px;
+      }
+
+      H1, H2, H3 { font-weight: bold; }
+
+      /*
+      H1 { margin-top: -13px; font-size: 22px; line-height: 40px; }
+      H2 { font-size: 17px; margin-top: 20px; margin-bottom: 10px; }
+      H3 { margin-top: 14px; margin-bottom: 10px; font-style: italic; }
+      */
+
+      DIV.doctitle, H1 { margin-top: -13px;
+        font-size: 22px; line-height: 40px; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-weight: bold; margin-bottom: 9px; }
+      DIV.subtitle { margin-top: 2px; font-size: 18px; font-weight: bold; }
+      DIV.authors { margin-top: 10px; margin-bottom: 10px; font-size: 16px; }
+      DIV.author A { font-style: italic; }
+      DIV.version { margin-top: 10px; }
+      DIV.version, DIV.legal-notice { font-size: 11px; line-height: 15px; }
+      SPAN.hash { font-size: 11px; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+      DIV.head { margin-bottom: 20px; }
+
+      DIV.section > DIV.title, DIV.section DIV.number SPAN, H2 {
+        font-size: 15px; font-weight: bold;
+        ZZline-height: 40px; margin-top: 20px; margin-bottom: 10px; }
+      H2 { font-size: 16px; }
+
+      H3 { margin-top: 10px; margin-bottom: 10px; font-style: italic; }
+
+      DIV.section DIV.number { float: left; width: 20px; }
+      DIV.section DIV.body { margin-left: 20px; }
+
+      DIV.toc { margin: 20px 0; padding-left: 40px; }
+      DIV.toc-section { margin-top: 10px; }
+      P.toc-reqs { font-size: 12px; text-indent: 0; margin-left: 20px; }
+      SPAN.toc-req { ZZwhite-space: nowrap; }
+
+      TABLE.toc { font-size: 13px; } /* Hack to ensure 20px rows */
+      TABLE.toc TD:first-child { font-weight: bold; padding-right: 10px; }
+      TABLE.toc TH { font-weight: bold; text-align: left; }
+      TABLE.toc TD.subcontent { padding-left: 40px; font-size: 11px; }
+
+      DIV.feature-details { margin-left: 0; }
+      DIV.feature-details DIV.group { margin-top: 20px; margin-left: 20px; }
+      DIV.feature-details DIV.group DIV.title { font-weight: bold; margin-left: -20px; }
+
+      DIV.feature { margin-top: 10px; margin-left: 20px; }
+      DIV.feature DIV.jep, DIV.feature DIV.title { font-weight: bold; }
+      DIV.feature DIV.jep { float: right; }
+      DIV.feature DIV.summary, DIV.feature DIV.refs, DIV.feature DIV.spec { margin-top: 10px; }
+      DIV.feature DIV.refs SPAN.what { font-weight: bold; }
+      DIV.spec .body { margin-left: 20px; }
+      DIV.spec .open { float: left; width: 20px; }
+
+      TABLE.features { margin: 10px 0 10px 0; }
+      TABLE.features TR.new-group TD { padding-top: 10px; }
+      TABLE.features TD:first-child { text-align: right; padding-right: 20px; }
+      TABLE.features TR:first-child TD { padding-top: 0; }
+      TABLE.features SPAN.jsrs-wrapper { padding-left: 6px; }
+      TABLE.features SPAN.jsrs { ZZfont-size: 11px; }
+      TABLE.features TD { white-space: nowrap; }
+
+      SPAN.new { color: #e76f00; font-size: smaller; }
+      SPAN.update { font-size: smaller; }
+
+      TABLE.jsr-list TD { vertical-align: baseline; }
+      TABLE.jsr-list TD.name { padding-left: 10px; }
+      TABLE.jsr-list TD.stage { padding-left: 40px; font-style: italic; white-space: nowrap; }
+
+      DIV.profiles-table { margin: 20px 0 20px 20px; }
+      TABLE.profiles { font-size: 12px; line-height: 16px; }
+      TABLE.profiles TH { text-align: left; }
+      TABLE.profiles TH + TH { padding-left: 40px; }
+      TABLE.profiles TD + TD { padding-left: 40px; }
+
+  </style></head><body>
+<h1>Java Platform Module System: Requirements</h1>
+<p class="br"> Mark Reinhold</p>
+<div class="version">2015/4/1 16:46 -0700<span class="hash">&#8192;[1b782d553f02]</span></div><div class="legal-notice">Copyright &#169; 2015 Oracle and/or its affiliates &#183; All Rights Reserved</div><div class="legal-notice">This version: <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/2015-04-01"><code>http://openjdk.java.net/projects/jigsaw/spec/reqs/2015-04-01</code></a><br />Latest version: <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/"><code>http://openjdk.java.net/projects/jigsaw/spec/reqs/</code></a></div>
+<p class="intro"> The overall goal of this JSR is to define an approachable
+yet scalable module system for the Java Platform.  It will be
+approachable, <em>i.e.</em>, easy to learn and easy to use, so that developers
+can use it to construct and maintain libraries and large applications for
+both the Java SE and Java EE Platforms.  It will be scalable so that it
+can be used to modularize the Java SE Platform itself, and its
+implementations.</p>
+<p class="br"> As outlined <a href="https://jcp.org/en/jsr/detail?id=376">in the JSR</a>, the specific goals are to
+provide and enable:</p>
+<ul>
+<li id="reliable-configuration">
+<p><em>Reliable configuration</em>, to replace the brittle, error-prone
+    class-path mechanism with a means for program components to declare
+    explicit dependences upon one another;</p>
+</li>
+<li id="strong-encapsulation">
+<p><em>Strong encapsulation</em>, to allow a component to declare which of its
+    APIs are accessible by other components, and which are not;</p>
+</li>
+<li id="a-scalable-java-se-platform">
+<p><em>A scalable Java SE Platform</em>, whose components can be assembled by
+    developers into custom configurations that contain only the
+    functionality actually required by an application;</p>
+</li>
+<li id="greater-platform-integrity">
+<p><em>Greater platform integrity</em>, to ensure that code that is internal to
+    a platform implementation is not accessible from outside the
+    implementation; and</p>
+</li>
+<li id="improved-performance">
+<p><em>Improved performance</em>, by applying whole-program optimization
+    techniques to complete configurations of platform, library, and
+    application components.</p>
+</li>
+</ul>
+<p>This document expands the above goals into a set of sub-goals, or
+requirements, and also some non-requirements, which identify goals that
+are beyond the scope of this JSR.  Each (non-)requirement is shown as</p>
+<ul>
+<li id="indented-bulleted-text-with-an-italic-title"><em>Indented, bulleted text with an italic title</em> &#8212; Followed by a
+    statement of the requirement.</li>
+</ul>
+<p>Motivational or explanatory comments sometimes follow a requirement, in
+non-indented text.</p>
+<p class="br"> The intent of this document is to serve as a set of
+guideposts for the deliberations of this JSR&#8217;s <a href="//openjdk.java.net/projects/jigsaw/spec">Expert Group</a>.
+The specification will, ultimately, satisfy all of these requirements.
+Revisions may be proposed after we finalize this document, but the bar
+for accepting them will be relatively high.</p>
+<p class="br"> The terms &#8220;must,&#8221; &#8220;must not,&#8221; &#8220;required,&#8221; &#8220;shall,&#8221; &#8220;shall
+not,&#8221; &#8220;should,&#8221; &#8220;should not,&#8221; &#8220;recommended,&#8221; &#8220;may,&#8221; and &#8220;optional&#8221; in
+this document are to be interpreted as described in <a href="http://www.ietf.org/rfc/rfc2119.txt">RFC
+2119</a>.</p>
+<h2 id="contents">Contents</h2>
+<div class="toc"><div class="toc-section"><div class="title"><a href="#fundamentals">Fundamentals</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#modules">Modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#dependences">Dependences</a>&#160;&#183;</span> <span class="toc-req"><a href="#resolution">Resolution</a>&#160;&#183;</span> <span class="toc-req"><a href="#exports">Exports</a>&#160;&#183;</span> <span class="toc-req"><a href="#encapsulation">Encapsulation</a>&#160;&#183;</span> <span class="toc-req"><a href="#non-interference">Non-interference</a>&#160;&#183;</span> <span class="toc-req"><a href="#resource-encapsulation">Resource encapsulation</a>&#160;&#183;</span> <span class="toc-req"><a href="#services">Services</a>&#160;&#183;</span> <span class="toc-req"><a href="#binding">Binding</a>&#160;&#183;</span> <span class="toc-req"><a href="#selective-binding">Selective binding</a>&#160;&#183;</span> <span class="toc-req"><a href="#fidelity-across-all-phases">Fidelity across all phases</a>&#160;&#183;</span> <span class="toc-req"><a href="#protection-domains">Protection domains</a>&#160;&#183;</span> <span class="toc-req"><a href="#compatible-java-platform-modularization">Compatible Java Platform modularization</a>&#160;&#183;</span> <span class="toc-req"><a href="#refactoring">Refactoring</a>&#160;&#183;</span> <span class="toc-req"><a href="#interoperation">Interoperation</a></span></p></div><div class="toc-section"><div class="title"><a href="#modularizing-the-java-se-platform">Modularizing the Java SE Platform</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#medium-grained-modularization">Medium-grained modularization</a>&#160;&#183;</span> <span class="toc-req"><a href="#qualified-exports">Qualified exports</a>&#160;&#183;</span> <span class="toc-req"><a href="#overrideable-encapsulation">Overrideable encapsulation</a>&#160;&#183;</span> <span class="toc-req"><a href="#upgradeable-modules">Upgradeable modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#referential-integrity">Referential integrity</a>&#160;&#183;</span> <span class="toc-req"><a href="#preserve-performance">Preserve performance</a></span></p></div><div class="toc-section"><div class="title"><a href="#development">Development</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#gradual-migration-of-applications">Gradual migration of applications</a>&#160;&#183;</span> <span class="toc-req"><a href="#integrate-smoothly-with-existing-tools">Integrate smoothly with existing tools</a>&#160;&#183;</span> <span class="toc-req"><a href="#multi-mode-artifacts">Multi-mode artifacts</a>&#160;&#183;</span> <span class="toc-req"><a href="#white-box-testing">White-box testing</a>&#160;&#183;</span> <span class="toc-req"><a href="#reflection-debugging-and-tools">Reflection, debugging, and tools</a>&#160;&#183;</span> <span class="toc-req"><a href="#readable-artifacts">Readable artifacts</a>&#160;&#183;</span> <span class="toc-req"><a href="#efficient-annotation-detection">Efficient annotation detection</a></span></p></div><div class="toc-section"><div class="title"><a href="#linking">Linking</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#linking-tool">Linking tool</a>&#160;&#183;</span> <span class="toc-req"><a href="#link-time-optimization">Link-time optimization</a></span></p></div><div class="toc-section"><div class="title"><a href="#packaging">Packaging</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#os-specific-module-packaging">OS-specific module packaging</a>&#160;&#183;</span> <span class="toc-req"><a href="#os-specific-application-packaging">OS-specific application packaging</a></span></p></div><div class="toc-section"><div class="title"><a href="#versioning">Versioning</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#version-strings">Version strings</a>&#160;&#183;</span> <span class="toc-req"><a href="#non-prescriptive-version-strings">Non-prescriptive version strings</a>&#160;&#183;</span> <span class="toc-req"><a href="#version-strings-in-reflective-apis">Version strings in reflective APIs</a></span></p></div><div class="toc-section"><div class="title"><a href="#dynamic-configuration">Dynamic Configuration</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#basic-dynamic-configuration">Basic dynamic configuration</a>&#160;&#183;</span> <span class="toc-req"><a href="#run-time-augmentation-of-platform-modules">Run-time augmentation of platform modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#multiple-dynamic-configurations">Multiple dynamic configurations</a>&#160;&#183;</span> <span class="toc-req"><a href="#isolated-dynamic-configurations">Isolated dynamic configurations</a>&#160;&#183;</span> <span class="toc-req"><a href="#composable-dynamic-configurations">Composable dynamic configurations</a>&#160;&#183;</span> <span class="toc-req"><a href="#alternate-module-versions-in-dynamic-configurations">Alternate module versions in dynamic configurations</a>&#160;&#183;</span> <span class="toc-req"><a href="#control-of-class-loaders">Control of class loaders</a></span></p></div><div class="toc-section"><div class="title"><a href="#non-requirements">Non-Requirements</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#modularize-the-java-language-specification">Modularize the Java Language Specification</a>&#160;&#183;</span> <span class="toc-req"><a href="#modularize-the-java-virtual-machine-specification">Modularize the Java Virtual Machine Specification</a>&#160;&#183;</span> <span class="toc-req"><a href="#multiple-versions">Multiple versions</a>&#160;&#183;</span> <span class="toc-req"><a href="#version-selection">Version selection</a></span></p></div></div>
+<h2 id="fundamentals">Fundamentals</h2>
+<ul>
+<li id="modules"><em>Modules</em> &#8212; Provide a means to define <em>modules</em>, which are named,
+    self-describing program components consisting of code and data.  A
+    module must be able to contain Java classes and interfaces, as
+    organized into packages, and also native code, in the form of
+    dynamically-loadable libraries.  A module&#8217;s data must be able to
+    contain static resource files and user-editable configuration files.</li>
+</ul>
+<p>Like a package, class, or interface, a module has both a specification
+and one or more implementations.  It is a large-grained unit of
+compilation, packaging, release, transport, and re-use.</p>
+<ul>
+<li id="dependences">
+<p><em>Dependences</em> &#8212; A module&#8217;s definition must be able to indicate
+    which other modules are <em>required</em> in order to compile and run the
+    module&#8217;s code.</p>
+</li>
+<li id="resolution">
+<p><em>Resolution</em> &#8212; The module system must be able to locate the modules
+    that an initial module requires from a set of modules made available
+    by the host system, and then locate the modules that those modules
+    require, and so on, until every dependence of every required module
+    is fulfilled.  The resulting <em>configuration</em> specifies all of the
+    code and data required to compile or run the initial module.</p>
+</li>
+<li id="exports">
+<p><em>Exports</em> &#8212; A module&#8217;s definition must be able to indicate which of
+    its packages are <em>exported</em> for use by other modules, and which are
+    not.  Multiple modules may export packages of the same name.</p>
+</li>
+<li id="encapsulation">
+<p><em>Encapsulation</em> &#8212; The access-control mechanisms of the Java
+    language and virtual machine must prevent code from accessing classes
+    and interfaces in packages that are not exported by their containing
+    modules, or in packages whose containing modules are not required by
+    the module containing the code.  These mechanisms must be operative
+    even when a security manager is not present.</p>
+</li>
+<li id="non-interference">
+<p><em>Non-interference</em> &#8212; The Java compiler, virtual machine, and
+    run-time system must ensure that modules that contain packages of the
+    same name do not interfere with each other.  If two distinct modules
+    contain packages of the same name then, from the perspective of each
+    module, all of the types and members in that package are defined only
+    by that module.  Code in that package in one module must not be able
+    to access package-private types or members in that package in the
+    other module.</p>
+</li>
+<li id="resource-encapsulation">
+<p><em>Resource encapsulation</em> &#8212; The run-time system must ensure that the
+    static resource files within a module are directly accessible only by
+    code within that module.  The existing resource-access APIs should
+    continue to work as they do today when used to access a module&#8217;s own
+    resource files.</p>
+</li>
+<li id="services">
+<p><em>Services</em> &#8212; A module&#8217;s definition must be able to indicate that it
+    <em>uses</em> one or more interfaces whose implementations will be
+    <em>provided</em> at run time by some modules.</p>
+</li>
+<li id="binding">
+<p><em>Binding</em> &#8212; The Java run-time system must bind service
+    implementations to interfaces and make these bindings available via
+    an enhanced version of the existing <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html"><code>java.util.ServiceLoader</code></a>
+    API.</p>
+</li>
+<li id="selective-binding">
+<p><em>Selective binding</em> &#8212; It must be possible for the agent that
+    invokes the binding process to control that process so that specific
+    services are provided only by specific providers, and in a specific
+    order.</p>
+</li>
+</ul>
+<p>In this context the invoking agent might be a developer, via command-line
+flags or build-system configuration settings, or it might be an
+application that dynamically loads modules, via an appropriate API.</p>
+<ul>
+<li id="fidelity-across-all-phases">
+<p><em>Fidelity across all phases</em> &#8212; Resolution, encapsulation,
+    non-interference, services, and all other aspects of the module
+    system should, to the fullest extent possible, work in exactly the
+    same way at compile time, at run time, and in every other phase of
+    development or deployment.</p>
+</li>
+<li id="protection-domains">
+<p><em>Protection domains</em> &#8212; At run time it must be possible to associate
+    the code in modules with protection domains, for the purpose of
+    granting security permissions.</p>
+</li>
+<li id="compatible-java-platform-modularization">
+<p><em>Compatible Java Platform modularization</em> &#8212; It must be possible to
+    divide an existing Java Platform, <em>e.g.</em>, Java SE or Java EE, into a
+    set of modules such that existing libraries and applications can run
+    without change, so long as they use only standard platform APIs.</p>
+</li>
+<li id="refactoring">
+<p><em>Refactoring</em> &#8212; It must be possible to refactor a set of modules
+    over time, by splitting a module into smaller modules or merging an
+    existing set of modules into a single module, without having to
+    modify any external component that makes use of the original modules.</p>
+</li>
+<li id="interoperation">
+<p><em>Interoperation</em> &#8212; It must be possible for another module system,
+    such as OSGi, to locate Java modules and resolve them using its own
+    resolver, except possibly for core system modules.</p>
+</li>
+</ul>
+<h2 id="modularizing-the-java-se-platform">Modularizing the Java SE Platform</h2>
+<ul>
+<li id="medium-grained-modularization"><em>Medium-grained modularization</em> &#8212; The module system must support
+    the division of the Java SE Platform into a set of modules that gives
+    significantly more configuration flexibility than is presently
+    provided by the very coarse-grained <a href="//openjdk.java.net/jeps/161">Compact Profiles</a>, but
+    is not so fine-grained that it is difficult to comprehend or costly
+    to implement.</li>
+</ul>
+<p>A module that exports one or more packages of the Java SE Platform will
+hereinafter be referred to as a &#8220;platform module.&#8221;</p>
+<ul>
+<li id="qualified-exports">
+<p><em>Qualified exports</em> &#8212; A module&#8217;s definition must be able to
+    indicate that some of its packages are exported only for use by a
+    specific set of named modules, rather than by all modules.  This will
+    allow modules to share internal implementation interfaces without
+    exposing those interfaces to all other modules.</p>
+</li>
+<li id="overrideable-encapsulation">
+<p><em>Overrideable encapsulation</em> &#8212; It must be possible to force a
+    module to export one or more of its packages to all other modules,
+    or to some specific modules, even if its definition does not do so.</p>
+</li>
+<li id="upgradeable-modules">
+<p><em>Upgradeable modules</em> &#8212; If a platform module implements an
+    <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/index.html">endorsed standard or standalone technology</a> then it must be
+    possible to replace it with a module that implements a later version
+    of that standard or technology.</p>
+</li>
+<li id="referential-integrity">
+<p><em>Referential integrity</em> &#8212; Given a specific set of modules
+    comprising an implementation of the Java SE Platform, it must be
+    possible to ensure that each module can be configured only to
+    reference other modules in the same set, with the exception of
+    upgradeable modules.</p>
+</li>
+<li id="preserve-performance">
+<p><em>Preserve performance</em> &#8212; The static footprint, startup time, memory
+    footprint, and run-time performance of an application running on a
+    typical platform implementation must be no worse than it is today,
+    except that footprint metrics may increase in order to accommodate
+    new features.</p>
+</li>
+</ul>
+<h2 id="development">Development</h2>
+<ul>
+<li id="gradual-migration-of-applications">
+<p><em>Gradual migration of applications</em> &#8212; It should be possible for a
+    developer to convert an existing application into modular form in a
+    series of incremental steps, which gradually move code from the class
+    path into modules, rather than one single step, which immediately
+    moves all code into modules.</p>
+</li>
+<li id="integrate-smoothly-with-existing-tools">
+<p><em>Integrate smoothly with existing tools</em> &#8212; A developer who
+    currently uses tools such as Maven, Ivy, or Gradle to build and test
+    a library or application should be able to use that tool to build and
+    test the modular form of that library or application with a minimum
+    of fuss.</p>
+</li>
+<li id="multi-mode-artifacts">
+<p><em>Multi-mode artifacts</em> &#8212; The existing JAR-file format must be
+    enhanced so that a module that does not contain native code can be
+    delivered in a single artifact that can be used either on the class
+    path or as a module.</p>
+</li>
+</ul>
+<p>This will allow library developers to continue to produce a single
+artifact for both class-path and module-based applications.</p>
+<ul>
+<li id="white-box-testing">
+<p><em>White-box testing</em> &#8212; It must be possible to test classes and
+    interfaces that are not exported by a module.</p>
+</li>
+<li id="reflection-debugging-and-tools">
+<p><em>Reflection, debugging, and tools</em> &#8212; Reflective and diagnostic APIs
+    and tools such the <code>java.lang.reflect</code> package, the
+    <code>javax.lang.model</code> package, stack traces, JVM TI, and Javadoc must be
+    upgraded to convey information about the modules in a configuration
+    and, when appropriate, provide the ability to manipulate modules, in
+    much the same manner as they already do for classes.</p>
+</li>
+<li id="readable-artifacts">
+<p><em>Readable artifacts</em> &#8212; If a module is defined by an artifact that
+    contains class and resource files then it must be possible, once that
+    module is loaded, for suitably-privileged code outside of that module
+    to read those files.</p>
+</li>
+<li id="efficient-annotation-detection">
+<p><em>Efficient annotation detection</em> &#8212; It must be possible to identify
+    all of the class files in a module artifact in which a particular
+    annotation is present without actually reading all of the class
+    files.  At run time it must be possible to identify all of the
+    classes in a loaded module in which a particular annotation is
+    present without enumerating all of the classes in the module, so long
+    as the annotation was retained for run time.  For efficiency it may
+    be necessary to specify that only certain annotations need to be
+    detectable in this manner.</p>
+</li>
+</ul>
+<p>One potential approach is to augment a module&#8217;s definition with an index
+of the annotations that are present in the module, together with an
+indication of the elements to which each annotation applies.  To limit
+the size of the index, only annotations which themselves are annotated
+with a new meta-annotation, say <code>@Indexed</code>, would be included.</p>
+<h2 id="linking">Linking</h2>
+<ul>
+<li id="linking-tool"><em>Linking tool</em> &#8212; It must be possible to create a tool which a
+    developer can use to create a custom binary run-time image that
+    contains a specific resolved configuration of platform, library, and
+    application modules.</li>
+</ul>
+<p>The result of the linking process may be a minimal Java run-time system
+integrated tightly with a single application and its libraries, an entire
+Java development environment, or something in between these two extremes.</p>
+<ul>
+<li id="link-time-optimization"><em>Link-time optimization</em> &#8212; When linking a custom run-time image it
+    must be possible to apply ahead-of-time, whole-program optimization
+    techniques that take advantage of module-configuration information.</li>
+</ul>
+<h2 id="packaging">Packaging</h2>
+<ul>
+<li id="os-specific-module-packaging"><em>OS-specific module packaging</em> &#8212; It must be possible for a
+    developer to use existing tools to package a set of modules into one
+    or more OS-specific packages, in formats such as RPM, Debian, and
+    Solaris IPS, such that the modules can, once the package is
+    installed, make use of modules installed on the target system in like
+    manner.</li>
+</ul>
+<p>This requirement does not apply to operating systems that do not have
+built-in, general-purpose packaging systems, such as Windows and Mac OS.</p>
+<ul>
+<li id="os-specific-application-packaging"><em>OS-specific application packaging</em> &#8212; It must be possible for a
+    developer to package a set of modules comprising an application,
+    together with the platform modules that they require, if necessary,
+    into an OS-specific package which can be installed and invoked by an
+    end user in the manner that is customary for the target system.</li>
+</ul>
+<p>If the target system is expected already to include the necessary
+platform modules then they need not be included in the application
+package.</p>
+<h2 id="versioning">Versioning</h2>
+<ul>
+<li id="version-strings">
+<p><em>Version strings</em> &#8212; A module&#8217;s definition must be able to indicate
+    a version string.</p>
+</li>
+<li id="non-prescriptive-version-strings">
+<p><em>Non-prescriptive version strings</em> &#8212; Version strings must have a
+    precisely-defined syntax and be totally ordered, but otherwise their
+    format should be as general as possible in order to accommodate
+    existing popular version-string schemes.</p>
+</li>
+<li id="version-strings-in-reflective-apis">
+<p><em>Version strings in reflective APIs</em> &#8212; The various <a href="#reflection-debugging-and-tools">reflective and
+    diagnostic APIs</a> must be upgraded to
+    convey the version strings of modules, when present.</p>
+</li>
+</ul>
+<h2 id="dynamic-configuration">Dynamic Configuration</h2>
+<p>The requirements for dynamic configuration are motivated by applications
+with plug-in or container architectures such as IDEs, test harnesses, and
+application servers.  For the Java EE Platform, in particular, the goal
+is to enable a future modular <code>war</code>-file standard in which the components
+in a <code>war</code> file can be modules.</p>
+<ul>
+<li id="basic-dynamic-configuration">
+<p><em>Basic dynamic configuration</em> &#8212; It must be possible for a running
+    application to load an additional set of non-platform modules, relate
+    them in a new configuration to each other and to modules in the
+    application&#8217;s existing configuration, invoke them as necessary, and
+    then release them for eventual garbage collection.</p>
+</li>
+<li id="run-time-augmentation-of-platform-modules">
+<p><em>Run-time augmentation of platform modules</em> &#8212; It must be possible
+    to load and configure additional platform modules after a run-time
+    image has been invoked.</p>
+</li>
+</ul>
+<p>This will allow a container application to load additional platform
+modules in order to satisfy the needs of the applications that it hosts.</p>
+<ul>
+<li id="multiple-dynamic-configurations">
+<p><em>Multiple dynamic configurations</em> &#8212; An application must be able to
+    create and manipulate multiple independent dynamic configurations.</p>
+</li>
+<li id="isolated-dynamic-configurations">
+<p><em>Isolated dynamic configurations</em> &#8212; An application must be able to
+    isolate the code in different dynamic configurations at least as well
+    as is possible today, where this is typically done by using multiple
+    class loaders.  An application must be able to ensure that code in a
+    dynamic configuration does not modify other configurations.</p>
+</li>
+<li id="composable-dynamic-configurations">
+<p><em>Composable dynamic configurations</em> &#8212; An application must be able
+    to create a dynamic configuration that relates to one or more
+    existing configurations rather than solely to the application&#8217;s
+    initial configuration.</p>
+</li>
+<li id="alternate-module-versions-in-dynamic-configurations">
+<p><em>Alternate module versions in dynamic configurations</em> &#8212; An
+    application must be able to arrange for a dynamic configuration to
+    include versions of non-platform modules and upgradeable platform
+    modules that are different from those already available in the
+    enclosing configuration, and it must be able to control the manner in
+    which such alternate versions are selected.</p>
+</li>
+</ul>
+<p>A canonical example of using multiple versions of an upgradeable module
+in a Java EE environment is that of a web application requiring a
+different version of the JAX-WS stack than is already available to the
+web container.</p>
+<ul>
+<li id="control-of-class-loaders"><em>Control of class loaders</em> &#8212; An application that loads a module
+    into a dynamic configuration must be able to specify the class loader
+    to be used to load that module.</li>
+</ul>
+<h2 id="non-requirements">Non-Requirements</h2>
+<ul>
+<li id="modularize-the-java-language-specification">
+<p><em>Modularize the Java Language Specification</em> &#8212; This specification
+    need not attempt to subdivide the Java programming language in any
+    way.</p>
+</li>
+<li id="modularize-the-java-virtual-machine-specification">
+<p><em>Modularize the Java Virtual Machine Specification</em> &#8212; This
+    specification need not attempt to subdivide the Java Virtual Machine
+    Specification in any way.</p>
+</li>
+</ul>
+<p>A particular JVM implementation may, of course, have its own internal
+modular structure, but there is no compelling need to subdivide either
+the language or the VM specifications.</p>
+<ul>
+<li id="multiple-versions"><em>Multiple versions</em> &#8212; It is not necessary to support more than one
+    version of a module within a single configuration.</li>
+</ul>
+<p>Most applications are not containers and, since they currently rely upon
+the class path, do not require the ability to load multiple versions of a
+module.  Container-type applications can achieve this, when needed, via
+dynamic configuration, as outlined above.</p>
+<ul>
+<li id="version-selection"><em>Version selection</em> &#8212; The process of configuring a set of modules
+    need not consider more than one version of any particular module.</li>
+</ul>
+<p>In other words, this specification need not define yet another
+dependency-management mechanism.  Maven, Ivy, and Gradle have all tackled
+this difficult problem.  We should leave it to these and other build
+tools, and container applications, to discover and select a set of
+candidate modules for a given library or application.  The module system
+need only validate that the set of selected modules satisfies each
+module&#8217;s dependences.</p></body></html>

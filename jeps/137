@@ -1,0 +1,367 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 137: Diagnostic-Command Framework</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 137: Diagnostic-Command Framework</h1><table class="head"><tr><td>Owner</td><td>Frederic Parain</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Discussion</td><td>serviceability dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Mikael Vidstedt</td></tr><tr><td>Endorsed by</td><td>Brian Goetz, Paul Hohensee</td></tr><tr><td>Created</td><td>2011/11/29 20:00</td></tr><tr><td>Updated</td><td>2017/06/12 19:16</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046127">8046127</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Define a framework for issuing diagnostics commands to the JVM.</p>
+<h2 id="Goals">Goals</h2>
+<p>Provide a framework to ease the implementation and invocation of diagnostic
+commands in a JVM process. Diagnostic commands are actions executed inside the
+Java virtual machine, mainly for monitoring or management purposes.  Diagnostic
+commands should be invocable locally using a new command-line utility or
+remotely using a JMX connection. The framework must provide a way for
+diagnostic commands to describe themselves in term of semantics, syntax, and
+options.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>This JEP is just about the diagnostic-command framework, not about implementing
+diagnostic commands. Implementation of new diagnostic commands will be a
+separate project, or will be associated with other projects that want to use
+this feature.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Such a feature has already been implemented in the JRockit Mission Control tool
+and used with success by the JRockit sustaining team.</p>
+<h2 id="Description">Description</h2>
+<p>This work has two parts.  The first part is in the HotSpot VM and contains the
+framework itself with two diagnostic commands. The second part is in the JDK
+and contains the command line utility to invoke diagnostic commands as well as
+additions to the <code>HotSpotDiagnosticMXBean</code> to allow a remote client to discover
+and invoke diagnostic commands using a JMX connection.</p>
+<p>1 - The Diagnostic Command Framework</p>
+<p>1-1 Overview</p>
+<p>The diagnostic command framework is fully implemented in native code and relies
+on HotSpot's internal exception mechanism.  The rationale for a pure native
+implementation is to be able to execute diagnostic commands even in critical
+situations like an out-of-memory condition. All diagnostic commands are
+registered in a single list, and two flags control the way a user can interact
+with them. The <em>hidden</em> flag prevents a diagnostic command from appearing in
+the list of available commands returned by the <code>help</code> command. However, it's
+still possible to get the detailed help message for a hidden command with the
+<code>help &lt;command name&gt;</code> syntax, but it requires knowing the name of the hidden
+command. The second flag is <em>enabled</em> and it controls whether a command can be
+invoked or not. When listed with the <code>help</code> commands, disabled commands appear
+with a <code>[disabled]</code> label in their descriptions. If the user tries to invoke a
+disabled command, an error message is returned and the command is not run. This
+error message can be customized on a per-command basis. The framework just
+provides these two flags with their semantics; it doesn't provide any policy or
+mechanism to set or modify these flags. These actions will be delegated to the
+JVM or specific diagnostic commands.</p>
+<p>1-2 Implementation</p>
+<p>All diagnostic commands are implemented as subclasses of the <code>DCmd</code> class
+defined in <code>services/diagnosticFramework.hpp</code>. Here's the layout of the <code>DCmd</code>
+class and the list of methods that a new command has to define or overwrite:</p>
+<pre><code>class DCmd {
+  DCmd(outputStream *output);
+  static const char *get_name();
+  static const char *get_description();
+  static const char *get_disabled_message();
+  static const char *get_impact();
+  static int get_num_arguments();
+  virtual void print_help(outputStream* out);
+  virtual void parse(CmdLine* line, char delim, TRAPS);
+  virtual void execute(TRAPS);
+  virtual void reset(TRAPS);
+  virtual void cleanup();
+  virtual GrowableArray&lt;const char *&gt;* get_argument_name_array();
+  virtual GrowableArray&lt;DCmdArgumentInfo*&gt;* get_argument_info_array();
+}</code></pre>
+<p>A diagnostic command is always instantiated with an <code>outputStream</code> in
+parameter. This <code>outputStream</code> can point either to a file, a buffer or a socket
+(see the <code>ostream.hpp</code> file).</p>
+<p>The <code>get_name()</code> method returns the string that will identify the command
+(i.e., the string to put on the command line to invoke it).</p>
+<p>The <code>get_description()</code> method returns the global description of the command.</p>
+<p>The <code>get_disabled_message()</code> method returns the customized message to return
+when the command is disabled, without having to instantiate the command.</p>
+<p>The <code>get_impact()</code> method returns a description of the intrusiveness of the
+diagnostic command on the Java Virtual Machine behavior. The rationale for this
+method is that some diagnostic commands can seriously disrupt the behavior of
+the Java Virtual Machine (for instance a thread dump for an application with
+several tens of thousands of threads, or a heap dump with a 40GB+ heap), while
+other diagnostic commands have no serious impact on the JVM (for instance,
+getting the command line arguments or the JVM version). The recommended format
+for the description is <code>&lt;impact level&gt;: [longer description]</code>, where the impact
+level is selected from this set: {<code>low</code>, <code>medium</code>, <code>high</code>}. The optional longer
+description can provide more specific details like the fact that thread dump
+impact depends on the heap size.</p>
+<p>The <code>get_num_arguments()</code> method returns the number of options/arguments
+recognized by the diagnostic command. This method is only used by the JMX
+interface support (see below).</p>
+<p>The <code>print_help()</code> method prints a detailed help message on the <code>outputStream</code>
+argument. The detailed help contains the list of all supported options with
+their type and description.</p>
+<p>The <code>parse()</code> method is in charge of parsing the command arguments. Each
+command is free to implement its own argument parser. However, an argument
+parser framework is provided (see section 1-3) to ease the implementation, but
+its use is optional. The parse method takes a delimiter character in argument,
+which is used to mark the boundary between two arguments.  Typically invocation
+from <code>jcmd</code> will use a space character as a delimiter, while invocation from
+the JVM's command-line parsing code will use a comma as a delimiter.</p>
+<p>The <code>execute()</code> method is naturally the one to invoke to execute the diagnostic
+command. The <code>parse()</code> and the <code>execute()</code> methods are dissociated, so that
+it's possible perform the argument parsing in one thread and delegate execution
+to another thread, as long as the diagnostic command doesn't reference
+thread-local variables. The framework allows several instances of the same
+diagnostic command to be executed in parallel. If for some reason concurrent
+executions should not be allowed for a given diagnostic command, it is the
+responsibility of the diagnostic-command implementor to enforce this rule, for
+instance by protecting the body of the <code>execute()</code> method with a global lock.</p>
+<p>The <code>reset()</code> method is used to initialize the internal fields of the
+diagnostic command or to reset the internal fields to their initial value, to
+be able to re-use an already allocated diagnostic command instance.</p>
+<p>The <code>cleanup()</code> method is used to perform cleanup, like freeing of all memory
+allocated to store internal data. The <code>DCmd</code> class extends the <code>ResourceObj</code>
+class, so when allocated in a <code>ResourceArea</code>, destructors cannot be used to
+perform cleanup. To ensure that cleanup is performed in all cases, it is
+recommended to create a <code>DCmdMark</code> instance for each <code>DCmd</code>
+instance. <code>DCmdMark</code> is a stack-allocated object with a pointer to a <code>DCmd</code>
+instance. When the <code>DCmdMark</code> is destroyed, its destructor calls the
+<code>cleanup()</code> method of the <code>DCmd</code> instance it points to. If the <code>DCmd</code> instance
+has been allocated on the C-heap, the <code>DCmdMark</code> will also free the memory
+allocated to store the <code>DCmd</code> instance.</p>
+<p>The <code>get_argument_name_array()</code> and <code>get_argument_info_array()</code> methods are
+related to the JMX interface of the diagnostic command framework, so they are
+described in section 3.</p>
+<p>1-3 <code>DCmdParser</code> framework</p>
+<p>The <code>DCmdParser</code> class is an optional framework to help the development of
+argument parsers. It provides many features required by the diagnostic command
+framework, such as generation of the help message or the argument descriptions
+for the JMX interface, but all these features can easily be re-implemented if a
+developer decides not to use the <code>DCmdParser</code> framework.</p>
+<p>The <code>DCmdParser</code> class relies upon the <code>DCmdArgument</code> template. This template
+must be used to define the different types of arguments the parser will have to
+handle. When a new specialization of the template is done, three methods have
+to be provided:</p>
+<pre><code>void parse_value(const char *str,size_t len,TRAPS);
+void init_value(TRAPS);
+void destroy_value();</code></pre>
+<p>The <code>parse_value()</code> method is used to convert a string into an argument
+value. The <code>print_value()</code> method is used to display the default value (support
+for the detailed help message). The <code>init_value()</code> method is used to initialize
+or reset the argument value. The <code>destroy_value()</code> method is a clean-up method,
+useful when the argument has allocated some C-heap memory to store its value
+and this memory has to be freed before destroying the <code>DCmdArgument</code> instance.</p>
+<p>The <code>DCmdParser</code> makes a distinction between options and arguments.  Options
+are identified by a key name that must appear on the command line, while
+argument are identified just by the position of the argument on the command
+line. Options use the <code>&lt;key&gt;=&lt;value&gt;</code> syntax. In the case of boolean options,
+the <code>=&lt;value&gt;</code> part of the syntax can be omitted to set the option to
+true. Arguments are just sequences characters delimited by a separator
+character. This separator can be specified at runtime when invoking the
+diagnostic-command framework. If an argument contains a character that could be
+used as a delimiter, it's possible to enclose the argument between single or
+double quotes. Options are arguments are instantiated using the same
+<code>DCmdArgument</code> class but they're registered differently to the <code>DCmdParser</code>.
+The way to use the <code>DCmdParser</code> is to declare the parser and the
+option/arguments as fields of the diagnostic command class, which is itself a
+sub-class of the <code>DCmd</code> class, like this:</p>
+<pre><code>class EchoDCmd : public DCmd {
+  protected:
+    DCmdParser _dcmdparser;
+    DCmdArgument&lt;jlong&gt; _required;
+    DCmdArgument&lt;jlong&gt; _intval;
+    DCmdArgument&lt;bool&gt; _boolval;
+    DCmdArgument&lt;char *&gt; _stringval;
+    DCmdArgument&lt;char *&gt; _first_arg;
+    DCmdArgument&lt;jlong&gt; _second_arg;
+    DCmdArgument&lt;char *&gt; _optional_arg;
+}</code></pre>
+<p>The parser and the options/arguments must be initialized before the diagnostic
+command class, and the options/arguments have to be registered to the parser
+like this:</p>
+<pre><code>EchoDCmd(outputStream *output) : DCmd(output),
+  _stringval("-strval","a string argument","STRING",false),
+  _boolval("-boolval","a boolean argument","BOOLEAN",false),
+  _intval("-intval","an integer argument","INTEGER",false),
+  _required("-req","a mandatory integer argument","INTEGER",true),
+  _fist_arg("first argument","a string argument","STRING",true),
+  _second_arg("second argument,"an integer argument,"INTEGER",true),
+  _optional_arg("optional argument","an optional string argument",
+                "STRING","false")
+{
+  _dcmdparser.add_dcmd_option(&amp;_stringval);
+  _dcmdparser.add_dcmd_option(&amp;_boolval);
+  _dcmdparser.add_dcmd_option(&amp;_intval);
+  _dcmdparser.add_dcmd_option(&amp;_required);
+  _dcmdparser.add_argument(&amp;_first_arg);
+  _dcmdparser.add_argument(&amp;_second_arg);
+  _dcmdparser.add_argument(&amp;_optional_arg);
+};</code></pre>
+<p>The <code>add_dcmd_argument()</code>/<code>add_dcmd_option()</code> method is used to add an
+argument/option to the parser. The option/argument constructor takes the name
+of the option/argument, its description, a string describing its type, and a
+boolean to specify if the option/argument is mandatory or not. The parser
+doesn't support option/argument duplicates (having the same name) but the code
+currently doesn't check for duplicates. The order used to register options has
+no impact on the parser. However, the order used to register arguments is
+critical because the parser will use the same order to parse the command
+line. In the example above, the parser expects to have a first argument of type
+<code>STRING</code> (parsed using <code>_first_arg</code>), then a second argument of type <code>INTEGER</code>
+(parsed using <code>_second_arg</code>), and optionally a third parameter of type <code>STRING</code>
+(parsed using <code>_optional_arg</code>). A mandatory option or argument has to be
+specify every time the command is invoked. If it is missing, an exception is
+thrown when parsing is finished. Optional arguments have to be registered after
+mandatory arguments. An optional argument will be considered for parsing only
+if all arguments before it, mandatory or not, have already been used to parse
+the command line.</p>
+<p>The <code>DCmdParser</code> and its <code>DCmdArgument</code> instances are embedded in the <code>DCmd</code>
+instance. The rationale for this design is to limit the number of C-heap
+allocations but also to be able to pre-allocate diagnostic command instances
+for critical situations. If the process is running out of C-heap space, it's
+not possible to instantiate new diagnostic commands to troubleshoot the
+situation. By pre-allocating some diagnostic commands it will be possible to
+run them even in this critical situation. Of course, the diagnostic command
+itself should not try to allocate memory during its execution; this prevents
+the diagnostic command from using variable-length arguments like strings. By
+nature, pre-allocated diagnostic commands aim to be re-usable; this is the
+purpose of the <code>reset()</code> method which restores the default status of all
+arguments.</p>
+<p>1-4 Internal invocation</p>
+<p>Using a diagnostic command from the JVM itself is pretty easy: instantiate the
+class and invoke the <code>parse()</code> method and then the <code>execute()</code> method. A
+diagnostic command can be instantiated from inside the JVM even it is not
+registered. This is a difference with the external invocations (from <code>jcmd</code> or
+JMX), which require the command to be registered.</p>
+<p>2 - The <code>jcmd</code> utility</p>
+<p>Diagnostic commands can also be invoked from outside the JVM process, using the
+new <code>jcmd</code> utility. The <code>jcmd</code> program uses the attach API to connect to the
+JVM, send requests, and receive results. The <code>jcmd</code> utility must be launched on
+the same machine as the one running the JVM. Launched without arguments, <code>jcmd</code>
+displays a list of all JVMs running on the machine. The <code>jcmd</code> source code is
+in the JDK repository, like other existing <code>j*</code> tools.</p>
+<p>To execute a diagnostic command in a particular JVM, the generic syntax is:</p>
+<pre><code>jcmd &lt;pid_of_the_jvm&gt; &lt;command_name&gt; [arguments]</code></pre>
+<p>The <code>attachListener</code> has been modified to recognize the <code>jcmd</code> requests.  When
+a <code>jcmd</code> request is identified, it is parsed to extract the command name. The
+JVM performs a look up of this command in a list of registered commands. To be
+executable by an external request, a diagnostic command has to be
+registered. The registration is performed with the <code>DCmdFactory</code> class (see
+<code>services/management.cpp</code>).</p>
+<p>3 - The JMX interface</p>
+<p>The framework provides a JMX-based interface to the diagnostic commands.  This
+interface allows remote invocation of diagnostic commands through a JMX
+connection.</p>
+<p>3-1 The interface</p>
+<p>The information related to the diagnostic commands are accessible through
+methods added to the <code>com.sun.management.HotspotDiagnosticMXBean</code> class:</p>
+<pre><code>public List&lt;String&gt; getDiagnosticCommands();
+public DiagnosticCommandInfo getDiagnosticCommandInfo(String command);
+public List&lt;DiagnosticCommandInfo&gt;
+    getDiagnosticCommandInfo(List&lt;String&gt; command);
+public List&lt;DiagnosticCommandInfo&gt; getDiagnosticCommandInfo();
+public String execute(String commandLine) throws IllegalArgumentException;
+public String execute(String cmd, String ... arguments)
+    throws IllegalArgumentException;</code></pre>
+<p>The <code>getDiagnosticCommands()</code> method returns an array containing the names of
+the non-hidden registered diagnostic commands.</p>
+<p>The three <code>getDiagnosticCommandInfo()</code> methods return one or several diagnostic
+command descriptions using the <code>DiagnosticCommandInfo</code> class.</p>
+<p>The two <code>execute()</code> methods allow the user the invoke a diagnostic command in
+different ways.</p>
+<p>The <code>DiagnosticCommandInfo</code> class describes a diagnostic command with the
+following information:</p>
+<pre><code>public class DiagnosticCommandInfo {
+    public String getName();
+    public String getDescription();
+    public String getImpact();
+    public boolean isEnabled();
+    public List&lt;DiagnosticCommandArgumentInfo&gt; getArgumentsInfo();
+}</code></pre>
+<p>The <code>getName()</code> method returns the name of the diagnostic command. This name is
+the one to use in <code>execute()</code> methods to invoke the diagnostic command.</p>
+<p>The <code>getDescription()</code> method returns a general description of the diagnostic
+command.</p>
+<p>The <code>getImpact()</code> method returns a description of the intrusiveness of
+diagnostic command.</p>
+<p>The <code>isEnabled()</code> method returns true if the method is enabled, false if it is
+disabled. A disabled method cannot be executed.</p>
+<p>The <code>getArgumentsInfo()</code> returns a list of descriptions for the options or
+arguments recognized by the diagnostic command. Each option/argument is
+described by a <code>DiagnosticCommandArgumentInfo</code> instance:</p>
+<pre><code>public class DiagnosticCommandArgumentInfo {
+    public String getName();
+    public String getDescription();
+    public String getType();
+    public String getDefault();
+    public boolean isMandatory();
+    public boolean isOption();
+    public int getPosition();
+}</code></pre>
+<p>If the <code>DiagnosticCommandArgumentInfo</code> instance describes an option,
+<code>isOption()</code> returns true and <code>getPosition()</code> returns -1. Otherwise, when the
+<code>DiagnosticCommandArgumentInfo</code> instance describes an argument, <code>isOption()</code>
+returns false and <code>getPosition()</code> returns the expected position for this
+argument. The position of an argument is defined relative to all arguments
+passed on the command line; options are not considered when defining an
+argument position. The <code>getDefault()</code> method returns the default value of the
+argument if a default has been defined, otherwise it returns null.</p>
+<p>3-2 The implementation</p>
+<p>The framework has been designed so that diagnostic-command developers don't
+have to worry about the JMX interface. In addition to the methods described in
+section 1-2, a diagnostic-command developer has to provide three methods:</p>
+<pre><code>int get_num_arguments()</code></pre>
+<p>which returns the number of option and arguments supported by the command;</p>
+<pre><code>GrowableArray&lt;const char *&gt;* get_argument_name_array()</code></pre>
+<p>which provides the name of the arguments supported by the command; and</p>
+<pre><code>GrowableArray&lt;DCmdArgumentInfo*&gt;* get_argument_info_array()</code></pre>
+<p>which provides the description of each argument with a <code>DCmdArgumentInfo</code>
+instance. <code>DCmdArgumentInfo</code> is a C++ class used by the framework to generate
+the <code>sun.com.management.DcmdArgumentInfo</code> instances. This is done automatically
+so that the diagnostic-command developer doesn't need to know how to create
+Java objects from the runtime.</p>
+<p>4 - The Diagnostic Commands</p>
+<p>To avoid name collisions between diagnostic commands coming from different
+projects, use of a flat name space should be avoided and a more structured
+organization is recommended. The framework itself doesn't depend on this
+organization, so it will be a set of rules defining a convention in the way
+commands are named.</p>
+<p>Diagnostic commands can easily organized in a hierarchical fashion, so the
+template for a command name can be:</p>
+<pre><code>&lt;domain&gt;.[sub-domain.]&lt;command&gt;</code></pre>
+<p>This template can be extended with sub-sub-domains and so on.</p>
+<p>A special set of commands without domains will be reserved for the commands
+related to the diagnostic framework itself, like the "help" command.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>HotSpot already has a number of troubleshooting tools (<code>jps</code>, <code>jstack</code>,
+<code>jinfo</code>, etc.) but most of them are unsupported and limited to local
+invocation.  This framework is the opportunity to unify all the diagnostic
+commands into a single framework and add the support for remote invocation.</p>
+<h2 id="Testing">Testing</h2>
+<p>The framework is provided with two diagnostic commands that will be used to
+develop unit tests (integrated in the JDK repository). More tests are being
+developed.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

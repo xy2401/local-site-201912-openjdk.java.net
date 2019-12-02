@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Pattern matching for switch (Preview)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Pattern matching for switch (Preview)</h1><table class="head"><tr><td>Author</td><td>Brian Goetz</td></tr><tr><td>Owner</td><td>Gavin Bierman</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>specification&#8201;/&#8201;language</td></tr><tr><td>Discussion</td><td>amber dash dev at openjdk dot java dot net</td></tr><tr><td>Relates to</td><td><a href="305">JEP 305: Pattern Matching for instanceof (Preview)</a></td></tr><tr><td>Created</td><td>2018/10/29 08:07</td></tr><tr><td>Updated</td><td>2019/09/04 07:19</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8213076">8213076</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enhance the Java programming language with <em>pattern matching</em> for
+<code>switch</code> expressions and statements. <a href="//cr.openjdk.java.net/~briangoetz/amber/pattern-match.html">Pattern matching</a>
+allows common logic in a program -- conditionally extracting components
+from objects -- to be expressed more concisely and safely.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Nearly every program includes some sort of logic that combines testing
+if an expression has a certain type or structure, and then
+conditionally extracting components of its state for further
+processing.  For example, all Java programmers are familiar with the
+instanceof-and-cast idiom:</p>
+<pre><code>if (obj instanceof String) {
+    String s = (String) obj;
+    // use s
+}</code></pre>
+<p><a href="//openjdk.java.net/jeps/305">JEP 305</a> extends the <code>instanceof</code> operator with a <em>type test pattern</em> to allow this code to be simplified to the following:</p>
+<pre><code>if (obj instanceof String s) {
+    // use s
+}</code></pre>
+<p>However, when we want to test against <em>multiple</em> possible target types we end up with a chain of <code>if...else</code> tests such as the following:</p>
+<pre><code>String formatted = "unknown";
+if (obj instanceof Integer i) {
+    formatted = String.format("int %d", i);
+}
+else if (obj instanceof Byte b) {
+    formatted = String.format("byte %d", b);
+}
+else if (obj instanceof Long l) {
+    formatted = String.format("long %d", l);
+}
+else if (obj instanceof Double d) {
+    formatted = String.format("double %f", d);
+}
+else if (obj instanceof String s) {
+    formatted = String.format("String %s", s);
+}</code></pre>
+<p>The above code benefits from pattern matching, but it's still not perfect. Most
+importantly the approach allows coding errors to remain hidden --
+because we've used an overly-general control construct.  The intent of
+the above code is to assign something to <code>formatted</code> in each arm of
+the <code>if...else</code> chain.  But, there is nothing here that enables the
+compiler to verify this actually happens.  If some block -- perhaps
+one that is executed rarely in practice -- forgets to assign to
+<code>formatted</code>, we have a bug.  (Leaving <code>formatted</code> as a blank
+local or blank final would at least enlist the "definite assignment"
+analysis in this effort, but this is not always done.) Finally, the
+above code is less optimizable; absent compiler heroics, it will have
+<em>O(n)</em> time complexity, even though the underlying problem is often
+<em>O(1)</em>.</p>
+<p>But we have an existing mechanism for a multi-armed equality test in the language: <code>switch</code>.  But <code>switch</code> is (at present) very limited.  You can only switch on values of a few types -- numeric types, enum types and <code>String</code> -- and you can only test for exact equality against constants.  But these limitations are mostly accidents of history; <code>switch</code> is a perfect "match" for pattern matching.  If we allow a <code>case</code> label to specify a type test pattern, we can express the above with a <code>switch</code> statement:</p>
+<pre><code>String formatted;
+switch (obj) {
+    case Integer i: formatted = String.format("int %d", i); break;
+    case Byte b:    formatted = String.format("byte %d", b); break;
+    case Long l:    formatted = String.format("long %d", l); break;
+    case Double d:  formatted = String.format("double %f", d); break;
+    case String s:  formatted = String.format("String %s", s); break
+    default:        formatted = obj.toString();
+}</code></pre>
+<p>Now, the intent of the code is far clearer, because we're using the
+right control construct -- we're saying "the expression <code>obj</code> matches
+at most one of the following conditions, figure it out and execute the
+corresponding arm".  As a bonus, it is more optimizable too; in this
+case we are more likely to be able to do the dispatch in <em>O(1)</em> time.</p>
+<p>Following <a href="//openjdk.java.net/jeps/325">JEP 325</a>, we are able to
+further improve the concision of this code by using a <code>switch</code>
+expression, as follows.</p>
+<pre><code>String formatted = 
+    switch (obj) {
+        case Integer i -&gt; String.format("int %d", i)
+        case Byte b    -&gt; String.format("byte %d", b);
+        case Long l    -&gt; String.format("long %d", l); 
+        case Double d  -&gt; String.format("double %f", d); 
+        case String s  -&gt; String.format("String %s", s); 
+        default        -&gt; obj.toString();
+    };</code></pre>
+<h2 id="Description">Description</h2>
+<p>Extend <code>case</code> labels of <code>switch</code> expressions and statements to take <a href="//openjdk.java.net/jeps/305">type test patterns</a> instead of just constants.</p>
+<p>The grammar for a switch label in a switch block will become:</p>
+<p><em>SwitchLabel</em>:</p>
+<p>&#160;&#160;&#160;&#160; <code>case</code> <em>Pattern</em> {<code>,</code> <em>Pattern</em> }</p>
+<p>&#160;&#160;&#160;&#160; <code>default</code></p>
+<h2 id="Future-Work">Future Work</h2>
+<p>Adding type-test patterns in <code>switch</code> expressions and statements is just a step in a comprehensive program of enriching Java with pattern matching. Possible areas for future work (to be the subject of future JEPs) include:</p>
+<p><em>Constant Patterns.</em> Traditional <code>case</code> labels (comparing against a
+compile-time constant, such as a number, <code>String</code>, or <code>enum</code>) can be
+thought of as <em>constant patterns</em>, where a target matches a constant
+pattern if they are equal according to <code>Object.equals()</code>, and matching
+a constant pattern produces no bindings.</p>
+<p><em>Deconstruction Patterns.</em> Many classes are simply carriers for their
+data.  We construct them with constructors, which take a vector of <em>N</em>
+arguments and produce an aggregate, but we generally fetch the components
+one at a time, with accessors.  Just as we can combine the
+type-test/cast/bind operations into a single type-test pattern, we can
+combine the type-test/cast/extract-multiple into a single <em>deconstruction
+pattern</em>.  If we have a hierarchy of <code>Node</code> with subtypes for <code>IntNode</code>
+(containing a single int), <code>AddNode</code> and <code>MulNode</code> (containing two
+nodes), and <code>NegNode</code> (containing a single node), we can match against a
+<code>Node</code> and act on the specific subtypes all in one step:</p>
+<pre><code>int eval(Node n) {
+    switch(n) {
+        case IntNode(int i): return i;
+        case NegNode(Node n): return -eval(n);
+        case AddNode(Node left, Node right): return eval(left) + eval(right);
+        case MulNode(Node left, Node right): return eval(left) * eval(right);
+        default: throw new IllegalStateException(n);
+    };
+}</code></pre>
+<p>Today, to express ad-hoc polymorphic calculations like this, we would use
+the "Visitor" pattern.  Using pattern matching is generally more
+transparent and straightforward.</p>
+<p><em>Nested Patterns</em>.  Patterns compose nicely.  In fact, in the above
+example, we are already using nested patterns; the "arguments" to the
+deconstruction patterns, such as <code>Node n</code>, are already patterns (in this
+case, type-test patterns.)  If we want to match on an <code>AddNode</code> whose
+left argument is an <code>IntNode</code> containing a zero, we can just add another
+level of nesting here:</p>
+<pre><code>case AddNode(IntNode(0), Node right)</code></pre>
+<p>In this example, we have a deconstruction pattern (<code>AddNode(...)</code>) whose
+left component must match another deconstruction pattern (<code>IntNode(...)</code>)
+whose sole component must match the constant pattern <code>0</code>.</p>
+<p><em>Guards</em>. In a future phase of pattern matching we may support guards:
+an ancillary boolean expression that must additionally be true in
+order for a pattern to match, such as <code>case String s &amp;&amp; !s.isEmpty()</code>,
+and/or a <code>continue</code> statement in switches.</p>
+<p><em>Sealed types</em>.  Knowing that the cases of a switch are exhaustive is
+useful; it means that we need not manually code <code>default</code> arms that
+should never be executed under normal situations.  Being able to seal a
+hierarchy helps communicate a valuable constraint to clients, and assists
+the compiler in exhaustiveness analysis.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>The benefits of type-test patterns (but not other forms of patterns,
+in particular decomposition and nested patterns) could be obtained by
+<em>flow typing</em> in <code>if</code> statements, or by a <em>type switch</em> construct.
+Pattern matching generalizes both of these constructs.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>This JEP builds on <a href="//openjdk.java.net/jeps/305">pattern matching in <code>instanceof</code> operator (JEP 305)</a> and also the enhancements offered by  <a href="//openjdk.java.net/jeps/325"><code>switch</code> expressions</a>.
+The implementation will likely make use of <a href="https://bugs.openjdk.java.net/browse/JDK-8177279">Dynamic Constants in the JVM</a>.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

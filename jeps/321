@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 321: HTTP Client (Standard)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 321: HTTP Client (Standard)</h1><table class="head"><tr><td>Owner</td><td>Chris Hegarty</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>11</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.net</td></tr><tr><td>Discussion</td><td>net dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Brian Goetz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2017/06/08 11:46</td></tr><tr><td>Updated</td><td>2018/09/27 13:11</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8181784">8181784</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Standardize the <a href="//openjdk.java.net/jeps/11">incubated</a> HTTP Client API introduced in
+JDK 9, via <a href="//openjdk.java.net/jeps/110">JEP 110</a>, and updated in JDK 10.</p>
+<h2 id="Goals">Goals</h2>
+<p>In addition to the <a href="//openjdk.java.net/jeps/110#Goals">goals of JEP 110</a>, this JEP will:</p>
+<ul>
+<li>Take into account feedback received on the incubated API,</li>
+<li>Provide a standardized API, in the  <code>java.net.http</code> package,
+based upon the incubated API, and</li>
+<li>Remove the incubated API.</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>The motivation of this JEP remains the same as that of the
+<a href="//openjdk.java.net/jeps/110#Motivation">motivation of JEP 110</a>.</p>
+<h2 id="Description">Description</h2>
+<p>This JEP proposes to standardize the HTTP Client API that was introduced
+as an incubating API in JDK 9 and updated in JDK 10. The incubating API
+has received a number of rounds of feedback that have resulted in
+significant improvements, but at a high level it remains largely the
+same. The API provides non-blocking request and response semantics
+through <code>CompletableFuture</code>s, which can be chained to trigger dependent
+actions. Back-pressure and flow-control of request and response bodies is
+provided for via the Platform's <a href="http://www.reactive-streams.org">reactive-streams</a> support in the
+<code>java.util.concurrent.Flow</code> API.</p>
+<p>While incubating in JDK 9 and JDK 10, the implementation has been almost
+completely rewritten. The implementation is now completely asynchronous
+(the previous HTTP/1.1 implementation was blocking). Use of the RX Flow
+concept has been pushed down into the implementation, which eliminated
+many of the original custom concepts needed to support HTTP/2. The flow
+of data can now be more easily traced, from the user-level request
+publishers and response subscribers all the way down to the underlying
+socket.  This significantly reduces the number of concepts and complexity
+in the code, and maximizes the possibility of reuse between HTTP/1.1 and
+HTTP/2.</p>
+<p>The module name and the package name of the standard API will be
+<code>java.net.http</code>.</p>
+<h3 id="Changes-over-what-was-incubated-in-JDK-10">Changes over what was incubated in JDK 10</h3>
+<ol>
+<li>
+<p>The predefined implementation of <code>BodyPublisher</code>, <code>BodyHandler</code>,
+and <code>BodySubscriber</code>, created through static factory methods, have
+been moved out to separate non-instantiable utility factory classes,
+following the pluralized naming convention. This improves readability
+of these relatively small interfaces.</p>
+</li>
+<li>
+<p>The names of the static factory methods have also been updated
+along the following broad categories:</p>
+</li>
+</ol>
+<ul>
+<li>
+<p><code>fromXxx</code>: Adapters from standard Subscriber, e.g. takes a
+<code>Flow.Subscriber</code> returns a <code>BodySubscriber</code>.</p>
+</li>
+<li>
+<p><code>ofXxx</code>: Factories that create a new pre-defined
+<code>Body[Publisher|Handler|Subscriber]</code> that perform useful common
+tasks, such as handling the response body as a String, or streaming the
+body to a File.</p>
+</li>
+<li>
+<p>other: Combinators (takes a <code>BodySubscriber</code> returns a
+<code>BodySubscriber</code>) and other useful operations.</p>
+</li>
+</ul>
+<ol start="3">
+<li>A few <code>BodyHandler</code>s and corresponding <code>BodySubscriber</code>s have been
+added, to improve usability in common scenarios:</li>
+</ol>
+<ul>
+<li>
+<p><code>discard(Object replacement)</code> combined discarding/ignoring the
+response body and allowing a given replacement. Feedback has
+indicated that this could appear confusing. It has been removed
+and replaced with two separate handlers: 1) <code>discarding()</code>, and 2)
+<code>replacing(Object replacement)</code>.</p>
+</li>
+<li>
+<p>Added <code>ofLines()</code> that returns a <code>BodyHandler&lt;Stream&lt;String&gt;&gt;</code>,
+to support streaming of response body as a <code>Stream</code> of lines,
+line by line. Provides similar semantics to that of
+<code>BufferedReader.lines()</code>.</p>
+</li>
+<li>
+<p>Added <code>fromLineSubscriber&#8203;</code>, that supports adaptation of
+response body to a <code>Flow.Subscriber</code> of <code>String</code> lines.</p>
+</li>
+<li>
+<p>Added <code>BodySubscriber.mapping</code> for general purpose mapping from
+one response body type to another.</p>
+</li>
+</ul>
+<ol start="4">
+<li>
+<p>The push promise support has been re-worked to reduce its impact on
+the API and bring it more in line with regular request/responses.
+Specifically, the <code>MultiSubscriber</code> and <code>MultiResultMap</code> have been
+removed. Push promises are now handled through a functional interface,
+<code>PushPromiseHandler</code>, that is optionally given during a send
+operation.</p>
+</li>
+<li>
+<p>The <code>HttpClient.Redirect</code> policy has been simplified, by replacing
+<code>SAME_PROTOCOL</code> and <code>SECURE</code> policies, with <code>NORMAL</code>.  It has been
+observed that the previously named <code>SECURE</code> was not really appropriately
+named and should be renamed to <code>NORMAL</code>, since it will likely be
+suitable for most normal cases. Given the newly named, aforementioned,
+<code>NORMAL</code>, <code>SAME_PROTOCOL</code> appears oddly named, possibly confusing, and
+not likely to be used.</p>
+</li>
+<li>
+<p><code>WebSocket.MessagePart</code> has been removed. This enum was used on the
+receiving side to indicate whether the delivery of a message is
+complete, or not. It is asymmetric with the sending side, which uses a
+simple boolean for this purpose. Additionally, it has been observed that
+handling received messages with a simple boolean significantly reduces
+and simplifies the receiving code logic. Determination of messages being
+delivered as a <code>WHOLE</code>, one of the benefits and the main purposes for
+the aforementioned <code>MessagePart</code>, has proved to not carry its own
+weight.</p>
+</li>
+</ol>
+<p>Further specifics on the API can be found in <a href="//openjdk.java.net/jeps/110#Description">JEP 110</a>,
+at the <a href="//cr.openjdk.java.net/~chegar/httpclient/02/javadoc/api/java.net.http/module-summary.html">latest API javadoc</a>, or the networking group's
+<a href="//openjdk.java.net/groups/net/httpclient/">JDK HTTP Client</a> page.</p>
+<h2 id="Testing">Testing</h2>
+<p>Existing tests for the incubated API will be updated to use the
+new standard API. Additional tests will be added to cover all scenarios
+supported, specifically the upgrade and downgrade between HTTP/1.1 and
+HTTP/2.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>Code that currently depends upon the incubated HTTP Client API will need
+to be updated, at the very minimum to change its package imports. This is
+no different than for any other incubated feature. Code depending upon
+incubating modules already receives an appropriate warning at both
+compile time and run time.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

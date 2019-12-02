@@ -1,0 +1,331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>The OpenJDK Developers' Guide: Change Planning and
+Guidelines</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><link rel="stylesheet" type="text/css" href="guidestyle.css" /></head><body><div id="main">
+<h1>Change Planning and Guidelines</h1>
+<div class="version">version 0.02</div>
+<div class="NavBit"><a href="codeConventions.html">&#171;&#160;Previous</a>&#160;&#8226;&#160;<a href="index.html">TOC</a>&#160;&#8226;&#160;<a href="reviewBodies.html">Next&#160;&#187;</a></div>
+<p>This section describes the development process of identifying a
+bug or enhancement (formerly "Request for Enhancement" (RFE)) and
+providing a solution. The instructions assume that the <a href="/bylaws#contributor">Contributor</a> already has a working build
+environment and has some familiarity with an existing OpenJDK
+<a href="bylaws#_6">Project</a> and its repositories.</p>
+<p>Three classes of changes are treated in separate sections:</p>
+<ul>
+<li><a href="#bug">Fixing a Bug</a> provides a step-by-step
+workflow for fixing a simple bug. Of particular note is the list of
+<a href="#noreg">noreg bug labels</a> for changes which do not have
+regression tests.</li>
+<li><a href="#api">Adding an API</a> is TBD.</li>
+<li><a href="#feature">Adding a Feature/JSR</a> is TBD.</li>
+</ul>
+<h2><a name="bug" id="bug">Fixing a Bug</a></h2>
+<p>This is the list of steps which should be performed when fixing
+a small bug. Small bugs include typos in code or specification,
+algorithm improvements for correctness or performance, and code
+changes required to correctly implement the specification.</p>
+<blockquote>
+<hr />
+<p>Some steps refer to operations which can not be performed
+directly without the assistance of a <a href="//openjdk.java.net/bylaws#committer">Project Committer</a>.
+For example, any changes to the <a href="bugs.openjdk.java.net">bug
+database</a> fall into this category. Since these steps are
+required, <a href="//openjdk.java.net/bylaws#contributor">Contributors</a> are
+urged to work with their <a href="/sponsor/">Sponsors</a> to
+complete these tasks.</p>
+<hr /></blockquote>
+<p>For the purposes of brevity this document will use the term
+"bug" to refer to both bugs and enhancements unless otherwise
+noted. Hence "fix for a bug" could also imply "implementation for
+an enhancement".</p>
+<dl>
+<dt><strong>1. Discuss the intended change</strong></dt>
+<dd>Send an e-mail to the appropriate development mailing list for
+the Project that maintains the code. The e-mail should have a
+subject line of the form:
+<blockquote>
+<p><code>6543210: My favorite bug</code></p>
+</blockquote>
+where <code>6543210</code> is replaced with the actual bug id
+number or "[NEW BUG]" if the bug id is not known and <code>My
+favorite bug</code> is replaced with the bug's summary. The message
+should describe the intended change, which components may be
+affected, and any other risks or concerns.</dd>
+<dt><strong>2. Does a bug id exist for the work?</strong></dt>
+<dd>
+<table summary="platformCode">
+<tr>
+<td class="aligned">Y</td>
+<td class="aligned">Continue</td>
+</tr>
+<tr>
+<td class="aligned">N</td>
+<td class="aligned">Create a bug in an appropriate
+component/sub-component. If the bug should not be publically
+visible, set the "Security Level" to "confidential".</td>
+</tr>
+</table>
+</dd>
+<dt><strong>3. Set the bug status to "Open"</strong></dt>
+<dd>This communicates intent to fix the bug to other members of the
+Project. It also sets the expectation for downstream teams such as
+SQE and JCK that the bug will be fixed in an upcoming
+integration.</dd>
+<dt><strong>4. Does the fix for the bug require a specification
+change, directly affect an external interface, or otherwise have a
+compatibility impact?</strong></dt>
+<dd>
+<table summary="ccc">
+<tr>
+<td class="aligned">Y</td>
+<td class="aligned">Submission of a CCC request is required. Work
+may begin after the request has been <a href="glossary.html#accepted">accepted</a> by the CCC; the changeset
+implementing the fix may be committed to a team forest after the
+request has been <a href="glossary.html#approved">approved</a> by
+the CCC. A description of the CCC requirements may be found in
+<a href="reviewBodies.html">Review Bodies</a>.</td>
+</tr>
+<tr>
+<td class="aligned">N</td>
+<td class="aligned">Continue</td>
+</tr>
+</table>
+</dd>
+<dt><strong>5. Fix the bug</strong></dt>
+<dd>Assuming that the development team approves of the intended
+approach, begin working on the code using the latest source
+available from the appropriate OpenJDK Project <a href="//hg.openjdk.java.net">repository</a>.</dd>
+<dt><strong>6. Is it possible to write a test to detect the
+bug?</strong></dt>
+<dd>
+<table summary="platformCode">
+<tr>
+<td class="aligned">Y</td>
+<td class="aligned">For bugs, provide a <a href="../jtreg/">jtreg</a> regression test as part of the changeset. For
+enhancements that directly affect one or more exported interfaces,
+add an adequate set of jtreg unit tests as part of the changeset.
+By convention all regression and unit tests should contain an
+<a href="//openjdk.java.net/jtreg/tag-spec.html#INFORMATIONAL_TAGS">@bug
+tag</a> referencing at least one bugid.<br />
+<br />
+An entirely new test (or tests) may not be required. For example,
+if the bug is an existing regression test failure, then when fixing
+the bug you should just add the new bug ID to the list of
+space-delimited bugs in the <a href="//openjdk.java.net/jtreg/tag-spec.html#INFORMATIONAL_TAGS">@bug
+tag</a> of the failing regression test, even if the test did not
+need to be updated.</td>
+</tr>
+<tr>
+<td class="aligned"><a name="noreg" id="noreg">N</a></td>
+<td class="aligned">An explanation for why a test is unnecessary or
+infeasible is required. Such an explanation is recorded by adding a
+label, and possibly a comment, to the bug report. The label has the
+prefix "noreg" for regression tests and "nounit" for unit tests.
+The suffixes and their meanings are as follows:
+<dl>
+<dt><strong>-sqe</strong></dt>
+<dd>Change can be verified by running an existing SQE test suite;
+the bug should identify the suite and the specific test
+case(s).</dd>
+<dt><strong>-jck</strong></dt>
+<dd>Change can be verified by running the JCK; the bug should
+identify the specific test case(s).</dd>
+<dt><strong>-external</strong></dt>
+<dd>Change can be verified by running an existing external test
+suite; the bug should identify the suite and the specific test
+case(s). <!-- <div
+        style="color:blue">XXX Is this still appropriate?  It's not obvious 
+        what types of test suites fall into this category.</div> --></dd>
+<dt><strong>-doc</strong></dt>
+<dd>Change only affects documentation.</dd>
+<dt><strong>-demo</strong></dt>
+<dd>Change only affects demo code.</dd>
+<dt><strong>-build</strong></dt>
+<dd>Change only affects build infrastructure (makefiles,
+copyrights, scripts, etc.).</dd>
+<dt><strong>-self</strong></dt>
+<dd>Change is a fix to a regression or unit test itself.</dd>
+<dt><strong>-perf</strong></dt>
+<dd>Change is for a performance bug for which writing a regression
+test is infeasible; the bug should describe how to verify the
+fix.</dd>
+<dt><strong>-hard</strong></dt>
+<dd>It is too hard to write a regression or unit test for this bug
+(e.g., theoretical race condition, complex setup, reboot required,
+editing of installed files required, specific graphics card
+required); the bug should explain why.</dd>
+<dt><strong>-long</strong></dt>
+<dd>Testing requires a very long running time (e.g., more than a
+few minutes).</dd>
+<dt><strong>-big</strong></dt>
+<dd>Testing requires an unreasonable quantity of resources (e.g.,
+tens of gigabytes of filesystem space).</dd>
+<dt><strong>-trivial</strong></dt>
+<dd>Change is so trivial that nothing could possibly go wrong with
+it.</dd>
+<dt><strong>-cleanup</strong></dt>
+<dd>Change is a cleanup or refactoring of existing code that is
+covered by existing tests.</dd>
+<dt><strong>-l10n</strong></dt>
+<dd>Change only affects localized text.</dd>
+<dt><strong>-undo</strong></dt>
+<dd>Change is a reversion of a previous faulty change.</dd>
+<dt><strong>-other</strong></dt>
+<dd>Regression or unit test is unnecessary or infeasible for some
+other reason; the bug report should explain why.</dd>
+</dl>
+<br />
+Examples: If a bug fix only corrects a change in the build system,
+then add the "noreg-build" label to the corresponding bug. If
+change improves loop optimizations in HotSpot, then add
+"nounit-perf" to the corresponding bug.</td>
+</tr>
+</table>
+</dd>
+<dt><strong>7. Is modification of shared Java code
+needed?</strong></dt>
+<dd>
+<table summary="platformCode">
+<tr>
+<td class="aligned">Y</td>
+<td class="aligned">It is often sufficient to build and test on a
+single platform, but sometimes it is not. Use discretion.</td>
+</tr>
+<tr>
+<td class="aligned">N</td>
+<td class="aligned">Continue</td>
+</tr>
+</table>
+</dd>
+<dt><strong>8. Is modification of shared C code
+needed?</strong></dt>
+<dd>
+<table summary="cCode">
+<tr>
+<td class="aligned">Y</td>
+<td class="aligned">Build and test on at least one instance of all
+three of the supported operating systems (Solaris, Linux, and
+Windows).</td>
+</tr>
+<tr>
+<td class="aligned">N</td>
+<td class="aligned">Continue</td>
+</tr>
+</table>
+</dd>
+<dt><strong>9. Is modification of C or Java platform-specific code
+needed?</strong></dt>
+<dd>
+<table summary="platformCode">
+<tr>
+<td class="aligned">Y</td>
+<td class="aligned">Build and test on all relevant platforms. Code
+under <code>src/solaris</code> builds on Solaris, Linux, and MacOS
+X despite its name.</td>
+</tr>
+<tr>
+<td class="aligned">N</td>
+<td class="aligned">Continue</td>
+</tr>
+</table>
+</dd>
+<dt><strong>10. Run relevant regression and unit tests on all
+relevant platforms</strong></dt>
+<dd>These include tests for external interfaces as well as other
+kinds of tests, e.g., HotSpot tests that use internal verification
+mechanisms. See <a href="testingChanges.html">Testing Changes</a>
+for more details.</dd>
+<dt><strong>11. Run relevant JCK tests on all relevant
+platforms</strong></dt>
+<dd>Running JCK tests is particularly important if the change may
+have unexpected side-effects. See <a href="jckAcquisition.html">JCK
+Acquisition</a> for more details.</dd>
+<dt><strong>12. Request a review of the changes by sending an
+e-mail to the development alias</strong></dt>
+<dd>A patch can be submitted as described in <a href="../contribute/">Contributing</a>. Alternatively, a <a href="webrevHelp.html">"webrev"</a> may be generated and uploaded to the
+<a href="//cr.openjdk.java.net/">community code review</a>
+server. The complete webrev generation and upload procedure is
+described at <a href="//cr.openjdk.java.net/">http://cr.openjdk.java.net</a>.<br />
+<br />
+Changeset pushes before the <a href="/projects/jdk8/milestones#Feature_Complete">Feature Complete</a>
+require at least one <a href="/bylaws#reviewer">Reviewer</a>;
+pushes after the Feature Complete require at least two Reviewers.
+In either case, the more the merrier. Some teams may require more
+Reviewers. Check with members of the Project.<br />
+<br />
+Reviewers should examine not only the code being added or changed
+but also the relevant unit or regression tests.<br />
+<br />
+A change may require multiple Reviewers because it affects multiple
+areas. Reviewers should be aware that they take full responsibility
+for the appropriateness and correctness of any changes in their
+area of expertise. If something goes wrong (e.g., the build breaks)
+and the change's author is unavailable, they may be asked to deal
+with the problem. Potential Reviewers are encouraged to refuse to
+review code for which they are not qualified.</dd>
+<dt><strong>13. Create a changeset</strong></dt>
+<dd>Follow the instructions in <a href="producingChangeset.html">Producing a Changeset</a>.</dd>
+<dt><strong>14. Update the bug content</strong></dt>
+<dd>Bug descriptions and comments are visible to the public and
+should be written in a professional manner. Comments not
+appropriate for public consumption should be marked as
+"Confidential" in when they're added to the bug. (The default is
+"Viewable by All Users".) <!-- 
+    <br/><br/> If you need to refer to a specific individual in a
+    publicly-visible section of a bug then use an e-mail address
+    ("j.duke(at)sun.com") rather than a plain name ("J. Duke").  E-mail
+    addresses are anonymized when bugs are displayed
+    on <a href="http://bugs.sun.com">bugs.sun.com</a>; plain names are
+    not.
+    --></dd>
+<dt><strong>15. Push the changeset into the Project's
+forest</strong></dt>
+<dd>Follow the instructions in <a href="producingChangeset.html">Producing a Changeset</a>. If working
+with a Sponsor, send the changeset to the development mailing list
+so that they can handle the final push.<br />
+The push will trigger a update to the bug which will make the
+following changes:
+<ul>
+<li>Set the bug's "Status" to "Resolved" and "Resolution to
+"Fixed".</li>
+<li>Set the bug's "Fix Version/s" to an appropriate release.</li>
+<li>Set the bug's "Resolved in Build" to "team".</li>
+<li>Add a Comment containing a reference to the changeset.</li>
+</ul>
+</dd>
+</dl>
+<p><em>Congratulations!</em> Your changeset will now make its way
+towards a promoted build. When the changeset becomes part of a
+promoted build, the bug's "Resolved in Build" will have a value of
+"b[1-9][0-9]*" to indicate the build number.</p>
+<h2><a name="api" id="api">Adding an API</a></h2>
+<p>TBD</p>
+<p>This section will cover additional considerations for changes
+that add new public APIs. For instance, they need to be
+implementable on all platforms.</p>
+<h2><a name="feature" id="feature">Adding a Feature/JSR</a></h2>
+<p>TBD</p>
+<p>This section will describe the process for adding new
+functionality which requires more than just a few new APIs. In
+particular, this will cover how the JSR process interacts with the
+OpenJDK development life cycle.</p>
+<div class="version">version 0.02</div>
+<div class="NavBit"><a href="codeConventions.html">&#171;&#160;Previous</a>&#160;&#8226;&#160;<a href="index.html">TOC</a>&#160;&#8226;&#160;<a href="reviewBodies.html">Next&#160;&#187;</a></div>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

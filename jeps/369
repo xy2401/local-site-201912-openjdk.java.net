@@ -1,0 +1,427 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 369: Migrate to GitHub</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 369: Migrate to GitHub</h1><table class="head"><tr><td>Authors</td><td>Erik Duveblad, Joe Darcy</td></tr><tr><td>Owner</td><td>Joe Darcy</td></tr><tr><td>Type</td><td>Infrastructure</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Candidate</td></tr><tr><td>Component</td><td>infrastructure</td></tr><tr><td>Discussion</td><td>discuss at openjdk dot java dot net </td></tr><tr><td>Effort</td><td>L</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="296">JEP 296: Consolidate the JDK Forest into a Single Repository</a></td></tr><tr><td></td><td><a href="357">JEP 357: Migrate from Mercurial to Git</a></td></tr><tr><td>Created</td><td>2019/11/07 18:54</td></tr><tr><td>Updated</td><td>2019/11/14 17:37</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8233813">8233813</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Host the OpenJDK Community's Git repositories on <a href="https://www.github.com/">GitHub</a>. In concert with <a href="https://openjdk.java.net/jeps/357">JEP 357 (Migrate from Mercurial to Git)</a>, this would migrate all single-repository OpenJDK Projects to GitHub, including both <a href="https://openjdk.java.net/projects/jdk/">JDK feature releases</a> and <a href="https://openjdk.java.net/projects/jdk-updates/">JDK update releases</a> for versions 11 and later.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>Host all OpenJDK Git repositories at <a href="https://github.com/openjdk/">https://github.com/openjdk/</a>.</li>
+<li>Run pre-commit checks (<a href="https://openjdk.java.net/projects/code-tools/jcheck/">jcheck</a>) before every push.</li>
+<li>Integrate existing OpenJDK services.</li>
+<li>Enable multiple ways of interacting with GitHub.</li>
+<li>Ensure that workflows structurally similar to the existing e-mail and webrev based workflows are supported.</li>
+<li>Preserve and archive all metadata.</li>
+<li>Ensure that OpenJDK Community can always move to a different source-code hosting provider.</li>
+<li>Do not require developers to install OpenJDK specific tools in order to contribute.</li>
+<li>Do not change the OpenJDK <a href="https://openjdk.java.net/bylaws">Bylaws</a>.</li>
+<li>Do not change the OpenJDK <a href="https://openjdk.java.net/census">Census</a>.</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>It is not a goal to change the OpenJDK Community's <a href="https://bugs.openjdk.java.net/">issue tracker</a>,
+<a href="https://wiki.openjdk.java.net/">wiki</a>, or any other existing infrastructure.</p>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<ul>
+<li>Significantly faster clone and pull times</li>
+<li>Better availability (uptime) of repositories</li>
+<li>Possible to interact with repositories on GitHub via OpenJDK mailing lists</li>
+<li>Possible to interact with repositories on GitHub via command-line tools</li>
+<li>Possible to interact with repositories on GitHub via web browsers</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>The motivation for this JEP is split into two sections. First we cover why it
+would benefit the OpenJDK Community to make use of an external source-code
+hosting provider, and then we explain why GitHub is the best choice of provider
+at this time.</p>
+<h3 id="Why-an-external-source-code-hosting-provider?">Why an external source-code hosting provider?</h3>
+<p>An external source-code hosting provider is a source-code repository service
+that is not implemented and managed by contributors in the OpenJDK
+Community. Examples of external providers are
+<a href="https://bitbucket.org/">BitBucket</a>, <a href="https://gitlab.com/">GitLab</a>,
+<a href="https://phacility.com/">Phacility</a>, <a href="https://sourcefourge.com%5D">SourceForge</a>
+and <a href="https://github.com/">GitHub</a>.</p>
+<p>There are three primary reasons for the OpenJDK Community to use an external
+source-code hosting provider:</p>
+<ul>
+<li>
+<p><em>Performance</em>. Many, if not all, providers have excellent performance, not
+only with regard to network performance but also when it comes to availability,
+i.e., uptime. For the OpenJDK Community this would result in significantly
+faster clone and pull times, and more highly-available source-code
+repositories.</p>
+</li>
+<li>
+<p><em>API</em>. A technical reason to host OpenJDK repositories on a source-code
+hosting platform is to gain access to web APIs that enable programs to interact
+with developers on the platform.  Although not impossible to achieve today by
+interacting with developers over email, it is considerably harder to implement
+programs that interpret free-form text in emails compared to using a structured
+API. Allowing programs to participate in the review process enables powerful
+automation; see the <a href="#Description">Description</a> section for several examples.</p>
+</li>
+<li>
+<p><em>Expanded community.</em> The largest providers would also offer the OpenJDK
+Community the opportunity to tap into large existing communities of developers
+and potential contributors. If a developer already has an account on a provider
+then few additional steps are required in order to contribute to
+OpenJDK. Almost all open-source projects in the larger Java community are
+hosted on an external providers, including several OpenJDK distributions. This
+can foster an even closer collaboration if OpenJDK repositories are also hosted
+on the same provider.</p>
+</li>
+</ul>
+<p>One drawback and risk of using an external provider is the possibility that the
+provider might shut down, or for some other reason make the source code and
+related materials inaccessible. See the <a href="#Risks-and-Assumptions">Risks and Assumptions</a> section for how this risk can be handled
+and mitigated.</p>
+<p>Another consideration is the effect that a move to an external provider would
+have on the workflow of existing contributors. See the
+<a href="#Description">Description</a> section for how multiple workflows can be supported
+with the help of the APIs from source-code hosting platforms, including how
+almost all of the OpenJDK Community's existing workflow can be preserved.</p>
+<h3 id="Why-GitHub?">Why GitHub?</h3>
+<p>The motivation for choosing GitHub is that is excels at all three primary
+reasons for choosing an external provider. GitHub's performance is as good as
+or superior to other providers, it is the world's largest source-code hosting
+service (37 million users as of May 2019), and it has one of the most extensive
+APIs.</p>
+<p>GitHub's extensive API has enabled support for GitHub in many tools including
+text editors, IDEs, command-line tools, and graphical desktop clients. The
+following text editors support GitHub (i.e., a developer can create, review,
+and comment upon pull requests directly from within the text editor):</p>
+<ul>
+<li><a href="https://www.gnu.org/software/emacs/">Emacs</a>
+(<a href="https://magit.vc/">magit</a> plugin +
+<a href="https://github.com/magit/forge">forge</a> plugin)</li>
+<li><a href="https://code.visualstudio.com/">VS Code</a>
+(<a href="https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github">GitHub Pull Request</a> plugin)</li>
+<li><a href="https://atom.io/">Atom</a> (builtin)</li>
+</ul>
+<p>The following integrated development environments (IDEs) support interacting
+with pull requests on GitHub:</p>
+<ul>
+<li><a href="https://www.jetbrains.com/idea/">IntelliJ</a> (builtin)</li>
+<li><a href="https://eclipse.org/">Eclipse</a> (<a href="https://github.com/eclipse/egit-github">GitHub MyLyn Connector</a>)</li>
+<li><a href="https://visualstudio.microsoft.com/">Visual Studio</a> (<a href="https://visualstudio.github.com/">GitHub Extension</a>)</li>
+</ul>
+<p>There is also a command-line client in the form of
+<a href="https://hub.github.com/">hub</a> (open source) and several graphical desktop
+clients, e.g., <a href="https://sourcetreeapp.com/">SourceTree</a>,
+<a href="https://git-tower.com/">Tower</a> and <a href="https://desktop.github.com/">GitHub Desktop</a> (open source).</p>
+<p>There are many other excellent source-code hosting providers. See the <a href="#Risks-and-Assumptions">Risk and
+Assumptions</a> section for why this is important and how
+this enables us to recommend GitHub.</p>
+<h2 id="Description">Description</h2>
+<p>The interesting part of moving to an external source-code hosting provider
+would <em>not</em> be in uploading the actual repositories to the service; that is
+trivial given the work in <a href="https://openjdk.java.net/jeps/357">JEP 357 (Migrate from Mercurial to Git)</a>.<br />
+What is interesting is how the move
+to an external provider would affect the workflow of OpenJDK contributors.</p>
+<p>Today, OpenJDK contributors collaborate via <a href="https://mail.openjdk.java.net">mailing lists</a>,
+they push changes to <a href="https://hg.openjdk.java.net">Mercurial repositories</a>, they test changes via the
+<a href="https://hg.openjdk.java.net/jdk/submit">jdk/submit</a> service, and they file bug
+reports via the <a href="https://bugs.openjdk.java.net">JDK Bug System</a>
+(JBS). Contributors can also make use of several command-line interface (CLI)
+tools, primarily
+<a href="https://openjdk.java.net/projects/code-tools/jcheck/">jcheck</a>,
+<a href="https://openjdk.java.net/projects/code-tools/webrev/">webrev</a>, and
+<a href="https://openjdk.java.net/projects/code-tools/defpath/">defpath</a>. This is a
+workflow that many experienced contributors enjoy and find productive. It's
+therefore critical to preserve as much of this workflow as possible if we move
+to an external provider.</p>
+<p>The workflow on GitHub and other popular hosting providers employs the concept
+of a <em>pull request</em> (PR), which on a high level is similar to the
+request-for-review (RFR) emails that OpenJDK contributors use today. A
+contributor on GitHub creates a PR from a source branch towards a target branch
+in particular repository (the source and target branch do not have to reside in
+the same repository). The PR is then reviewed by other contributors and
+additional commits are made to the source branch in response to reviewer
+feedback. Once the reviewers are happy with the changes, the PR is merged into
+the target branch.</p>
+<p>This JEP proposes to support multiple workflows, using the tooling developed in
+<a href="https://openjdk.java.net/projects/skara%5D">Project Skara</a>.  Contributors would
+be able to choose whichever workflow suits them best:</p>
+<ul>
+<li>CLI + mailing-list based (similar to the current workflow)</li>
+<li>Web-browser based (via the GitHub website)</li>
+<li>Text-editor and IDE based (via plugins and GitHub support in text
+editors and IDEs)</li>
+<li>CLI based (via custom CLI tooling)</li>
+</ul>
+<p>It is of course possible to mix and match the different workflows. With an
+open-source community as large and diverse as OpenJDK, the only common thing
+about individual contributors' workflows is that they differ. Before describing
+the various tools and services, we start with an example of the
+workflow for incorporating a new change. (Workflows for more specialized tasks
+such as syncing between repositories or adding tags will be
+discussed in future revisions of this JEP.)</p>
+<h3 id="Workflow">Workflow</h3>
+<p>Common for all four workflows is that every change starts with a pull request
+(PR). The PR can be created in various ways -- from the CLI, a web browser, a
+text editor, or an IDE.  However, creating a PR requires an account on
+<a href="https://www.github.com/">GitHub</a>. For contributors not wishing to create an
+account on <a href="https://www.github.com">GitHub</a>, we would continue to accept
+patches sent to the OpenJDK <a href="https://mail.openjdk.java.net">mailing lists</a>.
+Such patches would, however, require a
+contributor with a <a href="https://www.github.com/">GitHub</a> account to create a PR,
+similar to how many contributors today help newcomers to create and upload
+webrevs to <a href="https://cr.openjdk.java.net/">cr</a>.</p>
+<p>After a PR is created, the commits in the PR are analyzed by the jcheck
+commit-analysis tool, which is run as a server-side program (a so-called
+"bot"). The jcheck bot uses the external provider's API to present eventual
+issues as comments or errors, depending on the capabilities of the provider's
+API. On GitHub the jcheck bot specifically makes use of the
+<a href="https://developer.github.com/v3/checks/">Checks API</a> to produce informative error
+messages. The jcheck bot is configurable via the <code>.jcheck/config</code> configuration
+file in a repository. If configured, one of the checks ensures that the
+proposed change has a corresponding issue in
+<a href="https://bugs.openjdk.java.net/">JBS</a>.  In that case the bot ensures that the
+title of the PR corresponds to the title of the JBS issue, similar to the
+titles of RFR emails. If the PR contains a JBS issue as its title then the jbs
+bot adds a
+<a href="https://developer.atlassian.com/server/jira/platform/creating-remote-issue-links/">link</a>
+to the PR in the corresponding JBS issue.</p>
+<p>Once the PR passes jcheck then it gets the label <code>"rfr"</code>. This highlights to
+potential reviewers that the PR now is ready for review. (There is no point in
+reviewers engaging with a change that doesn't even pass jcheck.) At this time
+the PR is also automatically labeled according to the areas of the source code
+that are changed by the commits in the PR. For example, a PR to the <code>master</code>
+branch in the <a href="https://github.com/openjdk/jdi">jdk</a> repository with changes in
+both the <code>make</code> directory and the <code>src/hotspot</code> directory gets the labels
+<code>build-dev</code> and <code>hotspot-dev</code>. An automatically generated RFR email is sent to
+the mailing lists <code>build-dev@openjdk.java.net</code> and
+<code>hotspot-dev@openjdk.java.net</code> and to any other lists specified by the PR author.
+The RFR email contains the title and body of
+the PR, an automatically generated summary of the commits in the PR, and links
+to automatically generated webrevs.</p>
+<p>Reviewers can now discuss the changes in the PR, using multiple workflows:</p>
+<ul>
+<li>By replying to the RFR email sent to the mailing list(s), in which case the
+contents of replies are copied into the PR on GitHub (no GitHub account is
+required);</li>
+<li>By using the review tool on <a href="https://github.com/">https://github.com/</a> via a web browser;</li>
+<li>By using the review tool in various text editors and IDEs that integrate
+with GitHub;</li>
+<li>By using a graphical desktop application that integrates with GitHub; or</li>
+<li>By using the Skara CLI tools.</li>
+</ul>
+<p>Any comment made in <em>any</em> of the workflows is reflected in <em>all</em> of the
+workflows. One reviewer can add a comment via the mailing list, another via the
+web browser, and a third via the command-line and they will all see each
+others' comments.</p>
+<p>If the PR author pushes additional commits to the source branch based on
+feedback from reviewers then a bot sends a reply to the RFR email, including an
+automatic summary of the new commit(s) and automatically generated incremental
+and full webrevs.</p>
+<p>As reviewers are satisfied with the changes, they mark the PR as reviewed. This
+can be done by:</p>
+<ul>
+<li>Using a web browser and <a href="https://github.com/">https://github.com/</a>,</li>
+<li>Using <code>git pr approve</code> from the command line,</li>
+<li>Using a text editor and/or IDE with GitHub integration, or</li>
+<li>Using a graphical desktop tool with GitHub integration.</li>
+</ul>
+<p>Once all reviewers are satisfied, the author of the PR can finally integrate
+the PR. They do this by adding a comment with the exact content <code>/integrate</code>,
+after which a number of things happen:</p>
+<ol>
+<li>A bot squashes (collapses) all commits into one commit.</li>
+<li>If necessary, a bot rebases the squashed commit on top of the target
+branch (usually <code>master</code>).</li>
+<li>A bot constructs a commit message for the final commit, which includes:
+<ul>
+<li>The title of the PR as the title for the commit message,</li>
+<li>A body based on a comment from the PR starting with with the word <code>/summary</code>,</li>
+<li>All reviewers' OpenJDK usernames added in a <code>Reviewed-by:</code> trailer, and</li>
+<li>All co-authors added in <code>Co-authored-by:</code> trailers.</li>
+</ul>
+</li>
+<li>A bot pushes the resulting commit to the target branch (usually <code>master</code>).</li>
+</ol>
+<p>The author can preview the result of issuing the <code>/integrate</code> command,
+including the commit message, before actually integrating the PR.</p>
+<p>If the author of the PR is not an OpenJDK
+<a href="https://openjdk.java.net/bylaws#committer">Committer</a> then the label <code>sponsor</code>
+is added after the author has issued the <code>/integrate</code> command in a comment. An
+OpenJDK <a href="https://openjdk.java.net/bylaws#committer">committer</a> must then type
+the <code>/sponsor</code> command in a new comment to integrate the PR.</p>
+<h3 id="Permissions-and-roles">Permissions and roles</h3>
+<p>As <a href="#Goals">noted earlier</a> we do not propose to change the OpenJDK
+<a href="https://openjdk.java.net/census">Census</a>, nor would OpenJDK Contributors'
+roles and permissions be modeled on an external source-code hosting platform.
+Instead the server-side tools ("bots") maintain a mapping of OpenJDK Contributors'
+GitHub user ids (not usernames, which are unstable) to OpenJDK usernames. The
+result is that the bots can check if, e.g., the author of a PR is an OpenJDK
+<a href="https://openjdk.java.net/bylaws#author">Author</a> or that the reviewer of a PR
+is an OpenJDK <a href="https://openjdk.java.net/bylaws#reviewer">Reviewer</a>. This model
+is independent of external provider.  It also means that there is no need to
+duplicate the OpenJDK <a href="https://openjdk.java.net/census">Census</a> data on an
+external provider.</p>
+<h3 id="Tools">Tools</h3>
+<p>Contributors in the <a href="https://openjdk.java.net/projects/skara">Skara</a> project
+have developed various tools in support of this JEP, both CLI tools that run
+locally on a contributor's computer and server-side tools ("bots") that run on
+providers' servers. The CLI tools are primarily meant to assist contributors
+wishing to interact with an external provider from the command line. These are:</p>
+<ul>
+<li><code>git-fork</code>: fork a project on an external provider and clone it</li>
+<li><code>git-pr</code>: update, approve, fetch, show, etc., a pull request</li>
+<li><code>git-sync</code>: sync branches from an upstream repository</li>
+<li><code>git-publish</code>: publish a local branch to a remote repository</li>
+<li><code>git-info</code>: extract OpenJDK-specific information from a commit message</li>
+<li><code>git-token</code>: interact with a Git credential manager for handling tokens</li>
+</ul>
+<p>The following CLI tools were already made available in support of
+<a href="https://openjdk.java.net/jeps/357">JEP 357 (Migrate from Mercurial to Git)</a>:</p>
+<ul>
+<li><code>git-jcheck</code>: run jcheck locally</li>
+<li><code>git-webrev</code>: create a webrev</li>
+<li><code>git-defpath</code>: set up push and pull paths</li>
+<li><code>git-translate</code>: translate between hg and git hashes</li>
+</ul>
+<p>The bots that assist contributors are:</p>
+<ul>
+<li><code>pr</code>: checks, labels, and integrates pull requests</li>
+<li><code>ml-bridge</code>: bridges comments between mailing lists and source-code hosting services</li>
+<li><code>notify</code>: sends notifications to mailing lists after pushes</li>
+<li><code>archiver</code>: archives all PR metadata in JSON format in a Git repository</li>
+<li><code>forwarder</code>: forwards pushed commits to other repositories (e.g., a sandbox)</li>
+<li><code>jbs</code>: updates JBS (similar to the existing "hgupdater" service)</li>
+<li><code>submit</code>: an example of a test service implemented as a bot</li>
+</ul>
+<h3 id="Services">Services</h3>
+<p>In addition to the bots, there are two services to aid contributors and
+reviewers:</p>
+<ul>
+<li>
+<p>The <em>OCA service</em> relieves reviewers of the burden of checking whether
+contributors have signed the
+<a href="http://www.oracle.com/technetwork/community/oca-486395.html">Oracle Contributor Agreement</a>.</p>
+</li>
+<li>
+<p>The <em>test service</em> is a generalized version of the
+<a href="https://hg.openjdk.java.net/jdk/submit">jdk/submit</a> repository.  It allows a
+contributor to issue a <code>/test</code> request in a PR comment, to which one or more
+test services can respond. An simple example of a test service is already
+available in the form of a submit bot.</p>
+</li>
+</ul>
+<h2 id="Alternatives">Alternatives</h2>
+<ul>
+<li>
+<p>Keep using Mercurial and the existing OpenJDK workflow.
+(For repos as large as those for the JDK, we do not expect it
+to be practical to use <code>hg-git</code> or similar tools to retain a
+client-side Mercurial version of a server-side Git master repo.)</p>
+</li>
+<li>
+<p>Use <a href="https://gitlab.com/">GitLab EE</a> as the external source-code hosting provider.</p>
+</li>
+<li>
+<p>Use <a href="https://bitbucket.org/">BitBucket</a> as the external source-code hosting provider.</p>
+</li>
+</ul>
+<h2 id="Testing">Testing</h2>
+<ul>
+<li>
+<p>Almost all of the scenarios for the workflows have been implemented as
+integration tests in the <a href="https://openjdk.java.net/projects/skara%5D">Skara</a>
+project.</p>
+</li>
+<li>
+<p>The <a href="https://openjdk.java.net/projects/skara/">Skara</a> project has used the
+proposed workflow for its own code for a long period of time.</p>
+</li>
+<li>
+<p>Three other OpenJDK Projects have moved their repositories to GitHub on an
+experimental basis: <a href="https://openjdk.java.net/projects/openjfx/">OpenJFX</a>,
+<a href="https://openjdk.java.net/projects/loom/">Loom</a>, and
+<a href="https://openjdk.java.net/projects/mobile/">Mobile</a>.  These Projects will
+provide real-world testing of the tools, bots, and services before any other
+Projects are moved.</p>
+</li>
+</ul>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The primary risk of switching to an external source-code hosting provider is
+that the OpenJDK Community may become dependent upon that provider. The
+version-control data itself will always be independent of provider, due to
+distributed nature of Git. There is, however, a risk that metadata such as
+code-review comments could become locked in to a particular provider. There is
+also a risk that tooling and workflows could become dependent upon a particular
+provider, so that changing providers becomes impossible due to assumptions made
+in the tooling.</p>
+<p>Mitigating these risks has been a primary focus of the
+<a href="https://openjdk.java.net/projects/skara/">Skara</a> project.  The following
+design decisions ensure that critical metadata would not be locked in to any
+particular provider:</p>
+<ul>
+<li>
+<p>All discussions in pull requests are replicated to the corresponding OpenJDK
+<a href="https://mail.openjdk.java.net/">mailing lists</a>.</p>
+</li>
+<li>
+<p>All discussions in pull requests are archived in two formats: mbox (for human
+consumption) and JSON (for software consumption).</p>
+</li>
+<li>
+<p>Push notifications are sent to the corresponding <code>*-changes@openjdk.java.net</code>
+mailing lists, thereby avoiding a dependence upon a provider's RSS feeds.</p>
+</li>
+<li>
+<p>The OpenJDK <a href="https://openjdk.java.net/censis/">Census</a> is used for user
+organization and privilege levels, thereby avoiding a dependence upon a
+provider's user-organization tools.</p>
+</li>
+<li>
+<p>The domain <a href="https://git.openjdk.java.net/">https://git.openjdk.java.net/</a> redirects to the OpenJDK
+Community's current source-code hosting provider.  Source-code URLs recorded in
+<a href="https://bugs.openjdk.java.net/">JBS issues</a> and mailing-list messages use this
+domain rather than the domain of the current provider.</p>
+</li>
+</ul>
+<p>In order to prevent the Skara tooling from depending upon a particular
+provider's API, support for multiple external providers has been a strict
+requirement from the beginning. All of the tooling is also required to work
+with the open-source
+<a href="https://gitlab.com/gitlab-org/gitlab-ce/">GitLab Community Edition</a> (GitLab CE).</p>
+<h2 id="Dependencies">Dependencies</h2>
+<ul>
+<li><a href="https://openjdk.java.net/jeps/296/">JEP 296: Consolidate the JDK Forest into a Single Repository</a></li>
+<li><a href="https://openjdk.java.net/jeps/357">JEP 357: Migrate from Mercurial to Git</a></li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

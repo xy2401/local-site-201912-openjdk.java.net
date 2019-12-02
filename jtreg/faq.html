@@ -1,0 +1,3226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta charset="utf-8" /><meta name="generator" content="pandoc" /><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" /><title>jtreg FAQ</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+code{white-space: pre;}
+/**/
+</style><style type="text/css">
+/**/
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.bn { color: #40a070; } /* BaseN */
+code span.fl { color: #40a070; } /* Float */
+code span.ch { color: #4070a0; } /* Char */
+code span.st { color: #4070a0; } /* String */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.ot { color: #007020; } /* Other */
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.fu { color: #06287e; } /* Function */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code span.cn { color: #880000; } /* Constant */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.im { } /* Import */
+code span.va { color: #19177c; } /* Variable */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.op { color: #666666; } /* Operator */
+code span.bu { } /* BuiltIn */
+code span.ex { } /* Extension */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.at { color: #7d9029; } /* Attribute */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+/**/
+</style><style>
+
+    #TOC ul { margin: 1ex 0; list-style-type: decimal; }
+    #TOC span.toc-section-number { display:none }
+  
+    hr { margin-top: 2ex; }
+    pre { margin-left: 2em; }
+  
+    code { white-space: initial }
+    pre code {white-space: pre; 
+
+</style></head><body><div id="main">
+<h1>The <em>jtreg</em> FAQ</h1>
+This FAQ is a growing list of questions asked by developers running
+and writing tests which will be run using the regression test
+harness for the OpenJDK platform, <em>jtreg</em>. It is a
+supplement to the <a href="tag-spec.html">test-tag language
+specification</a> and is intended to illuminate implications of the
+spec and to answer questions about this implementation of the spec.
+<hr />
+<h2>Index</h2>
+<nav id="TOC">
+<ul>
+<li><a href="#overview"><span class="toc-section-number">1</span>
+Overview</a>
+<ul>
+<li><a href="#whats-the-purpose-of-this-test-framework"><span class="toc-section-number">
+1.1</span> What's the purpose of this test framework?</a></li>
+<li><a href="#whats-a-regression-test"><span class="toc-section-number">1.2</span> What's a regression test?</a></li>
+<li><a href="#but-can-i-also-write-non-regression-tests-using-this-framework"><span class="toc-section-number">
+1.3</span> But can I also write non-regression tests using this
+framework?</a></li>
+<li><a href="#what-is-the-javatest-harness"><span class="toc-section-number">1.4</span> What is the JavaTest&#8482;
+harness?</a></li>
+<li><a href="#what-are-the-jdk-regression-extensions-to-the-javatest-harness-what-is-regtest">
+<span class="toc-section-number">1.5</span> What are the JDK
+regression extensions to the JavaTest harness? What is
+"regtest"?</a></li>
+<li><a href="#what-are-the-system-requirements-for-using-the-jdk-regression-extensions">
+<span class="toc-section-number">1.6</span> What are the system
+requirements for using the JDK regression extensions?</a></li>
+<li><a href="#where-can-i-find-a-copy-of-jtreg"><span class="toc-section-number">1.7</span> Where can I find a copy of
+jtreg?</a></li>
+<li><a href="#where-do-i-find-additional-supporting-documentation"><span class="toc-section-number">1.8</span> Where do I find additional
+supporting documentation?</a></li>
+<li><a href="#theres-functionality-missing-from-the-tag-specification.-i-cant-write-my-test-or-it-would-vastly-improve-the-life-of-people-writing-tests-if-it-was-added.-what-do-i-need-to-do">
+<span class="toc-section-number">1.9</span> There's functionality
+missing from the tag specification. I can't write my test or it
+would vastly improve the life of people writing tests if it was
+added. What do I need to do?</a></li>
+<li><a href="#the-spec-is-fine-but-theres-some-functionality-that-id-like-to-get-from-the-regression-extensions-or-i-still-cant-run-it-on-a-basic-test.-who-do-i-contact">
+<span class="toc-section-number">1.10</span> The spec is fine, but
+there's some functionality that I'd like to get from the regression
+extensions or I still can't run it on a basic test. Who do I
+contact?</a></li>
+<li><a href="#why-not-use-junit-or-testng"><span class="toc-section-number">1.11</span> Why not use JUnit or
+TestNG?</a></li>
+</ul>
+</li>
+<li><a href="#getting-started"><span class="toc-section-number">2</span> Getting Started</a>
+<ul>
+<li><a href="#what-does-a-typical-invocation-of-jtreg-look-like-how-can-i-make-sure-that-i-can-even-run-the-javatest-harness">
+<span class="toc-section-number">2.1</span> What does a typical
+invocation of <code>jtreg</code> look like? How can I make sure
+that I can even run the JavaTest harness?</a></li>
+<li><a href="#bleah-that-verbose-output-is-so-long-can-i-have-something-shorter">
+<span class="toc-section-number">2.2</span> Bleah! That verbose
+output is so long! Can I have something shorter?</a></li>
+<li><a href="#are-there-abbreviations-for-these-long-options"><span class="toc-section-number">2.3</span> Are there abbreviations for these
+long options?</a></li>
+<li><a href="#jtr-file"><span class="toc-section-number">2.4</span>
+What is a <code>.jtr</code> file?</a></li>
+<li><a href="#whats-the-difference-between-the-fail-and-error-return-status"><span class="toc-section-number">
+2.5</span> What's the difference between the "fail" and "error"
+return status?</a></li>
+<li><a href="#if-a-test-fails-id-like-to-put-all-of-my-debugging-information-into-the-final-result.-how-do-i-do-that">
+<span class="toc-section-number">2.6</span> If a test fails, I'd
+like to put all of my debugging information into the final result.
+How do I do that?</a></li>
+<li><a href="#ive-heard-that-the-jtreg-has-a-gui.-how-do-i-access-that"><span class="toc-section-number">
+2.7</span> I've heard that the <code>jtreg</code> has a GUI. How do
+I access that?</a></li>
+<li><a href="#can-i-test-a-jre"><span class="toc-section-number">2.8</span> Can I test a JRE?</a></li>
+<li><a href="#how-do-i-run-jtreg-under-windows"><span class="toc-section-number">2.9</span> How do I run <code>jtreg</code>
+under Windows?</a></li>
+<li><a href="#which-should-i-use-mks-cygwin-or-wsl"><span class="toc-section-number">2.10</span> Which should I use? MKS, Cygwin or
+WSL?</a></li>
+<li><a href="#does-jtreg-provide-command-line-help"><span class="toc-section-number">2.11</span> Does jtreg provide command-line
+help?</a></li>
+</ul>
+</li>
+<li><a href="#using-jtreg"><span class="toc-section-number">3</span> Using jtreg</a>
+<ul>
+<li><a href="#how-do-i-specify-which-tests-to-run"><span class="toc-section-number">3.1</span> How do I specify which tests to
+run?</a></li>
+<li><a href="#how-do-i-specify-the-jdk-to-use"><span class="toc-section-number">3.2</span> How do I specify the JDK to
+use?</a></li>
+<li><a href="#report-work-dirs"><span class="toc-section-number">3.3</span> What are the work and report
+directories?</a></li>
+<li><a href="#scratch-directory"><span class="toc-section-number">3.4</span> What is a scratch
+directory?</a></li>
+<li><a href="#what-is-a-problemlist.txt-file"><span class="toc-section-number">3.5</span> What is a ProblemList.txt
+file?</a></li>
+<li><a href="#what-are-the-agentvm-and-othervm-modes"><span class="toc-section-number">3.6</span> What are the agentVM and otherVM
+modes?</a></li>
+<li><a href="#how-do-i-specify-whether-to-run-tests-concurrently"><span class="toc-section-number">3.7</span> How do I specify whether to run
+tests concurrently?</a></li>
+<li><a href="#how-do-i-specify-additional-options-for-compiling-and-running-tests">
+<span class="toc-section-number">3.8</span> How do I specify
+additional options for compiling and running tests?</a></li>
+<li><a href="#what-do-i-need-to-know-about-test-timeouts"><span class="toc-section-number">3.9</span> What do I need to know about test
+timeouts?</a></li>
+<li><a href="#how-do-i-run-only-tests-which-were-written-for-a-specific-bugid"><span class="toc-section-number">
+3.10</span> How do I run only tests which were written for a
+specific bugid?</a></li>
+<li><a href="#how-do-i-run-only-tests-not-requiring-manual-intervention"><span class="toc-section-number">
+3.11</span> How do I run only tests NOT requiring manual
+intervention?</a></li>
+<li><a href="#how-do-i-run-only-tests-requiring-manual-intervention"><span class="toc-section-number">
+3.12</span> How do I run only tests requiring manual
+intervention?</a></li>
+<li><a href="#how-do-i-view-what-a-test-sends-to-system.out-or-system.err"><span class="toc-section-number">
+3.13</span> How do I view what a test sends to
+<code>System.out</code> or <code>System.err</code>?</a></li>
+<li><a href="#how-do-i-see-what-groups-are-defined-in-my-test-suite"><span class="toc-section-number">
+3.14</span> How do I see what groups are defined in my test
+suite?</a></li>
+<li><a href="#how-do-i-see-what-tests-will-be-executed-without-actually-executing-them">
+<span class="toc-section-number">3.15</span> How do I see what
+tests will be executed, without actually executing them?</a></li>
+<li><a href="#can-i-verify-the-correctness-of-test-descriptions-without-actually-running-the-tests">
+<span class="toc-section-number">3.16</span> Can I verify the
+correctness of test descriptions without actually running the
+tests?</a></li>
+<li><a href="#id-like-to-run-my-test-standalone-without-using-jtreg-how-do-i-do-that">
+<span class="toc-section-number">3.17</span> I'd like to run my
+test standalone, without using jtreg: how do I do that?</a></li>
+<li><a href="#can-i-generate-reports-for-tests-that-have-already-been-run"><span class="toc-section-number">
+3.18</span> Can I generate reports for tests that have already been
+run?</a></li>
+<li><a href="#what-happens-when-jtreg-runs-a-test"><span class="toc-section-number">3.19</span> What happens when jtreg runs a
+test?</a></li>
+</ul>
+</li>
+<li><a href="#writing-a-jdk-regression-test"><span class="toc-section-number">4</span> Writing a JDK Regression Test</a>
+<ul>
+<li><a href="#how-do-i-write-a-test"><span class="toc-section-number">4.1</span> How do I write a test?</a></li>
+<li><a href="#what-does-the-test-tag-mean"><span class="toc-section-number">4.2</span> What does the <code>@test</code>
+tag mean?</a></li>
+<li><a href="#what-do-the-other-tags-mean"><span class="toc-section-number">4.3</span> What do the other tags
+mean?</a></li>
+<li><a href="#how-are-tag-arguments-delimited"><span class="toc-section-number">4.4</span> How are tag arguments
+delimited?</a></li>
+<li><a href="#can-i-put-comments-in-a-test-description"><span class="toc-section-number">
+4.5</span> Can I put comments in a test description?</a></li>
+<li><a href="#if-a-test-fails-do-i-have-to-throw-my-own-exception"><span class="toc-section-number">4.6</span> If a test fails, do I have to throw
+my own exception?</a></li>
+<li><a href="#should-a-test-call-the-system.exit-method"><span class="toc-section-number">4.7</span> Should a test call the
+<code>System.exit</code> method?</a></li>
+<li><a href="#can-a-test-write-to-system.out-and-system.err"><span class="toc-section-number">4.8</span> Can a test write to
+<code>System.out</code> and <code>System.err</code>?</a></li>
+<li><a href="#can-a-test-check-the-output-of-system.out-and-system.err"><span class="toc-section-number">
+4.9</span> Can a test check the output of <code>System.out</code>
+and <code>System.err</code>?</a></li>
+<li><a href="#my-test-opens-files-and-sockets-do-i-have-to-close-them-before-the-test-exits">
+<span class="toc-section-number">4.10</span> My test opens files
+and sockets: do I have to close them before the test
+exits?</a></li>
+<li><a href="#my-test-changes-observable-system-state-like-system-properties-or-the-default-locale-do-i-have-to-reset-it">
+<span class="toc-section-number">4.11</span> My test changes
+observable system state like system properties or the default
+locale: do I have to reset it?</a></li>
+<li><a href="#my-test-creates-and-uses-additional-threads-do-i-have-to-clean-them-up">
+<span class="toc-section-number">4.12</span> My test creates and
+uses additional threads: do I have to clean them up?</a></li>
+<li><a href="#combo-test"><span class="toc-section-number">4.13</span> What is a combo test?</a></li>
+<li><a href="#how-much-output"><span class="toc-section-number">4.14</span> How much output can a test
+generate?</a></li>
+<li><a href="#how-much-time"><span class="toc-section-number">4.15</span> How much time can a test
+take?</a></li>
+<li><a href="#configurable"><span class="toc-section-number">4.16</span> How can I make a test
+configurable?</a></li>
+<li><a href="#what-should-i-do-with-a-test-once-ive-written-it"><span class="toc-section-number">4.17</span> What should I do with a test once
+I've written it?</a></li>
+<li><a href="#do-i-need-to-test-a-test"><span class="toc-section-number">4.18</span> Do I need to test a test?</a></li>
+<li><a href="#how-do-i-test-a-test"><span class="toc-section-number">4.19</span> How do I test a test?</a></li>
+<li><a href="#where-are-the-openjdk-tests"><span class="toc-section-number">4.20</span> Where are the OpenJDK
+tests?</a></li>
+<li><a href="#why-not-have-separate-test-workspaces-that-only-contain-tests"><span class="toc-section-number">
+4.21</span> Why not have separate test workspaces that only contain
+tests?</a></li>
+<li><a href="#how-should-i-name-a-test"><span class="toc-section-number">4.22</span> How should I name a test?</a></li>
+<li><a href="#what-about-tests-that-dont-fit-into-the-api-structure"><span class="toc-section-number">
+4.23</span> What about tests that don't fit into the API
+structure?</a></li>
+<li><a href="#can-tests-in-different-directories-have-the-same-name"><span class="toc-section-number">
+4.24</span> Can tests in different directories have the same
+name?</a></li>
+<li><a href="#how-do-i-write-a-test-for-an-awt-bug-or-a-swing-bug"><span class="toc-section-number">4.25</span> How do I write a test for an AWT
+bug or a Swing bug?</a></li>
+<li><a href="#how-does-the-user-know-what-to-do-for-a-manual-applet-test"><span class="toc-section-number">
+4.26</span> How does the user know what to do for a manual applet
+test?</a></li>
+<li><a href="#exactly-what-does-themanual-option-mean"><span class="toc-section-number">4.27</span> Exactly what does
+the<code>/manual</code> option mean?</a></li>
+<li><a href="#how-does-a-manual-applet-test-indicate-success-or-failure"><span class="toc-section-number">
+4.28</span> How does a manual applet test indicate success or
+failure?</a></li>
+<li><a href="#can-i-and-should-i-write-shell-tests"><span class="toc-section-number">4.29</span> Can I (and should I) write shell
+tests?</a></li>
+<li><a href="#when-should-i-update-the-bug-entry-in-a-test-description"><span class="toc-section-number">
+4.30</span> When should I update the <code>@bug</code> entry in a
+test description?</a></li>
+<li><a href="#when-should-i-use-the-intermittent-or-randomness-keyword-in-a-test">
+<span class="toc-section-number">4.31</span> When should I use the
+<code>intermittent</code> or <code>randomness</code> keyword in a
+test?"</a></li>
+<li><a href="#when-should-i-use-the-randomnness-keyword-in-a-test"><span class="toc-section-number">4.32</span> When should I use the
+<code>randomnness</code> keyword in a test?</a></li>
+<li><a href="#what-if-a-test-does-not-apply-in-a-given-situation"><span class="toc-section-number">4.33</span> What if a test does not apply in a
+given situation?</a></li>
+<li><a href="#multiple-tests"><span class="toc-section-number">4.34</span> Can I put more than one test in a
+file?</a></li>
+<li><a href="#can-i-run-tests-differently-depending-on-the-circumstances"><span class="toc-section-number">
+4.35</span> Can I run tests differently, depending on the
+circumstances?</a></li>
+</ul>
+</li>
+<li><a href="#organizing-tests"><span class="toc-section-number">5</span> Organizing tests</a>
+<ul>
+<li><a href="#how-are-the-openjdk-test-suites-organized"><span class="toc-section-number">5.1</span> How are the OpenJDK test suites
+organized?</a></li>
+<li><a href="#what-is-the-test-root-directory"><span class="toc-section-number">5.2</span> What is the test root
+directory?</a></li>
+<li><a href="#why-is-the-test-root-directory-important"><span class="toc-section-number">
+5.3</span> Why is the "test root directory" important?</a></li>
+<li><a href="#can-i-have-more-than-one-test.root"><span class="toc-section-number">5.4</span> Can I have more than one
+TEST.ROOT?</a></li>
+<li><a href="#how-should-i-organize-tests-libraries-and-other-test-related-files">
+<span class="toc-section-number">5.5</span> How should I organize
+tests, libraries, and other test-related files?</a></li>
+<li><a href="#what-is-tiered-testing"><span class="toc-section-number">5.6</span> What is "tiered testing"?</a></li>
+</ul>
+</li>
+<li><a href="#testng-and-junit-tests"><span class="toc-section-number">6</span> TestNG and JUnit tests</a>
+<ul>
+<li><a href="#what-is-a-package-root"><span class="toc-section-number">6.1</span> What is a "package root"?</a></li>
+<li><a href="#how-does-jtreg-support-testng-and-junit-tests"><span class="toc-section-number">6.2</span> How does jtreg support TestNG and
+JUnit tests?</a></li>
+<li><a href="#how-do-i-identify-a-group-of-testng-or-junit-tests-in-their-own-directory">
+<span class="toc-section-number">6.3</span> How do I identify a
+group of TestNG or JUnit tests in their own directory?</a></li>
+<li><a href="#how-does-jtreg-run-testng-and-junit-tests"><span class="toc-section-number">6.4</span> How does jtreg run TestNG and JUnit
+tests?</a></li>
+<li><a href="#how-do-i-specify-any-libraries-i-want-to-use-in-testng-and-junit-tests">
+<span class="toc-section-number">6.5</span> How do I specify any
+libraries I want to use in TestNG and JUnit tests?</a></li>
+<li><a href="#what-version-of-testng-and-junit-does-jtreg-support"><span class="toc-section-number">6.6</span> What version of TestNG and JUnit
+does jtreg support?</a></li>
+</ul>
+</li>
+<li><a href="#general-problems"><span class="toc-section-number">7</span> General Problems</a>
+<ul>
+<li><a href="#my-test-only-passes-if-i-dont-use-jtreg-to-run-it.-why-does-it-fail-in-jtreg">
+<span class="toc-section-number">7.1</span> My test only passes if
+I don't use jtreg to run it. Why does it fail in jtreg?</a></li>
+<li><a href="#how-do-i-set-the-classpath-environment-variable-for-my-test"><span class="toc-section-number">
+7.2</span> How do I set the <code>CLASSPATH</code> environment
+variable for my test?</a></li>
+<li><a href="#why-dont-you-just-pass-all-of-my-shell-environment-variables-to-the-jvm-running-the-test">
+<span class="toc-section-number">7.3</span> Why don't you just pass
+all of my shell environment variables to the JVM running the
+test?</a></li>
+<li><a href="#why-is-the-default-to-run-tests-in-another-jvm"><span class="toc-section-number">7.4</span> Why is the default to run tests in
+another JVM?</a></li>
+<li><a href="#why-would-i-ever-want-to-run-in-the-same-jvm"><span class="toc-section-number">7.5</span> Why would I ever want to run in the
+same JVM?</a></li>
+<li><a href="#what-is-agent-vm-mode-and-why-would-i-want-to-use-it"><span class="toc-section-number">
+7.6</span> What is "agent VM" mode, and why would I want to use
+it?</a></li>
+<li><a href="#should-a-test-call-the-system.exit-method-1"><span class="toc-section-number">7.7</span> Should a test call the
+<code>System.exit</code> method?</a></li>
+<li><a href="#my-test-only-applies-to-one-platform-and-it-will-failnot-run-in-others.-how-do-i-prevent-the-harness-from-running-it-on-the-wrong-platform">
+<span class="toc-section-number">7.8</span> My test only applies to
+one platform and it will fail/not run in others. How do I prevent
+the harness from running it on the wrong platform?</a></li>
+<li><a href="#how-can-i-make-applet-and-main-action-tests-read-from-data-files">
+<span class="toc-section-number">7.9</span> How can I make
+<code>applet</code> and <code>main</code> action tests read from
+data files?</a></li>
+<li><a href="#can-i-use-package-statements-in-my-tests"><span class="toc-section-number">
+7.10</span> Can I use <code>package</code> statements in my
+tests?</a></li>
+<li><a href="#why-cant-multiple-test-source-files-in-the-same-directory-have-package-private-classes-of-the-same-name">
+<span class="toc-section-number">7.11</span> Why can't multiple
+test source files in the same directory have package-private
+classes of the same name?</a></li>
+<li><a href="#write-catch-exceptions"><span class="toc-section-number">7.12</span> Should a test catch
+<code>Throwable</code>, <code>Exception</code>, or
+<code>Error</code>?</a></li>
+<li><a href="#my-test-requires-that-i-use-information-printed-to-system.out-or-system.err-to-determine-whether-a-test-passed-or-failed.-when-i-run-my-test-in-the-harness-i-cant-seem-to-find-these-output-streams.">
+<span class="toc-section-number">7.13</span> My test requires that
+I use information printed to <code>System.out</code> or
+<code>System.err</code> to determine whether a test passed or
+failed. When I run my test in the harness, I can't seem to find
+these output streams.</a></li>
+<li><a href="#my-test-does-tricky-things-that-are-not-supported-by-jtreg.-can-i-still-write-a-regression-test">
+<span class="toc-section-number">7.14</span> My test does tricky
+things that are not supported by <code>jtreg</code>. Can I still
+write a regression test?</a></li>
+<li><a href="#what-happens-if-my-test-returns-when-there-are-still-threads-running">
+<span class="toc-section-number">7.15</span> What happens if my
+test returns when there are still threads running?</a></li>
+<li><a href="#if-my-bug-hasnt-been-fixed-and-the-test-is-run-the-jvm-crashes.-how-do-i-make-sure-that-the-test-doesnt-cause-the-harness-to-crash">
+<span class="toc-section-number">7.16</span> If my bug hasn't been
+fixed, and the test is run, the JVM crashes. How do I make sure
+that the test doesn't cause the harness to crash?</a></li>
+<li><a href="#the-javatest-harness-is-running-into-problems-running-the-test-because-of-issues-with-the-jdk-im-trying-to-test.-what-can-i-do">
+<span class="toc-section-number">7.17</span> The JavaTest harness
+is running into problems running the test because of issues with
+the JDK I'm trying to test. What can I do?</a></li>
+<li><a href="#my-test-requires-that-i-install-my-own-security-manager-but-it-appears-that-the-javatest-harness-has-already-installed-one.-what-do-i-do">
+<span class="toc-section-number">7.18</span> My test requires that
+I install my own security manager, but it appears that the JavaTest
+harness has already installed one. What do I do?</a></li>
+<li><a href="#can-i-automate-running-regtests-or-can-i-run-the-tests-on-a-regular-basis">
+<span class="toc-section-number">7.19</span> Can I automate running
+regtests or can I run the tests on a regular basis?</a></li>
+<li><a href="#i-run-all-or-a-huge-part-of-the-regression-test-suite-as-part-of-a-cron-job-or-other-nightly-process.-id-like-to-generate-my-own-reports-or-id-like-to-send-myself-e-mail-whenever-a-test-fails.-do-i-have-to-parse-the-verbose-output-or-the-.jtr-file">
+<span class="toc-section-number">7.20</span> I run all (or a huge
+part) of the regression test suite as part of a cron job or other
+nightly process. I'd like to generate my own reports or I'd like to
+send myself e-mail whenever a test fails. Do I have to parse the
+verbose output or the <code>.jtr</code> file?</a></li>
+</ul>
+</li>
+<li><a href="#tag-problems"><span class="toc-section-number">8</span> Tag Problems</a>
+<ul>
+<li><a href="#how-do-i-decide-whether-my-test-should-use-the-compile-action-or-the-build-action">
+<span class="toc-section-number">8.1</span> How do I decide whether
+my test should use the <code>compile</code> action or the
+<code>build</code> action?</a></li>
+<li><a href="#when-do-i-need-to-specify-the-build-action"><span class="toc-section-number">8.2</span> When do I need to specify the
+<code>build</code> action?</a></li>
+<li><a href="#how-do-i-decide-whether-my-applet-test-should-use-the-main-action-or-the-applet-action">
+<span class="toc-section-number">8.3</span> How do I decide whether
+my applet test should use the <code>main</code> action or the
+<code>applet</code> action?</a></li>
+<li><a href="#i-put-in-an-ignore-tag-into-my-test-description-but-my-test-wasnt-ignored.">
+<span class="toc-section-number">8.4</span> I put in an
+<code>ignore</code> tag into my test description but my test wasn't
+ignored.</a></li>
+<li><a href="#can-i-use-the-author-run-etc.-tags-in-other-files"><span class="toc-section-number">8.5</span> Can I use the <code>@author</code>,
+<code>@run</code>, etc. tags in other files?</a></li>
+</ul>
+</li>
+<li><a href="#applet-problems"><span class="toc-section-number">9</span> Applet Problems</a>
+<ul>
+<li><a href="#my-manual-test-sends-events-to-system.outsystem.err-so-that-the-user-can-determine-whether-the-test-behaved-properly.-how-do-i-write-my-test-if-i-cant-see-these-output-streams">
+<span class="toc-section-number">9.1</span> My <code>/manual</code>
+test sends events to <code>System.out/System.err</code> so that the
+user can determine whether the test behaved properly. How do I
+write my test if I can't see these output streams?</a></li>
+<li><a href="#i-threw-an-exception-the-output-was-sent-to-system.err-but-my-test-still-passed.-what-happened">
+<span class="toc-section-number">9.2</span> I threw an exception,
+the output was sent to <code>System.err</code>, but my test still
+passed. What happened?</a></li>
+<li><a href="#my-applet-action-test-didnt-run-my-main-method"><span class="toc-section-number">9.3</span> My <code>applet</code> action test
+didn't run my <code>main</code> method!</a></li>
+<li><a href="#if-i-have-an-applet-test-do-i-put-the-test-description-in-the-.html-file-or-the-.java-file">
+<span class="toc-section-number">9.4</span> If I have an applet
+test, do I put the test description in the <code>.html</code> file
+or the <code>.java</code> file?</a></li>
+<li><a href="#for-my-manual-tests-how-do-i-provide-the-user-instructions-to-run-the-test">
+<span class="toc-section-number">9.5</span> For my
+<code>/manual</code> tests, how do I provide the user instructions
+to run the test?</a></li>
+<li><a href="#for-manual-tests-how-is-the-initial-size-of-the-running-applet-determined">
+<span class="toc-section-number">9.6</span> For
+<code>/manual</code> tests, how is the initial size of the running
+applet determined?</a></li>
+</ul>
+</li>
+<li><a href="#deciphering-common-harness-errors"><span class="toc-section-number">10</span> Deciphering Common Harness
+Errors</a>
+<ul>
+<li><a href="#failed.-unexpected-exit-from-test"><span class="toc-section-number">10.1</span> <code>Failed. Unexpected exit from
+test</code></a></li>
+<li><a href="#error.-cant-find-main-method"><span class="toc-section-number">10.2</span> <code>Error. Can't find 'main'
+method</code></a></li>
+<li><a href="#error.-parse-exception-no-class-provided-for-main"><span class="toc-section-number">10.3</span> <code>Error. Parse Exception: No
+class provided for 'main'</code></a></li>
+<li><a href="#error.-parse-exception-applet-requires-exactly-one-file-argument">
+<span class="toc-section-number">10.4</span> <code>Error. Parse
+Exception: 'applet' requires exactly one file
+argument</code></a></li>
+<li><a href="#error.-parse-exception-archive-not-supported-in-file"><span class="toc-section-number">
+10.5</span> <code>Error. Parse Exception: 'archive' not supported
+in file:</code> &#8230;</a></li>
+<li><a href="#test-results-no-tests-selected"><span class="toc-section-number">10.6</span> <code>test results: no tests
+selected</code></a></li>
+<li><a href="#test-does-not-have-unique-name-within-work-directory"><span class="toc-section-number">
+10.7</span> <code>Test does not have unique name within work
+directory</code></a></li>
+<li><a href="#error.-junit-not-available"><span class="toc-section-number">10.8</span> <code>Error. JUnit not
+available</code></a></li>
+<li><a href="#javatest-message-problem-cleaning-up-the-following-threads"><span class="toc-section-number">
+10.9</span> <code>JavaTest Message: Problem cleaning up the
+following threads:</code></a></li>
+<li><a href="#incompatible-kind-of-jdk-used-to-compile-or-run-tests-...-with-that-used-to-run-jtreg-...">
+<span class="toc-section-number">10.10</span> Incompatible kind of
+JDK used to compile or run tests (...) with that used to run jtreg
+(...)</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<hr />
+<h2 id="overview"><span class="header-section-number">1</span>
+Overview</h2>
+<h3 id="whats-the-purpose-of-this-test-framework"><span class="header-section-number">1.1</span> What's the purpose of this test
+framework?</h3>
+<p>The test framework described here is intended primarily for unit
+and regression tests. It can also be used for functional tests, and
+even simple product tests -- in other words, just about any type of
+test except a conformance test. (Conformance tests belong in a
+Technology Compatibility Kit (TCK), such as the Java Compatibility
+Kit (JCK)). Tests can often be written as small standalone Java
+programs, although in some cases an applet or a shell-script might
+be required.</p>
+<h3 id="whats-a-regression-test"><span class="header-section-number">1.2</span> What's a regression test?</h3>
+<p>A regression test is a test written specifically to check that a
+bug has been fixed and remains fixed. A regression test should fail
+when run against a build with the bug in question, and pass when
+run against a build in which the bug has been fixed.</p>
+<h3 id="but-can-i-also-write-non-regression-tests-using-this-framework">
+<span class="header-section-number">1.3</span> But can I also write
+non-regression tests using this framework?</h3>
+<p>Yes. Suppose, for example, that you evaluate a bug that turns
+out not to be a bug, but in the course of doing the evaluation you
+write a test that checks for correct behavior. You can help improve
+the quality of the JDK by checking this test into the test
+directory.</p>
+<h3 id="what-is-the-javatest-harness"><span class="header-section-number">1.4</span> What is the JavaTest&#8482;
+harness?</h3>
+<p>The JavaTest harness is a set of tools designed to execute test
+programs. It was originally designed to execute tests in the Java
+Compatibility Kit (JCK). Among other things, the harness has
+evolved the ability to execute non-JCK testsuites. The JDK
+regression test suite is one such suite.</p>
+<p>An open source version of the harness is available at <a href="//openjdk.java.net/projects/code-tools/jtharness/" class="uri">http://openjdk.java.net/projects/code-tools/jtharness/</a>.</p>
+<h3 id="what-are-the-jdk-regression-extensions-to-the-javatest-harness-what-is-regtest">
+<span class="header-section-number">1.5</span> What are the JDK
+regression extensions to the JavaTest harness? What is
+"regtest"?</h3>
+<p>For the harness to execute tests in a given test suite, it needs
+specialized code which knows how to find test descriptions and how
+to interpret those descriptions. The <a href="tag-spec.html">JDK
+Test Framework: Tag Language Specification</a> provides the needed
+descriptions. "regtest" refers to extensions for the JavaTest
+harness that implement this specification, and is an older name for
+what is now known as "jtreg".</p>
+<h3 id="what-are-the-system-requirements-for-using-the-jdk-regression-extensions">
+<span class="header-section-number">1.6</span> What are the system
+requirements for using the JDK regression extensions?</h3>
+<p>It is recommended that you run jtreg using JDK 1.7 or later.</p>
+<h3 id="where-can-i-find-a-copy-of-jtreg"><span class="header-section-number">1.7</span> Where can I find a copy of
+jtreg?</h3>
+<p>Information on downloading and building the source code, as well
+as publicly available binaries, is given on the <a href="//openjdk.java.net/jtreg">OpenJDK jtreg home page</a>.</p>
+<h3 id="where-do-i-find-additional-supporting-documentation">
+<span class="header-section-number">1.8</span> Where do I find
+additional supporting documentation?</h3>
+<p>Beyond the Java&#8482; Platform documentation, the following are
+relevant documentation resources.</p>
+<ul>
+<li>
+<p><a href="tag-spec.html">JDK Test Framework: Tag Language
+Specification</a> - The definitive document defining the test
+description tags (syntax and behavior).</p>
+</li>
+<li>
+<p>The <code>-help</code> option to jtreg offers brief
+documentation for the complete set of currently available
+options.</p>
+</li>
+</ul>
+<h3 id="theres-functionality-missing-from-the-tag-specification.-i-cant-write-my-test-or-it-would-vastly-improve-the-life-of-people-writing-tests-if-it-was-added.-what-do-i-need-to-do">
+<span class="header-section-number">1.9</span> There's
+functionality missing from the tag specification. I can't write my
+test or it would vastly improve the life of people writing tests if
+it was added. What do I need to do?</h3>
+<p>See the <a href="http://openjdk.dev.java.net/jtreg">OpenJDK
+jtreg home page</a> for a suitable forum or mailing list.</p>
+<h3 id="the-spec-is-fine-but-theres-some-functionality-that-id-like-to-get-from-the-regression-extensions-or-i-still-cant-run-it-on-a-basic-test.-who-do-i-contact">
+<span class="header-section-number">1.10</span> The spec is fine,
+but there's some functionality that I'd like to get from the
+regression extensions or I still can't run it on a basic test. Who
+do I contact?</h3>
+<p>Send email to <code>jtreg-discuss(at)openjdk.java.net</code></p>
+<h3 id="why-not-use-junit-or-testng"><span class="header-section-number">1.11</span> Why not use JUnit or
+TestNG?</h3>
+<p>JUnit and TestNG not around when we started writing tests for
+JDK. And, the test tag specification has been specifically designed
+for testing JDK, with support for testing applets, command-line
+interfaces, and so on, as well as simple API tests.</p>
+<p>And by now, there are many thousands of tests written for jtreg,
+so it would not be practical to convert them all to some other test
+framework.</p>
+<p>However, note that jtreg now includes support for collections of
+tests written in JUnit and TestNG.</p>
+<hr />
+<h2 id="getting-started"><span class="header-section-number">2</span> Getting Started</h2>
+<h3 id="what-does-a-typical-invocation-of-jtreg-look-like-how-can-i-make-sure-that-i-can-even-run-the-javatest-harness">
+<span class="header-section-number">2.1</span> What does a typical
+invocation of <code>jtreg</code> look like? How can I make sure
+that I can even run the JavaTest harness?</h3>
+<p>You may verify that the JavaTest harness can be properly invoked
+by using <code>jtreg</code> to run this sample test.</p>
+<div class="sourceCode">
+<pre class="sourceCode java"><code class="sourceCode java"><span class="co">/*</span>
+<span class="co"> * @test</span>
+<span class="co"> * @bug 2718282</span>
+<span class="co"> * @summary Hello test</span>
+<span class="co"> */</span>
+
+<span class="kw">public</span> <span class="kw">class</span> Hello {
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span> [] args) <span class="kw">throws</span> <span class="bu">Exception</span> {
+        <span class="kw">if</span> (<span class="kw">true</span>)
+            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">"Hello World!"</span>);
+        <span class="kw">else</span>
+            <span class="kw">throw</span> <span class="kw">new</span> <span class="bu">Exception</span>(<span class="st">"??"</span>);
+    }
+}</code></pre></div>
+<p>A typical invocation of <code>jtreg</code> on that test is:</p>
+<pre>
+<code>ribbit$ jtreg -verbose:all -testjdk:/usr/local/java/jdk1.4/solsparc Hello.java</code></pre>
+<p>where</p>
+<ul>
+<li><code>-verbose:all</code> is a verbose option which causes
+output from all tests (regardless of whether they passed or failed)
+to be printed at completion of the test.</li>
+<li><code>-testjdk</code> specifies the location of the JDK version
+which should be used to run the test.</li>
+</ul>
+<p>Modulo the line numbers, output for the successful invocation of
+<code>jtreg</code> will look like:</p>
+<pre><code> 1   --------------------------------------------------
+ 2   TEST: Hello.java
+ 3   JDK under test: (/usr/local/java/jdk1.4/solsparc/jre)
+ 4   java version "1.4.0-beta"
+ 5   Java(TM) 2 Runtime Environment, Standard Edition (build 1.4.0-beta-b56)
+ 6   Java HotSpot(TM) Client VM (build 1.4-beta-B56, mixed mode)
+ 7
+ 8   ACTION: build -- Passed. Compilation successful
+ 9   REASON: Named class compiled on demand
+10   TIME:   3.024 seconds
+11
+12   ACTION: compile -- Passed. Compilation successful
+13   REASON: .class file out of date or does not exist
+14   TIME:   3.023 seconds
+15   STDOUT:
+16   STDERR:
+17
+18   ACTION: main -- Passed. Execution successful
+19   REASON: Assumed action based on file name: run main Hello
+20   TIME:   0.862 seconds
+21   STDOUT:
+22   Hello World!
+23   STDERR:
+24   STATUS:Passed.
+25
+26   TEST RESULT: Passed. Execution successful
+27   --------------------------------------------------
+28   test results: passed: 1
+29   Report written to /u/iag/jtw/JTreport/report.html
+30   Results written to /u/iag/jtw/JTwork</code></pre>
+<p>The test was compiled and executed. No exception was thrown
+during execution, thus the test passed.</p>
+<p>Interpretation of this output is as follows:</p>
+<ul>
+<li>line 2 - The name of the test that was run.</li>
+<li>line 3 - The JDK under test (should be identical to the value
+passed via the <code>-testjdk</code> option).</li>
+<li>line 4-6 - The product version produced when <code>java
+[-JVMOptions]</code> version" is called for the JDK under test.
+Valid <code>[-JVMOptions]</code> include <code>-client</code>,
+<code>-server</code>, <code>-hotspot</code>, <code>-d64</code>, and
+<code>-d32</code>, as applicable to the current platform and test
+JDK.</li>
+<li>
+<p>lines 8-10, 12-16, 18-24 - The set of actions that were run
+according to the test description provided. Each action contains
+five parts.</p>
+<ul>
+<li>the name of the action and its final status</li>
+<li>the reason the action was taken</li>
+<li>the amount of time to run the test</li>
+<li>standard output (note line 22 of the <code>main</code> action
+contains the string "Hello World!")</li>
+<li>standard error</li>
+</ul>
+</li>
+<li>line 26 - The final result of the test.</li>
+<li>
+<p>lines 28-30 - Summary information about all the tests that were
+run.</p>
+<ul>
+<li>line 28 - One test passed. This line would also indicate the
+number of tests that failed, or that produced errors, as
+applicable.</li>
+<li>line 29 - Location for <code>.html</code> reports.</li>
+<li>line 30 - Location for auxiliary files generated during the
+test execution. Of particular note are the results files
+(<code>.jtr</code>) which contain information about the individual
+tests that were run.</li>
+</ul>
+</li>
+</ul>
+<h3 id="bleah-that-verbose-output-is-so-long-can-i-have-something-shorter">
+<span class="header-section-number">2.2</span> Bleah! That verbose
+output is so long! Can I have something shorter?</h3>
+<p>Yes. Several different options provided with <code>jtreg</code>
+influence the output per test. Here are a few verbose settings in
+order of decreasing average output per test.</p>
+<ul>
+<li><a href="#V.0"><code>-verbose:fail</code></a> (and related
+<code>-verbose:pass</code>, <code>-verbose:error</code>, and
+<code>-verbose:all</code>)</li>
+<li><a href="#V.1"><code>-verbose</code></a></li>
+<li><a href="#V.2"><code>-verbose:summary</code></a></li>
+<li><a href="#V.3">no verbose option</a></li>
+</ul>
+<p>The following samples of output correspond to each of the above
+settings. Each sample is run with three tests:
+<code>Pass.java</code>, <code>Fail.java</code>, and
+<code>Error.java</code> . Note that in some cases, the output
+varies substantially depending on whether the test passed or
+failed.</p>
+<p><a id="V.0"><strong><code>-verbose:fail</code></strong></a> -
+Full output for failed tests only. Two lines for tests that passed
+or produced errors (related options: <code>-verbose:pass</code>,
+<code>-verbose:fail</code>, and <code>-verbose:all</code>).</p>
+<pre>
+<code>ribbit$ jtreg -verbose:fail Pass.java Fail.java Error.java
+--------------------------------------------------
+TEST: Pass.java
+TEST RESULT: Passed. Execution successful
+--------------------------------------------------
+TEST: Fail.java
+JDK under test: (/usr/local/java/jdk1.4/solsparc)
+java version "1.4.0-beta"
+Java(TM) 2 Runtime Environment, Standard Edition (build 1.4.0-beta-b56)
+Java HotSpot(TM) Client VM (build 1.4-beta-B56, mixed mode)
+
+ACTION: build -- Passed. Compilation successful
+REASON: Named class compiled on demand
+TIME:   3.649 seconds
+
+ACTION: compile -- Passed. Compilation successful
+REASON: .class file out of date or does not exist
+TIME:   3.637 seconds
+STDOUT:
+STDERR:
+
+ACTION: main -- Failed. Execution failed: `main' threw exception: java.lang.Exception: Fail
+REASON: Assumed action based on file name: run main Fail
+TIME:   1.219 seconds
+STDOUT:
+STDERR:
+java.lang.Exception: I failed
+ at Fail.main(Fail.java:5)
+ at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+ at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:30)
+ at sun.reflect.InflatableMethodAccessorImpl.invoke(InflatableMethodAccessorImpl.java:46)
+ at java.lang.reflect.Method.invoke(Method.java:306)
+ at com.sun.javatest.regtest.MainWrapper$MainThread.run(MainWrapper.java:94)
+ at java.lang.Thread.run(Thread.java:579)
+
+JavaTest Message: Test threw exception: java.lang.Exception: I failed
+JavaTest Message: shutting down test
+
+STATUS:Failed.`main' threw exception: java.lang.Exception: I failed
+
+TEST RESULT: Failed. Execution failed: `main' threw exception: java.lang.Exception: I failed
+--------------------------------------------------
+TEST: Error.java
+TEST RESULT: Error. Parse Exception: Unexpected length for bugid: 31415926,
+--------------------------------------------------
+test results: passed: 1; failed: 1; error: 1
+Report written to /u/iag/jtw/JTreport/report.html
+Results written to /u/iag/jtw/JTwork
+Error: some tests failed or other problems occurred</code></pre>
+<p><a id="V.1"><strong><code>-verbose</code></strong></a> - This
+option produces three lines of output per test: start, end, final
+status.</p>
+<pre><code>ribbit$ jtreg -verbose Pass.java Fail.java Error.java
+runner starting test: Pass.java
+runner finished test: Pass.java
+Passed. Execution successful
+runner starting test: Fail.java
+runner finished test: Fail.java
+Failed. Execution failed: `main' threw exception: java.lang.Exception: I failed
+runner starting test: Error.java
+runner finished test: Error.java
+Error. Parse Exception: Unexpected length for bugid: 31415926,
+test results: passed: 1; failed: 1; error: 1
+Report written to /u/iag/jtw/JTreport/report.html
+Results written to /u/iag/jtw/JTwork
+Error: some tests failed or other problems occurred</code></pre>
+<p><a id="V.2"><strong><code>-verbose:summary</code></strong></a> -
+A single line of output per test: final status and name of
+file.</p>
+<pre>
+<code>ribbit$ jtreg -verbose:summary Pass.java Fail.java Error.java
+Passed: Pass.java
+FAILED: Fail.java
+Error:  Error.java
+test results: passed: 1; failed: 1; error: 1
+Report written to /u/iag/jtw/JTreport/report.html
+Results written to /u/iag/jtw/JTwork
+Error: some tests failed or other problems occurred</code></pre>
+<p><a id="V.3"><strong>No verbose option</strong></a> provides only
+general summary information about all the tests run.</p>
+<pre><code>ribbit$ jtreg Pass.java Fail.java Error.java
+test results: passed: 1; failed: 1; error: 1
+Report written to /u/iag/jtw/JTreport/report.html
+Results written to /u/iag/jtw/JTwork
+Error: some tests failed or other problems occurred</code></pre>
+<p>If there is information that you find lacking in all of these
+options, please contact the developer to determine if it is
+possible to make it available.</p>
+<h3 id="are-there-abbreviations-for-these-long-options">
+<span class="header-section-number">2.3</span> Are there
+abbreviations for these long options?</h3>
+<p>Yes. The <code>-help</code> option to <code>jtreg</code> lists
+the long and abbreviated forms of all options.</p>
+<h3 id="jtr-file"><span class="header-section-number">2.4</span>
+What is a <code>.jtr</code> file?</h3>
+<p>As each test is run, it produces a JavaTest Results
+(<code>.jtr</code>) file which contains information about how the
+test was run, the name of the test, standard output, standard
+input, final status, etc. The name of the file is the basename of
+the file containing the test description followed by the
+<code>.jtr</code> extension. For example, <code>Hello.java</code>
+produces a file called <code>Hello.jtr</code>. These files reside
+in the work directory which contains a directory hierarchy that
+parallels the test source structure.</p>
+<p>Blocks of text within a .jtr file use <code>\</code> to escape
+certain characters (including <code>\</code> itself). This needs to
+be taken into account if you view the contents of the file
+directly. If you use the GUI, or use the jtreg <code>-show</code>
+option, the escapes are automatically taken into acocunt.</p>
+<h3 id="whats-the-difference-between-the-fail-and-error-return-status">
+<span class="header-section-number">2.5</span> What's the
+difference between the "fail" and "error" return status?</h3>
+<p>If a test <em>failed</em>, then the harness was able to actually
+run the test code. The failure could either indicate that the test
+truly failed (i.e. it threw an exception) or that there was some
+problem running the test due to security restrictions, lack of
+resources, etc.</p>
+<p>If <em>error</em> is the final result of a test, then the
+harness was unable to run the test. An error is most commonly
+associated with problems in the test description (typos, missing
+required arguments, etc.).</p>
+<p>In either case the result contains a short message intended to
+provide hints as to where the problem lies.</p>
+<h3 id="if-a-test-fails-id-like-to-put-all-of-my-debugging-information-into-the-final-result.-how-do-i-do-that">
+<span class="header-section-number">2.6</span> If a test fails, I'd
+like to put all of my debugging information into the final result.
+How do I do that?</h3>
+<p>The final result string is composed by the harness. For tests
+that fail because an exception is thrown, the result string will
+contain some header string such as `<code>main' threw
+exception:</code> followed by the exception's type and detail
+message. This detail message should contain sufficient information
+to provide the test user a starting point to investigate the
+unexpected failure. It should <em>not</em> contain full debugging
+information.</p>
+<p>The harness makes no guarantees as to the availability of any
+detail message longer than 128 characters.</p>
+<h3 id="ive-heard-that-the-jtreg-has-a-gui.-how-do-i-access-that">
+<span class="header-section-number">2.7</span> I've heard that the
+<code>jtreg</code> has a GUI. How do I access that?</h3>
+<p>The complete JavaTest harness GUI is available via the
+<code>-gui</code> option to <code>jtreg</code>.</p>
+<h3 id="can-i-test-a-jre"><span class="header-section-number">2.8</span> Can I test a JRE?</h3>
+<p>Yes. Use the <code>-testJDK</code> option to specify the JRE or
+other image to be tested, and use the <code>-compileJDK</code>
+option to specify a matching version of JDK, containing all the
+standard JDK modules and tools.</p>
+<p>For OpenJDK version 9 and later, this relies on the tests being
+correctly marked up with appropriate <code>@modules</code> tags.
+For earlier versions, the appropriate subset of tests will need to
+be determined and specified on the command line. Some tests may
+fail if they are not correctly marked up, or if they are
+inappropriately selected.</p>
+<h3 id="how-do-i-run-jtreg-under-windows"><span class="header-section-number">2.9</span> How do I run <code>jtreg</code>
+under Windows?</h3>
+<p><code>jtreg</code> is normally invoked by a wrapper script,
+written for the Bourne family of shells. On Windows, you can use
+any of the following:</p>
+<ul>
+<li><a href="http://www.mkssoftware.com/">MKS</a>, which uses
+<code>ksh</code>;</li>
+<li><a href="http://www.cygwin.com/">Cygwin</a>, which uses
+<code>ash</code> or <code>bash</code>, depending on which version
+you are using;</li>
+<li><a href="https://docs.microsoft.com/en-us/windows/wsl/about">Windows
+Subsystem for Linux (WSL)</a>, which uses <code>bash</code>.</li>
+</ul>
+<p>You can also start <code>jtreg</code> directly, with a command
+of the form <code>java -jar jtreg.jar</code> <em>options</em>, but
+you will still need to install one of MKS, Cygwin or WSL to be able
+to run shell tests.</p>
+<h3 id="which-should-i-use-mks-cygwin-or-wsl"><span class="header-section-number">2.10</span> Which should I use? MKS, Cygwin
+or WSL?</h3>
+<p><code>jtreg</code> supports all, equally. However, the tests in
+recent versions of OpenJDK test suites assume the use of Cygwin.
+So, when you are writing tests for one of those test suites, you
+should make sure that your test at least works with Cygwin.</p>
+<p>Older versions of OpenJDK assumed the use of MKS to run shell
+tests, with Cygwin being a secondary option. So, when you are
+writing tests for those test suites, you should make sure that your
+test at least works with MKS. If you prefer to use Cygwin, and can
+make your test run with both, so much the better.</p>
+<p>Support for Windows Subsystem for Linux is being added to the
+build system and tests for JDK 13. If jtreg detects Cygwin on the
+execution path, jtreg will use Cygwin to run shell tests;
+otherwise, if jtreg detect WSL on the path, jtreg will use WSL to
+run shell tests. You can override the automatic selection by using
+either the <code>-wsl</code> or <code>-cygwin</code> command-line
+options.</p>
+<h3 id="does-jtreg-provide-command-line-help"><span class="header-section-number">2.11</span> Does jtreg provide command-line
+help?</h3>
+<p>jtreg provides command line help, which lists all the available
+options and any arguments expected by those options. You can get
+help on all the options by using the <code>-help</code> option by
+itself:</p>
+<pre><code>$ jtreg -help</code></pre>
+<p>You may also get command line help for any option or topic by
+giving arguments to the <code>-help</code> option, in which case
+jtreg will just print the sections containing any of the specified
+terms. For example:</p>
+<pre><code>$ jtreg -help -workDir
+$ jtreg -help jdk</code></pre>
+<hr />
+<h2 id="using-jtreg"><span class="header-section-number">3</span>
+Using jtreg</h2>
+<h3 id="how-do-i-specify-which-tests-to-run"><span class="header-section-number">3.1</span> How do I specify which tests to
+run?</h3>
+<p>The most basic way to specify which tests to run is to give one
+or more paths directly on the command line, for directories and
+files containing tests. If a file contains multiple tests, you can
+specify the name of a test within that file by appending
+<code>#id</code><em>N</em> to the file path, where N is the number
+of the test within the file, where <code>0</code> identifies the
+first test.</p>
+<p>If you wish to specify a long list of files, you can put the
+list in a file and specify that file using the
+<code>@</code><em>file</em> option.</p>
+<p>You may also specify the name of a group of tests. Groups are
+defined in the test suite, and define a collection of tests to be
+run.</p>
+<p>You may also refine the set of tests to be run in various
+ways:</p>
+<ul>
+<li>
+<p>You can filter the tests using keywords, using the
+<code>-k</code> option. The option can be given multiple times, and
+are combined conjunctively. Keywords may be defined explicitly in
+tests using <code>@key</code> or may be be defined implicitly from
+other properties of the test, such as whether it is a "shell" test
+or a "manual" test.</p>
+</li>
+<li>
+<p>You can filter the tests by their prior execution status, using
+the <code>-status</code> option. For example, you can select the
+tests which previously failed or had an error using
+<code>-status:fail,error</code></p>
+</li>
+<li>
+<p>You can filter the tests by providing a list of tests which
+should <em>not</em> be run on some or all platforms, perhaps
+because it is known they are likely to fail, using the
+<code>-exclude</code> option.</p>
+</li>
+</ul>
+<p>Note that in addition to the command-line options just listed, a
+test may contain tags such as <code>@requires</code> and
+<code>@modules</code> that determine whether or not a test should
+be run on any particular system.</p>
+<h3 id="how-do-i-specify-the-jdk-to-use"><span class="header-section-number">3.2</span> How do I specify the JDK to
+use?</h3>
+<p>First, it is important to distinguish the JDK you use to run
+jtreg itself from the JDK you use to run the tests. It is generally
+recommended to use a released version of JDK to run jtreg; it must
+be at least version 1.7.</p>
+<p>If you use the standard <code>bin/jtreg</code> script to run
+jtreg, you can specify the version using the <code>JT_JAVA</code>
+environment variable.</p>
+<p>The JDK that jtreg will use to run the tests is normally
+specified with the jtreg <code>-jdk</code> option. This JDK will be
+used to both compile and run the tests. It need not be the same
+version of JDK that is used to run jtreg; it must be at least JDK
+1.5 to run tests in agentVM mode, and can be even older to run
+tests in otherVM mode.</p>
+<h4 id="cross-compilation" class="unnumbered">
+Cross-compilation</h4>
+<p>jtreg provides some (limited) support for using different
+versions of JDK to compile tests and to run them. This is useful
+when testing small version of JDK, such as compact profiles, or
+images built with <code>jlink</code> that do not contain all the
+modules of a standard JDK.</p>
+<p>To use this feature, use the <code>-compileJDK</code> option to
+specify the JDK used to compile the tests (that is, used by the
+<code>@build</code> and <code>@compile</code> tags), and use the
+<code>-testJDK</code> option to specify the JDK used to execute the
+compiled classes (for example, as used by <code>@run
+main</code>).</p>
+<p><em>Note:</em> the <code>@compile</code> tag has a dual use: it
+is used in compiler tests (that is, to test the JDK compiler,
+<code>javac</code>) and less commonly, it is used to compile
+classes for API tests when the simple <code>@build</code> tag is
+not sufficient. It is currently not possible to distinguish these
+uses except by context. It does not make sense to use the
+cross-compilation feature for compiler tests.</p>
+<h3 id="report-work-dirs"><span class="header-section-number">3.3</span> What are the work and report
+directories?</h3>
+<p>The work directory contains any files which are generated during
+a test run. These include compiled (<code>.class</code>) files,
+individual test result (<code>.jtr</code>) files, and any files
+which are saved from the scratch directory, as directed by the
+<code>-retain</code> option. By default, the name of the work
+directory is <code>JTwork</code>. The name may be selected via the
+<code>-workDir</code> option to jtreg.</p>
+<p>The report directory contains all final reports in HTML and/or
+plain text format. By default, the name of the report directory is
+<code>JTreport</code>. The name may be selected via the
+<code>-reportDir</code> option.</p>
+<p>The HTML files in the report directory may contain links to the
+individual test result (<code>.jtr</code>) files in the work
+directory. These links will be relative links if the report and
+work directories share a nearby common ancestor, such as the same
+parent or grandparent. A recommended practice is to create a single
+directory, containing subdirectories simply named
+<code>report</code> and <code>work</code>.</p>
+<p>The plain text files in the report directory include the
+following:</p>
+<ul>
+<li><code>cmdArgs.txt</code>: the jtreg command-line args used when
+the report was written</li>
+<li><code>stats.txt</code>: summary statistics</li>
+<li><code>summary.txt</code>: summary of test results: one test per
+line, suitable for use with <code>grep</code></li>
+<li><code>timeStats.txt</code>: some statistics regarding test
+execution times</li>
+</ul>
+<p>Reports can be disabled with the <code>-noreport</code>
+option.</p>
+<p>It is generally recommended that the work and report directories
+should <em>not</em> be placed anywhere in the test suite itself.
+Since jtreg may scan the entire test suite looking for tests, it is
+unnecessary work for jtreg to have the scan these directories
+looking for the unlikely possibility of tests. This implies a
+corollary that you should not rely on the default settings for
+these directories (<code>./JTwork</code> and
+<code>./JTreport</code>) if you choose to execute jtreg in any
+directory in the test suite.</p>
+<h3 id="scratch-directory"><span class="header-section-number">3.4</span> What is a scratch
+directory?</h3>
+<p>When jtreg executes a test, the current directory for the test
+is set to a <em>scratch directory</em> so that the test can easily
+write any temporary files. jtreg will ensure that the directory is
+always empty when the test begins, so that the test does not have
+to worry about deleting any pre-existing files. These directories
+are placed in the work directory.</p>
+<ul>
+<li>If tests are not being run concurrently, the directory will
+simply be named <code>scratch</code>.</li>
+<li>If tests are being run concurrently, the directories will be
+numbered subdirectories of <code>scratch</code>, such as
+<code>scratch/0</code>, <code>scratch/1</code>, and so on.</li>
+<li>If at any point jtreg cannot clean up files in a scratch
+directory, jtreg will report an error, and create and use a new
+directory, named using a numbered suffix, such as <code>_1</code>,
+<code>_2</code>, and so on.</li>
+</ul>
+<p>As a special case, if all the tests are being run in otherVM
+mode, and if <code>-retain</code> is specified, the scratch
+directory for each test will be the unique test-specific directory
+in the work directory where the test's files will be retained. In
+this situation, if any file that is not to be retained cannot be
+deleted, an error will be reported and the will simply be left in
+place.</p>
+<h3 id="what-is-a-problemlist.txt-file"><span class="header-section-number">3.5</span> What is a ProblemList.txt
+file?</h3>
+<p><code>ProblemList.txt</code> is the name given by convention to
+a list of tests in a test suite that should not be run. Use the
+<code>-exclude</code> option to specify the file to jtreg. The file
+is a simple text file in which blank lines and lines beginning
+<code>#</code> are treated as comments and ignored, and other lines
+are of the form:</p>
+<p><em>test-name</em> <em>list-of-bug-numbers</em>
+<em>list-of-platforms</em> <em>description</em></p>
+<p>The two list items must each be comma-separated lists with no
+embedded whitespace.</p>
+<p>The list of bug numbers should identify one or more bugs that
+justify why the test is in the list and should not be run. It is
+not used by jtreg, but may be used by other tools to warn when a
+test should be removed from the list because the underlying issue
+has been resolved.</p>
+<p>The list of platforms should identify one or more platforms on
+which the test should not be run. Each entry in this list should be
+in one of the following forms:</p>
+<ul>
+<li>
+<p><code>generic-all</code>: if the problem is on all platforms</p>
+</li>
+<li>
+<p><code>generic-</code><em>ARCH</em>: if the problem is specific
+to a platform architecture, where <em>ARCH</em> is one of:
+<code>sparc</code>, <code>sparcv9</code>, <code>x64</code>,
+<code>i586</code>, or the value of the <code>os.arch</code> system
+property</p>
+</li>
+<li>
+<p><em>OSNAME</em><code>-all</code>: if the problem is specific to
+a class of operating systems, where <em>OSNAME</em> is one of:
+<code>linux</code>, <code>macosx</code>, <code>solaris</code>,
+<code>windows</code> or the value of the <code>os.name</code>
+system property</p>
+</li>
+<li>
+<p><em>OSNAME</em><code>-</code><em>ARCH</em>: if the problem is
+specific to an operating system and architecture; for example,
+<code>solaris-x64</code></p>
+</li>
+<li>
+<p><em>OSNAME</em><code>-</code><em>REV</em>: if the problem is
+specific to a version of an operating system, where <em>REV</em> is
+the value of the <code>os.version</code> system property; for
+example, <code>solaris-5.8</code></p>
+</li>
+</ul>
+<h3 id="what-are-the-agentvm-and-othervm-modes"><span class="header-section-number">3.6</span> What are the agentVM and otherVM
+modes?</h3>
+<p>In <em>otherVM</em> mode, jtreg will start a new JVM to perform
+each action (such as <code>@compile</code>, <code>@run main</code>,
+and so on) in a test. When the action has been completed, the JVM
+will exit, relying on the system to cleanup any resources that may
+have been in use by the action.</p>
+<p>In <em>agentVM</em> mode, jtreg will maintain a pool of
+available JVMs, grouped according to the VM options specified when
+the JVM was created. When jtreg needs to execute an action for a
+test, it will obtain a suitable JVM from the pool, or create a new
+one if necessary. jtreg will use that JVM, and when it has been
+completed, it will attempt to restore some well-known global values
+to a standard state (such as the system properties, standard IO
+streams, security manager, etc). If that cleanup is successful,
+depending on the VM options used to create the JVM, jtreg may put
+the JVM in the pool for later reuse. Otherwise, the JVM is allowed
+to exit.</p>
+<h4 id="which-mode-should-i-use" class="unnumbered">Which mode
+should I use?</h4>
+<p>OtherVM mode provides the maximum isolation between the actions
+of tests, at the cost of performance, since a new JVM is started
+for each action.</p>
+<p>In contrast, agentVM mode has higher performance, but it
+requires that any code that runs in an agent VM must ensure that
+the VM can easily be reset to a standard state when the action has
+completed. For any state that cannot be reset by jtreg, such as
+closing any open files, the code must perform its own cleanup, or
+the action should be changed to use otherVM mode.</p>
+<h4 id="how-do-i-specify-which-mode-to-use" class="unnumbered">How
+do I specify which mode to use?</h4>
+<p>The default for all actions is to use the mode specified on the
+command line, using either the <code>-agentvm</code> or
+<code>-othervm</code> options or their shorter-form aliases. If no
+option is specified, <code>-othervm</code> is the default.</p>
+<p><em>Note:</em> the JDK <code>make run-test</code> feature uses
+the <code>-agentvm</code> option, so that agentVM mode is the
+default when using <code>make run-test</code>.</p>
+<p>The default action can be overridden for the tests in a
+directory (and its subdirectories) by using the
+<code>othervm.dirs</code> property in either the
+<code>TEST.ROOT</code> or a <code>TEST.properties</code> file.</p>
+<p>The default action can be overridden for any individual action
+by using the <code>/othervm</code> option for the action. For
+example,</p>
+<pre><code>@compile/othervm MyTest.java
+@run main/othervm -esa MyTest</code></pre>
+<h4 id="how-do-i-find-which-mode-was-used-to-run-an-action" class="unnumbered">How do I find which mode was used to run an
+action?</h4>
+<p>Look for a line beginning "Mode:" in the "messages" section for
+the action in the test's result (<em>.jtr</em>) file. This will
+specify the mode used to execute the action, together with a reason
+if the default mode was not used. For example,</p>
+<pre><code>    ----------messages:(4/152)----------
+    command: main MainOtherVM
+    reason: User specified action: run main/othervm MainOtherVM
+=&gt;  Mode: othervm [/othervm specified]
+    elapsed time (seconds): 0.141</code></pre>
+<h3 id="how-do-i-specify-whether-to-run-tests-concurrently">
+<span class="header-section-number">3.7</span> How do I specify
+whether to run tests concurrently?</h3>
+<p>jtreg provides the ability to run tests in parallel, using
+multiple JVMs running at once. (jtreg never runs multiple tests at
+the same time in any one JVM.)</p>
+<p>Running tests in parallel can significantly speed up the overall
+time to run the selected tests in the test suite on big
+server-class machines, but it is also important not to overload the
+machine, because that can cause spurious test failures, caused by
+resource starvation, leading to test timeouts.</p>
+<p>You can specify the number of tests to run in parallel with the
+<code>-concurrency</code> option. The default value is 1, meaning
+that only one test is being executed at any one time.</p>
+<p>It is difficult to give a hard and fast rule for choosing higher
+values; it depends on the characteristics of the machine being
+used: the number of cores, hyperthreading and the amount of
+available memory. The general rule is to determine a value that is
+high enough to use most of the system resources, without
+overloading the system and pegging the resource utilization meter
+at 100%. It is also advisable to avoid swapping virtual memory as
+much as possible.</p>
+<p>One important consideration is how the specified concurrency can
+affect the number of JVMs that are instantiated:</p>
+<ul>
+<li>
+<p>One JVM is created to run jtreg itself.</p>
+</li>
+<li>
+<p>In otherVM mode, there will typically be one JVM for each test
+that is currently executing.</p>
+</li>
+<li>
+<p>In agentVM mode, it depends on whether there are different VM
+options specified for the VMs used to compile tests and to run
+tests.</p>
+<ul>
+<li>
+<p>If the same VM options are used, there will be one JVM created
+for each test that can run at once.</p>
+</li>
+<li>
+<p>If different VM options are used, there will be two JVMs created
+for each test that can run at once: one to compile the test code,
+and another to execute the test code.</p>
+</li>
+</ul>
+<p>In addition, in agentVM mode, any action that overrides the
+default set of VM options specified on the command line will cause
+an additional JVM to be created, for the duration of that
+action.</p>
+</li>
+</ul>
+<p><em>Note:</em> the preceding rules describe the current behavior
+of jtreg. Alternate behaviors have been proposed, such as a
+fixed-size pool with a least-recently-used (LRU) replacement
+strategy.</p>
+<p>Another important consideration when many JVMs are active on a
+single machine is the amount of memory that may be used by each
+JVM. Use VM options such as <code>-Xmx</code> and
+<code>-XX:MaxRAMPercentage</code> to control the amount of memory
+allocated to each JVM.</p>
+<p>If you run JDK tests using <code>make run-test</code>, suitable
+values for <code>-concurrency</code>, <code>-Xmx</code>
+and<code>-XX:MaxRAMPercentage</code> are determined
+automatically.</p>
+<h4 id="can-i-run-tests-on-multiple-machines" class="unnumbered">
+Can I run tests on multiple machines?</h4>
+<p>jtreg does not natively support running tests on multiple
+machines at once. However, you can partition the test suite into
+sections, and use different instances of jtreg to each run a
+section of the test suite on a different machine. You can then use
+jtreg to generate a single report based of the results of executing
+each of the sections.</p>
+<h3 id="how-do-i-specify-additional-options-for-compiling-and-running-tests">
+<span class="header-section-number">3.8</span> How do I specify
+additional options for compiling and running tests?</h3>
+<p>You can specify additional VM options for all JVMs started by
+jtreg, using the <code>-vmoption</code> and <code>-vmoptions</code>
+options.</p>
+<ul>
+<li><code>-vmoption</code> can be used multiple times and can be
+used to add an option with any value, including one containing
+whitespace characters.</li>
+<li><code>-vmoptions</code> can be used to set a
+whitespace-separated list of options. There is no support for
+quoting any values that may contain whitespace; use
+<code>-vmoption</code> instead.</li>
+</ul>
+<p>In addition, for historical reasons, jtreg supports a number of
+VM options which can be specified directly on the command-line.
+Some of the more useful such options include
+<code>-enableassertions</code> and related options,
+<code>-D</code><em>name</em><code>=</code><em>value</em> to set a
+system property, and <code>-Xmx</code><em>value</em> to limit the
+memory usage.</p>
+<p>You can specify additional VM options for all JVMs used to
+execute tests, using the <code>-javaoption</code> and
+<code>-javaoptions</code> options. These options apply to the JVMs
+used for the <code>@run main</code> and <code>@run applet</code>
+actions. (They do <em>not</em> apply to the JVMs used for the
+<code>@build</code> and <code>@compile</code> actions.)</p>
+<ul>
+<li><code>-javaoption</code> can be used multiple times and can be
+used to add an option with any value, including one containing
+whitespace characters.</li>
+<li><code>-javaoptions</code> can be used to set a
+whitespace-separated list of options. There is no support for
+quoting any values that may contain whitespace; use
+<code>-javaoption</code> instead.</li>
+</ul>
+<p>Although not common to do so, you can specify additional options
+for use whenever javac is invoked. You can do this with the
+<code>-javacoption</code> and <code>-javacoptions</code>
+options.</p>
+<ul>
+<li><code>-javacoption</code> can be used multiple times and can be
+used to add an option with any value, including one containing
+whitespace characters.</li>
+<li><code>-javacoptions</code> can be used to set a
+whitespace-separated list of options. There is no support for
+quoting any values that may contain whitespace; use
+<code>-javacoption</code> instead.</li>
+</ul>
+<p>It is not possible to set VM options just for the JVMs used to
+run javac. In particular, the javac option
+<code>-J</code><em>vm-option</em> is not supported.</p>
+<h3 id="what-do-i-need-to-know-about-test-timeouts"><span class="header-section-number">3.9</span> What do I need to know about
+test timeouts?</h3>
+<p>Because most users do not closely monitor the execution of all
+the tests in a test run, jtreg will monitor the time take for
+various events during its overall execution, to ensure that those
+events do not take longer than anticipated. This includes the
+following:</p>
+<ul>
+<li>
+<p>The time taken to execute each of the actions in a test. The
+default time is 120 seconds (2 minutes) but can be changed using
+the <code>/timeout</code> option for the action. To allow for
+reasonable variations in the speed of execution, it is recommended
+that the typical execution time for an action should be not more
+than half of the default or specified time when the test is
+executed on a reasonable modern system such as may be used by
+developer or in use in a continuous build and test system.</p>
+</li>
+<li>
+<p>The time taken to clean up after each individual action. This
+includes any time that spent waiting for any threads to complete,
+that may may been started by the code in the action, for which the
+maximum time is 10 seconds.</p>
+</li>
+<li>
+<p>The time taken to clean up after a test, when all the actions
+that will be executed have been executed. This includes any time
+that may be spent waiting for any files in the scratch directory to
+be deleted, for which the maximum time is 15 seconds per file on
+Windows and 0 otherwise.</p>
+</li>
+<li>
+<p>The time taken to run a "timeout handler" (see below). The
+default time is 300 seconds (5 minutes), which can be changed by
+using the <code>-timeoutHandlerTimeout</code> option.</p>
+</li>
+</ul>
+<p>To allow for running tests on slow hardware, or when using VM
+options that might adversely affect system performance, the timeout
+intervals can be scaled by using the <code>-timeoutFactor</code>
+option.</p>
+<p>Ideally, any test code that uses timeouts internally should take
+the current timeout factor into account. Java code can access the
+current timeout value using the <code>test.timeout.factor</code>
+system property. Shell tests can access the value using the
+<code>TESTTIMEOUUTFACTOR</code> environment variable.</p>
+<p>It may be convenient to run code in a JVM when an action for a
+test is about to be timed out: such code may perform a thread dump
+or some other detailed analysis of the JVM involved. jtreg allows
+such code to be provided using the <code>-timeoutHandler</code> and
+<code>-timeoutHanderDir</code> options. The default timeout handler
+will try and call <code>jstack</code> to generate stack traces of
+all the Java threads running in the JVM being used for the
+action.</p>
+<p>For all timeout-related options, use <code>jtreg -help
+timeout</code>.</p>
+<h3 id="how-do-i-run-only-tests-which-were-written-for-a-specific-bugid">
+<span class="header-section-number">3.10</span> How do I run only
+tests which were written for a specific bugid?</h3>
+<p>The <code>-bug</code> option to <code>jtreg</code> will run only
+those tests which define the given bugid using the
+<code>@bug</code> tag.</p>
+<h3 id="how-do-i-run-only-tests-not-requiring-manual-intervention">
+<span class="header-section-number">3.11</span> How do I run only
+tests NOT requiring manual intervention?</h3>
+<p>The <code>-automatic</code> option to <code>jtreg</code> will
+ignore all tests which contain the <code>/manual</code> tag
+option.</p>
+<h3 id="how-do-i-run-only-tests-requiring-manual-intervention">
+<span class="header-section-number">3.12</span> How do I run only
+tests requiring manual intervention?</h3>
+<p>The <code>-manual</code> option to <code>jtreg</code> will run
+only those tests which contain the <code>/manual</code> tag
+option.</p>
+<h3 id="how-do-i-view-what-a-test-sends-to-system.out-or-system.err">
+<span class="header-section-number">3.13</span> How do I view what
+a test sends to <code>System.out</code> or
+<code>System.err</code>?</h3>
+<p>You have several alternatives.</p>
+<ol type="1">
+<li>Use the <code>-verbose:all</code> option, or the related
+result-sensitive options <code>-verbose:pass</code>,
+<code>-verbose:fail</code>, <code>-verbose:error</code>.</li>
+<li>Use the JavaTest harness GUI.</li>
+<li>View the test's <code>.jtr</code> file.</li>
+<li>Use the <code>-show</code> option. For example,
+<ul>
+<li><code>jtreg -show:System.out</code> <em>test-name</em></li>
+</ul>
+</li>
+</ol>
+<h3 id="how-do-i-see-what-groups-are-defined-in-my-test-suite">
+<span class="header-section-number">3.14</span> How do I see what
+groups are defined in my test suite?</h3>
+<p>Use the <code>showGroups</code> option. To see all groups,
+specify the name of the test suite; to see the details for a
+specific group, specify the test suite and group.</p>
+<pre><code>$ jtreg -showGroups test/langtools
+$ jtreg -showGroups test/langtools:tier2</code></pre>
+<h3 id="how-do-i-see-what-tests-will-be-executed-without-actually-executing-them">
+<span class="header-section-number">3.15</span> How do I see what
+tests will be executed, without actually executing them?</h3>
+<p>Use the <code>-listtests</code> option.</p>
+<pre>
+<code>$ jtreg -listtests test/langtools/jdk/javadoc/doclet</code></pre>
+<h3 id="can-i-verify-the-correctness-of-test-descriptions-without-actually-running-the-tests">
+<span class="header-section-number">3.16</span> Can I verify the
+correctness of test descriptions without actually running the
+tests?</h3>
+<p>Yes! The <code>-check</code> option to <code>jtreg</code> will
+find test descriptions and will determine whether they are written
+according to the <a href="tag-spec.html">tag specification</a>.
+Tests will <em>not</em> be executed.</p>
+<p>The following sample output illustrates use of this option.</p>
+<pre>
+<code>ribbit$ jtreg -verbose:summary -check Pass.java Fail.java Error.java
+Passed: Pass.java
+Passed: Fail.java
+Error:  Error.java
+test results: passed: 2; error: 1
+Report written to /u/iag/jtw/JTreport/report.html
+Results written to /u/iag/jtw/JTwork
+Error: some tests failed or other problems occurred</code></pre>
+<h3 id="id-like-to-run-my-test-standalone-without-using-jtreg-how-do-i-do-that">
+<span class="header-section-number">3.17</span> I'd like to run my
+test standalone, without using jtreg: how do I do that?</h3>
+<p>All tests are generally designed so that they can be run without
+using jtreg. Tests either have a <code>main</code> method, or can
+be run using a framework like TestNG or JUnit.</p>
+<p>If you have already executed the test, jtreg can provide a
+sample command-line to rerun it; you can find this in the
+<code>rerun</code> section of the test result (<code>.jtr</code>)
+file, or you can use the <code>-show</code> option to display the
+information to the console. For example,</p>
+<ul>
+<li><code>jtreg -show:rerun</code> <em>test-name</em></li>
+</ul>
+<h3 id="can-i-generate-reports-for-tests-that-have-already-been-run">
+<span class="header-section-number">3.18</span> Can I generate
+reports for tests that have already been run?</h3>
+<p>Yes! The <code>-reportOnly</code> option to <code>jtreg</code>
+will generate the standard HTML and plain text reports for tests
+which have been previously executed. Tests will <em>not</em> be
+executed. A <a href="#report-work-dirs">work directory</a>
+containing the results of the executed tests must be provided. The
+default location is <code>./JTwork</code>. An alternate directory
+may be specified using <code>-workDir</code>.</p>
+<h3 id="what-happens-when-jtreg-runs-a-test"><span class="header-section-number">3.19</span> What happens when jtreg runs a
+test?</h3>
+<p>In preparation for running a test, jtreg will ensure that the
+scratch directory to be used for the test is empty. If any files
+are found, jtreg will attempt to delete them; it it cannot, it will
+report an error and not run the test.</p>
+<p><em>Note:</em> it can be difficult for jtreg to identify the
+test that created an undeletable file, which may result in
+less-than-helpful error messages. See <a href="#cleanup-files">below</a> for a way around this problem.</p>
+<p>Once the scratch directory has been prepared, jtreg will execute
+each action (<span class="citation" data-cites="build">@build</span>, <span class="citation" data-cites="compile">@compile</span>, <span class="citation" data-cites="run">@run</span>, and so on) in order. For each action:</p>
+<ul>
+<li>
+<p>If the action is to be executed in otherVM mode, jtreg will
+start a new JVM to perform the action; if the action is to be
+executed in agentVM mode, jtreg will attempt to get a suitable JVM
+from the pool, or create a new JVM if necessary.</p>
+</li>
+<li>For Java tests (<code>@run main</code>, <code>@run
+applet</code>) jtreg will run the action in a newly-created thread
+group. The action is over when one of the following occurs:
+<ul>
+<li>when the <code>main</code> method returns (for <code>@run
+main</code>)</li>
+<li>when the user clicks on one of <code>Pass</code>,
+<code>Fail</code> or <code>Done</code>(for <code>@run
+applet</code>)</li>
+<li>when any thread in the thread group throws an exception, which
+is detected by using an uncaught exception handler for the thread
+group</li>
+</ul>
+</li>
+<li>
+<p>If the action was executed in agentVM mode, jtreg will try and
+reset some well-known global values to the state before the action
+was performed. This includes:</p>
+<ul>
+<li>
+<p>Wait for all threads started in the test's main thread group to
+terminate, calling <code>Thread.interrupt</code> periodically on
+any threads that have not yet terminated.</p>
+</li>
+<li>
+<p>Reset the security manager, if it was changed during the
+action.</p>
+</li>
+<li>
+<p>Reset the set of security providers, if it was changed during
+the action.</p>
+</li>
+<li>
+<p>Reset the system properties, if any were modified during the
+action.</p>
+</li>
+<li>
+<p>Reset the system streams (<code>System.out</code> and
+<code>System.err</code>).</p>
+</li>
+<li>
+<p>Reset the default locale, if it was changed during the
+action.</p>
+</li>
+</ul>
+<p>Note that jtreg cannot close any files or sockets that may have
+been left open; that is the responsibility of the test itself. Any
+other significant global state that is modified during the course
+of an action is also the responsibity of the test to clean up.</p>
+</li>
+<li>
+<p>If any action does not complete successfully, no subsequent
+actions will be executed.</p>
+</li>
+</ul>
+<p><a id="cleanup-files">When jtreg has completed executing the
+actions for a test</a>, it may try and retain or delete and files
+that may have been created in the scratch directory.</p>
+<p>The default behavior is for jtreg to leave any files created by
+the test in the scratch directory after a test completes, but to
+subsequently delete any such files before the next test begins.
+This behavior conveniently means that any files are left in the
+scratch directory for inspection by the user when running a single
+test, such as when developing and running a new test, but the
+downside is that if there are subsequently any problems deleting
+those files, the identity of the test that created them is not
+easily determined.</p>
+<p>The default behavior can be changed by using the
+<code>--retain</code> option, which is used to specify which files,
+if any, are to be retained when a test completes. Any file in the
+scratch directory that is not one of those specified to be retained
+will be deleted.</p>
+<p>If there are any problems deleting any file, it will be reported
+as an error against the test; if the scratch directory is
+associated with a JVM in the agent pool, that JVM will be
+discarded. Another will be created to replace it, using a different
+scratch directory, if the need arises.</p>
+<p>On Windows, a file will not be deleted until any open handles on
+the file have been <a href="https://docs.microsoft.com/en-us/windows/desktop/fileio/closing-and-deleting-files">
+closed</a>. This will mean that files that have accidentally been
+left open by a test cannot be deleted. jtreg will try hard to
+delete files in the scratch directory, and will wait a while in
+case the files go away in a timely manner.</p>
+<hr />
+<h2 id="writing-a-jdk-regression-test"><span class="header-section-number">4</span> Writing a JDK Regression Test</h2>
+<h3 id="how-do-i-write-a-test"><span class="header-section-number">4.1</span> How do I write a test?</h3>
+<p>The simplest test is an ordinary Java program with the usual
+static main method. If the test fails, it should throw an
+exception; if it succeeds, it should return normally.</p>
+<p>Here's an example:</p>
+<div class="sourceCode">
+<pre class="sourceCode java"><code class="sourceCode java"><span class="co">/* @test</span>
+<span class="co">   @bug 1234567</span>
+<span class="co">   @summary Make sure that 1 != 0</span>
+<span class="co">*/</span>
+
+<span class="kw">public</span> <span class="kw">class</span> OneZero {
+
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) <span class="kw">throws</span> <span class="bu">Exception</span> {
+        <span class="kw">if</span> (<span class="dv">1</span> == <span class="dv">0</span>) {
+            <span class="kw">throw</span> <span class="kw">new</span> <span class="bu">Exception</span>(<span class="st">"1 == 0"</span>);
+        }
+    }
+
+}</code></pre></div>
+<p>This test could be run on its own with the command</p>
+<pre><code>$JDK/bin/java OneZero</code></pre>
+<p>where $JDK is the location of the JDK build that you're
+testing.</p>
+<h3 id="what-does-the-test-tag-mean"><span class="header-section-number">4.2</span> What does the <code>@test</code>
+tag mean?</h3>
+<p>The <code>@test</code> tag identifies a source file that defines
+a test. the harness will automatically run any <code>.java</code>,
+<code>.sh</code>, and <code>.html</code> file containing an
+<code>@test</code> tag within the appropriate comment; it ignores
+any file not containing such a tag or not utilizing one of the
+expected extensions.</p>
+<p>If necessary the harness will compile the source file, if the
+class files are older than the corresponding source files. Other
+files which the test depends on must be specified with the
+<code>@run build</code> action.</p>
+<p>The arguments to the <code>@test</code> tag are ignored by the
+harness. For identification it may be useful to put information
+such as SCCS ID keywords after the <code>@test</code> tag.</p>
+<p>While not part of the tag specification, some tests use the
+string "<code>/nodynamiccopyright</code>" after <code>@test</code>
+to indicate that that the file should not be subject to automated
+copyright processing that might affect the operation of the test,
+for example, by affecting the line numbers of the test source
+code.</p>
+<h3 id="what-do-the-other-tags-mean"><span class="header-section-number">4.3</span> What do the other tags
+mean?</h3>
+<p>The other tags shown above are optional.</p>
+<p>The <code>@bug</code> tag should be followed by one or more bug
+numbers, separated by spaces. The bug number is useful in
+diagnosing test failures. It's OK to write tests that don't have
+bug numbers, but if you're writing a test for a specific bug please
+include its number in an <code>@bug</code> tag.</p>
+<p>The <code>@summary</code> tag describes the condition that is
+checked by the test. It is especially useful for non-regression
+tests, which by definition don't have bug numbers, but even if
+there's a bug number it's helpful to include a summary. Note that a
+test summary is generally not the same thing as a Bugtraq synopsis,
+since the latter describes the bug rather than the condition that
+the bug violates.</p>
+<h3 id="how-are-tag-arguments-delimited"><span class="header-section-number">4.4</span> How are tag arguments
+delimited?</h3>
+<p>The arguments of a tag are the words between that tag and the
+next tag, if there is one, or the end of the comment enclosing the
+tags.</p>
+<h3 id="can-i-put-comments-in-a-test-description"><span class="header-section-number">4.5</span> Can I put comments in a test
+description?</h3>
+<p>Yes, use the <code>@comment</code> tag. It can be followed with
+any text, excluding <code>@</code> characters, up to the next
+<code>@</code> or the end of the comment containing the test
+description.</p>
+<h3 id="if-a-test-fails-do-i-have-to-throw-my-own-exception">
+<span class="header-section-number">4.6</span> If a test fails, do
+I have to throw my own exception?</h3>
+<p>No. In cases like the above example in which you must check a
+condition in order to decide whether the test is to pass or fail,
+you have no choice but to construct an exception.
+<code>RuntimeException</code> is a convenient choice since it's
+unchecked, so you don't have to sprinkle your code with throws
+clauses.</p>
+<p>On the other hand, if the test would naturally cause an
+exception to be thrown when it fails, it suffices to let that
+exception be propagated up through the main method. If the
+exception you expect to be thrown in the failure case is a checked
+exception, then you'll need to provide the appropriate throws
+clauses in your code.</p>
+<p>In general, the advantage of throwing your own exception is that
+often you can provide better diagnostics.</p>
+<p>It is <em>strongly</em> recommended that you not catch general
+exceptions such as <code>Throwable</code>, <code>Exception</code>,
+or <code>Error</code>. Doing so can be potentially <a href="#write-catch-exceptions">problematic</a>.</p>
+<h3 id="should-a-test-call-the-system.exit-method"><span class="header-section-number">4.7</span> Should a test call the
+<code>System.exit</code> method?</h3>
+<p>No. Depending on how you run the tests, you may get a security
+exception from the harness.</p>
+<h3 id="can-a-test-write-to-system.out-and-system.err"><span class="header-section-number">4.8</span> Can a test write to
+<code>System.out</code> and <code>System.err</code>?</h3>
+<p>Yes. The harness will capture everything sent to both
+streams.</p>
+<h3 id="can-a-test-check-the-output-of-system.out-and-system.err">
+<span class="header-section-number">4.9</span> Can a test check the
+output of <code>System.out</code> and <code>System.err</code>?</h3>
+<p>Yes, compiler tests using the <code>@compile</code> tag can use
+the <code>/ref=</code><em>file</em> option. Such tests are
+generally not recommended, since the output can be sensitive to the
+locale in which the are run, and may contain other details which
+may be hard to maintain, such as line numbers.</p>
+<p>While not part of the tag specification, some tests use the
+string "<code>/nodynamiccopyright/</code>" after the
+<code>@test</code> tag to indicate that that the file should not be
+subject to automated copyright processing that might affect the
+operation of the test.</p>
+<h3 id="my-test-opens-files-and-sockets-do-i-have-to-close-them-before-the-test-exits">
+<span class="header-section-number">4.10</span> My test opens files
+and sockets: do I have to close them before the test exits?</h3>
+<p>If you want to be able to run the action in agentVM mode, then
+any open files and sockets must be closed before the action is
+completed: jtreg cannot do it for you.</p>
+<p>If the action will always be run in otherVM mode, then it may be
+good practice to close any open files and sockets, but the
+operating system will probably close the open items for you if you
+do not.</p>
+<h3 id="my-test-changes-observable-system-state-like-system-properties-or-the-default-locale-do-i-have-to-reset-it">
+<span class="header-section-number">4.11</span> My test changes
+observable system state like system properties or the default
+locale: do I have to reset it?</h3>
+<p>If you want to be able to run the action in agentVM mode, then
+you may need to reset the value before the action is completed.
+When an action is run in agentVM mode, jtreg will try and reset
+some commonly used values to their their state at the beginning of
+the action. If you modify any other values, you must either reset
+them in the test code before the action exits, or ensure the use of
+otherVM mode for the action.</p>
+<p>If the action will always be run in otherVM mode, there is no
+need to reset any system state that was modified during the
+action.</p>
+<h3 id="my-test-creates-and-uses-additional-threads-do-i-have-to-clean-them-up">
+<span class="header-section-number">4.12</span> My test creates and
+uses additional threads: do I have to clean them up?</h3>
+<p>If you want to be able to run the action in agentVM mode, then
+you either must ensure that any threads have been terminated, or
+that they can be terminated by being interrupted. jtreg will run
+the main test code in a new thread in a new thread group. When that
+thread exits, or when any thread in the thread group throws an
+exception, jtreg will try to ensure that all threads in that thread
+group have exited. It will periodically interrupt those threads for
+a short period, to give them a chance to terminate themselves, and
+will report an error if they do not terminate in a timely fashion.
+An action should clean up for itself any threads that will not
+respond to being interrupted, or which are created in some other
+thread group.</p>
+<p>If the action will always be run in othervm mode, there is no
+need to help ensure that all threads have terminated.</p>
+<h3 id="combo-test"><span class="header-section-number">4.13</span>
+What is a combo test?</h3>
+<p>"Combo test" is an informal term used by OpenJDK developers to
+describe a style of writing a test so that it executes many test
+cases within the test, often by iterating over all combinations of
+a set of parameters. Such a technique can lead to a combinatorial
+explosion in the number of test cases, yielding hundreds or even
+thousands of test cases; when writing a test like this, it is
+important to consider <a href="#how-much-time">how much time</a> it
+will take to execute and <a href="#how-much-output">how much
+output</a> it may generate.</p>
+<h3 id="how-much-output"><span class="header-section-number">4.14</span> How much output can a test
+generate?</h3>
+<p>While a test can generate as much output as it wants, jtreg
+limits the amount that is saved of output written to any stream
+used by an action. This includes the standard output and error
+streams, and the "direct" output written by the compiler (javac)
+when run in agentVM mode.</p>
+<p>The default for the maximum amount that is saved is 100K
+characters. If a test exceeds this limit, the first recourse should
+be to try and reduce the amount of output. Ask yourself whether all
+the information being written by the test is actually useful and if
+anyone is likely to read it all? Writing an unnecessary amount of
+detail affects everyone who runs the test and stores the output for
+any length of time.</p>
+<p>Consider the following possibilities, to reduce the amount
+written by a test:</p>
+<ul>
+<li>In a <a href="#combo-test">combo test</a>, reduce the amount of
+information written by test cases that pass, and just generate more
+details when a test case fails.</li>
+<li>Make the amount of output be <a href="#configurable">configurable</a>, so that it can be less verbose by
+default and more verbose when needed, such as when a developer
+might be developing or debugging the test.</li>
+</ul>
+<p>If you really need to have jtreg save more of the output, you
+can override the limit in two ways:</p>
+<ul>
+<li>
+<p>To override the limit for a single test run, set the jtreg
+system property <code>javatest.maxOutputSize</code> to an integer
+giving the new size. If you are running jtreg using the normal
+script, remember to use <code>-J</code>, to set the system property
+in the jtreg JVM, and not the system property in a test JVM.</p>
+<pre>
+<code>jtreg -J-Djavatest.maxOutputSize=250000 ...</code></pre></li>
+<li>
+<p>To override the limit test runs for some or all tests in a test
+suite, set the property <code>maxOutputSize</code> in either the
+top-level <code>TEST.ROOT</code> file (to affect all tests) or in a
+<code>TEST.properties</code> file (to affect tests in that
+directory and its subdirectories.)</p>
+</li>
+</ul>
+<p>If the limit is exceeded, jtreg will discard the middle of the
+output, so that it can save the beginning of the output, which
+often contains configuration details written by the action or the
+top of a long stacktrace, and can save the end of the output, which
+contains the output that was written most recently by the
+action.</p>
+<p>The discarded output will be replaced with a message like the
+following:</p>
+<pre><code>    Output overflow:
+    JT Harness has limited the test output to the text
+    at the beginning and the end, so that you can see how the
+    test began, and how it completed.
+    If you need to see more of the output from the test,
+    set the system property javatest.maxOutputSize to a higher
+    value. The current value is 100000.</code></pre>
+<h3 id="how-much-time"><span class="header-section-number">4.15</span> How much time can a test
+take?</h3>
+<p>jtreg limits the amount of time that may be used to execute each
+action of the test. The default limit is 120 seconds (2 minutes).
+If a test exceeds this limit, the first recourse should be to try
+and reduce the time that is being used. If a test takes an
+excessive amount of time to run, that affects everyone who runs the
+test.</p>
+<ul>
+<li>Try to avoid executing code in a subprocess when it could be
+done equivalently and faster within the same JVM, perhaps using
+library code. A good example of that is compiling code on the fly:
+it is much faster to execute javac via the
+<code>java.util.spi.ToolProvider</code> API or Java Compiler API
+than it is to run <code>javac</code> in a separate process.</li>
+<li>In a <a href="#combo-test">combo test</a>, consider reducing
+the number of test cases that are executed.</li>
+<li>Make the amount of execution be <a href="#configurable">configurable</a>, so that it executes less by
+default and more when needed, such as when a developer might be
+developing or debugging the test.</li>
+</ul>
+<p>If you really need to increase the time allowed for an action,
+use the <code>/timeout</code> option for the action.</p>
+<p>If you want to scale all the timeouts in a test run, use the
+<code>-timeoutFactor</code> command-line option.</p>
+<h3 id="configurable"><span class="header-section-number">4.16</span> How can I make a test
+configurable?</h3>
+<p>It can sometimes be useful to make a test behave differently
+when so required. One way to do so is to make the test code read
+the value of a system property or environment variable. You can set
+a system property on the jtreg command-line (for all tests) with
+<code>-D</code> or any of the ways to set a VM option. If you want
+to use an environment variable, you must declare that using the
+jtreg <code>-e</code> option. (If you don't, jtreg will not pass
+the environment variable into any JVMs that it starts.)</p>
+<h3 id="what-should-i-do-with-a-test-once-ive-written-it">
+<span class="header-section-number">4.17</span> What should I do
+with a test once I've written it?</h3>
+<p><a href="#do-i-need-to-test-a-test">Test it</a> and then when
+you're satisfied, check it into the test directory in your
+repository.</p>
+<p>Yes, it really is that simple.</p>
+<h3 id="do-i-need-to-test-a-test"><span class="header-section-number">4.18</span> Do I need to test a test?</h3>
+<p>Yes! While there are procedures in place to routinely run tests
+to detect any issues in the product, that presumes that each test
+will work as expected. It is not practical to routinely test that
+every test is working as intended, because to do so would require a
+malfunctioning product that will help exercise the code pathways
+that are typically not executed. It is therefore especially
+important to ensure the test functions correctly (meaning, it will
+actually detect the errors it is designed to catch) at the time it
+is being written and reviewed.</p>
+<h3 id="how-do-i-test-a-test"><span class="header-section-number">4.19</span> How do I test a test?</h3>
+<p>There is no "one size fits all" solution, but here are some
+guidelines.</p>
+<p>If a test is a regression test, meaning it is designed to test
+the fix for a bug that was found in the product, then check the
+following:</p>
+<ul>
+<li>Does the test detect the failure on a recent version of the
+product that does <em>not</em> include the fix?</li>
+<li>Does the test demonstrate the absence of the failure on a
+version of the product that <em>does</em> include the fix?</li>
+</ul>
+<p>If the test is a unit test or system test for new functionality
+that has been added to the system, there is no prior version of the
+system that would demonstrate any errors, but you can try
+temporarily injecting some errors into the product code, in order
+to verify that the test will correctly detect those errors. One way
+to indirectly achieve this goal is to develop and use the test
+while developing the new feature (so-called <a href="https://en.wikipedia.org/wiki/Test-driven_development">test-driven
+development</a>), instead of leaving it until afterwards.</p>
+<p>For any type of test, ask yourself if the test is designed to
+cover all the lines of code that were affected in the corresponding
+change to the product. If code was changed, but is not exercised by
+any existing test or the new test, then that code is effectively
+untested. There may be minor exceptions to this rule for code that
+will really difficult to exercise, such as code to detect "out of
+memory" or "disk full" conditions, but the general principle holds.
+If you have access to code coverage tools, check that all of the
+modified lines of code in the product have been executed: if code
+has not been executed, it has definitely not been tested.</p>
+<p>For some types of test, it may be possible to build in some
+amount of self-testing. For example, if a test is designed to
+exercise a number of different behaviors in the product, where
+those behaviors can be externally monitored, ensure that all those
+behaviors were actually exercised, and report an error if any were
+not.</p>
+<h3 id="where-are-the-openjdk-tests"><span class="header-section-number">4.20</span> Where are the OpenJDK
+tests?</h3>
+<p>Within a recent version of an OpenJDK repo, the
+<code>test/</code> directory contains three separate test
+suites:</p>
+<ul>
+<li><code>test/hotspot/jtreg</code>: tests for the HotSpot JVM</li>
+<li><code>test/jdk</code>: tests for the main JDK API and related
+tools</li>
+<li><code>test/langtools</code>: tests for the javac, javadoc,
+javap and jshell tools</li>
+</ul>
+<p>In older versions of OpenJDK, these directories were in
+<code>test</code> subdirectories of the <code>hotspot</code>,
+<code>jdk</code> and <code>langtools</code> repositories.</p>
+<h3 id="why-not-have-separate-test-workspaces-that-only-contain-tests">
+<span class="header-section-number">4.21</span> Why not have
+separate test workspaces that only contain tests?</h3>
+<p>Checking a test into the workspace against which it's first
+written helps prevent spurious test failures. In the case of a
+regression test, this process ensures that a regression test will
+migrate upward in the integration hierarchy along with the fix for
+the corresponding bug. If tests were managed separately from fixes
+then it would be difficult to distinguish between a true test
+failure and a failure due to version skew because the fix hadn't
+caught up with the test.</p>
+<h3 id="how-should-i-name-a-test"><span class="header-section-number">4.22</span> How should I name a test?</h3>
+<p>In general, try to give tests names that are as specific and
+descriptive as possible. If a test is checking the behavior of one
+or a few methods, its name should include the names of those
+methods. For example, a test written for a bug in the skip method
+of FileInputStream could be placed in
+<code>test/jdk/java/io/FileInputStream/Skip.java</code>. A test
+written for a bug that involves both the skip and available methods
+could be named <code>SkipAvailable.java</code>.</p>
+<p>Tests that involve many methods require a little more creativity
+in naming, since it would be unwieldy to include the names of all
+the methods. Just choose a descriptive word or short phrase. For
+example, a test that checks the general behavior of a
+FileInputStream after end-of-file has been reached could be named
+<code>AfterEOF.java</code>.</p>
+<p>It can be helpful to add more information to the test name to
+help further describe the test. For example, a test that checks the
+skip method's behavior when passed a negative count could be named
+<code>SkipNegative.java</code>.</p>
+<p>You might find that the name you want to give your test has
+already been taken. In this case either find a different name or,
+if you're just not in a creative mood, append an underscore and a
+digit to an existing name. Thus if there were already a
+<code>Skip.java</code> file, a new test for the skip method could
+be named <code>Skip_1.java</code>.</p>
+<p>Some tests require more than one source file, or may need access
+to data files. In this case it's best to create a subdirectory in
+order to keep related files together. The subdirectory should be
+given a descriptive mixed-case name that begins with a lowercase
+letter. For example, a FileInputStream test that needs an input
+file as well as its Java source file in order to test the
+interaction of the read and available methods could be placed in
+the subdirectory
+<code>test/jdk/java/io/FileInputStream/readAvailable</code>.</p>
+<p>Some tests involve more than one class in a package, in which
+case a new subdirectory in the relevant package directory should be
+created. For example, a set of general tests that exercise the
+character streams in the <code>java.io</code> package could be
+placed in the <code>test/jdk/java/io/charStreams</code>
+directory.</p>
+<h3 id="what-about-tests-that-dont-fit-into-the-api-structure">
+<span class="header-section-number">4.23</span> What about tests
+that don't fit into the API structure?</h3>
+<p>In addition to a <code>java</code> directory for API-related
+tests, the test directory contains a <code>javax</code> directory,
+<code>vm</code> directory, a <code>tools</code> directory, and
+<code>com</code> and <code>sun</code> directories.</p>
+<h3 id="can-tests-in-different-directories-have-the-same-name">
+<span class="header-section-number">4.24</span> Can tests in
+different directories have the same name?</h3>
+<p>Yes. When a test is run by the harness, a special classloader is
+used so that the classpath is effectively set to include just the
+directory containing the test, plus the standard system classes.
+Thus name clashes between tests in different directories are not a
+problem.</p>
+<p>An alternative approach would be to associate a different
+package with each test directory. This is done, for example, in the
+JCK test suite. The difficulty with this idea is that in order to
+debug a test (under dbx or workshop or jdb or whatever) you must
+set up your classpath in just the right way. This makes it
+difficult to diagnose bugs that are reported against specific
+tests.</p>
+<h3 id="how-do-i-write-a-test-for-an-awt-bug-or-a-swing-bug">
+<span class="header-section-number">4.25</span> How do I write a
+test for an AWT bug or a Swing bug?</h3>
+<p>Bugs in the graphical facilities of the JDK generally require
+manual interaction with applets. Applet tests are written in much
+the same way as the simple <code>main</code> tests described above.
+The primary differences are that a second "@" tag is given to
+indicate that the test is an applet test, and an appropriate HTML
+file is needed. For example, an AWT test named
+<code>Foo.java</code> would have the form:</p>
+<div class="sourceCode">
+<pre class="sourceCode java"><code class="sourceCode java"><span class="co">/* @test</span>
+<span class="co"> * @bug 9876543</span>
+<span class="co"> * @run applet/manual Foo.html</span>
+<span class="co"> */</span>
+
+<span class="kw">public</span> <span class="kw">class</span> Foo <span class="kw">extends</span> java.<span class="fu">awt</span>.<span class="fu">Applet</span> { <span class="kw">... </span>}</code></pre></div>
+<p>or</p>
+<div class="sourceCode">
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="kw">class</span> Foo <span class="kw">extends</span> javax.<span class="fu">swing</span>.<span class="fu">JApplet</span> { <span class="kw">... </span>}</code></pre></div>
+<p>The <code>@run</code> tag tells the harness how to run the test.
+The first argument is the run type, <code>applet</code>, followed
+by an option, <code>/manual</code>, that flags this test as a
+manual test requiring user interaction. The remaining arguments to
+the <code>@run</code> tag are passed to the program in a manner
+appropriate to the run type. In this case, the test will be run
+just as if the <code>appletviewer</code> had been invoked on
+<code>Foo.html</code>. Thus <code>Foo.html</code> must contain, at
+least, an HTML <code>applet</code> tag with any necessary
+parameters.</p>
+<h3 id="how-does-the-user-know-what-to-do-for-a-manual-applet-test">
+<span class="header-section-number">4.26</span> How does the user
+know what to do for a manual applet test?</h3>
+<p>When the harness runs a manual applet test, it will display the
+contents of the HTML file that defines the applet. Include
+instructions in the HTML file so that the person running the test
+can figure out what to do if any interaction is required.</p>
+<h3 id="exactly-what-does-themanual-option-mean"><span class="header-section-number">4.27</span> Exactly what does
+the<code>/manual</code> option mean?</h3>
+<p>The <code>/manual</code> option indicates to the harness that
+this is a manual test. This allows the harness to distinguish
+manual from automatic tests, which is important since the latter
+can be run without user interaction.</p>
+<p>There are actually three kinds of applet manual tests:
+Self-contained tests, <code>yesno</code> tests, and
+<code>done</code> tests.</p>
+<ul>
+<li>
+<p>A self-contained manual test handles all user interaction
+itself. If the test fails, whether this is determined by the user
+or by the applet, then the applet must throw an exception.
+Self-contained tests specify <code>applet/manual</code> for the
+first <code>@run</code> argument.</p>
+</li>
+<li>
+<p>A <code>yesno</code> test requests the harness to ask the user
+whether the test passes or fails. To do this, the harness will put
+up <code>pass</code> and <code>fail</code> buttons, and it's up to
+the user to inspect the screen and click one of the buttons. The
+harness will take care of shutting down the applet. The test will
+also fail if the applet throws an exception. <code>Yesno</code>
+tests specify <code>applet/manual=yesno</code> for the first
+<code>@run</code> argument.</p>
+</li>
+<li>
+<p>A <code>done</code> test requests the harness to put up a
+<code>done</code> button. After the user has completed whatever
+actions are required by the test, the user clicks <code>done</code>
+and the harness shuts down the applet. The program must itself
+determine whether the test is to pass or fail, and throw an
+exception in the latter case. <code>Done</code> tests specify
+<code>applet/manual=done</code> for the first <code>@run</code>
+argument.</p>
+</li>
+</ul>
+<p><code>main</code> and <code>shell</code> may also specify the
+<code>manual</code> option using <code>main/manual</code> and
+<code>shell/manual</code> respectively. These tests must be
+completely self-contained.</p>
+<h3 id="how-does-a-manual-applet-test-indicate-success-or-failure">
+<span class="header-section-number">4.28</span> How does a manual
+applet test indicate success or failure?</h3>
+<p>Just as with <code>main</code> tests, an applet may throw an
+exception at any time to indicate test failure. A <code>done</code>
+test applet, for example, can check for failure in the
+<code>java.applet.Applet.destroy</code> method. If an applet
+doesn't throw an exception, and if, in the case of a
+<code>yesno</code> test, the user clicks <code>pass</code>, then
+the test is considered to have passed.</p>
+<p>Be very careful about where failure is checked. The AWT event
+thread does not propagate exceptions!</p>
+<h3 id="can-i-and-should-i-write-shell-tests"><span class="header-section-number">4.29</span> Can I (and should I) write
+shell tests?</h3>
+<p>Yes (and no). While jtreg supports the use of shell tests (that
+is, tests using <code>@run shell</code> actions), and while it was
+convenient at one time to be able to write such tests, the use of
+such tests is now deprecated. In practice, it is difficult to write
+tests that behave correctly and as intended, under all conditions
+on all platforms, especially when the item being tested may not be
+behaving as expected. There is also some amount of a performance
+penalty, since many of the operations that may be performed by a
+shell script can be performed faster, by relatively simple API
+calls, in a Java program. Therefore, it is now recommended to write
+Java code to perform the same work that might otherwise be done
+with a shell script, perhaps using JDK API or shared test library
+code to perform commonly-used operations such as file manipulation,
+executing commands in sub-processes when necessary, and analyzing
+the results of those commands.</p>
+<p>jtreg provides a variant of <code>@run main</code> that can be
+useful in such situations: <code>@run driver</code>. This is the
+same as <code>@run main</code> with the exception that any VM
+options specified on the command line will not be used when running
+the specified class. Such code can start processes using the
+standard <code>java.util.ProcessBuilder</code> API. To build up the
+command line to be invoked, the code may want to reference details
+about the test (such as the class path) or values that were given
+on the jtreg command line (such as the JDK being tested, or the set
+of any VM options that were specified.) All these values are
+available in system properties, most of which have names beginning
+<code>test.</code>; the complete list is given in the <a href="tag-spec.html#testvars">tag specification</a>.</p>
+<p>If you still want to write a shell test, and if you wish to
+support the use of Windows Subsystem for Linux (WSL) to run such
+tests on Windows, you should use a suffix of <code>.exe</code> when
+specifying the path in the shell script for a JDK tool that was
+built to be run directly on Windows. To help with that,
+<code>jtreg</code> will set an environment variable
+<code>EXE_SUFFIX</code> that can be used when constructing the path
+for a tool. For example:</p>
+<pre>
+<code>javac="${TESTJAVA+${TESTJAVA}/bin/}javac${EXE_SUFFIX}"</code></pre>
+<p>For more information on writing shell tests, see <a href="shellTests.html">Shell Tests in jtreg</a>.</p>
+<h3 id="when-should-i-update-the-bug-entry-in-a-test-description">
+<span class="header-section-number">4.30</span> When should I
+update the <code>@bug</code> entry in a test description?</h3>
+<p>When a new test is added to a test suite, it is generally
+considered good practice to add an <code>@bug</code> entry that
+identifies one or more bug numbers for the issue that the new test
+is addressing.</p>
+<p>Sometimes, when fixing a bug, it may be more appropriate to
+modify an existing test than to write a completely new one. In this
+case, it is appropriate to add a bug number to the existing
+<code>@bug</code> entry, to indicate that this test is both a test
+for the original issue and for one or more additional issues.</p>
+<p>If you're modifying an existing test, check whether the
+<code>@summary</code> entry should be updated as well: if it is too
+specific to the original reason for the test, you should generalize
+the summary.</p>
+<p>It can also happen that when you're fixing a bug, you may break
+some existing, unrelated tests, such that you need to update those
+tests to work again. In this case, you should probably <em>not</em>
+update the <code>@bug</code> entry.</p>
+<p>These guidelines can be summarized as follows:</p>
+<ul>
+<li>If you're updating a test to be a regression test for a bug
+fix, then you should probably update the <code>@bug</code>
+entry.</li>
+<li>If you're updating a test because it was affected by a bug fix,
+but the test is not otherwise a regression test for the bug fix,
+then you should probably not update the <code>@bug</code>
+entry.</li>
+</ul>
+<h3 id="when-should-i-use-the-intermittent-or-randomness-keyword-in-a-test">
+<span class="header-section-number">4.31</span> When should I use
+the <code>intermittent</code> or <code>randomness</code> keyword in
+a test?"</h3>
+<p>The <code>intermittent</code> keyword should be used to mark
+tests that are known to fail intermittently.</p>
+<p>Extra care should be taken to handle test failures of such
+tests.</p>
+<p>For more details, see these email threads: <a href="//mail.openjdk.java.net/pipermail/jdk9-dev/2015-March/001991.html">
+March 2015</a>, <a href="//mail.openjdk.java.net/pipermail/jdk9-dev/2015-April/002164.html">
+April 2015</a>.</p>
+<h3 id="when-should-i-use-the-randomnness-keyword-in-a-test">
+<span class="header-section-number">4.32</span> When should I use
+the <code>randomnness</code> keyword in a test?</h3>
+<p>The <code>randomness</code> keyword should be used to mark tests
+that use randomness such that the test cases will differ from run
+to run. (A test using a fixed random seed would not count as
+"randomness" by this definition.)</p>
+<p>Extra care should be taken to handle test failures of tests
+using random behavior.</p>
+<p>For more details, see these email threads: <a href="//mail.openjdk.java.net/pipermail/jdk9-dev/2015-March/001991.html">
+March 2015</a>, <a href="//mail.openjdk.java.net/pipermail/jdk9-dev/2015-April/002164.html">
+April 2015</a>.</p>
+<h3 id="what-if-a-test-does-not-apply-in-a-given-situation">
+<span class="header-section-number">4.33</span> What if a test does
+not apply in a given situation?</h3>
+<p>Sometimes a test should not be run in a particular situation.
+For example, a test may require the presence of specific modules in
+the JDK being tested, in order to function correctly; or, a test
+may specifically verify a behavior on one kind of platform (such as
+Windows), and not be relevant on other kinds of platform (such as
+Linux or macOS).</p>
+<p>A test may specify the modules that need to be present in the
+JDK being tested using the <code>@modules</code> tag. A test may
+specify more general conditions to determine whether it should be
+run using the <code>@requires</code> tag, which can test the values
+of properties (such as system properties) that are determined in a
+JVM running the JDK being tested.</p>
+<p>If jtreg determines that a test fails to meet the conditions
+expressed in <code>@modules</code> and <code>@requires</code>, no
+additional processing of the test will occur: in particular, none
+of the actions will be executed.</p>
+<p>While <code>@modules</code> and <code>@requires</code> will
+cover many cases, there may be cases where the determination of
+whether the test is applicable needs to be determined by the test
+itself. For example, a test may want to check the presence of a
+shared library containing compiled native code, and to skip the
+main body of the test if the library is not available. In such
+cases, a test may throw an exception named
+<code>jtreg.SkippedException</code>. (To avoid any dependency on
+any jtreg library, so that the code can be run standalone, the
+exception should be defined in test library code.) This exception
+will be treated specially: unlike for any other exception, the test
+will be deemed to have passed, but the reason will be set to a
+message saying that the test was skipped instead of executing
+normally.</p>
+<h3 id="multiple-tests"><span class="header-section-number">4.34</span> Can I put more than one test in
+a file?</h3>
+<p>Yes. You may place one or more separate test descriptions near
+the head of a test source file. Each test description should be in
+its own comment block, and begin with <code>@test</code>. By
+convention, the comment blocks should appear after any leading
+legal header, and before any executable code in the file. The
+feature is supported in normal Java tests, in shell tests, and in
+legacy applet tests. (It is not supported in JUnit or TestNG tests,
+which do not use explicit test descriptions.)</p>
+<p>The test descriptions are independent of each other, and may be
+used to run a test class with different arguments, such as in the
+following examples:</p>
+Example: MyJavaTest.java
+<pre style="margin-left:0.25in; border:1px solid grey; padding: 5px; width: 50%">
+
+/* Copyright (C) A.N.Other. */
+
+/* @test
+ * @run main MyJavaTest 1 2 3
+ */
+
+/* @test
+ * @run main MyJavaTest a b c
+ */
+
+public class MyJavaTest {
+    public static void main(String... args) {
+        System.out.println(java.util.Arrays.toString(args));
+    }
+}
+</pre>
+Example: MyShellTest.sh
+<pre style="margin-left:0.25in; border:1px solid grey; padding: 5px; width: 50%">
+
+#!/bin/sh
+# Copyright (C) A.N.Other
+
+# @test
+# @shell MyShellTest 1 2 3
+
+# @test
+# @shell MyShellTest a b c
+
+echo $*
+</pre>
+<h4 id="how-are-the-tests-named" class="unnumbered">How are the
+tests named?</h4>
+<p>If there is only one test description in a file, the test is
+named according to the path of the file relative to the top level
+directory of the test suite, that contains the
+<code>TEST.ROOT</code> file.</p>
+<p>If there is more than one test description in a file, each one
+is named by appending a URL-style "fragment identifier" to the path
+of the file relative to the top level directory of the test suite.
+Each fragment identifier is of the form <code>id</code><em>N</em>,
+starting from <em>N</em> equal to 0.</p>
+<p>Examples:</p>
+<pre><code>MyJavaTest.java#id0
+MyJavaTest.java#id1</code></pre>
+<h4 id="how-are-the-test-results-organized" class="unnumbered">How
+are the test results organized?</h4>
+<p>The fragment identifier is incorporated into the name of the
+result (<em>.jtr</em>) file and any directory containing
+test-specific results, replacing the <code>#</code> with
+<code>_</code>.</p>
+<p>Examples:</p>
+<pre><code>MyJavaTest_id0.jtr
+MyJavaTest_id1.jtr</code></pre>
+<h4 id="how-do-i-list-the-tests-in-an-exclude-file-such-as-problemlist.txt" class="unnumbered">How do I list the tests in an exclude file, such
+as <code>ProblemList.txt</code>?</h4>
+<p>Specify the test names, using the fragment identifier form.</p>
+<p>Example:</p>
+<pre>
+<code>MyJavaTest.java#id0   1234567 generic-all This test is broken!</code></pre>
+<p><em>Note:</em> It is currently not possible to exclude all the
+tests in a file with a single entry. See <a href="https://bugs.openjdk.java.net/browse/CODETOOLS-7902265">CODETOOLS-7902265</a>.</p>
+<h3 id="can-i-run-tests-differently-depending-on-the-circumstances">
+<span class="header-section-number">4.35</span> Can I run tests
+differently, depending on the circumstances?</h3>
+<p>Yes; one way is to use a combination of putting multiple tests
+in a file, and <code>@requires</code> to select which one will be
+run. For example, the following simple, somewhat contrived, example
+shows how to run a class with different parameters depending on the
+platform being tested:</p>
+<pre style="margin-left:0.25in; border:1px solid grey; padding: 5px; width: 50%">
+
+/* @test
+ * @requires os.family == windows
+ * @run main MyJavaTest --root C:
+ */
+
+/* @test
+ * @requires os.family != windows
+ * @run main MyJavaTest --root /
+ */
+</pre>
+<p>jtreg does not support any sort of conditional flow within the
+sequence of actions. You can use <code>@run driver</code> to run a
+class that provides more complex logic, if needed.</p>
+<hr />
+<h2 id="organizing-tests"><span class="header-section-number">5</span> Organizing tests</h2>
+<h3 id="how-are-the-openjdk-test-suites-organized"><span class="header-section-number">5.1</span> How are the OpenJDK test suites
+organized?</h3>
+<p>For mostly historical reasons, the OpenJDK tests are grouped
+into three test suites: <code>test/hotspot/jtreg</code>,
+<code>test/jdk</code> and <code>test/langtools</code>.</p>
+<ul>
+<li>
+<p>Tests in the <code>test/hotspot/jtreg</code> test suite are
+organized according to the subsystem to be tested.</p>
+</li>
+<li>
+<p>Tests in the <code>test/jdk</code> test suite are generally
+organized following the structure of the Java API. For example, the
+<code>test/jdk</code> directory contains a <code>java</code>
+directory that has subdirectories <code>lang</code>,
+<code>io</code>, <code>util</code>, and so on.</p>
+</li>
+</ul>
+<p>Each package directory contains one subdirectory for each class
+in the package. Thus tests for <code>java.io.FileInputStream</code>
+can be found in <code>test/jdk/java/io/FileInputStream</code>.</p>
+<p>Each class directory may contain a combination of single-file
+tests and further subdirectories for tests that require more than
+one source file.</p>
+<ul>
+<li>Tests in the <code>test/langtools</code> test suite are
+organized according to a combination of the tool or API being
+tested.</li>
+</ul>
+<h3 id="what-is-the-test-root-directory"><span class="header-section-number">5.2</span> What is the test root
+directory?</h3>
+<p>The <em>test root directory</em>, or <em>test suite root
+directory</em> is the root directory of the overall test suite. In
+OpenJDK terms, this means a directory like <code>test/jdk</code> or
+<code>test/langtools</code> in a recent OpenJDK repo.</p>
+<p>The test root directory for any test is determined by finding
+the smallest enclosing directory containing a marker file called
+TEST.ROOT. The TEST.ROOT file can also be used to define some
+global properties for the test suite.</p>
+<h3 id="why-is-the-test-root-directory-important"><span class="header-section-number">5.3</span> Why is the "test root directory"
+important?</h3>
+<p>Within the test suite, tests are uniquely identified by their
+path relative to the test root directory. This relative path is
+used to generate test-specific directories and files within the
+work directory, and to identify test results within the report
+directory.</p>
+<p>However, note that tests can be specified on the command line by
+any valid file system path, either absolute or relative to the
+current directory.</p>
+<h3 id="can-i-have-more-than-one-test.root"><span class="header-section-number">5.4</span> Can I have more than one
+TEST.ROOT?</h3>
+<p>In general, no. Each test is uniquely associated with exactly
+one test root directory, which is the smallest enclosing directory
+containing a marker file called TEST.ROOT. In general, a test run
+will consist of tests from a single test suite, identified by a
+single test root directory.</p>
+<p>It <em>is</em> possible to run tests from multiple test suites
+(such as <code>test/jdk</code> and <code>test/langtools</code>) in
+the same invocation of jtreg, but this is not common.</p>
+<h3 id="how-should-i-organize-tests-libraries-and-other-test-related-files">
+<span class="header-section-number">5.5</span> How should I
+organize tests, libraries, and other test-related files?</h3>
+<p>The directories within a test suite may be used for a number of
+different purposes:</p>
+<ul>
+<li>
+<p>The overall test hierarchy, as reflected in the name of each
+test.</p>
+</li>
+<li>
+<p>Java source code, organized in a module or package hierarchy.
+Such code may provide packages, modules or patches for modules to
+be used by tests, or may be a collection of TestNG or JUnit
+tests.</p>
+</li>
+<li>
+<p>Library code, as referenced by a <code>@library</code> directive
+in a test description.</p>
+</li>
+<li>
+<p>Additional test-specific files, such as resource files,
+configuration information, and even additional source files, such
+as may be used when testing the javac and javadoc tools.</p>
+</li>
+</ul>
+<p>Given all those possibilities: here are some guidelines to
+follow.</p>
+<ul>
+<li>
+<p>Tests are normally written to be in the unnamed package (that
+is, with no <code>package</code> statement)</p>
+</li>
+<li>
+<p>Don't place too many tests in the same directory.</p>
+</li>
+<li>
+<p>If a test requires a number of test-specific additional files,
+consider placing the test and those files in a separate directory.
+It would be reasonable to colocate additional tests that also
+require access to those files.</p>
+</li>
+<li>
+<p>Library code should normally use named packages. This helps
+avoid name clashes that may occur if a test uses multiple
+libraries.</p>
+</li>
+<li>
+<p>A directory that is named as a library directory (such as with
+<code>@library</code>) should only contain the packages for that
+library, and nothing else.</p>
+</li>
+</ul>
+<p>Some guidelines follow from this one fundamental guideline:</p>
+<ul>
+<li>If a directory is part of a source-code package hierarchy, all
+the source files in that directory should be part of that same
+package hierarchy.</li>
+</ul>
+<p>For example:</p>
+<ul>
+<li>Don't use "nested" package hierarchies: that is, don't use a
+package hierarchy whose root is part of an enclosing package.</li>
+<li>Don't place one library within another.</li>
+<li>Don't place tests in a library.</li>
+<li>Don't use the anti-pattern in which a test refers to a library
+in an enclosing directory, such as <code>@library
+../..</code>.</li>
+</ul>
+<h3 id="what-is-tiered-testing"><span class="header-section-number">5.6</span> What is "tiered testing"?</h3>
+<p>"Tiered testing" is a policy used in OpenJDK test suites to
+categorize tests according to their importance and reliability. The
+tiers are implemented as jtreg groups:</p>
+<ul>
+<li><code>tier1</code>: All tier 1 tests should always pass
+whenever they are run.</li>
+<li><code>tier2</code>: All tier 2 tests should typically pass,
+although some failures may occasionally occur.</li>
+<li><code>tier3</code> and above: mMre failures may be expected
+when these tests are run.</li>
+</ul>
+<p>For more details, see these email threads: <a href="//mail.openjdk.java.net/pipermail/jdk9-dev/2015-March/001991.html">
+March 2015</a>, <a href="//mail.openjdk.java.net/pipermail/jdk9-dev/2015-April/002164.html">
+April 2015</a>, <a href="//mail.openjdk.java.net/pipermail/jdk9-dev/2015-June/002325.html">
+June 2015</a>.</p>
+<hr />
+<h2 id="testng-and-junit-tests"><span class="header-section-number">6</span> TestNG and JUnit tests</h2>
+<h3 id="what-is-a-package-root"><span class="header-section-number">6.1</span> What is a "package root"?</h3>
+<p>"package root" refers the root of the package hierarchy in which
+a Java source is placed. It is the directory you would put on the
+javac source path if you wanted javac to compile the file
+explicitly.</p>
+<p>Most jtreg tests are written in the "unnamed package" (i.e.
+without a package statement) and so for most jtreg tests, the
+directory directly containing the test is the package root for the
+test. This is different from other test suites using other test
+harnesses (such as TestNG or JUnit) in which all the tests of a
+test suite are placed in a single package hierarchy, often
+mirroring the package hierarchy of API being tested.</p>
+<h3 id="how-does-jtreg-support-testng-and-junit-tests"><span class="header-section-number">6.2</span> How does jtreg support TestNG
+and JUnit tests?</h3>
+<p>jtreg supports TestNG and Junit tests in two ways.</p>
+<ol type="1">
+<li>
+<p>Tests can be written with a full test description (the comment
+beginning <code>/* @test....*/</code>) and can use one of the
+following action tags to run a test class with TestNG or JUnit:</p>
+<p><span class="citation" data-cites="run">@run</span> testng
+classname args <span class="citation" data-cites="run">@run</span>
+junit classname args</p>
+</li>
+</ol>
+<p>Such a test is otherwise similar to a standard test using
+<code>@run main</code>. You can use other tags such as
+<code>@library</code> and <code>@build</code>, just as you would
+for <code>@run main</code>. These tests should normally be in the
+unnamed package (i.e. no package statement.) These tests can be
+freely intermixed with other tests using <code>@run main</code>,
+<code>@run shell</code>, <code>@run applet</code> and so on.</p>
+<p>You may place <a href="#multiple-tests">multiple tests</a>
+containing such actions in a file.</p>
+<ol start="2" type="1">
+<li>If you have a group of TestNG or JUnit tests written in their
+own package hierarchy, you can include that entire package
+hierarchy as a subdirectory under the main test root directory. To
+do this, you must identify the root directory of that package
+hierarchy to jtreg, so that it knows to treat all the files in that
+package hierarchy specially.</li>
+</ol>
+<p>In such a group of tests, you do not need to provide test
+descriptions in each test, but you may optionally provide a test
+description if you choose to do so, if you wish to specify
+information tags such as<code>@bug</code>, <code>@summary</code>
+and <code>@keyword</code>. You must not specify any action tags,
+such as <code>@run</code>, <code>@compile</code>, etc, since the
+actions are implicit for every test in the group of tests.</p>
+<p>At most one such test description may be provided in each file
+in the group.</p>
+<h3 id="how-do-i-identify-a-group-of-testng-or-junit-tests-in-their-own-directory">
+<span class="header-section-number">6.3</span> How do I identify a
+group of TestNG or JUnit tests in their own directory?</h3>
+<p>Add a line specifying the directory to TEST.ROOT; the line is
+the same for both TestNG and JUnit tests:</p>
+<pre><code>TestNG.dirs = dir1 dir2 dir3 ...</code></pre>
+<p>Include the package root directory for each group of TestNG or
+JUnit tests, and specify the package root directory relative to the
+test root directory.</p>
+<p>You can also override the value in TEST.ROOT by using the
+TEST.properties file in any subdirectory of the test root directory
+that contains the package root. If you put the declaration in a
+TEST.properties file, you must specify the path relative to the
+directory containing the TEST.properties file. In particular,
+instead of declaring the directory in TEST.ROOT, you could place
+the declaration in a TEST.properties file in the package root
+directory for the group of tests, in which case the declaration
+would be simply:</p>
+<pre><code>TestNG.dirs = .</code></pre>
+<p>You can mix TestNG and JUnit tests in the same group of tests,
+although it may not be good style to do so.</p>
+<h3 id="how-does-jtreg-run-testng-and-junit-tests"><span class="header-section-number">6.4</span> How does jtreg run TestNG and
+JUnit tests?</h3>
+<p>Tests using <code>@run testng</code> are compiled in the
+standard way, with TestNG libraries on the classpath. The test is
+run using the class <code>org.testng.TestNG</code>.</p>
+<p>Tests using <code>@run junit</code> are compiled in the standard
+way, with JUnit libraries on the classpath. The test is run using
+the class <code>org.junit.runner.JUnitCore</code>.</p>
+<p>For any JUnit or TestNG tests in a group of TestNG or JUnit
+tests, any tests in the group that need compiling are compiled
+together, before any test in the group is run. Then, the selected
+test classes are run one at a time using
+<code>org.testng.TestNG</code>. If the class imports JUnit classes,
+it will be run with TestNG "mixed mode" enabled. Each test that is
+run will have its results stored in a corresponding
+<code>*.jtr</code> file. <em>Note:</em> it is not possible to
+reliably determine via static analysis which files may contain
+TestNG or JUnit tests and which do not. As a result, jtreg may run
+some classes only to have TestNG report that no tests were found in
+the file. If there are many such classes in the group, you may want
+to move those classes to a separate library that can be used by the
+tests in the group; this will avoid jtreg running the library
+classes in case they contain tests.</p>
+<h3 id="how-do-i-specify-any-libraries-i-want-to-use-in-testng-and-junit-tests">
+<span class="header-section-number">6.5</span> How do I specify any
+libraries I want to use in TestNG and JUnit tests?</h3>
+<p>Tests using <code>@run testng</code> or <code>@run
+junit</code>can use <code>@library</code> and <code>@build</code>
+in the standard way.For any test in a group of TestNG or JUnit
+tests, you can specify the library by adding a line specifying the
+library in the TEST.properties file in the package root directory
+for the group of tests.</p>
+<pre><code>lib.dirs = path-to-library ...</code></pre>
+<p>As with the <code>@library</code> tag, if the path begins with
+"/", it will be evaluated relative to the test root directory;
+otherwise, it will be evaluated relative to the directory
+containing the TEST.properties file.</p>
+<p>For any particular group of TestNG or JUnit tests, you can only
+specify libraries for the entire group: you cannot specify one
+library for some of the tests and another library for other tests.
+This is because the all the source files in the group are compiled
+together.</p>
+<h3 id="what-version-of-testng-and-junit-does-jtreg-support">
+<span class="header-section-number">6.6</span> What version of
+TestNG and JUnit does jtreg support?</h3>
+<p>Run the command <code>jtreg -version</code> to see the version
+of jtreg and available components.</p>
+<p>For OpenJDK, the policy is to use a supported, older version and
+not necessarily the latest and greatest version.</p>
+<hr />
+<h2 id="general-problems"><span class="header-section-number">7</span> General Problems</h2>
+<h3 id="my-test-only-passes-if-i-dont-use-jtreg-to-run-it.-why-does-it-fail-in-jtreg">
+<span class="header-section-number">7.1</span> My test only passes
+if I don't use jtreg to run it. Why does it fail in jtreg?</h3>
+<p>By default, tests run using <code>jtreg</code> are each run in a
+separate JVM. By design, only a limited number of shell environment
+variables are passed down to the test's JVM. This may affect how a
+test is run.</p>
+<p>As per spec, the only shell environment variables that are
+automatically propagated into the test's JVM are:</p>
+<ul>
+<li>Linux and Solaris:
+<ul>
+<li><code>PATH</code> is set to <code>/bin:/usr/bin</code></li>
+<li>The following are propogated from the user's environment:
+<code>DISPLAY</code>, <code>HOME</code> <code>LANG</code>,
+<code>LC_ALL</code>, <code>LC_CTYPE</code>, <code>LPDEST</code>,
+<code>PRINTER</code>, <code>TZ</code> and
+<code>XMODIFIERS</code></li>
+</ul>
+</li>
+<li>
+<p>Windows:</p>
+<ul>
+<li><code>PATH</code> is set to the MKS or Cygwin toolkit binary
+directory</li>
+<li>The following are propogated from the user's environment:
+<code>SystemDrive</code>, <code>SystemRoot</code>
+<code>windir</code></li>
+</ul>
+</li>
+</ul>
+<p>If your test needs to provide more environment variables or to
+override any values, use the <code>-e</code> option.</p>
+<h3 id="how-do-i-set-the-classpath-environment-variable-for-my-test">
+<span class="header-section-number">7.2</span> How do I set the
+<code>CLASSPATH</code> environment variable for my test?</h3>
+<p>The harness sets the <code>CLASSPATH</code> for the
+<code>compile</code>, <code>main</code>, and <code>applet</code>
+actions to be the system class path plus the test's source and
+classes directory.</p>
+<p>It is possible to set the classpath for the
+<code>main/othervm</code> action via the <code>-classpath</code>
+option to <code>java</code>. Any other modification of the
+<code>CLASSPATH</code> must be done using the <code>shell</code>
+action.</p>
+<h3 id="why-dont-you-just-pass-all-of-my-shell-environment-variables-to-the-jvm-running-the-test">
+<span class="header-section-number">7.3</span> Why don't you just
+pass all of my shell environment variables to the JVM running the
+test?</h3>
+<p>The approach of passing down a list of pre-defined environment
+variables helps guarantee consistent results across different
+people running the test(s).</p>
+<h3 id="why-is-the-default-to-run-tests-in-another-jvm">
+<span class="header-section-number">7.4</span> Why is the default
+to run tests in another JVM?</h3>
+<p>Insulation from other tests. Most well-behaved tests do not
+modify the JVM; however, if a test does modify the JVM it is
+possible that this change will interfere with subsequent tests.
+Running each test in another JVM allows for the possibility of bad
+test suite citizens.</p>
+<h3 id="why-would-i-ever-want-to-run-in-the-same-jvm"><span class="header-section-number">7.5</span> Why would I ever want to run in
+the same JVM?</h3>
+<p>Speed.</p>
+<h3 id="what-is-agent-vm-mode-and-why-would-i-want-to-use-it">
+<span class="header-section-number">7.6</span> What is "agent VM"
+mode, and why would I want to use it?</h3>
+<p>It's like "same VM" mode, but better. By default, tests will run
+in the same JVM. In between tests, jtreg will try to reset the JVM
+to a standard state, and if it cannot, it will discard the JVM and
+start another.</p>
+<h3 id="should-a-test-call-the-system.exit-method-1"><span class="header-section-number">7.7</span> Should a test call the
+<code>System.exit</code> method?</h3>
+<p><em>NO!</em> The default harness security manager prevents tests
+from calling <code>System.exit</code>. If the test is running in
+the same JVM as the harness and the harness was not permitted to
+install its own security manager, a call to
+<code>System.exit</code> will cause the harness itself to exit!</p>
+<p>If the test is running in its own separate JVM, a call to
+<code>System.exit</code> may not allow the harness to properly
+handle test termination.</p>
+<h3 id="my-test-only-applies-to-one-platform-and-it-will-failnot-run-in-others.-how-do-i-prevent-the-harness-from-running-it-on-the-wrong-platform">
+<span class="header-section-number">7.8</span> My test only applies
+to one platform and it will fail/not run in others. How do I
+prevent the harness from running it on the wrong platform?</h3>
+<p>The <a href="tag-spec.html">tag specification</a> provides no
+way to indicate any platform requirements. If the test only applies
+to a single platform, then the test itself must determine the
+current platform and decide whether the test should be run there.
+If the test suite is running on the wrong platform, the test should
+pass (i.e. just return) otherwise, the test should proceed. A
+significant benefit to this approach is that the same number of
+tests in a testsuite will always be run if the same arguments are
+given to <code>jtreg</code> regardless of the particular
+platform.</p>
+<p>For tests that are written in Java code (i.e.
+<code>applet</code> and <code>main</code> tests), you may determine
+the platform via the system properties. The following code fragment
+may be used to distinguish between SunOS sparc, SunOS x86, Windows,
+etc.</p>
+<div class="sourceCode">
+<pre class="sourceCode java"><code class="sourceCode java">    <span class="bu">String</span> name = <span class="bu">System</span>.<span class="fu">getProperty</span>(<span class="st">"os.name"</span>);
+    <span class="kw">if</span> (name.<span class="fu">equals</span>(<span class="st">"Linux"</span>)) {
+        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">"Linux"</span>);
+    } <span class="kw">else</span> <span class="kw">if</span> (name.<span class="fu">contains</span>(<span class="st">"OS X"</span>)) {
+        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">"(Mac) OS X"</span>);
+    } <span class="kw">else</span> <span class="kw">if</span> (name.<span class="fu">equals</span>(<span class="st">"SunOS"</span>)) {
+        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">"Solaris"</span>);
+    } <span class="kw">else</span> <span class="kw">if</span> (name.<span class="fu">startsWith</span>(<span class="st">"Windows"</span>)) {
+        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">"Windows"</span>);
+    } <span class="kw">else</span> {
+        <span class="kw">throw</span> <span class="kw">new</span> <span class="bu">RuntimeException</span>(<span class="st">"unrecognized OS:"</span> +
+                <span class="st">" os.name == "</span> + name);
+    }</code></pre></div>
+<p>This approach is not suitable for <code>shell</code> tests. In
+this case, you can determine the platform via <code>uname</code>.
+The following code accomplishes the same task as above.</p>
+<pre><code>OS=`uname -s`
+case "$OS" in
+    CYGWIN* )
+        echo "Windows (Cygwin)" ;;
+    Darwin )
+        echo "(Mac) OS X" ;;
+    Linux )
+        echo "Linux" ;;
+    SunOS )
+        echo "Solaris" ;;
+    Windows* )
+        echo "Windows" ;;
+    * )
+        echo "unrecognized system: $OS" ; exit 1 ;;
+esac</code></pre>
+<h3 id="how-can-i-make-applet-and-main-action-tests-read-from-data-files">
+<span class="header-section-number">7.9</span> How can I make
+<code>applet</code> and <code>main</code> action tests read from
+data files?</h3>
+<p>When jtreg is executed, it <code>cd</code>'s into a scratch area
+to ensure that a test can not alter the test suite. Thus, a direct
+reference to a data file without some sort of indicator as to where
+the test was originally located will fail.</p>
+<p>The system property <code>test.src</code> contains the name of
+the directory where the test source resides. The following example
+illustrates how to read the data file <code>foo</code> which is
+contained in the test source directory. Note that the default value
+of <code>"."</code> allows this test to run both with the harness,
+and without (in the source directory).</p>
+<pre>
+<code>File f = new File(System.getProperty("test.src", "."), "foo");
+InputStream in = new File(f);</code></pre>
+<h3 id="can-i-use-package-statements-in-my-tests"><span class="header-section-number">7.10</span> Can I use <code>package</code>
+statements in my tests?</h3>
+<p>Yes&#8230; but you probably don't want to. The harness searches
+for class files in a class directory with components which are
+parallel to the source directory. It will be unable to locate
+packaged class files when the test is invoked via reflection. Use
+of the <code>package</code> statement is not recommended unless the
+test is intended to test <code>package</code> statements.</p>
+<p>Tests which test the package mechanism may use package
+statements; however, it will be the responsibility of the test
+writer to properly execute the compiled class as necessary.</p>
+<h3 id="why-cant-multiple-test-source-files-in-the-same-directory-have-package-private-classes-of-the-same-name">
+<span class="header-section-number">7.11</span> Why can't multiple
+test source files in the same directory have package-private
+classes of the same name?</h3>
+<p>In the Java language, package private classes defined in
+different files in the same directory are interpreted as duplicate
+class definitions. The contents of the class files depends on the
+order of compilation. To avoid compilation order dependency
+problems, we recommend that you define auxiliary classes as inner
+classes.</p>
+<p>For performance reasons, the harness does not automatically
+remove class files between individual tests or build each test
+within its own unique subdirectory. This allows us to cache class
+files across test runs and share code between tests in the same
+directory.</p>
+<h3 id="write-catch-exceptions"><span class="header-section-number">7.12</span> Should a test catch
+<code>Throwable</code>, <code>Exception</code>, or
+<code>Error</code>?</h3>
+<p>Ideally, only specific, anticipated exceptions should be caught
+by a test. Any other exception which is provoked during testing
+should be propagated back to the harness.</p>
+<p>In the event that a very general exception is caught in test
+code, a certain amount of care will need to be exercised. For
+example if a user wants to stop the harness during a test run, an
+<code>InterruptedException</code> is used to interrupt the test. If
+that exception is caught by a test and not re-thrown to the
+harness, the stop request will be lost and the tests will not
+stop!</p>
+<p>Here is a list of exceptions that may need to be re-thrown:</p>
+<ul>
+<li><code>InterruptedException</code> (from
+<code>Exception</code>)</li>
+<li><code>InterruptedIOException</code> (from
+<code>IOException</code>)</li>
+<li><code>ThreadDeath</code> (from <code>Error</code>)</li>
+</ul>
+<h3 id="my-test-requires-that-i-use-information-printed-to-system.out-or-system.err-to-determine-whether-a-test-passed-or-failed.-when-i-run-my-test-in-the-harness-i-cant-seem-to-find-these-output-streams.">
+<span class="header-section-number">7.13</span> My test requires
+that I use information printed to <code>System.out</code> or
+<code>System.err</code> to determine whether a test passed or
+failed. When I run my test in the harness, I can't seem to find
+these output streams.</h3>
+<p>Currently, information sent to <code>System.out</code> or
+<code>System.err</code> is only available <em>after</em> the test
+has finished running.</p>
+<p>Note that this question indicates that the test itself can not
+determine whether it passed or failed (i.e. it needs human
+intervention). Thus, the test uses the <code>manual</code> option.
+The suggestions provided for the <a href="#applet-problems"><code>applet</code> action</a> may apply.</p>
+<h3 id="my-test-does-tricky-things-that-are-not-supported-by-jtreg.-can-i-still-write-a-regression-test">
+<span class="header-section-number">7.14</span> My test does tricky
+things that are not supported by <code>jtreg</code>. Can I still
+write a regression test?</h3>
+<p>Yes. Most tests can be written using a series of
+<code>main</code>, <code>clean</code>, <code>build</code>,
+<code>applet</code>, and <code>compile</code> actions. However,
+there have been a few tests that need to do things like run a
+specific application or access specific environment variables. The
+<code>shell</code> action allows a user to invoke a Bourne
+shell-script which can run arbitrary commands, including running
+<code>java</code> and <code>javac</code>.</p>
+<p><strong>Warning!</strong> All tests, including shell-script
+tests, may be run on multiple platforms including Linux, Solaris,
+Windows and Mac OS X. The shell-script should be written to with
+this in mind. The following code fragment may be useful in defining
+various platform-dependent variables.</p>
+<pre><code>OS=`uname -s`
+case "$OS" in
+    SunOS | Linux | *BSD | Darwin )
+        NULL=/dev/null
+        PATHSEP=":"
+        FILESEP="/"
+        TMP=/tmp
+        ;;
+    CYGWIN* )
+        NULL=/dev/null
+        PATHSEP=";"
+        FILESEP="/"
+        TMP=/tmp
+        ;;
+    Windows* )
+        NULL=NUL
+        PATHSEP=";"
+        FILESEP="\\"
+        TMP=$TEMP
+        ;;
+    * )
+        echo "Unrecognized system!"
+        exit 1;
+        ;;
+esac</code></pre>
+<p>If the <code>shell</code> action still does not provide the
+flexibility needed to write the regression test, then use the
+<code>ignore</code> action. It is also advisable to include a
+comment with sufficient detail to allow a person to run the test
+and verify its behavior.</p>
+<h3 id="what-happens-if-my-test-returns-when-there-are-still-threads-running">
+<span class="header-section-number">7.15</span> What happens if my
+test returns when there are still threads running?</h3>
+<p>The harness runs the <code>main</code> action's
+<code>main</code> method in its own thread group. The thread group
+will be destroyed by the harness when the <code>main</code> method
+returns. It is the responsibility of the test to return only after
+the appropriate tasks have been completed by its subsidiary
+threads.</p>
+<h3 id="if-my-bug-hasnt-been-fixed-and-the-test-is-run-the-jvm-crashes.-how-do-i-make-sure-that-the-test-doesnt-cause-the-harness-to-crash">
+<span class="header-section-number">7.16</span> If my bug hasn't
+been fixed, and the test is run, the JVM crashes. How do I make
+sure that the test doesn't cause the harness to crash?</h3>
+<p>If the symptom of a bug is a JVM crash, then the test's
+description should include the <code>othervm</code> option. This
+will allow the harness to continue running any subsequent tests,
+write its reports, and exit normally.</p>
+<h3 id="the-javatest-harness-is-running-into-problems-running-the-test-because-of-issues-with-the-jdk-im-trying-to-test.-what-can-i-do">
+<span class="header-section-number">7.17</span> The JavaTest
+harness is running into problems running the test because of issues
+with the JDK I'm trying to test. What can I do?</h3>
+<p>When the harness is used to run tests, two possibly different
+versions of the JDK are used: the JDK version used to run the
+harness and the JDK version used to run the test(s) themselves.</p>
+<p>To run the harness with one version of the JDK and the tests
+with another, use the <code>-othervm</code> option in conjunction
+with the <code>-testjdk</code> option. The <code>-testjdk</code>
+option will specify the version of the JDK to run the tests. The
+environment variables <code>JT_JAVA</code> or
+<code>JAVA_HOME</code> will specify the version of the JDK for the
+harness.</p>
+<h3 id="my-test-requires-that-i-install-my-own-security-manager-but-it-appears-that-the-javatest-harness-has-already-installed-one.-what-do-i-do">
+<span class="header-section-number">7.18</span> My test requires
+that I install my own security manager, but it appears that the
+JavaTest harness has already installed one. What do I do?</h3>
+<p>The harness normally installs its own rather permissive security
+manager in self-defense to prevent tests from interfering with each
+other. The harness' security manager is designed to prevent changes
+to the JVM's state that would impact other tests. Most tests will
+not find the standard harness security manager a hindrance.</p>
+<p>A test which must install its own security manager will always
+need to run in its own separate JVM. To do this, add the
+<code>othervm</code> option to the <code>main</code> action in the
+test description.</p>
+<h3 id="can-i-automate-running-regtests-or-can-i-run-the-tests-on-a-regular-basis">
+<span class="header-section-number">7.19</span> Can I automate
+running regtests or can I run the tests on a regular basis?</h3>
+<p>Yes. If you are using a UNIX system, <code>man crontab</code> is
+your friend. Other platforms have similar facilities (often third
+party) for automated command scheduling.</p>
+<h3 id="i-run-all-or-a-huge-part-of-the-regression-test-suite-as-part-of-a-cron-job-or-other-nightly-process.-id-like-to-generate-my-own-reports-or-id-like-to-send-myself-e-mail-whenever-a-test-fails.-do-i-have-to-parse-the-verbose-output-or-the-.jtr-file">
+<span class="header-section-number">7.20</span> I run all (or a
+huge part) of the regression test suite as part of a cron job or
+other nightly process. I'd like to generate my own reports or I'd
+like to send myself e-mail whenever a test fails. Do I have to
+parse the verbose output or the <code>.jtr</code> file?</h3>
+<p>No. The harness supports an observer interface. APIs exist to
+query test results at the conclusion of the test's execution. A
+user can write their own observer to record and act on information
+as desired.</p>
+<hr />
+<h2 id="tag-problems"><span class="header-section-number">8</span>
+Tag Problems</h2>
+<h3 id="how-do-i-decide-whether-my-test-should-use-the-compile-action-or-the-build-action">
+<span class="header-section-number">8.1</span> How do I decide
+whether my test should use the <code>compile</code> action or the
+<code>build</code> action?</h3>
+<p>The <code>build</code> action will compile the specified class
+only if the classfile doesn't exist or is older than its source.
+The <code>compile</code> action <em>always</em> invokes the
+compiler. Typically, the <code>compile</code> action is used only
+to test the compiler, while the <code>build</code> action is used
+for tests that make use of multiple sources or for API tests.</p>
+<h3 id="when-do-i-need-to-specify-the-build-action"><span class="header-section-number">8.2</span> When do I need to specify the
+<code>build</code> action?</h3>
+<p>Each <code>main</code> and <code>applet</code> action contains
+an implied <code>build</code> action. The harness will build the
+class specified by the <code>main</code> or <code>applet</code>
+actions as needed without any prompting. If the test requires
+additional class(es), every additional class must be associated
+with an explicit <code>build</code> action.</p>
+<h3 id="how-do-i-decide-whether-my-applet-test-should-use-the-main-action-or-the-applet-action">
+<span class="header-section-number">8.3</span> How do I decide
+whether my applet test should use the <code>main</code> action or
+the <code>applet</code> action?</h3>
+<p>Ultimately, that decision is left to the person writing the
+test; however, the following should be considered.</p>
+<p>Tests which use the <code>applet</code> action are <i>not</i>
+necessarily restricted to tests which must run in a browser. Any
+Swing/AWT code which can be written such that it derives from
+<code>java.applet.Applet</code> or <code>javax.swing.JApplet</code>
+is a potential applet test.</p>
+<p>For tests which test graphics functionality, there are three
+major advantages to selecting the <code>applet</code> action over
+the <code>main</code> action: expanded <code>manual</code> support
+leading to less duplicated code per test, thread synchronization,
+and cleanup.</p>
+<p>Frequently, tests which test graphics functionality need some
+sort of user interaction to determine whether the test behaves as
+expected. The <code>applet</code> action takes care of providing a
+user interface which contains instructions for the user and the
+appropriate interface to indicate <code>pass</code>,
+<code>fail</code>, or <code>done</code> as indicated by the
+<code>manual</code> option. User instructions are taken from the
+<code>.html</code> file referenced in the <code>applet</code>
+action. Each <code>main</code> action which tests graphics
+functionality must implement their own version of this interface.
+This path leads to more code needed per test and less consistency
+across tests in the test suite.</p>
+<p>A <code>main</code> action test is deemed to be completed when
+the <code>main</code> method returns. A test which requires
+multiple threads must take care not to allow the main method to
+return before those other threads have completed. The
+<code>applet</code> action handles basic AWT thread
+synchronization.</p>
+<p>Finally, the <code>applet</code> action handles test cleanup. If
+a test can not or does not dispose top-level windows or any AWT
+threads, they will be eliminated by the harness after the test
+completes.</p>
+<h3 id="i-put-in-an-ignore-tag-into-my-test-description-but-my-test-wasnt-ignored.">
+<span class="header-section-number">8.4</span> I put in an
+<code>ignore</code> tag into my test description but my test wasn't
+ignored.</h3>
+<p>The <code>ignore</code> tag should be used for tests that are
+too complex for the currently defined set of tags or for tests that
+should be temporarily ignored. The <code>ignore</code> tag
+instructs the harness to ignore that and any <i>subsequent</i>
+tags. Check the location of the <code>ignore</code> tag.</p>
+<h3 id="can-i-use-the-author-run-etc.-tags-in-other-files">
+<span class="header-section-number">8.5</span> Can I use the
+<code>@author</code>, <code>@run</code>, etc. tags in other
+files?</h3>
+<p>Yes. The tags may be used for documentation purposes in any
+file. Only those comments whose leading tag is <code>@test</code>
+is considered a test description</p>
+<hr />
+<h2 id="applet-problems"><span class="header-section-number">9</span> Applet Problems</h2>
+<h3 id="my-manual-test-sends-events-to-system.outsystem.err-so-that-the-user-can-determine-whether-the-test-behaved-properly.-how-do-i-write-my-test-if-i-cant-see-these-output-streams">
+<span class="header-section-number">9.1</span> My
+<code>/manual</code> test sends events to
+<code>System.out/System.err</code> so that the user can determine
+whether the test behaved properly. How do I write my test if I
+can't see these output streams?</h3>
+<p>The test code should be written to determine whether a test has
+passed or failed based on events generated during a given
+time-frame. Use the <code>/manual=done</code> option of the
+<code>applet</code> action to set the time frame. If the user has
+not generated the expected event before the <code>done</code>
+button has been pressed, the test should detect this in the
+<code>destroy</code> method and throw an exception.</p>
+<p>While this approach takes potentially more time to implement, it
+avoids user error which may occur in checking the event. This
+scheme also avoids string comparison of events. (A much safer way
+to determine whether the expected event has been received is to
+check the event type, coordinates, modifiers, etc.)</p>
+<p><strong>Warning!</strong> The AWT event thread does not
+propagate exceptions! It is recommended that all exceptions
+indicating failure of the test be thrown from one of the methods
+called by the harness. (i.e. <code>init()</code>,
+<code>start()</code>, <code>stop()</code>,
+<code>destroy()</code>)</p>
+<p>The following simple <code>applet</code> test illustrates the
+recommended behavior.</p>
+<p>Basic <code>.html</code> test description file.</p>
+<pre><code>&lt;html&gt;
+    &lt;body&gt;
+        &lt;!--
+            @test
+            @bug 2997924
+            @summary Sample test that verifies an event
+            @run applet/manual=done SampleTest.html
+        --&gt;
+        &lt;applet code=SampleTest width=200 height=50&gt;&lt;/applet&gt;
+        Select the "pick me" check box.
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>The sample test code.</p>
+<pre><code>import java.applet.Applet;
+import java.awt.Checkbox;
+import java.awt.FlowLayout;
+import java.awt.Panel;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+
+// WARNING! The AWT event thread does not propagate exceptions!
+// It is recommended that all exceptions indicating failure
+// of the test be thrown from one of the methods called by the harness.
+// (i.e. init(), start(), stop(), destroy())
+
+public class SampleTest extends Applet {
+    public void init() {
+        setLayout(new FlowLayout());
+        add(new TestPanel(this));
+    }
+
+    public void destroy() {
+        if (myEvent == null)
+            throw new RuntimeException("no events");
+        else {
+            Checkbox cb = (Checkbox)(myEvent.getItemSelectable());
+            if (!(cb.getLabel().equals("pick me!") &amp;amp;&amp;amp; cb.getState()))
+                throw new RuntimeException("unexpected last event");
+        }
+    }
+
+    class TestPanel extends Panel {
+        Checkbox pickMe, notMe;
+        Listener listener = new Listener();
+        Applet applet;
+
+        public TestPanel(Applet myApplet) {
+            applet = myApplet;
+            pickMe = new Checkbox("pick me!");
+            notMe  = new Checkbox("not me");
+
+            pickMe.addItemListener(listener);
+            notMe.addItemListener(listener);
+
+            add(pickMe);
+            add(notMe);
+        }
+
+        class Listener implements ItemListener {
+            // Don't throw an exception here.  The awt event thread
+            // will NOT propagate your exception!
+            public void itemStateChanged(ItemEvent event) {
+                System.out.println("event: " + event);
+                myEvent = event;
+            }
+        }
+    }
+
+    private ItemEvent myEvent;
+}</code></pre>
+<h3 id="i-threw-an-exception-the-output-was-sent-to-system.err-but-my-test-still-passed.-what-happened">
+<span class="header-section-number">9.2</span> I threw an
+exception, the output was sent to <code>System.err</code>, but my
+test still passed. What happened?</h3>
+<p>Verify that the exception was not thrown by the event thread.
+The event thread does not propagate exceptions. Furthermore, the
+event thread is in a separate thread group and the harness cannot
+catch exceptions thrown from there. It is <em>strongly</em>
+recommended that all exceptions indicating failure of the test be
+thrown from one of the methods called by the harness. (i.e.
+<code>init()</code>, <code>start()</code>, <code>stop()</code>,
+<code>destroy()</code>)</p>
+<h3 id="my-applet-action-test-didnt-run-my-main-method">
+<span class="header-section-number">9.3</span> My
+<code>applet</code> action test didn't run my <code>main</code>
+method!</h3>
+<p><code>applet</code> action tests do not call <code>main</code>.
+A test which uses the <code>applet</code> action is run by invoking
+its <code>init</code>, <code>start</code>, and
+<code>setVisible(true)</code> methods. Depending on the value of
+<code>manual</code>, the harness will pause either for a few
+seconds or until the user clicks on the <code>pass</code>,
+<code>fail</code>, or <code>done</code> buttons. Finally, the
+harness will invoke the <code>stop</code> and <code>destroy</code>
+methods.</p>
+<p>The <code>main</code> method of an <code>applet</code> action
+will only be used if the test was run outside of the harness.</p>
+<h3 id="if-i-have-an-applet-test-do-i-put-the-test-description-in-the-.html-file-or-the-.java-file">
+<span class="header-section-number">9.4</span> If I have an applet
+test, do I put the test description in the <code>.html</code> file
+or the <code>.java</code> file?</h3>
+<p>It doesn't matter. When <code>jtreg</code> is run on a test
+suite or directory, the test description will be found regardless
+of the file particulars. When running a single test,
+<code>jtreg</code> must be invoked on the file which contains the
+test description.</p>
+<h3 id="for-my-manual-tests-how-do-i-provide-the-user-instructions-to-run-the-test">
+<span class="header-section-number">9.5</span> For my
+<code>/manual</code> tests, how do I provide the user instructions
+to run the test?</h3>
+<p>User instructions should be provided in the applet's HTML file.
+The uninterpreted HTML file will be displayed by the
+<code>applet</code> action in a TextArea labelled <code>html file
+instructions:</code>.</p>
+<h3 id="for-manual-tests-how-is-the-initial-size-of-the-running-applet-determined">
+<span class="header-section-number">9.6</span> For
+<code>/manual</code> tests, how is the initial size of the running
+applet determined?</h3>
+<p>The size of the applet is statically determined by the
+<code>height</code> and <code>width</code> attributes provided to
+the HTML <code>applet</code> tag. The applet interface provides a
+way to dynamically change the size of the applet by setting the
+<code>applet size:</code> to "<code>variable</code>".</p>
+<hr />
+<h2 id="deciphering-common-harness-errors"><span class="header-section-number">10</span> Deciphering Common Harness
+Errors</h2>
+<h3 id="failed.-unexpected-exit-from-test"><span class="header-section-number">10.1</span> <code>Failed. Unexpected exit
+from test</code></h3>
+<p><strong>Answer:</strong> The test has completed in an unexpected
+manner. This could be caused by some sort of fault (e.g. a
+segmentation fault) or because the harness has detected a call to
+<code>System.exit</code> from the test.</p>
+<p>Tests are not allowed to call <code>System.exit</code> because
+the test must have the ability to run in the same JVM as the
+harness. Calling <code>System.exit</code> while the test is running
+in this manner whould cause the harness itself to exit! Instead of
+calling <code>System.exit()</code>, throw an exception.</p>
+<p>Be warned that the AWT event thread does not propagate
+exceptions, so if the test was exiting from the event thread, it is
+not sufficient to simply throw an exception. The test must set some
+variable which can be used to throw an exception from one of the
+methods called by the harness. (i.e. <code>init()</code>,
+<code>start()</code>, <code>stop()</code>, or
+<code>destroy()</code>)</p>
+<h3 id="error.-cant-find-main-method"><span class="header-section-number">10.2</span> <code>Error. Can't find 'main'
+method</code></h3>
+<p><strong>More symptoms</strong>: In <code>System.err</code>, you
+get a stack trace for an
+<code>java.lang.NoSuchMethodException</code> and some harness
+messages.</p>
+<pre><code>java.lang.NoSuchMethodException
+ at java.lang.Class.getMethod(Class.java)
+ at com.sun.javatest.regtest.MainWrapper$MainThread.run(MainWrapper.java:89)
+ at java.lang.Thread.run(Thread.java)
+
+JavaTest Message: main() method must be in a public class named
+JavaTest Message: ClassNotPublic in file ClassNotPublic.java</code></pre>
+<p><strong>Answer</strong>: The class defining the test must be
+declared <code>public</code> and the class name must be the
+basename of the <code>.java</code> file; otherwise the harness will
+not be able to use reflection to invoke the test.</p>
+<h3 id="error.-parse-exception-no-class-provided-for-main">
+<span class="header-section-number">10.3</span> <code>Error. Parse
+Exception: No class provided for 'main'</code></h3>
+<p><strong>Answer</strong>: An <code>@run main</code> tag was
+provided without the required class name. Either provide the name
+of the class or remove the line entirely if appropriate.</p>
+<p>The line may be removed without impacting the test if all of the
+following criteria are met:</p>
+<ul>
+<li>The file containing the test description has the
+<code>.java</code> extension.</li>
+<li>This is the only <code>@run</code> tag in the test
+description.</li>
+<li>No options to <code>main</code> are required</li>
+</ul>
+<p>In removing the line, we take advantage of the default action
+for <code>.java</code> files.</p>
+<h3 id="error.-parse-exception-applet-requires-exactly-one-file-argument">
+<span class="header-section-number">10.4</span> <code>Error. Parse
+Exception: 'applet' requires exactly one file argument</code></h3>
+<p><strong>Answer</strong>: The applet action requires a single
+argument which should be the name of the <code>.html</code> file
+which contains (at minimum) the HTML <code>applet</code> tag.</p>
+<h3 id="error.-parse-exception-archive-not-supported-in-file">
+<span class="header-section-number">10.5</span> <code>Error. Parse
+Exception: 'archive' not supported in file:</code> &#8230;</h3>
+<p><strong>More Symptoms</strong>: The test is an
+<code>applet</code> action test. The HTML <code>applet</code> tag
+includes the <code>archive</code> attribute.</p>
+<p><strong>Answer</strong>: The regression extensions to the
+harness do not support the <code>archive</code> attribute.</p>
+<h3 id="test-results-no-tests-selected"><span class="header-section-number">10.6</span> <code>test results: no tests
+selected</code></h3>
+<p><strong>More Symptoms</strong>: At a terminal window, you
+get:</p>
+<pre><code>test results: no tests selected
+Report written to /home/iag/work/doc/JTreport/report.html
+Results written to /home/iag/work/doc/JTwork</code></pre>
+<p><strong>Answer</strong>: No test descriptions were found by
+<code>jtreg</code> in the file or directory specified. If the
+<code>-automatic</code> option to <code>jtreg</code> was provided,
+then there were no tests which did not include the
+<code>/manual</code> tag option.</p>
+<p>Verify that the first tag of each test description is
+<code>@test</code>.</p>
+<h3 id="test-does-not-have-unique-name-within-work-directory">
+<span class="header-section-number">10.7</span> <code>Test does not
+have unique name within work directory</code></h3>
+<p><strong>More Symptoms</strong>: At a terminal window, you
+get:</p>
+<pre><code>Error:
+ -- Test does not have unique name within work directory
+ -- Test name: Duplicate
+ -- Used by test: Duplicate.java
+ -- And by test:  Duplicate.html
+ -- Overwriting results of first test</code></pre>
+<p>A single directory contains more than one file with the same
+basename.</p>
+<p><strong>Answer</strong>: The two files contain descriptions of
+tests and the harness is unable to determine a unique <a href="#jtr-file"><code>.jtr</code></a> filename so the harness will
+overwrite the results of the first test. It is possible to have a
+single directory with more than one file with the same basename;
+however, only one of those files may have a test description
+(<code>@test</code> is the first token of the comment).</p>
+<p>If both files contain identical test descriptions, select one
+file to contain the primary test description. Disable the other
+test description by either removal of the entire comment or simply
+the <code>@test</code> tag.</p>
+<p>If the files contain unique test descriptions, one of the
+basefile names must be changed.</p>
+<h3 id="error.-junit-not-available"><span class="header-section-number">10.8</span> <code>Error. JUnit not
+available</code></h3>
+<p>To run JUnit tests within jtreg, you must have a copy of
+junit.jar available. To do this, you should do one of the
+following:</p>
+<ul>
+<li>Put junit.jar on the classpath used to run jtreg.</li>
+<li>You can specify the location by setting the system property
+<code>junit.jar</code></li>
+<li>Install a copy in the <em>jtreg</em><code>/lib</code> directory
+if it is not already present.</li>
+</ul>
+<p>If you do not have a copy of junit.jar on your system, you can
+download it from the <a href="http://junit.org/">JUnit home
+page</a>.</p>
+<p><em>Note:</em> recent builds of jtreg automatically include a
+copy of JUnit to run tests.</p>
+<h3 id="javatest-message-problem-cleaning-up-the-following-threads">
+<span class="header-section-number">10.9</span> <code>JavaTest
+Message: Problem cleaning up the following threads:</code></h3>
+<p><strong>More symptoms</strong>: After the message, jtreg lists
+the stacktrace for one or more threads started by the test
+code.</p>
+<p><strong>Answer</strong>: When you run tests in agentVM mode,
+jtreg will try to ensure that any threads started by the test have
+terminated, so that they don't affect any code that might run
+subsequently in the same JVM. It does this by checking for the
+presence of any threads in the thread group that was created to run
+the main test code. If there are any such threads, jtreg will
+periodically interrupt them, until a timeout has been reached, at
+which point the message in question will be reported and the test
+will be reported as having an error.</p>
+<h3 id="incompatible-kind-of-jdk-used-to-compile-or-run-tests-...-with-that-used-to-run-jtreg-...">
+<span class="header-section-number">10.10</span> Incompatible kind
+of JDK used to compile or run tests (...) with that used to run
+jtreg (...)</h3>
+<p><strong>Answer</strong>: When using Windows Subsystem for Linux
+(WSL) to run jtreg, or to run shell tests within jtreg, it is
+possible to run tests on either a Windows JDK or a Linux JDK.
+However, there is a restriction that to run tests on a Linux JDK,
+you must also use a Linux JDK to run jtreg itself. (It need not be
+the same instance or same version of JDK). Likewise, to run tests
+on a Windows JDK, you must also use a Windows JDK to run jtreg
+itself. (Again, it need not be the same instance or the same
+version.)</p>
+<p>If you see this message, you are trying to run jtreg on one kind
+of JDK, and use a different kind of JDK to compile or run the
+tests.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

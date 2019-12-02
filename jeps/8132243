@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Optimize Final Field Loads In Generated Code</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Optimize Final Field Loads In Generated Code</h1><table class="head"><tr><td>Author</td><td>vlivanov</td></tr><tr><td>Owner</td><td>Vladimir Ivanov</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;compiler</td></tr><tr><td>Discussion</td><td> hotspot dash compiler dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Created</td><td>2015/07/23 13:16</td></tr><tr><td>Updated</td><td>2019/11/14 21:55</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8132243">8132243</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enable optimizations in JIT-compilers to constant fold final field loads in
+generated code.</p>
+<h2 id="Goals">Goals</h2>
+<p>The goal is to come up with a set of optimizations in JIT-compilers to
+constant fold final field loads in generated code. During the course of work
+opportunities for tightening rules for final field updates at run-time will also
+be explored.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>The JVMS and the JMM provide some strong guarantees about final field initialization
+and visibility.</p>
+<p>It's appealing from a performance perspective to exploit them and avoid loading
+field values which don't change, thus producing more efficient code.</p>
+<p>Moreover, optimizations on instance final fields are crucial for performance in
+some scenarios. For example, JSR 292 (<code>java.lang.invoke</code>) heavily relies on
+the ability to constant fold loads from final instance fields to get decent
+<code>invokedynamic</code> performance (there are special cases in the JVM code for now).</p>
+<p>Although the <code>HotSpot</code> JVM already optimizes loads from static final fields, it is
+still very conservative when seeing instance final fields. The reason is that
+there are scenarios (e.g. deserialization) when the object constructor is skipped
+and final field values are written after the object is instantiated.</p>
+<p>Immutable objects are promoted as safe in concurrent scenarios and are becoming very popular, so many applications should benefit from such optimizations.</p>
+<h2 id="Description">Description</h2>
+<p>The JVMS is already quite restrictive. At the byte-code level, instance final field
+writes are allowed only in constructors (<code>&lt;init&gt;</code>) and static final field
+writes only in static initializers (<code>&lt;clinit&gt;</code>).</p>
+<p>However, there's a limited set of additional scenarios when final field
+updates are possible. There are 4 ways to circumvent the limitations and
+change a final field value at run-time:</p>
+<ul>
+<li>
+<p>Reflection API (through <code>Field.setAccessible()</code>)</p>
+</li>
+<li>
+<p><code>java.lang.invoke</code> (through <code>Lookup.unreflect()</code> since there's no way to get a setter for a final field)</p>
+</li>
+<li>
+<p><code>JNI</code> (<code>SetXXXField()</code>)</p>
+</li>
+<li>
+<p><code>sun.misc.Unsafe</code> (<code>setXXX()</code>/<code>setXXXUnaligned()</code>)</p>
+</li>
+</ul>
+<p>The <code>Unsafe</code> API is deliberately left out of scope. It is designed as a simple,
+well-factored set of building blocks to implement low-level JVM operations and
+(independently) provide access to some run-time features of the hardware
+platform. It is a user's responsibility to ensure that performed operations are
+safe.</p>
+<p>Regarding all other cases, JIT-compilers should take all of them into account
+when optimizing final field loads and either track updates or be conservative
+and avoid optimizations.</p>
+<p>There are 3 approaches being considered:</p>
+<ol>
+<li>
+<p>tighten run-time rules for final field updates: forbid all stores to final
+fields once the object is fully constructed;</p>
+</li>
+<li>
+<p>silently <code>nullify</code> (ignore and discard) illegal stores to final fields;</p>
+</li>
+<li>
+<p>track all final field updates in the JVM and adapt accordingly.</p>
+</li>
+</ol>
+<p>The first approach, tightened rules for illegal final field updates, requires the JVM
+to throw an exception when a store to final field is performed on a properly constructed
+object (fail-fast approach). It aligns run-time behavior with the JVMS.</p>
+<p>The normal <code>new</code>/<code>&lt;init&gt;</code> byte-code sequence guarantees that the object is
+properly constructed once constructor has completed.</p>
+<p>It liberates the JVM from the responsibility to track all final field updates
+and throwing away generated code when a field which was optimized earlier
+changes its value.</p>
+<p>However, there are valid use-cases when JVMS restrictions should be relaxed
+(e.g., deserialization). The common scenario is separate object construction
+and publication. In such case, the <code>new</code>/<code>&lt;init&gt;</code> sequence doesn't work anymore and
+non-standard ways to instantiate objects are used. There are 3 ways to create
+an instance without running a constructor on it:</p>
+<ol>
+<li>
+<p><code>Unsafe.allocateInstance(Class&lt;?&gt;)</code></p>
+</li>
+<li>
+<p><code>ReflectionFactory.newConstructorForSerialization(Class&lt;?&gt;, Constructor&lt;?&gt;)</code> (used by deserialization)</p>
+</li>
+<li>
+<p><code>AllocObject(JNIEnv*, jclazz)</code> in JNI</p>
+</li>
+</ol>
+<p>These functions should produce "slushy" objects - objects which can freely
+change after they are instantiated. The JVM should allow final field updates
+for such objects and be conservative when optimizing for them.</p>
+<p>The "slushiness" property can be recorded as a flag in the object header.</p>
+<p>Since it is the user's responsibility to either invoke a constructor or manually
+initialize the object, an additional operation ("publish"/"freeze") is needed to
+signal that construction is over and clear the "slushy" flag. It lets the JVM
+know that the object construction is finished (no more final field updates are
+planned), so the JVM can harden checks and optimize operations on final fields
+from then on.</p>
+<p>JIT-compilers consult that flag to gate final-folding. Reflection, JNI, and
+MethodHandles check the flag when attempting to write to a final field and
+throw a error if it is not set.</p>
+<p>The second approach, silently <code>nullifying</code> stores to final fields in properly constructed
+objects, is legal in some cases according to the JMM. Nullification is indistinguishable
+from the store occurring but never being observed by a future read.  This is
+possible if either the store is delayed indefinitely, or if all threads (and
+compiled methods) have previously performed a caching read of the original
+final value. Additional investigation should be conducted to ensure that the JMM
+allows some sort of OOTA caching read of the original final value, since the
+threads aren't obliged to physically do such a caching read first.</p>
+<p>Finally for the third approach, if there are no adjustments to run-time behavior, the JVM
+has to track all final field updates and adapt accordingly by invalidating all affected
+generated code.</p>
+<p>JNI, <code>java.lang.invoke</code> and the Reflection API should be instrumented with
+additional checks to notify the JVM when an application attempts to write to a
+final field. The JVM should track all the dependencies in generated code on
+final field values.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>There are compatibility risks due to hardened checks in the Reflection API.
+If an application uses the Reflection API to write final fields, it will get
+run-time errors when attempting to perform such operations.</p>
+<p>External users of <code>sun.misc.Unsafe</code> are affected if they change final fields in a
+properly constructed object. Such updates aren't guaranteed to be visible, i.e. just as today if static final fields are updated.</p>
+<p>There's a risk that a user forgets to perform the "publish" operation and the
+object stays in "slushy" state forever.</p>
+<p>That can be mitigated by providing JVM and library diagnostic functionality to
+detect runaway slushy objects:</p>
+<ul>
+<li>
+<p>The JVM can be equipped with elaborate checks to hunt them down;</p>
+</li>
+<li>
+<p>an alternative <code>sun.misc.Unsafe</code> implementation which detects final field updates and
+performs a "slushy" bit check can be implemented.</p>
+</li>
+</ul>
+<p>For a JVM-only optimization, experiments showed a considerable increase in recorded
+dependencies for generated code during run-time. It stresses dependency
+tracking machinery in the JVM, both in recording (more space needed) and
+checking (more work to enumerate affected generated code).</p>
+<p>The impact should be measured and additional optimizations considered (e.g.
+more efficient lookup of per-object dependencies, per-class vs per-object
+dependency tracking) to reduce both the number of dependencies and dependency
+tracking overhead.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>None.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

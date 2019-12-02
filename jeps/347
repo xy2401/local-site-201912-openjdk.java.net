@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 347: Adopt C++14 Language Features in HotSpot</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 347: Adopt C++14 Language Features in HotSpot</h1><table class="head"><tr><td>Owner</td><td>Kim Barrett</td></tr><tr><td>Type</td><td>Infrastructure</td></tr><tr><td>Scope</td><td>Implementation</td></tr><tr><td>Status</td><td>Candidate</td></tr><tr><td>Component</td><td>hotspot</td></tr><tr><td>Discussion</td><td>hotspot dash dev at openjdk dot java dot net</td></tr><tr><td>Reviewed by</td><td>David Holmes, Mikael Vidstedt</td></tr><tr><td>Endorsed by</td><td>Mikael Vidstedt</td></tr><tr><td>Created</td><td>2018/07/23 14:30</td></tr><tr><td>Updated</td><td>2019/11/06 17:49</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8208089">8208089</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Allow the use of selected C++14 language features in the HotSpot C++
+source code.</p>
+<h2 id="Goals">Goals</h2>
+<p>Through JDK 12, the language features utilized by C++ code in the JDK
+have been limited to the C++98/03 language standards.
+With JDK 11, the code has been updated to support building with newer
+versions of the C++ standard, although it is not yet using any new
+features. This includes being able to build with recent versions of
+various compilers that support C++11/14 language features.</p>
+<p>The purpose of this JEP is to formally allow C++ source
+code changes within HotSpot to take advantage of some
+C++14 standard language features.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Changes-to-the-Build-System">Changes to the Build System</h3>
+<p>To take advantage of C++14 language features some build-time
+changes may be required, depending on the platform compiler. Minimum
+acceptable versions of the various platform compilers also need to be
+specified. The desired language standard should be specified
+explicitly; later compiler versions might default to a later, and
+possibly incompatible, language standard.</p>
+<p>For Windows: Visual Studio 2017 is required for JDK 11. (Earlier
+versions will generate a configure-time warning and may or may not
+work.) For Visual Studio 2017 the default C++ standard is C++14. The
+<code>/std:c++14</code> option should be added.  Support for older versions will be
+dropped entirely.</p>
+<p>For Linux: Replace the <code>-std=gnu++98</code> compiler option with <code>-std=c++14</code>.
+The minimum supported version of gcc is TBD.</p>
+<p>For macOS: Replace the <code>-std=gnu++98</code> compiler option with <code>-std=c++14</code>.
+The minimum supported version of clang is TBD.</p>
+<p>For Solaris: Add the <code>-std=c++14</code> compiler option. Remove the existing
+standard library selection option (<code>-library=stlport4</code>). Remove the
+linking options for using stlport4 or no library (<code>-library=%none</code>,
+<code>-nolib</code>).  The minimum supported version of the compiler is
+Oracle Developer Studio 12.6.</p>
+<h3 id="Changes-to-C++-Usage">Changes to C++ Usage</h3>
+<p>The existing restrictions and best-practice recommendations for C++ usage in
+HotSpot code are based on the C++98/03 language standard, and described in the
+<a href="https://wiki.openjdk.java.net/display/HotSpot/StyleGuide">HotSpot Style Guide</a>.</p>
+<p>Similar restrictions and guidelines for features of more recent
+language standards will be added to that document.  They will be
+described by a table of permitted features and another of excluded
+features.  Use of permitted features may be unconditional or may have
+some restrictions or additional guidance.  Use of excluded features is
+forbidden in HotSpot code.</p>
+<p>(This JEP does not propose any usage or style changes for C++
+code in the JDK that is outside of HotSpot.  The rules are already different
+for HotSpot and non-HotSpot code.  For example, C++ exceptions are
+used in some non-HotSpot code, but are disallowed in HotSpot by
+build-time options.  However, build consistency requirements will make
+the newer language features available for use in all C++ code in the JDK.)</p>
+<p>There is a third category, undecided features, about which HotSpot
+developers have not reached a consensus, or possibly discussed at all.
+Use of these features is also forbidden.</p>
+<p>Note, however, that the use of some language features may not be
+immediately obvious and may accidentally slip in anyway, since the
+compiler will accept them. As always, the code review process is the
+main defense against this.</p>
+<p>Proposed changes to a feature's categorization are approved by
+<a href="https://en.wikipedia.org/wiki/Rough_consensus">rough consensus</a>
+of the HotSpot Group members, as determined by the Group Lead.
+Such changes must be documented in updates to the Style Guide.</p>
+<p>Lists of new features for C++11 and C++14, along with links to their
+descriptions, can be found in the online documentation for some of the
+compilers and libraries:</p>
+<ul>
+<li><a href="https://gcc.gnu.org/projects/cxx-status.html">C++ Standards Support in GCC</a></li>
+<li><a href="https://clang.llvm.org/cxx_status.html">C++ Support in Clang</a></li>
+<li><a href="https://docs.microsoft.com/en-us/cpp/visual-cpp-language-conformance">Visual C++ Language Conformance</a></li>
+<li><a href="https://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html">libstdc++ Status</a></li>
+<li><a href="https://libcxx.llvm.org/cxx1y_status.html">libc++ Status</a></li>
+</ul>
+<p>As a rule of thumb, permitting features which simplify writing code and,
+especially, reading code, are encouraged.</p>
+<p>HotSpot has largely avoided using the C++ Standard Library.  Some of
+the reasons for that may be obsolete (in particular, bugs encountered
+in early versions), while others may still be applicable (minimizing
+dependencies). Categorizing pieces of the Standard Library should go
+through the same process as language features.</p>
+<p>An initial set of feature categorizations for HotSpot follows.</p>
+<h3 id="Permitted">Permitted</h3>
+<ul>
+<li>
+<p><code>constexpr</code></p>
+<ul>
+<li>Relaxing requirements on <code>constexpr</code> functions
+(<a href="https://isocpp.org/files/papers/N3652.html">n3652</a>)</li>
+<li>Generalized constant expressions
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2235.pdf">n2235</a>)</li>
+</ul>
+<p>Relaxed <code>constexpr</code> (n3652) is perhaps the key feature distinguishing C++14 from
+C++11.  The <code>constexpr</code> feature will permit the elimination of some clumsy macro code
+in favor of <code>constexpr</code> functions. This feature is also the foundation for simplified
+metaprogramming idioms.  See <a title="Simple C++11 metaprogramming" href="http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming.html">mpl11</a> and <a title="Simple C++11 metaprogramming, part 2" href="http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming_2.html">mpl11_2</a>.</p>
+</li>
+<li>
+<p>Sized deallocation
+(<a href="https://isocpp.org/files/papers/n3778.html">n3778</a>) &#8212;
+Syntax is already in use, because of Visual Studio.</p>
+</li>
+<li>
+<p>Variadic templates</p>
+<ul>
+<li>Variadic templates
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf">n2242</a>)</li>
+<li>Extending variadic template template parameters
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf">n2555</a>)</li>
+</ul>
+<p>Probably only occasionally useful directly, but foundational for simplified
+metaprogramming idioms such as described in <a title="Simple C++11 metaprogramming" href="http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming.html">mpl11</a> and <a title="Simple C++11 metaprogramming, part 2" href="http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming_2.html">mpl11_2</a>.</p>
+</li>
+<li>
+<p>Static assertions
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1720.html">n1720</a>) &#8212;
+Replaces HotSpot STATIC_ASSERT macro, providing better error messages.</p>
+</li>
+<li>
+<p><code>decltype</code></p>
+<ul>
+<li>Declared type of an expression
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2343.pdf">n2343</a>)</li>
+<li><code>decltype</code> and call expressions
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3276.pdf">n3276</a>)</li>
+</ul>
+<p>Important metaprogramming tool.  Needed to implement a simplified
+function template SFINAE utility.</p>
+</li>
+<li>
+<p>Right angle brackets
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1757.html">n1757</a>) &#8212;
+Eliminates an annoying syntactic wart.</p>
+</li>
+<li>
+<p>Default template arguments for function templates
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#226">CWG D226</a>) &#8212;
+In addition to being useful in its own right, this is needed to
+implement a simplified function template SFINAE utility.</p>
+</li>
+<li>
+<p>Template aliases
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2258.pdf">n2258</a>) &#8212;
+Typedefs with template parameters.  Provides syntax for partial specializations of a
+class template, rather than using inheritance (in sometimes inappropriate ways).
+Also used as metafunctions in simplified approach to metaprogramming <a title="Simple C++11 metaprogramming" href="http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming.html">mpl11</a>
+and <a title="Simple C++11 metaprogramming, part 2" href="http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming_2.html">mpl11_2</a>.</p>
+</li>
+<li>
+<p>Strongly-typed enums
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2347.pdf">n2347</a>) &#8212;
+Allows explicit control of the underlying type for an enum, rather than leaving it
+potentially implementation defined (and varying between implementations).  Also
+allows strong typing for enum classes, eliminating implicit conversions.  It is
+recommended that <em>scoped-enums</em> be used when the enumerators are indeed
+a logical set of values.  Use of <em>unscoped-enums</em> is permitted, though ordinary
+constants should be preferred when the automatic initializer feature isn't used.
+The <em>enum-base</em> should always be specified explicitly, rather than leaving it
+dependent on the range of the enumerator values and the platform.</p>
+</li>
+<li>
+<p>Delegating constructors
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1986.pdf">n1986</a>) &#8212;
+Eliminate some code duplication and simplification by allowing specialized constructors
+to chain to more general constructors.</p>
+</li>
+<li>
+<p>Explicit conversion operators
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2437.pdf">n2437</a>) &#8212;
+Use to make some existing conversion operators safe.</p>
+</li>
+<li>
+<p>Standard Layout Types
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2342.htm">n2342</a>)</p>
+</li>
+<li>
+<p>Defaulted and deleted functions
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2346.htm">n2346</a>)</p>
+</li>
+<li>
+<p>Dynamic initialization and destruction with concurrency
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2660.htm">n2660</a>) &#8212;
+Thread-safe function-local statics.</p>
+</li>
+<li>
+<p><code>&lt;type_traits&gt;</code> is a core metaprogramming library. It
+eliminates the need for many of the HotSpot metaprogramming utilities,
+which were modeled on corresponding parts of this library.</p>
+</li>
+<li>
+<p><code>final</code> virtual specifiers for classes and virtual functions
+(<a href="http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2009/n2928.htm">n2928</a>),
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3206.htm">n3206</a>),
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3272.htm">n3272</a>) &#8212;
+The <code>final</code> specifier permits devirtualization of virtual function
+calls.  This can provide better performance than relying on the
+compiler's use of techniques such as points-to analysis or speculative
+devirtualization.  The <code>overrides</code> specifier for virtual functions,
+which is also described in the referenced papers, may be considered at
+a later time.</p>
+</li>
+<li>
+<p>Local and unnamed types as template parameters
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2657.htm">n2657</a>) &#8212;
+Allows local definition of used-once helper classes to be placed near
+the point of use when the use is a template, rather than requiring
+such helpers be defined at namespace scope.</p>
+</li>
+</ul>
+<h3 id="Excluded">Excluded</h3>
+<ul>
+<li>
+<p>New string and character literals</p>
+<ul>
+<li>New character types
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2249.html">n2249</a>)</li>
+<li>Unicode string literals
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2442.htm">n2442</a>)</li>
+<li>Raw string literals
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2442.htm">n2442</a>)</li>
+<li>Universal character name literals
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2170.html">n2170</a>)</li>
+</ul>
+<p>HotSpot doesn't need any of the new character and string literal
+types.</p>
+</li>
+<li>
+<p>User-defined literals
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2765.pdf">n2765</a>) &#8212;
+User-defined literals should not be added casually, but only
+through a proposal to add a specific UDL.</p>
+</li>
+<li>
+<p>Inline namespaces
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2535.htm">n2535</a>) &#8212;
+HotSpot makes very limited use of namespaces.</p>
+</li>
+<li>
+<p><code>using namespace</code> directives.  In particular, don't use <code>using namespace std;</code> to avoid needing to qualify Standard Library names.</p>
+</li>
+<li>
+<p>Propagating exceptions
+(<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2179.html">n2179</a>) &#8212;
+HotSpot does not permit the use of exceptions, so this feature isn't useful.</p>
+</li>
+</ul>
+<p>Similar lists for some other projects:</p>
+<ul>
+<li>
+<p><a href="https://google.github.io/styleguide/cppguide.html">Google C++ Style Guide</a> &#8212;
+Currently targeting C++11 and should not use C++14</p>
+</li>
+<li>
+<p><a href="https://chromium-cpp.appspot.com">C++11 and C++14 use in Chromium</a> &#8212;
+Categorizes features as allowed, banned, or to be discussed.</p>
+</li>
+<li>
+<p><a href="https://llvm.org/docs/CodingStandards.html">llvm Coding Standards</a> &#8212;
+Currently targeting C++11 and should not use C++14.</p>
+</li>
+<li>
+<p><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Using_CXX_in_Mozilla_code">Using C++ in Mozilla code</a> &#8212;
+C++14 support is required.</p>
+</li>
+</ul>
+<h2 id="Risk-and-Assumptions">Risk and Assumptions</h2>
+<p>There may be other platforms with toolchains that do not yet support the
+C++14 language standard.  In particular, the IBM XLC++ compiler used by
+the aix_ppc port provides very little C++11/14 support; version 13.1.3
+seems to be the most recent version, and provides a small subset of the
+new language and library features, and will be rendered unusable once
+HotSpot code starts using almost any of the above proposed permitted
+features.</p>
+<p>There may be bugs in the support for some new features by some compilers.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

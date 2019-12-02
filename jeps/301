@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 301: Enhanced Enums</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 301: Enhanced Enums</h1><table class="head"><tr><td>Owner</td><td>Maurizio Cimadamore</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Candidate</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;javac</td></tr><tr><td>Discussion</td><td>platform dash jep dash discuss at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="286">JEP 286: Local-Variable Type Inference</a></td></tr><tr><td>Created</td><td>2016/11/25 11:27</td></tr><tr><td>Updated</td><td>2017/04/11 16:17</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8170351">8170351</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enhance the expressiveness of the <code>enum</code> construct in the Java Language by allowing type-variables in enums (<em>generic enums</em>), and performing sharper type-checking for enum constants.</p>
+<h2 id="Goals">Goals</h2>
+<p>These two enhancements work together to enable enum constants to carry constant-specific <em>type information</em> as well as constant-specific state and behavior.  There are many situations where developers have to refactor enums into classes in order to achieve the desired result; these enhancements should reduce this need.</p>
+<p>The following example shows how the two enhancements work together:</p>
+<pre><code>enum Argument&lt;X&gt; { // declares generic enum
+   STRING&lt;String&gt;(String.class), 
+   INTEGER&lt;Integer&gt;(Integer.class), ... ;
+
+   Class&lt;X&gt; clazz;
+
+   Argument(Class&lt;X&gt; clazz) { this.clazz = clazz; }
+
+   Class&lt;X&gt; getClazz() { return clazz; }
+}
+
+Class&lt;String&gt; cs = Argument.STRING.getClazz(); //uses sharper typing of enum constant</code></pre>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>This JEP targets specific enhancements to how enum constants are type-checked. As such, other enum-related features such as:</p>
+<ul>
+<li>allow enum subclassing</li>
+<li>allow enum in non-static contexts</li>
+</ul>
+<p>are <em>outside</em> the scope of this JEP.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Java enums are a powerful construct. They allow grouping of constants - where each constant is a singleton object. Each constant can optionally declare a body, which can be used to override the behavior of the base enum declaration. In the following we will try to model the set of Java primitive types using an enum. Here's a start:</p>
+<pre><code>enum Primitive {
+    BYTE,
+    SHORT,
+    INT,
+    FLOAT,
+    LONG,
+    DOUBLE,
+    CHAR,
+    BOOLEAN;
+}</code></pre>
+<p>As stated above, an enum declaration is like a class, and can have constructors; we can use this feature to keep track of the boxed class and the default value of each primitive:</p>
+<pre><code>enum Primitive {
+    BYTE(Byte.class, 0),
+    SHORT(Short.class, 0),
+    INT(Integer.class, 0),
+    FLOAT(Float.class, 0f),
+    LONG(Long.class, 0L),
+    DOUBLE(Double.class, 0d),
+    CHAR(Character.class, 0),
+    BOOLEAN(Boolean.class, false);
+
+    final Class&lt;?&gt; boxClass;
+    final Object defaultValue;
+
+    Primitive(Class&lt;?&gt; boxClass, Object defaultValue) {
+       this.boxClass = boxClass;
+       this.defaultValue = defaultValue;
+    }
+
+}</code></pre>
+<p>While this is rather nice, there are some limitations: that the field <code>boxClass</code> is loosely typed as <code>Class&lt;?&gt;</code>, as the field type needs to be compatible with all the sharper types used by the enum constants. As a result, any attempt to do something like this:</p>
+<pre><code>Class&lt;Short&gt; cs = SHORT.boxedClass(); //error</code></pre>
+<p>Will fail with a compile-time error. Even worse, the field <code>defaultValue</code> has a type of <code>Object</code>. This is unavoidable since the field needs to be shared across multiple constants modelling different primitive types. Hence, static safety is lost, as the compiler allows code like the following:</p>
+<pre><code>String s = (String)INT.defaultValue(); //ok</code></pre>
+<p>Let's now try to extend the enum and add some operations to the constants modelling primitive types (for the sake of brevity, in the remainder we will only show a subset of the constants):</p>
+<pre><code>enum Primitive {
+    INT(Integer.class, 0) {
+       int mod(int x, int y) { return x % y; }
+       int add(int x, int y) { return x + y; }
+    },
+    FLOAT(Float.class, 0f)  {
+       long add(long x, long y) { return x + y; }
+    }, ... ;
+
+    final Class&lt;?&gt; boxClass;
+    final Object defaultValue;
+
+    Primitive(Class&lt;?&gt; boxClass, Object defaultValue) {
+       this.boxClass = boxClass;
+       this.defaultValue = defaultValue;
+    }
+
+}</code></pre>
+<p>Again, this results in problems, as there's no way to do something like this:</p>
+<pre><code>int seven = INT.add(3, 4); //error</code></pre>
+<p>That's because the static type of <code>INT</code> is simply <code>Primitive</code> and <code>Primitive</code> has no member named <code>add</code>. So, in order to add operations to our enum, we need to add the members to the enum declaration itself, as follows:</p>
+<pre><code>enum Primitive {
+    INT(Integer.class, 0),
+    FLOAT(Float.class, 0f), ... ;
+
+    final Class&lt;?&gt; boxClass;
+    final Object defaultValue;
+
+    Primitive(Class&lt;?&gt; boxClass, Object defaultValue) {
+       this.boxClass = boxClass;
+       this.defaultValue = defaultValue;
+    }
+
+    int mod(int x, int y) {
+       if (this == INT) {
+          return x % y;
+       } else {
+          throw new IllegalStateException();
+       }
+    }
+
+    int add(int x, int y) {
+        if (this == INT) {
+          return x + y;
+       } else {
+          throw new IllegalStateException();
+       }
+    }
+
+    long add(float x, float y) {
+        if (this == FLOAT) {
+          return x + y;
+       } else {
+          throw new IllegalStateException();
+       }
+    }
+    ...
+
+}</code></pre>
+<p>But the code above has, again, several problems. First, this breaks encapsulation: suddenly, <code>Primitive</code> acquires a bunch of members, none of which make sense for all the constants. As a result, the implementation of each method becomes more convoluted, as the methods must check whether they have been called on the <em>right</em> enum constant. Type-safety is also lost, as the compiler will not detect bad usages such as:</p>
+<pre><code>int zero = FLOAT.mod(50, 2); //ok</code></pre>
+<p>All the problems described above can be addressed by removing specific asymmetries between enums and classes, and by refining the way in which enum constants are type-checked. More precisely:</p>
+<ul>
+<li>allow type-parameter in enum declarations</li>
+<li>do not prematurely erase sharp type-information associated with enum constants</li>
+</ul>
+<p>With these enhancements, the <code>Primitive</code> enum can be rewritten as follows:</p>
+<pre><code>enum Primitive&lt;X&gt; {
+    INT&lt;Integer&gt;(Integer.class, 0) {
+       int mod(int x, int y) { return x % y; }
+       int add(int x, int y) { return x + y; }
+    },
+    FLOAT&lt;Float&gt;(Float.class, 0f)  {
+       long add(long x, long y) { return x + y; }
+    }, ... ;
+
+    final Class&lt;X&gt; boxClass;
+    final X defaultValue;
+
+    Primitive(Class&lt;X&gt; boxClass, X defaultValue) {
+       this.boxClass = boxClass;
+       this.defaultValue = defaultValue;
+    }
+}</code></pre>
+<p>This generic declaration is clearly more expressive than the previous one - now the enum constant <code>Primitive.INT</code> has a sharper parameterized type <code>Primitive&lt;Integer&gt;</code> which means that its members are also sharply typed:</p>
+<pre><code>Class&lt;Short&gt; cs = SHORT.boxedClass(); //ok!</code></pre>
+<p>Also, since type information on enum constants is not prematurely erased, the compiler can reason about membership of constants - as demonstrated below:</p>
+<pre><code>int zero_int = INT.mod(50, 2); //ok
+int zero_float = FLOAT.mod(50, 2); //error</code></pre>
+<p>The compiler is now able to reject the second statement as there's no member <code>mod</code> in the enum constant <code>FLOAT</code> - which guarantees extra type-safety.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Generic-enums">Generic enums</h3>
+<p>As discussed in JDK-6408723, an important requirement for allowing generics in enums is that type-parameters are fully bound in the enum constant declaration. This allows for a straightforward translation scheme which can augment the one we have today - for instance, given an enum declaration like the following:</p>
+<pre><code>enum Foo&lt;X&gt; {
+   ONE&lt;String&gt;,
+   TWO&lt;Integer&gt;;
+}</code></pre>
+<p>The corresponding desugared code will look as follows:</p>
+<pre><code>/* enum */ class Foo&lt;X&gt; {
+   static Foo&lt;String&gt; ONE = ...
+   static Foo&lt;Integer&gt; TWO = ...
+
+   ...
+}</code></pre>
+<p>That is, it is still possible to map each constant to a static field declaration, as type bindings are all statically known.</p>
+<p>It might be desirable to allow diamond on enum constant initialization - for instance:</p>
+<pre><code>enum Bar&lt;X&gt; {
+   ONE&lt;&gt;(Integer.class),
+   TWO&lt;&gt;(String.class);
+
+   Bar(X x) { ... }
+}</code></pre>
+<p>If the diamond syntax is used, special care is required if the enum constant has a body (i.e. it is translated into an anonymous class) and the inferred type is non-denotable. As in the case for diamond with anonymous inner classes, the compiler will have to reject that case.</p>
+<h3 id="Sharper-typing-of-enum-constants">Sharper typing of enum constants</h3>
+<p>Under current rules, the static type of an enum constant is the enum type itself. Under such rules, the constants <code>Foo.ONE</code> and <code>Foo.TWO</code> above will both have the same type, namely <code>Foo</code>. This is undesirable for at least two reasons:</p>
+<ul>
+<li>in case of a generic enum (as <code>Foo</code>), the static type of a constant is not sharp enough to capture the full type info carried by that constant</li>
+<li>even in the absence of generic enum, the constant type is not sharp enough to let a client access a member that is only defined on that enum constant (see the example at the beginning of this page)</li>
+</ul>
+<p>To overcome this limitation, typing of enum constants should be redefined so that a given enum constant gets its own type. Let E be an enum declaration, and C be a (possibly generic) enum constant declaration in E. The constant C is associated with a sharper type if either of the following conditions are satisfied:</p>
+<ul>
+<li><code>C</code> is of the kind <code>C&lt;T1, T2 ... Tn&gt;</code>  but declares no body; the constant sharper type is <code>E&lt;T1, T2 ... Tn&gt;</code></li>
+<li>C has a body; the constant sharper type is an anonymous type (written <code>E.C</code>) whose supertype is either
+<ul>
+<li><code>E&lt;T1, T2, ... Tn&gt;</code> if <code>C</code> is of the kind <code>C&lt;T1, T2, ... Tn&gt;</code> and <code>E</code> is a generic enum</li>
+<li><code>E</code>, if E is non-generic</li>
+</ul>
+</li>
+</ul>
+<p>These enhanced typing rule allow the static types for <code>Foo.ONE</code> and the one for <code>Foo.TWO</code> to be different.</p>
+<h2 id="Additional-Considerations">Additional Considerations</h2>
+<p><strong>Binary compatibility</strong></p>
+<p>Let's assume we have the following enum:</p>
+<pre><code>enum Test {
+   A { void a() { } }
+   B { void b() { } }
+}</code></pre>
+<p>As we have seen, this would be translated as follows:</p>
+<pre><code>/* enum */ class Test {
+   static Test A = new Test() { void a() { } }
+   static Test B = new Test() { void b() { } }
+}</code></pre>
+<p>If we allow sharper type for enum constants, a naive approach would translate the code as follows:</p>
+<pre><code>/* enum */ class Test {
+   static Test$1 A = new Test() { void a() { } }
+   static Test$2 B = new Test() { void b() { } }
+}</code></pre>
+<p>Here, the binary incompatibility is manifest: the type of the enum constant <code>A</code> just changed from <code>Test</code> to <code>Test$1</code> upon recompilation. This change is going to break non-recompiled clients using <code>Test</code>.</p>
+<p>To overcome this problem, it is better to take an erasure-based approach: while the static type of <code>A</code> might be the sharper type <code>Test.A</code> - any reference to the type of the constant gets erased to the base enum type <code>Test</code>. This leads to code that is binary compatible with respect to what we had before. However, if everything gets erased to <code>Test</code>, how is access to members of a specific enum constants implemented?</p>
+<pre><code>Foo.A.a();</code></pre>
+<p>It is easy to see that, if in the code above, symbolic references to <code>A</code> are erased to <code>Test</code>, the method call will not be well-typed (as <code>Test</code> does not have a member named <code>a</code>). To overcome this problem, the compiler has to insert a synthetic cast:</p>
+<pre><code>checkcast Test$1
+invokevirtual Test$1::a</code></pre>
+<p>This is not dissimilar with what happens when accessing members of an intersection type through erasure.</p>
+<p>Another orthogonal observation is that the current naming scheme for enum constants classes is too fragile - the names <code>Test$1</code> and <code>Test$2</code> shown above are essentially order-dependent - this means that changing the order in which enum constants are declared could lead to binary compatibility issues. More specifically, if in the code above <code>A</code> is swapped with <code>B</code> and the enum is recompiled, the client bytecode above would fail to link, as <code>Test$1</code> would no longer have a member method named <code>a</code>. This is in stark contrast with the respect to what the JLS has to say about binary compatible evolution of enums:</p>
+<blockquote>
+<p>Adding or reordering constants in an enum will not break compatibility with pre-existing binaries.</p>
+</blockquote>
+<p>One way to preserve binary compatible evolution would be to emit order insensitive class names, such as <code>Test$A</code> and <code>Test$B</code> instead of <code>Test$1</code> and <code>Test$2</code>. The impact of such a change with respect to reflection and serialization is discussed below.</p>
+<p><strong>Serialization</strong></p>
+<p>In Java, all enums are implicitly serializable, as Enum implements Serializable. We would like that the changes provide here be serialization-compatible; they should not change the serialized form.  The serialization specification:</p>
+<p>http://docs.oracle.com/javase/6/docs/platform/serialization/spec/serial-arch.html#6469</p>
+<p>provides special treatment for enums; the serialized form of an enum constant is its name only, and it is not possible to customize serialization/deserialization of an enum constant. (Note that all enum constants are initialized during the <code>&lt;clinit&gt;</code>, and the <code>Enum.valueOf</code> method that is used by deserialization calls the enum's static <code>values()</code> method, which implicitly forces initialization of the base enum class (and of all the constants)).</p>
+<p>In other words, no compatibility problem with respect to the serialized form exists, as the serialized form already does not depend on the class name generated by the compiler.</p>
+<p><strong>Reflection</strong></p>
+<p>Another place where binary names come up is reflection.  The following is perfectly legal reflective code:</p>
+<pre><code>Class&lt;?&gt; c = Class.forName("Test$1");
+System.err.println(c.getName()); //prints Test$1</code></pre>
+<p>While reflection has restrictions in order to prevent an enum constant to be instantiated reflectively, there's no restriction for inspecting the members of an enum constant class. Therefore, existing code using the idiom above would cease to work should we change the binary form of enum constants.</p>
+<p><strong>Denotability</strong></p>
+<p>Currently, an enum constant is a value, not a type. So, a legitimate question is as to whether enum constants should also be denotable types.</p>
+<p>The usual arguments apply here - on the one hand, having a denotable type for an enum constant makes it less magic, and allow programmer to declare variable with that type. But there are also disadvantages:</p>
+<ul>
+<li>could make the code less readable (e.g. A a = A) - as the same ident could mean both value and type</li>
+<li>not clear as to whether all enum constants get their own type; what about an enum constant that does not declare any additional member? Is its type just an alias for the base enum type?</li>
+</ul>
+<p>On the other hand, if the enum constant type is a non-denotable type, it becomes an opaque thing that programmers can only interact with indirectly (e.g. through type inference). To mitigate some of the drawbacks of a non-denotable type, it is important to note that the proposal to add local variable type inference could technically allow programmers to declare variables with the sharper enum type, even though it is non-denotable (e.g. <code>var a = A</code>).</p>
+<p><strong>Accessibility</strong></p>
+<p>There is one corner case with respect to accessibility of members through the enum sharper type. Consider the following case:</p>
+<pre><code>package a;
+
+public enum Foo {
+  A() { 
+    public String s = "Hello!";
+  };
+}
+
+package b;
+
+class Client {
+   public static void main(String[] args) {
+      String s = Foo.A.s; //IllegalAccessError
+   }
+}</code></pre>
+<p>When executing this code, the VM will issue an <code>IllegalAccessError</code>; the problem is that the anonymous class for the enum constant <code>Foo$A</code> is package-private; as a result, an attempt to access a public field in a package-private class from another package will result in an access error. To overcome this problem, the enum constant class should have same modifier as the enum class in which it is defined.</p>
+<p><strong>Source compatibility</strong></p>
+<p>From a source compatibility perspective, there are cases in which sharper typing could leak out as a result of an interaction between this feature and type inference - consider the following code:</p>
+<pre><code>EnumSet&lt;Test&gt; e = EnumSet.of(Test.A);</code></pre>
+<p>The code above used to behave in a relatively straightforward fashion: the static type of <code>Test.A</code> is simply <code>Test</code>, meaning that inferring the type-variable of <code>EnumSet.of</code> was simple, as both constraints named the type <code>Test</code>. But if we change the way in which <code>Test.A</code> is type-checked, the behavior gets more interesting: the type-variable of <code>EnumSet.of</code> will get two competing constraints: it must be equal to <code>Test</code> (form the target-type) and it must be a supertype of <code>Test.A</code>. Luckily, in such a scenario, type inference is smart enough to prefer the stricter equality constraint, and ends up inferring <code>Test</code>.  All things considered, the source compatibility impact of this change is not too different from the one in JDK-8075793, where the change caused capture variables to appear in more places instead of their upper bounds.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>This proposal has two main risks outlined in the sections above:</p>
+<ul>
+<li>change in binary names of enum constants could lead to issues with core reflection</li>
+<li>change in typing of enum constants could result in subtle changes in method type inference, especially in the absence of a target-type</li>
+</ul>
+<p>The first problem is probably nothing to be concerned about; as it has been shown, binary names of enum constants is currently very fragile and prone to re-ordering issues. As a result, any code that is relying on the binary name of an enum constant is inherently fragile, as it is essentially relying on the output of a specific compiler.</p>
+<p>The second problem is more worrisome, as it could cause potential source compatibilities. In order to detect how frequent the source incompatibility scenario described above could be, we have measured how many times the <code>EnumSet.of</code> method was called with various arities; for each call we kept track of whether the call occurred in a context where a target type was available. Below are the results (the measurements have been taken against the full open JDK forest).</p>
+<ul>
+<li>Total calls to EnumSet.of: 150
+<ul>
+<li>calls with arity = 1 : 69
+<ul>
+<li>of which, without target-type: 0</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>In other words, the source compatibility scenario described above does not seem to pose any serious threat.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>The sharper type used for an enum constant are not necessarily denotable; these would constitute another category of non-denotable types.  This may interact with the treatment of non-denotable types in JEP-286 (Local Variable Type Inference).  Depending on decisions made in JEP-286 regarding non-denotable types, one might be able to say:</p>
+<pre><code>var a = Argument.String;</code></pre>
+<p>and have the type of <code>a</code> be the sharper type <code>Argument.String</code> rather than the coarser type <code>Argument</code>.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

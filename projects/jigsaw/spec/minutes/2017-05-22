@@ -1,0 +1,472 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Java Platform Module System (&#8202;JSR 376)Expert Group Minutes: 2017/5/22</title><meta name="viewport" content="width=device-width, initial-scale=.6" /><link rel="stylesheet" type="text/css" href="//openjdk.java.net/.fonts/dejavu.css" /><style type="text/css">
+
+      HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,
+      BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,
+      IMG, INS, KBD, Q, S, SAMP, SMALL, STRIKE, STRONG, SUB, SUP, TT, VAR, B, U,
+      I, CENTER, DL, DT, DD, OL, UL, LI, FIELDSET, FORM, LABEL, LEGEND, TABLE,
+      CAPTION, TBODY, TFOOT, THEAD, TR, TH, TD, ARTICLE, ASIDE, CANVAS, DETAILS,
+      EMBED, FIGURE, FIGCAPTION, FOOTER, HEADER, HGROUP, MENU, NAV, OUTPUT, RUBY,
+      SECTION, SUMMARY, TIME, MARK, AUDIO, VIDEO {
+        margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit;
+        vertical-align: baseline; }
+      ARTICLE, ASIDE, DETAILS, FIGCAPTION, FIGURE, 
+      FOOTER, HEADER, HGROUP, MENU, NAV, SECTION { display: block; }
+      BLOCKQUOTE, Q { quotes: none; }
+      BLOCKQUOTE:before, BLOCKQUOTE:after, Q:before, Q:after {
+              content: ''; content: none; }
+      TABLE { border-collapse: collapse; border-spacing: 0; }
+
+      A { text-decoration: none; }
+      A:link, TABLE.toc A:visited { color: #437291; }
+      A:visited { color: #666666; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+
+      HTML { font-size: 20px; } /* baseline grid */
+      HTML > BODY { font-size: 14px; }
+      BODY {
+        background: white;
+        margin: 40px;
+        margin-bottom: 150%;
+        width: 560px;
+        line-height: 20px;
+        -webkit-text-size-adjust: 100%; /* iOS */
+        color: #222;
+      }
+
+      /* BODY { background: url("grid.png") repeat 0 5px; } */
+
+      BODY { font-family: "DejaVu Serif", "Bitstream Vera Serif",
+                          "Lucida Bright", "Bookman Old Style",
+                          Georgia, serif; }
+      CODE, TT, .jref, DIV.spec .open, TABLE.profiles {
+        font-family: "DejaVu Sans", "Bitstream Vera Sans",
+                     "Lucida Sans", Helvetica, sans-serif; }
+      PRE, PRE > CODE { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+                        Monaco, "Courier New", monospace; }
+
+      @media only screen
+      and (min-device-width: 320px) and (max-device-width: 480px) {
+        BODY { width: 90%; }
+      }
+
+      I, EM { font-style: italic; }
+      B, STRONG, TH { font-weight: bold; }
+      SPAN.open { font-weight: bold; font-size: 12px; }
+
+      P { text-indent: 40px; }
+      P:first-child, UL + P, OL + P, BLOCKQUOTE + P, TABLE + P, P.subsection,
+        P.br, P.intro, DIV.toc + P, DIV.image + P { text-indent: 0; }
+      P.br, LI > P { margin-top: 10px; }
+      P.intro { margin-top: 32px; } /* grid tweak */
+      LI { margin-right: 20px; }
+
+      P.subsection { margin-top: 20px; }
+      P.subsection SPAN.title { font-weight: bold; padding-right: 20px; }
+
+      UL, OL { margin: 10px 0; padding-left: 40px; }
+      UL UL { margin: 0; }
+      LI { ZZmargin-bottom: 10px; }
+      UL.compact LI { margin-bottom: 0; }
+
+      PRE { padding: 0; margin: 10px 0 10px 40px; ZZwidth: 45em; }
+      BLOCKQUOTE { margin: 10px 0; margin-left: 40px; }
+      LI BLOCKQUOTE { margin-left: 0; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+      .error { color: red; font-weight: bold; }
+      .warn { color: #ee0000; font-weight: bold; }
+
+
+      H1 + P, H2 + P, H3 + P, PRE + P, BLOCKQUOTE + P { text-indent: 0; }
+      P.small { font-size: 11px; line-height: 16px; }
+
+      H1, DIV.h1-number, H2, DIV.h2-number, H3 { font-weight: bold; }
+
+      /*
+      H1 { margin-top: -13px; font-size: 22px; line-height: 40px; }
+      H2 { font-size: 17px; margin-top: 20px; margin-bottom: 10px; }
+      H3 { margin-top: 14px; margin-bottom: 10px; font-style: italic; }
+      */
+
+      DIV.doctitle, H1:first-child { margin-top: -13px;
+        font-size: 20px; line-height: 30px; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-weight: bold; margin-bottom: 9px; }
+      DIV.subtitle { margin-top: 2px; font-size: 18px; font-weight: bold; }
+      DIV.authors { margin-top: 10px; margin-bottom: 10px; font-size: 16px; }
+      DIV.author A { font-style: italic; }
+      DIV.version { margin-top: 13px; } /* grid tweak */
+      DIV.version, DIV.legal-notice { font-size: 11px; line-height: 15px; }
+      SPAN.hash { font-size: 11px; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+      DIV.head { margin-bottom: 20px; }
+
+      DIV.section > DIV.title, DIV.section DIV.number SPAN, H1, H2 {
+        ZZfont-size: 15px; font-weight: bold;
+        ZZline-height: 40px; margin-top: 20px; margin-bottom: 10px; }
+
+      H1, DIV.h1-number { font-size: 13px; letter-spacing: 1px;
+        text-transform: uppercase; margin-top: 30px; }
+
+      H1 SMALL { font-size: 18px; }
+
+      .sc { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+      .draft, .confidential { font-size: 13px; font-weight: bold;
+        letter-spacing: 1px; text-transform: uppercase; color: #e00; }
+
+      H1:first-child { letter-spacing: 0; text-transform: none;
+                       margin-bottom: 0; }
+      H1:first-child + H1 { margin-top: 1px; } /* grid tweak */
+
+      H1 + H2, H1 + H1 { margin-top: 0; }
+
+      H3 { margin-top: 10px; margin-bottom: 10px; font-style: italic; }
+
+      H1, H2, DIV, BODY > P, BODY > UL, BODY > OL, IMG { margin-left: 00px; }
+      PRE { margin-left: 80px; }
+      DIV.h1-number, DIV.h2-number { float: left; margin-left: 10px;
+        width: 20px; text-align: right; }
+      DIV.h1-number { font-size: 20px; }
+      DIV.h2-number { margin-top: 20px; }
+      DIV.h2-number SPAN { font-size: 12px; }
+      DIV.section DIV.body { margin-left: 00px; }
+
+      DIV.toc { margin: 20px 0; margin-left: 60px; margin-right: 20px; }
+
+      TABLE.toc { font-size: 14px; }
+      TD + TD { padding-left: 10px; }
+      TABLE.toc TH { font-weight: bold; text-align: left; }
+      TABLE.toc TD.subsections { font-size: 12px; }
+      TABLE.toc TD.number { font-weight: bold; font-size: 13px; }
+      TABLE.toc TD.title { text-transform: uppercase; font-size: 13px;
+        letter-spacing: 1px; font-weight: bold; }
+      TABLE.toc SPAN.subsection { white-space: nowrap; }
+      TABLE.toc TR.section TD { padding-top: 10px; }
+      TABLE.toc TR.section:first-child TD { padding-top: 0; }
+
+      SPAN.new { color: #e76f00; font-size: smaller; }
+      SPAN.update { font-size: smaller; }
+
+      DIV.image { margin: 20px 0 20px 20px; }
+
+  </style></head><body>
+<h1>Java Platform Module System <small>(&#8202;JSR 376)</small><br />Expert Group Minutes: <small>2017/5/22</small></h1>
+<p class="br"> Iris Clark</p>
+<div class="version">2017/5/26 12:26 -0700<span class="hash">&#8192;[38f5637354d0]</span></div><div class="legal-notice">Copyright &#169; 2017 Oracle and/or its affiliates &#183; All Rights Reserved &#183; <a href="license.pdf">License</a></div>
+<p class="intro"> The Expert Group met via video conference on Monday, 22 May
+2017 at 15:00 UTC in order to work toward closure on various technical issues
+and prepare to submit a revised Public Review Draft Specification to the JCP
+by 7 June.</p>
+<p class="br"> <em>Attendees:</em> Jayaprakash &#8220;Jay&#8221; Arthanareeswaran (IBM), Alex
+Buckley (Oracle), Tim Ellison (IBM), R&#233;mi Forax, Brian Fox (Apache Maven,
+about one hour late), Brian Goetz (Oracle, moderator), David Lloyd (Red Hat),
+Mark Reinhold (Oracle), and Robert Scholte (Apache Maven).</p>
+<p class="br"> The intent of these minutes is capture the conversational flow of
+the discussion and to record decisions.  If you are only interested in the
+latter, search for the word &#8220;RESOLUTION&#8221; throughout the text.</p>
+<p class="br"> These minutes were taken during the meeting.  All participants had
+the opportunity to review and correct them for accuracy and completeness prior
+to publication.</p>
+<h2 id="Administration">Administration</h2>
+<p>Brian welcomed everybody back.  He asked that attendees review the draft
+minutes of the last meeting which had been sent to the private conference
+list. These minutes will be sent to the <a href="//mail.openjdk.java.net/mailman/listinfo/jpms-spec-experts">public EG list</a> to
+form the public record for the meeting.  The deadline is noon UTC.  After a
+brief discussion, it was determined that this meeting would run 90 minutes.</p>
+<h2 id="ModuleIdentifiers"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ModuleIdentifiers">#ModuleIdentifiers</a></h2>
+<p>This is an update for a pending agenda item from the last meeting.</p>
+<p>Mark said that after further study and prototyping by Alan Bateman (Oracle),
+it was determined that multiple versions of modules of the same name could be
+handled in a future revision of this specification almost entirely by
+overloading the existing <code>String</code>-consuming API methods.  Mark recommended
+moving this issue firmly into the <code>LATER</code> disposition.  After Tim confirmed
+that a solution had been investigated and potential impact identified, he had
+no objections.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: LATER, since the current specification has the necessary flexibility
+to extend the module system to handle multiple versions in a later release.</p>
+</blockquote>
+<h2 id="CompilationWithConcealedPackages"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#CompilationWithConcealedPackages">#CompilationWithConcealedPackages</a></h2>
+<p>This is an update for a pending agenda item from the last meeting.</p>
+<p>Mark reported that an updated working draft of the JLS has <a href="//cr.openjdk.java.net/~mr/jigsaw/spec/">been
+published</a>.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: PENDING: Eclipse to review and provide feedback (no change).</p>
+</blockquote>
+<h2 id="ResolutionAtCompileTime"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ResolutionAtCompileTime">#ResolutionAtCompileTime</a></h2>
+<p>This is an update for a pending agenda item from the last meeting.</p>
+<p>Mark communicated that revisions to the specification were in progress.</p>
+<p>Brian noted that for this and the previous issue, there seemed to be no
+disagreements.  Only time was required to produce the solution.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: PENDING: Oracle to provide an updated specification for
+review (no change).</p>
+</blockquote>
+<h2 id="RestrictedKeywords"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#RestrictedKeywords">#RestrictedKeywords</a></h2>
+<p>This is an open issue.</p>
+<p>Discussion of this item is deferred until Tuesday (tomorrow) to allow for key
+participant attendance.</p>
+<h2 id="VersionSyntax"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#VersionSyntax">#VersionSyntax</a></h2>
+<p>This is an open issue.</p>
+<p>Mark opened this issue saying that there had been a little discussion a long
+time ago, but not much since then.  After reading the brief <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#VersionSyntax">issue
+summary</a>, he offered his opinion.  Mark noted that he prefers
+not to do things that are not strictly necessary, but that it was very likely
+that a total ordering of version strings would be desirable in the future and
+it would be difficult to impose that restriction in the future.  The existing
+system was designed after studying how Maven, Gradle, Ivy, OSGi, and other
+popular frameworks and tools handled versioning.  The current solution is very
+general.  Some advocates of <a href="http://semver.org/">Semantic Versioning</a> don&#8217;t like it
+because it&#8217;s not sufficiently prescriptive.  The current design does, however,
+seem to encompass a wide variety of cases and is good enough for now.</p>
+<p>R&#233;mi reminded people that technically there are two &#8220;versions&#8221;: the &#8220;version&#8221;
+from the API and a &#8220;raw version&#8221; represented by a <code>String</code>.  Code may use
+either.  Mark agreed saying that on R&#233;mi&#8217;s suggestion, a
+<code>ModuleDescriptor.Requires::rawCompiledVersion</code> method, had been added;
+however, Mark did not recommend its general use.  R&#233;mi acknowledged that the
+new method was a nice fallback.</p>
+<p>David explained that there was a distinction between &#8220;version syntax&#8221; and
+&#8220;version scheme&#8221;.  He advocated specifying a syntax instead of applying a
+scheme.  In a syntax, there is a common set of rules that people may take
+advantage of (primarily for ordering).  There is no positional meaning.  For
+every software project there is a different version scheme, typically based
+on the production process.  If a syntax is used, there is a total ordering and
+everybody will can do what makes sense for them with little impact to others.</p>
+<p>Robert said that Maven used major, minor, etc.; however, it wasn&#8217;t interesting
+enough so string comparison was preferred.</p>
+<p>Mark agreed with David saying that the API was not intended to be prescriptive
+and it encompassed many things.  There are some differences between this API
+and OSGi with regard to pre-release strings, but even some OSGi advocates
+think their system is kind of broken in this respect anyway.  This API is
+consistent with Maven and other systems.  It does not try to force the use of
+Semantic Versioning, though it accommodates it.  If six or seven version
+components are needed, they may be compared in a sensible manner.</p>
+<p>In response to Robert&#8217;s statement, Mark thought that strings were not
+sufficient.  As an example, he offered the case of a version which is a
+sequence of numbers separated by &#8216;.&#8217;. A sensible comparison via
+<code>String::compare</code> is not possible.  Parsing is required for a total ordering.
+Robert agreed that users are on their own for versions using only numbers
+since the API would just be a <code>Comparable</code>.</p>
+<p>Mark said that the API intentionally did not provide &#8220;major&#8221; or &#8220;minor&#8221;
+convenience methods.  The names of individual components are for somebody else
+to determine.  The API could be extended in the future to return a sequence of
+tokens.</p>
+<p>Brian reviewed, saying that while there was some disagreement, it sounded like
+people were mostly satisfied with the API and no further changes were necessary.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: NOW, retaining the existing API.</p>
+</blockquote>
+<h2 id="AvoidConcealedPackageConflicts"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AvoidConcealedPackageConflicts">#AvoidConcealedPackageConflicts</a></h2>
+<p>This issue was included because it was of specific interest to the JCP EC.</p>
+<p>Mark summarized this item saying that this comes down to whether there should
+be a way to load multiple modules when they contain non-exported packages of
+the same name.  When the issue was originally closed, the suggestion was to
+defer a solution to a future release when there would be more time to design a
+proper solution.  The design was not necessarily straight-forward.  Mark
+confirmed that he understood that some people were concerned about this
+decision and that it has been raised by the EC.  He said he suspects that the
+near-term impact of not addressing this issue is unlikely to be that great
+since most code being modularized is currently being run on the class path and
+is already likely to be free of conflicts.  The chances of conflict are
+further reduced by the common use of the reverse-DNS package-naming
+convention.  Further, while not pretty, there are already standard tools and
+practices, such as shading, for handling those conflicts.  For those reasons,
+this is not a pressing issue and it could be addressed in a later release.</p>
+<p>R&#233;mi concurred, saying that in a perfect world there would be a solution in
+the initial release.  Unfortunately, this was not a problem that could be
+solved with one day or even one week of work.  It should be addressed in the
+next release.</p>
+<p>David provided further background saying that this is a general concern for
+enterprises when deploying updates. They tend to be stuck on those versions
+for quite a long time.  If a restriction is discovered in a year or two, they
+often cannot update to the next JDK release without difficulty.  He suggested
+that an interim solution was desirable, even if it was unsupported.</p>
+<p>Tim shared David&#8217;s concern in allowing people to do something that needed to
+be tightened later.  He expressed his disappointment that this stage was not
+reached earlier.  Tim thought that it should be made very clear to early
+adopters that this is the first version of the modular platform.  They should
+not be encouraged to re-organize their code around the new architecture, but
+that new code may be written in a modular fashion.  A mature modular platform
+is expected in a subsequent release.  Tim echoed R&#233;mi&#8217;s comment that now is
+not the time to attack this problem.</p>
+<p>Tim expanded saying that a temporary solution would still result in a complex
+discussion with customers.  Given the choice, he&#8217;d rather have a conversation
+describing the current limitation than the nature of a temporary solution.
+David agreed with this conclusion.</p>
+<p>Brian recapped, saying that everybody agrees that this is something that the
+module system should support.  Everybody is disappointed that this is not
+addressed in the initial release.  There is broad agreement from R&#233;mi, Mark,
+and Tim that there are still technical issues that need to be considered and a
+solution should not be rushed.  David was not happy that there was no
+temporary solution and expected members of the community to share to share his
+disappointment, but did not have any better ideas.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: LATER (regretfully), as <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AvoidConcealedPackageConflicts">previously
+decided</a>.</p>
+</blockquote>
+<h2 id="Additional-agenda-items">Additional agenda items</h2>
+<p>The previous issue was the final pre-seeded agenda item.  After Brian
+individually surveyed everybody, this is the list of additional items:</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#CyclicDependences">#CyclicDependences</a> (David)</li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#LayerPrimitives">#LayerPrimitives</a> (David)</li>
+<li>Advice on requiring automatic modules (Robert)</li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MultiModuleJARs">#MultiModuleJARs</a> (Tim, citing a <a href="https://www.jcp.org/en/jsr/results?id=5959">PR Ballot
+    comment</a> from a JCP EC member, Software AG)</li>
+<li>Ready to move forward?  (Tim)</li>
+<li>Status: <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012673.html">Relax strong encapsulation</a>
+   (Jay)</li>
+</ul>
+<h2 id="Status:-Relax-strong-encapsulation">Status: <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012673.html">Relax strong encapsulation</a></h2>
+<p>This issue was added to the agenda when attendees were surveyed for any
+additional items.</p>
+<p>Jay requested status for the recent proposal sent to the
+<a href="//mail.openjdk.java.net/mailman/listinfo/jigsaw-dev">jigsaw-dev</a> list to <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012673.html">allow illegal reflective access from code on
+the class path by default</a> in JDK 9.</p>
+<p>Mark addressed this issue shortly after it was added to the agenda.  He
+noted that the related text for the <a href="//openjdk.java.net/projects/jdk9/spec/">JSR 379</a> platform
+specification had not been proposed yet.  While the general response on
+jigsaw-dev was positive, he recognized that there was no decision that would
+make everybody happy.  He expected to send a response and update the reference
+implementation once these EG meetings were over.  Mark could not commit to
+specific dates.</p>
+<p>After Jay pressed for a commitment that there would be no further
+specification changes, Tim reminded him that as a draft specification, there
+could be no guarantees that there would not be more changes in the next few
+weeks.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: NOW: Oracle to propose appropriate text for JSR 379 and
+update the reference implementation.</p>
+</blockquote>
+<h2 id="CyclicDependences"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#CyclicDependences">#CyclicDependences</a></h2>
+<p>This issue was added to the agenda when attendees were surveyed for any
+additional items.</p>
+<p>David&#8217;s concern was the cyclic dependency check at runtime.  He began by
+saying that an essential feature of the module system is that recompilation of
+everything is not required whenever a dependency is updated.  The issue is
+that cycles may be introduced at runtime as the system evolves.  He noted that
+if no cycles are present at compile time, then there is no benefit to the JVM
+in detecting them at runtime.  He thought that this would most likely be
+encountered by enterprise systems and the problem should be addressed now
+because addressing it is easy.</p>
+<p>R&#233;mi professed that he had seen such a system and wanted a switch that
+disabled the runtime circularity check.  He would want to fix the
+circularity, but that would not be practical at deployment.  The switch would
+acknowledge this difficulty.  David agreed that by the time the problem is
+detected at deployment, it is too late.  It was not always practical to solve
+a circularity problem in a short time.</p>
+<p>Alex requested verification that the cycle check was not a problem at compile
+time, only at runtime.  David and R&#233;mi agreed, adding that this is essentially
+how Maven behaved.  Alex rephrased saying that the first person who discovers
+the problem is some unfortunate individual who is the first to run with the
+circular versions of the two components.  Robert said he concurred with David
+and R&#233;mi&#8217;s evaluation.</p>
+<p>After understanding the problem, Alex made the broad observation that there
+were plenty of things that could go wrong when there is independent
+development.  For instance, at runtime there could be a discovery that an
+automatic module&#8217;s name has changed (Robert&#8217;s issue), or that a module&#8217;s
+exports have been reduced.  He noted that rollback to a previous version of
+the components, before the cycle was introduced, would solve the problem.</p>
+<p>David said that avoiding cycles at runtime is a conceptual problem.  He
+continued saying that cycles are not a good design practice; however, these
+did not cause failures, problems, or bugs.  The prohibition of cyclic
+dependencies existed purely to encourage good design practice.  This made it
+difficult to explain to management why an upgrade failed.</p>
+<p>Mark did not think that the solution to this problem was simply a matter of
+changing a few lines of code.  He cited a few scenarios which would need to be
+resolved, including specification complications with cycles and the potential
+for class-loader delegation loops at run time.  He also reminded the group of
+a philosophical point, namely that this restriction is meant to lead
+developers to better design practices for large systems, so it does have
+value.  Since this restriction could be lifted in a later release, he thought
+it best to be conservative for now and wait for actual experience.</p>
+<p>R&#233;mi said that he mostly agreed with Mark but practically speaking he wanted a
+disabling flag on the command-line.  Without such a flag, he expected people
+to wait until there was a version of the module system with that capability.
+Mark reminded R&#233;mi that there was no way to have an &#8220;invisible&#8221; command-line
+flag, since it would need to be allowed by the specification.</p>
+<p>Alex believed that nobody should be able to pick an arbitrary set of modules
+and expect everything to just work.  David responded saying that deployers do
+that all the time.  They do things that are well beyond what the original
+developer envisioned.  Going back to Mark&#8217;s comment regarding cycles
+complicating the implementation, David wanted to know if this was something
+theoretical or possible.  Mark replied saying it would take serious
+investigation to ensure that there were no problems.  He added that there
+would be issues with both the specification and with adequate testing.</p>
+<p>Brian recapped the discussion saying that everybody seemed to agree that
+cyclic dependencies could become a problem at run time.  In theory there was
+no aversion to having a different runtime response; however, additional,
+non-trivial analysis was required.  Once there is confidence in a solution,
+the runtime behavior could be changed at that time.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: LATER: After additional, thorough analysis of issues around
+run-time cyclic dependencies, it may be possible to relax the requirement.</p>
+</blockquote>
+<p>Shortly before the end of this topic, Brian Fox joined the call.  After the
+resolution, Brian Goetz summarized the set of new agenda items and asked
+whether Brian Fox wished to add anything.  He declined.</p>
+<h2 id="LayerPrimitives"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#LayerPrimitives">#LayerPrimitives</a></h2>
+<p>This issue was added to the agenda when attendees were surveyed for any
+additional items.</p>
+<p>Mark read the issue summary from the issue list, adding that while the
+requested <code>addExports</code>, <code>addUses</code>, and <code>addPackage</code> primitives exist in the
+reference implementation he was reluctant to expose them.  They weren&#8217;t
+designed for general use; they were added to the reference implementation for
+whitebox testing and were under consideration for removal since they were of
+little value for that purpose.</p>
+<p>David said that being time-aware, he wanted to discuss the items individually.
+For <code>addExports</code>, he indicated that it would be useful to add an export
+without opening a module.  The only way to do that currently is via injected
+bytecode.</p>
+<p>R&#233;mi thought that part of the problem was that the current API was not the
+right one.  He outlined two aspects of the problem that need to be considered:
+overriding the <code>module-info.class</code> file and overriding at arbitrary times
+during runtime.  He thought the first was just adding new things.  The second
+could potentially override <code>module-info</code> before creation.  He suspected that
+there may be problems with the latter.</p>
+<p>David thought that this was a bigger problem due to layers and he did not wish
+to venture into that &#8220;rabbit hole.&#8221;  For now, it seemed logical to have an
+<code>addExports</code> given the existence of <code>addOpens</code>.</p>
+<p>Brian noted the time and suggested that <code>addPackage</code> seemed to be the most
+controversial.  He suggested that the conversation move towards that item.</p>
+<p>David begin by saying that the ability to add classes at any time already
+existed.  He thought that adding a package wasn&#8217;t that different and the
+distinction between classes and packages was not one that a user would
+intuitively understand.  Further, he didn&#8217;t believe that it would be an
+unreasonable request since it did not push the boundaries of other dynamic
+systems.  David and R&#233;mi disagreed about the identity of a module.  R&#233;mi
+declared that a module is defined by all of the packages it contains; hence,
+adding a package changes the identity.  David countered saying he defined the
+module&#8217;s identity by the ABI, i.e., by the set of classes that it exposes.
+R&#233;mi replied saying that private packages were part of the ABI because
+<a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AvoidConcealedPackageConflicts">#AvoidConcealedPackageConflicts</a> had not been
+implemented yet.</p>
+<p>Mark made the general observation that in this situation, the <code>addPackage</code>
+method would impose additional constraints that would restrict how the
+platform and its implementations can evolve in the future.  He said that the
+reference implementation added code to the JVM that used package indices for
+access control, and requiring every JVM to be prepared to allow those indices
+to be updated at any time seemed unwise, particularly since it was not needed
+in this module system.  Mark thought that adding <code>addPackages</code> would impose
+constraints on the future evolution of JVMs without clear justification.</p>
+<p>Brian reviewed the situation saying that there appeared to be two strong
+objections and that the arguments in favor seemed to be of the form of &#8220;it
+would be nice.&#8221;  He suggested that rational thing to do was to consider this
+later.</p>
+<p>David went back to describe the <code>addExports</code> case, saying that it was a
+compatibility breaker.  Prior to the current release, <code>ServiceLoader</code> could be
+used to statically wire modules based on services.  He expected to introduce
+tools to mitigate the new problems which could be solved via bytecode
+generation (not ideal).</p>
+<p>Further explanation and discussion was interrupted due to lack of time.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: <code>addExports</code> &#8212; PENDING: additional discussion required;
+<code>addPackage</code> &#8212; LATER: if the additional complexity and constraints can be
+justified; <code>addUses</code> &#8212; PENDING: no time for discussion today.</p>
+</blockquote>
+<h2 id="Next-meeting">Next meeting</h2>
+<p>Brian made a time-check.  After a brief discussion, a meeting at 15:00 UTC for
+90 minutes on Tuesday was agreed upon.</p>
+<p class="br"> At this point the EG adjourned.</p></body></html>

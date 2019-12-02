@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 200: The Modular JDK</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 200: The Modular JDK</h1><table class="head"><tr><td>Owner</td><td>Mark Reinhold</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>JSR</td><td><a href="https://jcp.org/en/jsr/detail?id=376">376</a></td></tr><tr><td>Discussion</td><td>jigsaw dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>XL</td></tr><tr><td>Duration</td><td>XL</td></tr><tr><td>Depends</td><td><a href="201">JEP 201: Modular Source Code</a></td></tr><tr><td></td><td><a href="220">JEP 220: Modular Run-Time Images</a></td></tr><tr><td></td><td><a href="261">JEP 261: Module System</a></td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Alex Buckley, Paul Sandoz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/07/22 14:08</td></tr><tr><td>Updated</td><td>2017/09/21 14:30</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8051618">8051618</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Use the Java Platform Module System, specified by <a href="//openjdk.java.net/projects/jigsaw/spec/">JSR 376</a> and
+implemented by <a href="//openjdk.java.net/jeps/261">JEP 261</a>, to modularize the JDK.</p>
+<h2 id="Goals">Goals</h2>
+<p>Divide the JDK into a set of modules that can be combined at compile
+time, build time, and run time into a variety of configurations
+including, but not limited to:</p>
+<ul>
+<li>
+<p>Configurations corresponding to the full Java&#160;SE Platform, the
+full JRE, and the full JDK;</p>
+</li>
+<li>
+<p>Configurations roughly equivalent in content to each of the
+<a href="//openjdk.java.net/jeps/161">Compact Profiles</a> defined in <a href="//openjdk.java.net/projects/jdk8/spec/">Java SE 8</a>; and</p>
+</li>
+<li>
+<p>Custom configurations which contain only a specified set of modules
+possibly augmented by external library and application modules, and
+the modules transitively required by all of these modules.</p>
+</li>
+</ul>
+<p>The definition of the modular structure should make a clear distinction
+between standard modules, whose specifications are governed by the
+<a href="http://jcp.org/">Java Community Process</a>, and modules that are specific to the JDK.
+It should also distinguish modules that are included in the Java&#160;SE
+Platform Specification, and thereby made mandatory in every Platform
+Implementation, from all other modules.</p>
+<h2 id="Motivation">Motivation</h2>
+<p><a href="//openjdk.java.net/projects/jigsaw/">Project Jigsaw</a> aims to design and implement a standard module
+system for the Java&#160;SE Platform and to apply that system to the
+Platform itself, and to the JDK.  Its primary goals are to make
+implementations of the Platform more easily scalable down to small
+devices, improve security and maintainability, enable improved
+application performance, and provide developers with better tools for
+programming in the large.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Design-principles">Design principles</h3>
+<p>The modular structure of the JDK implements the following principles:</p>
+<ol>
+<li>
+<p><a id="p1">Standard modules, whose specifications are governed by
+the JCP, have names starting with the string <code>"java."</code>.</a></p>
+</li>
+<li>
+<p><a id="p2">All other modules are merely part of the JDK, and have
+names starting with the string <code>"jdk."</code>.</a></p>
+</li>
+<li>
+<p><a id="p3">If a module exports a package that contains a type that
+contains a public or protected member that, in turn, refers to a
+type from some other module, then the first module must grant
+implied readability to the second, via <code>requires transitive</code>.</a>
+(This ensures that method-invocation chaining works in the obvious
+way.)</p>
+</li>
+<li>
+<p><a id="p4">A standard module may contain both standard and
+non-standard API packages.</a> If a standard module exports a
+standard API package then the export may be qualified; if a standard
+module exports a non-standard API package then the export must be
+qualified.  In either case, if a standard module exports a package
+with qualification then the export must be to some subset of the
+modules in the JDK.  If a standard module is a Java&#160;SE module,
+<em>i.e.</em>, is included in the Java&#160;SE Platform Specification, then
+it must not export any non-SE API packages, at least not without
+qualification.</p>
+</li>
+<li>
+<p><a id="p5">A standard module may depend upon one or more
+non-standard modules.</a> It must not grant implied readability to
+any non-standard module.  If it is a Java&#160;SE module then it
+must not grant implied readability to any non-SE module.</p>
+</li>
+<li>
+<p><a id="p6">A non-standard module must not export any standard API
+packages.</a> A non-standard module may grant implied readability to
+a standard module.</p>
+</li>
+</ol>
+<p>An important consequence of principles 4 and 5 is that code that depends
+only upon Java&#160;SE modules will depend only upon standard
+Java&#160;SE types, and thus be portable to all Implementations of the
+Java&#160;SE Platform.</p>
+<h3 id="The-module-graph">The module graph</h3>
+<p>The modular structure of the JDK can be visualized as a graph: Each
+module is a node, and there is a directed edge from one module to another
+if the first depends upon the second.  The full module graph has too many
+edges to be displayed easily; here is the <a href="https://en.wikipedia.org/wiki/Transitive_reduction"><em>transitive reduction</em></a>
+of the graph, in which redundant edges are omitted (click to enlarge):</p>
+<blockquote>
+<p><a href="https://bugs.openjdk.java.net/secure/attachment/72525/jdk.png"><img src="https://bugs.openjdk.java.net/secure/attachment/72524/jdk-thumb.png" /></a></p>
+</blockquote>
+<p>Herewith a guided tour of the module graph:</p>
+<ul>
+<li>
+<p>Standard Java&#160;SE modules are colored orange; non-SE modules are
+colored blue.</p>
+</li>
+<li>
+<p>If one module depends upon another, and it grants implied readability
+to that module, then the edge from the first module to the second is
+solid; otherwise, the edge is dashed.</p>
+</li>
+<li>
+<p>At the very bottom is the <code>java.base</code> module, which contains
+essential classes such as <code>java.lang.Object</code> and <code>java.lang.String</code>.
+The base module depends upon no module, and every other module
+depends upon the base module.  Edges to the base module are lighter
+than other edges.</p>
+</li>
+<li>
+<p>Near the top is the <code>java.se.ee</code> module, which gathers together all
+of the modules that comprise the Java&#160;SE Platform, including
+modules that overlap with the Java&#160;EE Platform Specification.
+This is an example of an <em>aggregator</em> module, which collects and
+re-exports the content of other modules but adds no content of its
+own.  A run-time system configured to contain the <code>java.se.ee</code> module
+will contain all of the API packages of the Java&#160;SE Platform.  A
+module is included in the Java&#160;SE Platform Specification if, and
+only if, it is a standard module reachable from the <code>java.se.ee</code>
+module.</p>
+</li>
+<li>
+<p>The <code>java.se</code> aggregator module gathers together those parts of the
+Java&#160;SE Platform that do not overlap with Java&#160;EE.</p>
+</li>
+<li>
+<p>The non-standard modules include debugging and serviceability tools
+and APIs (<em>e.g.</em>, <code>jdk.jdi</code>, <code>jdk.jcmd</code> and <code>jdk.jconsole</code>),
+development tools (<em>e.g.</em>, <code>jdk.compiler</code>, <code>jdk.javadoc</code>, and
+<code>jdk.xml.bind</code>), and various service providers (<em>e.g.</em>,
+<code>jdk.charsets</code>, <code>jdk.scripting.nashorn</code>, and <code>jdk.crypto.ec</code>), which
+are made available to other modules via the existing
+<code><a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">java.util.ServiceLoader</a></code> mechanism.</p>
+</li>
+<li>
+<p>The <code>java.smartcardio</code> module is standard but not part of the
+Java&#160;SE Platform Specification, hence its name starts with the
+string <code>"java."</code> but it is colored blue, and it is not reachable from
+the <code>java.se</code> module.</p>
+</li>
+</ul>
+<p>The module graph is, in effect, a new kind of API, and is specified and
+evolved as such.  The subgraph of the module graph rooted at the
+<code>java.se.ee</code> module, with all non-SE modules and corresponding edges
+removed, is specified in the Java&#160;SE Platform Specification; its
+evolution will hereinafter be governed by the JCP.  The evolution of the
+remainder of the graph will be covered by future JEPs.  In either case,
+if a module is specified as being available for general use then it will
+be subject to the same evolutionary constraints as other APIs.  Removing
+such a module or changing it incompatibly, in particular, will require
+public notice at least one major release in advance.</p>
+<p>A tabular summary of all of the modules, including footprint metrics for
+a Linux/AMD64 build, is available <a href="https://bugs.openjdk.java.net/secure/attachment/72527/module-summary.html">here</a>.</p>
+<h2 id="Testing">Testing</h2>
+<p>The unit and regression tests in the JDK and <code><a href="//openjdk.java.net/jtreg/">jtreg</a></code>,
+the harness used to run them, now allow tests to be selected on the basis
+of the modules which they test and upon which they depend, so that
+arbitrary configurations of JDK modules can be tested.</p>
+<p>The primary functional test of this enhancement inspects a configured set
+of modules to ensure that it is a valid combination of the modules
+defined herein, that each module has the expected content and exports the
+expected API packages, and that the modules have the expected dependence
+relationships.</p>
+<p>The JCK can now test those aspects of the module graph which become part
+of the Java&#160;SE Platform Specification.  This includes the names of
+the SE modules, their exported API packages, and the dependences amongst
+them that cause SE API packages to be re-exported.  The JCK can also test
+arbitrary configurations of the SE modules present in a Platform
+Implementation.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The modular structure defined here does not support at least one known
+use case, namely that of wanting to use the <code>java.beans</code> package without
+having to require the very large <code>java.desktop</code> module.  It might not
+address other use cases, as yet unknown.  If a critical use case is not
+supported in the final implementation of this JEP then we expect to be
+able address it in a later release by refactoring the module graph.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>This JEP is the one of several for <a href="//openjdk.java.net/projects/jigsaw/">Project Jigsaw</a>.  The other JEPs
+are:</p>
+<ul>
+<li><a href="//openjdk.java.net/jeps/201">201: Modular Source Code</a></li>
+<li><a href="//openjdk.java.net/jeps/220">220: Modular Run-Time Images</a></li>
+<li><a href="//openjdk.java.net/jeps/260">260: Encapsulate Most Internal APIs</a></li>
+<li><a href="//openjdk.java.net/jeps/261">261: Module System</a>; see also <a href="//openjdk.java.net/projects/jigsaw/spec/">JSR 376</a></li>
+<li><a href="//openjdk.java.net/jeps/282">282: jlink: The Java Linker</a></li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

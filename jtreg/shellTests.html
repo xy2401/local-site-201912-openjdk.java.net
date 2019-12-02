@@ -1,0 +1,331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Shell Tests in jtreg</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style>
+
+ul.inline-list li { display: inline-block;  }
+ul.inline-list li::before { content: " \a0\2022\a0"; }
+pre.shell {
+    margin: 10px 20px;
+    padding: 5px;
+    border: 1px solid gray;
+    border-radius: 5px;
+}
+pre.shell, code {
+   background-color: #eee;
+}
+table.envvars {
+    margin: 10px 20px;
+    border: 1px solid gray;
+    border-collapse: collapse;
+}
+table.envvars th, table.envvars td {
+    padding: 2px 5px;
+    vertical-align: top;
+    border: 1px solid gray;
+}
+table.envvars td:first-child {
+    font-family: monospace;
+}
+dt { font-style: italic; margin-top:5px; margin-bottom:2px; }
+
+ul.recommend { margin-left:-15px }
+
+
+</style></head><body><div id="main">
+<h1>Shell Tests in <i>jtreg</i></h1>
+When writing a shell test, it is important to consider the take
+into account the differences in the way that scripts are executed
+on the various supported platforms.
+<h2>Platform differences</h2>
+<p>The primary differences that may need to be taken into account
+when writing a test that can be run on a variety of platforms
+reflect the different ways to run tests on a Windows system, as
+compared to POSIX systems like Linux, macOS, and Solaris. On
+Windows, MKS Toolkit was originally used to run JDK shell tests;
+for OpenJDK shell tests, Cygwin is currently the standard, and
+support is coming for using Windows Subsystem for Linux (WSL) on
+Windows 10.</p>
+<p><i>Note:</i> While it is necessary to update existing shell
+tests if they are to support being run with WSL, there is no need
+to update any tests if such support is not required.</p>
+<p>These are the differences that typically affect the way to write
+a shell test.</p>
+<dl>
+<dt>File separator</dt>
+<dd>On POSIX systems, <code>/</code> is the standard file separator
+character; Windows originally required the use of <code>\</code>
+but now accepts either.</dd>
+<dt>Path separator</dt>
+<dd>On POSIX systems, <code>:</code> is the standard character to
+separate file and directory names within a single string. On
+Windows, the character depends on the system being used to run
+shell tests: the standard Windows path separator character is
+<code>;</code> but some systems allow or require the use of
+<code>:</code> instead.</dd>
+<dt>Null device</dt>
+<dd>On POSIX systems, the null device is <code>/dev/null</code>. On
+Windows, the name depends on the system being used to run tests,
+and is either <code>NUL</code> (MKS Toolkit) or
+<code>/dev/null</code> (other systems).</dd>
+<dt>Suffix for executable binaries</dt>
+<dd>On POSIX systems, executable binaries typically do not use any
+file name extension. On Windows, executable binaries use the
+<code>.exe</code> extension, but depending on the environment used
+to run tests, it may not be necessary to specify the extension when
+invoking the command from a shell. When invoking a Windows binary
+from WSL, the file extension must be specified.</dd>
+<dt>Absolute file system paths</dt>
+<dd>On native Windows, an absolute filename begins with
+<code><i>letter</i>:</code>. On Cygwin, such paths are normally
+represented by <code>/cygdrive/<i>letter</i></code> although it
+allows the use of "mixed-style" paths, beginning with
+<code><i>letter</i>:</code> and using <code>/</code> as the file
+separator character. On WSL, such paths are represented by
+<code>/mnt/<i>letter</i></code>. Unlike Cygwin, it does not allow
+the use of mixed-style paths, and paths must be in the correct form
+for the context in which it will be used. A utility
+(<i>wslpath</i>, similar to Cygwin's <i>cygpath</i>) is provided to
+convert between the different forms.</dd>
+</dl>
+<p>It is also worth noting that these differences only apply in the
+shell system itself. When values are passed in to a native Windows
+binary, via the command line or environment variables, the strict
+Windows-native forms must be used. This primarily applies to the
+use of the path separator character and the form of any absolute
+filesystem paths.</p>
+<p>Most of these differences can be handled by determining the
+platform and setting environment variables to be used later in the
+script. That is not so for the issues related to absolute file
+system paths, and there the solution is to avoid the use of
+absolute file system paths as much as possible, relying on tools
+like <i>jtreg</i> to initialize any paths as needed, and to
+completely avoid the use of conversion utilities like
+<i>cygpath</i> and <i>wslpath</i>. (If your script is so
+complicated that it needs such utilities, maybe it shouldn't be
+written as a script. See <a href="#opt1">Convert shell tests to
+Java</a>.)</p>
+<h3>Determining the platform</h3>
+Most platforms can be determined by examining the result of
+executing <code style="white-space:nowrap">uname&#160;-s</code>,
+which typically yields the name of the operating system. The
+following are exceptions to that rule:
+<dl>
+<dt>Cygwin</dt>
+<dd><code>uname&#160;-s</code> begins with
+<code>CYGWIN</code>.</dd>
+<dt>Windows Subsystem for Linux</dt>
+<dd><code>uname&#160;-s</code> reports <code>Linux</code>;
+<code>/proc/version</code> contains the word
+<code>Microsoft</code>.</dd>
+<dt>MKS Toolkit</dt>
+<dd><code>uname&#160;-s</code> begins with
+<code>Windows</code>.</dd>
+<dt>macOS</dt>
+<dd><code>uname&#160;-s</code> reports <code>Darwin</code>.</dd>
+</dl>
+<h2>Handling platform-specific differences</h2>
+<ul class="inline-list">
+<li><a href="#opt1">Convert to Java</a></li>
+<li><a href="#opt2">Inline <code>case</code> statement</a></li>
+<li><a href="#opt3">Shared library file</a></li>
+<li><a href="#opt4"><i>jtreg</i> environment variables</a></li>
+</ul>
+<h3 id="opt1">1: Convert shell tests to Java</h3>
+<p>Convert the test to Java. In general, this continues to be the
+recommended alternative. Shell tests are fragile, and difficult to
+test in all likely environments. Converting a test to Java code is
+the best and most effective way to ensure correct operation on all
+platforms.</p>
+<h3 id="opt2">2: Use an inline <code>case</code> statement</h3>
+<p>You can use an inline <code>case</code> statement to set
+environment variables according to the characteristics of the
+platform being used to run the shell tests. These environment
+variables can then be used later in the script to accommodate the
+platform differences. Sometimes it will be necessary to use quotes
+around the reference to the environment variable, to prevent
+additional expansion by the shell. This is particularly true if the
+value may contain spaces. For example,
+<code>"$TESTJAVA"</code>.</p>
+<p>The following is an example script to set
+<code>EXE_SUFFIX</code>, <code>FS</code> and <code>PS</code> on
+different platforms.</p>
+<pre class="shell">
+# set platform-dependent variables
+OS=`uname -s`
+case "$OS" in
+  SunOS )
+    FS="/"
+    PS=":"
+    ;;
+  Linux )
+    FS="/"
+    if grep -q Microsoft /proc/version \
+            &amp;&amp; test -x "$TESTJAVA"/bin/javac.exe; then
+        PS=";"
+        EXE_SUFFIX=".exe" ;
+    else
+        PS=":" ;
+    fi
+    ;;
+  Darwin )
+    FS="/"
+    PS=":"
+    ;;
+  AIX )
+    FS="/"
+    PS=":"
+    ;;
+  CYGWIN* )
+    FS="/"
+    PS=";"
+    ;;
+  Windows* )
+    FS="\\"
+    PS=";"
+    ;;
+  * )
+    echo "Unrecognized system!"
+    exit 1;
+    ;;
+esac
+</pre>
+<h3 id="opt3">3: Use a shared library file</h3>
+<p>Instead of using an inline <code>case</code> statement, you can
+put the statement in a shared library file, and execute it with the
+<code>source</code> command. You can either reference the file with
+a path that is relative to the <code>TESTSRC</code> directory,
+which will probably mean the path is different for different tests,
+or you can reference the file with a path relative to the
+test-suite root directory, using the <code>TESTROOT</code>
+environment variable set by <i>jtreg</i>.</p>
+<pre class="shell">
+source "$TESTROOT"/testlib/env.sh
+</pre>
+<p>Note that there is a small chicken-and-egg problem here: unless
+the shared script is in the same directory as the tests that will
+refer to it, there will be file separators in the relative path,
+and those file separators may vary between platforms. To reference
+the shared file, we potentially need to access the variables before
+they are set. However, <code>/</code> works as a file separator on
+all platforms, and so can be used instead.</p>
+<p>Do not use the <code>sh</code> command to execute the script,
+because that will execute it in a child shell, which will not
+affect the instance of the shell running the test.</p>
+<h3 id="opt4">4: Use environment variables set by <i>jtreg</i></h3>
+<p>When running a shell test, <i>jtreg</i> will set the following
+environment variables, intended to help avoid the need for a
+<code>case</code> statement in the test itself, or in shared
+library code. The following variables will be set:</p>
+<table class="envvars" summary="Table of environment variables">
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>EXE_SUFFIX</td>
+<td>Set to <code>.exe</code> when it is necessary to invoke a
+program such as <i>java</i> or <i>javac</i>.</td>
+</tr>
+<tr>
+<td>FS</td>
+<td>Set to the file separator: <code>/</code> or
+<code>\</code>.</td>
+</tr>
+<tr>
+<td>PS</td>
+<td>Set to the path separator: <code>:</code> or
+<code>;</code>.</td>
+</tr>
+<tr>
+<td>NULL</td>
+<td>Set to the name of the null device: <code>/dev/null</code> or
+<code>NUL</code>.</td>
+</tr>
+</table>
+<h2>Running tests standalone</h2>
+<p>Amongst the reasons in the past to advocate the use of an inline
+<code>case</code> statement to handle platform differences was a
+desire to be able to develop and debug a test without the
+encumbrance of the <i>jtreg</i> harness infrastructure, and because
+of the prevailing practice at the time of doing "partial
+bringovers" (using an earlier source-code management system),
+meaning there was no guarantee that any shared library files would
+be available.</p>
+<p>Although those reasons have mostly gone away, it can still
+occasionally be useful to run a shell test standalone. For example,
+one reason for running the test outside of the test harness is to
+insert a wrapper around the test process, such as to point
+<code>LD_LIBRARY_PATH</code> at a debugging malloc or run under
+<code>strace -c</code> to measure system calls.</p>
+<p>These days, <i>jtreg</i> helps make it easy to run a test
+standalone: once a test has been run by <i>jtreg</i>, the test
+result (<i>.jtr</i>) file contains "rerun" sections with details on
+how to run each action of the test. You can either use the
+<i>jtreg</i> <code>-show:rerun</code> option to output the
+information to the standard output stream, which you can then save
+to a file, or you can copy/paste/edit from the <i>.jtr</i> file
+directly. If you copy from the <i>.jtr</i>, note that the text
+contains occasional escape sequences, which you will have to fix up
+before you can use the text in a script; if you use the
+<code>-show:rerun</code> option, those escape sequences are
+interpreted before the section is written to the output stream.</p>
+<h2>Recommendations</h2>
+<ul class="recommend">
+<li>
+<p><a href="#opt1">Converting shell tests to Java</a> is the most
+work but it simplifies cross-platform testing and eliminates any
+potential costs that may be incurred from any subsequent changes to
+the mechanism to invoke shell tests. The cost to convert shell
+tests can often be amortized by converting groups of related tests
+together, perhaps by developing and/or using shared libraries for
+common operations, such as compiling code or executing a child
+JVM.</p>
+</li>
+<li>
+<p>If a test already has an <a href="#opt2">inline
+<code>case</code> statement</a>, simply updating the statement to
+support WSL may be the easiest solution with the least risk to the
+operation on other platforms.</p>
+</li>
+<li>
+<p>Alternatively, if a test has an inline <code>case</code>
+statement, it may be enough to delete the statement and to <a href="#opt4">rely on <i>jtreg</i></a> to set any necessary environment
+variables. If the script uses different variables names other than
+those set by <i>jtreg</i> (such as <code>FS</code>, <code>PS</code>
+and so on), then it will be necessary to either rename the
+variables used in the rest of the script, or to just assign
+variables with the preferred names to the values set by
+<i>jtreg</i>. For example:</p>
+<pre class="shell">
+FILESEP="$FS"
+PATHSEP="$PS"
+</pre></li>
+<li>
+<p>Using a <a href="#opt3">shared library script</a> allows an
+inline <code>case</code> statement to be removed, and avoids most
+or all dependence on any platform-specific values being set by
+<i>jtreg</i>.</p>
+</li>
+</ul>
+<p>In all cases, whether modifying or removing an inline
+<code>case</code> statement, it will also be necessary to ensure
+that the rest of the script uses the <code>.exe</code> file
+extension, when necessary, when invoking Windows binaries.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

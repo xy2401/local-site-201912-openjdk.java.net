@@ -1,0 +1,530 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 338: Vector API (Incubator)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 338: Vector API (Incubator)</h1><table class="head"><tr><td>Authors</td><td>Vladimir Ivanov, Razvan Lupusoru, Paul Sandoz, Sandhya Viswanathan</td></tr><tr><td>Owner</td><td>Vivek Deshpande</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Candidate</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;compiler</td></tr><tr><td>Discussion</td><td>panama dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>John Rose</td></tr><tr><td>Created</td><td>2018/04/06 22:58</td></tr><tr><td>Updated</td><td>2019/10/16 21:09</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8201271">8201271</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Provide an initial iteration of an <a href="https://openjdk.java.net/jeps/11">incubator module</a>, <code>jdk.incubator.vector</code>, to express
+vector computations that reliably compile at runtime to optimal vector hardware instructions on
+supported CPU architectures and thus achieve superior performance to equivalent scalar
+computations.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p><em>Clear and concise API:</em>
+The API shall be capable of clearly and concisely expressing a wide range of
+vector computations consisting of a sequence of vector operations often composed
+within loops and possibly with control flow.  It should be possible to express a
+computation that is generic to vector size (or the number of lanes per vector)
+thus enabling such computations to be portable across hardware supporting
+different vector sizes.</p>
+</li>
+<li>
+<p><em>Reliable runtime compilation and performance on x64 architectures:</em>
+The Java runtime, specifically the HotSpot C2 compiler, shall compile, on
+capable x64 architectures, a sequence of vector operations to a corresponding
+sequence of vector hardware instructions, such as those supported by
+<a href="https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions">Streaming SIMD Extensions</a> (SSE) and <a href="https://en.wikipedia.org/wiki/Advanced_Vector_Extensions">Advanced Vector Extensions</a>
+(AVX) extensions, thereby generating efficient and performant code.
+The programmer shall have confidence that the vector operations they express
+will reliably map closely to associated hardware vector instructions.</p>
+</li>
+</ul>
+<ul>
+<li><em>Platform agnostic:</em>
+The API shall be architecture agnostic, enabling support for runtime
+implementations on more than one hardware vectorization that supports vector
+hardware instructions.
+As is usual in Java APIs, where platform optimization and portability
+conflict, the bias will be to making the Vector API portable, even if some
+platform-specific idioms cannot be directly expressed in portable code.
+The previous goal of x64 performance is representative of appropriate
+performance goals on all platforms where Java is supported.
+The <a href="https://arxiv.org/pdf/1803.06185.pdf">ARM Scalable Vector Extension</a> (SVE) is of special interest in this
+regard to ensure the API can support this architecture (even though as of
+writing there are no known production hardware implementations).</li>
+</ul>
+<ul>
+<li><em>Graceful degradation:</em>
+If a vector computation cannot be fully expressed at runtime as a sequence of
+hardware vector instructions, either because an x64 archictecture does not
+support some of the required instructions or because another CPU architecture is
+not supported, then the Vector API implementation shall degrade gracefully and
+still function.  This may include issuing warnings to the developer if a vector
+computation cannot be sufficiently compiled to vector hardware instructions.
+On platforms without vectors, graceful degradation shall yield code
+competitive with manually-unrolled loops, where the unroll factor is
+the number of lanes in the selected vector.</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>It is not a goal to enhance the auto-vectorization support in HotSpot.</p>
+</li>
+<li>
+<p>It is not a goal for HotSpot to support vector hardware instructions on CPU
+architectures other than x64.  Such support is left for later JEPs.
+However, it is important to state, as expressed
+in the goals, that the API must not rule out such implementations.  Further,
+work performed may naturally leverage and extend existing abstractions in
+HotSpot for auto-vectorization vector support making such a task easier.</p>
+</li>
+<li>
+<p>It is not a goal to support the C1 compiler in this or future iterations.  We
+expect the Graal compiler to be supported in future work.</p>
+</li>
+<li>
+<p>It is not a goal to support strict floating point calculations as defined by
+the Java <code>strictfp</code> keyword.  The results of floating point operations performed
+on floating point scalars may differ from equivalent floating point operations
+performing on vectors of floating point scalars.  However, this goal does not
+rule out options to express or control the desired precision or reproducibility
+of floating point vector computations.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Vector computations consist of a sequence of operations on vectors.  A vector
+comprises a (usually) fixed sequence of scalar values, where the scalar
+values correspond to the number of hardware-defined vector lanes.   A binary operation applied
+to two vectors with the same number of lanes would, for each lane, apply the
+equivalent scalar operation on the corresponding two scalar values from each
+vector.  This is commonly referred to as
+<a href="https://en.wikipedia.org/wiki/SIMD">Single Instruction Multiple Data</a> (SIMD).</p>
+<p>Vector operations express a degree of parallelism that enables more work to be
+performed in a single CPU cycle and thus can result in significant performance
+gains.  For example, given two vectors each covering a sequence of eight
+integers (eight lanes), then the two vectors can be added together using a
+single hardware instruction.  The vector addition hardware instruction operates
+on sixteen integers, performing eight integer additions, in the time it would
+ordinarily take to operate on two integers, performing one integer addition.</p>
+<p>HotSpot supports <a href="//cr.openjdk.java.net/~vlivanov/talks/2017_Vectorization_in_HotSpot_JVM.pdf">auto-vectorization</a> where scalar operations are transformed into
+superword operations, which are then mapped to vector hardware instructions.
+The set of transformable scalar operations are limited and fragile to changes in
+the code shape.  Furthermore, only a subset of available vector hardware
+instructions might be utilized limiting the performance of generated code.</p>
+<p>A developer wishing to write scalar operations that are reliably transformed
+into superword operations needs to understand HotSpot's auto-vectorization
+support and its limitations to achieve reliable and sustainable performance.</p>
+<p>In some cases it may not be possible for the developer to write scalar
+operations that are transformable.  For example, HotSpot does not transform the
+simple scalar operations for calculating the hash code of an array (see the
+<code>Arrays.hashCode</code> method implementations in the JDK source code), nor can it
+auto-vectorize code to lexicographically compare two arrays (which why an
+intrinsic was added to perform  lexicographical comparison, see
+<a href="https://bugs.openjdk.java.net/browse/JDK-8033148">JDK-8033148</a>).</p>
+<p>The Vector API aims to address these issues by providing a mechanism to write
+complex vector algorithms in Java, using pre-existing support in HotSpot
+for vectorization, but with a user model which makes vectorization far more
+predictable and robust.  Hand-coded vector loops can express high-performance
+algorithms (such as vectorized <code>hashCode</code> or specialized array comparison)
+which an auto-vectorizer may never optimize.
+There are numerous domains where this explicitly vectorizing
+API may be applicable such as machine learning, linear algebra, cryptography,
+finance, and usages within the JDK itself.</p>
+<h2 id="Description">Description</h2>
+<p>A vector will be represented by the abstract class <code>Vector&lt;E&gt;</code>.
+The type variable <code>E</code> corresponds to the boxed type of scalar primitive integral
+or floating point element types covered by the vector.  A vector also has a shape,
+which defines the size, in bits, of the vector. The shape of the vector will govern
+how an instance of <code>Vector&lt;E&gt;</code> is mapped to a vector hardware register when vector
+computations are compiled by the HotSpot C2 compiler (see later for a mapping from
+instances to x64 vector registers).  The length of a vector (number of lanes or elements)
+will be the vector size divided by the element size.</p>
+<p>The set of element types (<code>E</code>) supported will be <code>Byte</code>, <code>Short</code>, <code>Int</code>, <code>Long</code>,
+<code>Float</code> and <code>Double</code> corresponding to the scalar primitive types <code>byte</code>,
+<code>short</code>, <code>int</code>, <code>long</code>, <code>float</code> and <code>double</code>, respectively.</p>
+<p>The set of shapes supported will be corresponding to vector sizes of 64, 128, 256, and 512 bits.
+A shape corresponding to a size of 512 bits can pack <code>byte</code>s into 64 lanes or pack
+<code>int</code>s into 16 lanes, and a vector of such a shape can operate on 64 <code>byte</code>s at
+a time, or 16 <code>int</code>s at a time.</p>
+<p>(<em>Note:</em> We believe that these simple shapes are generic enough to be
+useful on all platforms supporting the Vector API.  However, as we
+experiment during the incubation of this JEP with future platforms, we may further
+modify the design of the shape parameter.  Such work is not in
+the early scope of this JEP, but these possibilities partly inform the
+present role of shapes in the Vector API.  See the "Future Work" section.)</p>
+<p>The combination of element type and shape determines the vector's species, represented by <code>VectorSpecies&lt;E&gt;</code></p>
+<p>An instance of <code>Vector&lt;E&gt;</code> is immutable and is a value-based type that
+retains, by default, object identity invariants (see later for relaxation of
+these invariants).</p>
+<p>Operations on vectors can be classified as lane-wise and cross-lane.  Lane-wise operations
+can be further classified as unary, binary, ternary and comparison.  Cross-lane operations
+can be classified as permutation, conversion and reduction.  To reduce the surface of api,
+we will define collective methods for each class of operation which then take an operator as input.
+The supported operators are instances of <code>Operator</code> class and are defined as static final
+fields in <code>VectorOperators</code> class.  Some common operations(e.g. add, mul), called full-service
+operations, will have dedicated methods which can be used in place of the generic methods.</p>
+<p>Certain operations on vectors, such lane-wise cast and reinterpret, can be said to be inherently "shape-changing".
+Having shape-changing operations in a vector computation could have unintended effects
+on portability and performance.  For this reason, wherever applicable, the api will define an additional
+shape-invariant flavor of such an operation.  Users are encouraged to write shape-invariant code using
+the shape-invariant flavor of operations.  Additionally, shape-changing operations will be clearly called
+out in the javadoc.</p>
+<p><code>Vector&lt;E&gt;</code> declares a set of methods for common vector operations supported
+by all element types.<br />
+To support operations specific to an element type there are six
+abstract sub-classes of <code>Vector&lt;E&gt;</code>, one for each supported element type,
+<code>ByteVector</code>, <code>ShortVector</code>, <code>IntVector</code>, <code>LongVector</code>,
+<code>FloatVector</code>, and <code>DoubleVector</code>.  These sub-classes define additional operations
+which are bound to the element type since the method signature refers to the element type
+(or the equivalent array type), such as reduction operations (e.g. sum all
+elements to a scalar value), or storing the vector elements to an array.
+They also define additional full-service operations that are specific
+to the integral sub-types, such as bitwise operations (e.g. logical or),
+and operations specific to the floating point types, such as mathematical
+operations (e.g. transcendental functions like pow()).</p>
+<p>These classes are further extended by concrete sub-classes defined for different shapes (size) of Vectors.</p>
+<p>The following table presents the concrete vector classes and their mapping to x64 registers:</p>
+<pre><code>| Vector                                                                                       | x64 register |
+|----------------------------------------------------------------------------------------------|--------------|
+| Byte64Vector,  Short64Vector,  Int64Vector,  Long64Vector,  Float64Vector,  Double64Vector   | xmm?         |
+| Byte128Vector, Short128Vector, Int128Vector, Long128Vector, Float128Vector, Double128Vector  | xmm?         |
+| Byte256Vector, Short256Vector, Int256Vector, Long256Vector, Float256Vector, Double256Vector  | ymm?         |
+| Byte512Vector, Short512Vector, Int512Vector, Long512Vector, Float512Vector, Double512Vector  | zmm?         |</code></pre>
+<p>These classes are non-public since there is no need to provide operations specific to the type and
+shape.  This reduces the API surface to a sum of concerns rather than a product. As a result instances
+of concrete Vector classes cannot be constructed directly.  Instead
+instances are obtained via factories methods defined in the base <code>Vector&lt;E&gt;</code> and its type-specific sub-classes.
+These methods take as input the species of the desired vector instance. The factory methods
+provide different ways to obtain vector instances, such as the vector
+instance whose elements are initiated to default values (the zero vector), or
+a vector from an array, in addition to providing the canonical support for
+converting between vectors of different types and/or shapes (e.g. casting).</p>
+<p>To support control flow relevant vector operations will optionally accept masks,
+represented by the public abstract class <code>VectorMask&lt;E&gt;</code>.  Each element in a mask, a boolean
+value or bit, corresponds to a vector lane.  When a mask is an input to an operation
+it governs whether the operation is applied to each lane; the operation is applied if the
+mask bit for the lane is set (is true). Alternative behavior occurs if the mask bit
+is not set (is false).<br />
+Similar to vectors, instances of <code>VectorMask&lt;E&gt;</code> are instances of (private) concrete sub-class defined for
+each element type and length combination. The instance of <code>VectorMask&lt;E&gt;</code> used in an operation should have the same
+type and length as the instance(s) of <code>Vector&lt;E&gt;</code> involved in the operation. Comparison operations
+produce masks, which can then be input to other operations to selectively disable the
+operation on certain lanes and thereby emulate flow control.  Another way for creating masks
+is using static factory methods in <code>VectorMask&lt;E&gt;</code>.</p>
+<p>It is anticipated that masks will likely play an important role in the
+development of vector computations that are generic to shape.  (This is based
+on the central importance of predicate registers, the equivalent of masks, in
+the ARM Scalable Vector Extensions as well as in Intel's AVX-512.)</p>
+<h3 id="Example">Example</h3>
+<p>Here is a simple scalar computation over elements of arrays:</p>
+<pre><code>void scalarComputation(float[] a, float[] b, float[] c) {
+   for (int i = 0; i &lt; a.length; i++) {
+        c[i] = (a[i] * a[i] + b[i] * b[i]) * -1.0f;
+   }
+}</code></pre>
+<p>(It is assumed that the array arguments will be of the same size.)</p>
+<p>An explicit way to implement the equivalent vector computation using the Vector
+API is as follows:</p>
+<p>Example 1:</p>
+<pre><code>static final VectorSpecies&lt;Float&gt; SPECIES = FloatVector.SPECIES_256;
+
+void vectorComputation(float[] a, float[] b, float[] c) {
+
+    for (int i = 0; i &lt; a.length; i += SPECIES.length()) {
+        var m = SPECIES.indexInRange(i, a.length);
+		// FloatVector va, vb, vc;
+        var va = FloatVector.fromArray(SPECIES, a, i, m);
+        var vb = FloatVector.fromArray(SPECIES, b, i, m);
+        var vc = va.mul(va).
+                    add(vb.mul(vb)).
+                    neg();
+        vc.intoArray(c, i, m);
+    }
+}</code></pre>
+<p>In this example, a species for 256-bit wide vector of floats is obtained from FloatVector.
+The species is stored in a static final field so the runtime compiler will treat the field's
+value as a constant and therefore be able to better optimize the vector computation.</p>
+<p>The vector computation features a main loop kernel iterating over the
+arrays in strides of vector length (the species length).  Static method fromArray() loads
+<code>float</code> vectors of the given species from arrays <code>a</code> and <code>b</code> at the corresponding index. Then
+the operations are performed (fluently), and finally the result is stored into
+array <code>c</code>.</p>
+<p>We use masks, generated by indexInRange(), to prevent reading/writing past the array length.
+The first <code>floor(a.length / SPECIES.length())</code> iterations will have a mask
+with all lanes set. Only the final iteration (if <code>a.length</code> is not a multiple of
+<code>SPECIES.length()</code>) will have a mask with first <code>a.length % SPECIES.length()</code> lanes set.</p>
+<p>Since a mask is used in all iterations, the above implementation may not acheive optimal
+performance(for large array lengths). The same computation can be implemented without masks as follows:</p>
+<p>Example 2:</p>
+<pre><code>static final VectorSpecies&lt;Float&gt; SPECIES = FloatVector.SPECIES_256;
+
+void vectorComputation(float[] a, float[] b, float[] c) {
+    int i = 0;
+    for (; i &lt; (a.length &amp; ~(SPECIES.length() - 1));
+           i += SPECIES.length()) {
+        // FloatVector va, vb, vc;
+        var va = FloatVector.fromArray(SPECIES, a, i);
+        var vb = FloatVector.fromArray(SPECIES, b, i);
+        var vc = va.mul(va).
+                    add(vb.mul(vb)).
+                    neg();
+        vc.intoArray(c, i);
+    }
+
+    for (; i &lt; a.length; i++) {
+        c[i] = (a[i] * a[i] + b[i] * b[i]) * -1.0f;
+    }
+}</code></pre>
+<p>The <em>tail</em> elements, the length of which is smaller than the species length, are processed
+using the scalar computation after the vector computation. Another way to process the tail
+elements is using a single masked vector computation.</p>
+<p>When operating on large arrays, the implementation above achieves optimal performance.</p>
+<p>Continuing with example 2 presented above, the HotSpot compiler should generate machine
+code similar to the following:</p>
+<pre><code>0.43%  / &#9474;  0x0000000113d43890: vmovdqu 0x10(%r8,%rbx,4),%ymm0
+  7.38%  &#9474; &#9474;  0x0000000113d43897: vmovdqu 0x10(%r10,%rbx,4),%ymm1
+  8.70%  &#9474; &#9474;  0x0000000113d4389e: vmulps %ymm0,%ymm0,%ymm0
+  5.60%  &#9474; &#9474;  0x0000000113d438a2: vmulps %ymm1,%ymm1,%ymm1
+ 13.16%  &#9474; &#9474;  0x0000000113d438a6: vaddps %ymm0,%ymm1,%ymm0
+ 21.86%  &#9474; &#9474;  0x0000000113d438aa: vxorps -0x7ad76b2(%rip),%ymm0,%ymm0
+  7.66%  &#9474; &#9474;  0x0000000113d438b2: vmovdqu %ymm0,0x10(%r9,%rbx,4)
+ 26.20%  &#9474; &#9474;  0x0000000113d438b9: add    $0x8,%ebx
+  6.44%  &#9474; &#9474;  0x0000000113d438bc: cmp    %r11d,%ebx
+         \ &#9474;  0x0000000113d438bf: jl     0x0000000113d43890</code></pre>
+<p>This is actual output from a JMH micro-benchmark for the example code under
+test using a prototype of the Vector API and implementation (the
+<code>vectorIntrinsics</code> branch of Project Panama's development repository).</p>
+<p>The hot areas of C2 generated machine code are presented.  There is a clear
+translation to vector registers and vector hardware instructions.  (Note loop
+unrolling was disabled to make the translation clearer, otherwise HotSpot should
+be able to unroll using existing C2 loop optimization techniques.).  All Java
+object allocations are elided.</p>
+<p>It is an important goal to support more complex non-trivial vector computations
+that translate clearly into generated machine code.</p>
+<p>There are, however, a few issues with this particular vector computation:</p>
+<ol>
+<li>
+<p>The loop is hardcoded to a concrete vector shape, so the computation cannot
+adapt dynamically to a maximal shape supported by the architecture (which may be
+smaller or larger than 256 bits).  Therefore the code is less portable and maybe
+less performant.</p>
+</li>
+<li>
+<p>Calculation of the loop upper bounds, although simple here, can be a common
+source of programming error.</p>
+</li>
+<li>
+<p>A scalar loop is required at the end, duplicating code.</p>
+</li>
+</ol>
+<p>The first two issues will be addressed by this JEP.  A preferred species can be
+obtained whose shape is optimal for the current architecture, the vector
+computation can then be written with a generic shape, and a method on the
+species can round down the array length, for example:</p>
+<pre><code>static final VectorSpecies&lt;Float&gt; SPECIES = FloatVector.SPECIES_PREFERRED;
+
+void vectorComputation(float[] a, float[] b, float[] c,
+        VectorSpecies&lt;Float&gt; species) {
+    int i = 0;
+    int upperBound = species.loopBound(a.length);
+    for (; i &lt; upperBound; i += species.length()) {
+        //FloatVector va, vb, vc;
+        var va = FloatVector.fromArray(species, a, i);
+        var vb = FloatVector.fromArray(species, b, i);
+        var vc = va.mul(va).
+                    add(vb.mul(vb)).
+                    neg();
+        vc.intoArray(c, i);
+    }
+
+    for (; i &lt; a.length; i++) {
+        c[i] = (a[i] * a[i] + b[i] * b[i]) * -1.0f;
+    }
+}
+
+vectorComputation(a, b, c, SPECIES);</code></pre>
+<p>The last issue will not be fully addressed by this JEP and will be the subject
+of follow on work.  As shown in example 1 earlier, you can use masks
+to implement vector computation without tail processing.  It is anticipated that such masked
+loops will work well for a range of architectures, including x64 and ARM, but
+will require additional runtime compiler support to generate maximally efficient
+code. Such work on masked loops, though important, is beyond the scope of this
+JEP.</p>
+<h3 id="HotSpot-C2-compiler-implementation-details">HotSpot C2 compiler implementation details</h3>
+<p>The Vector API has two implementations in order to adhere to the project goals.
+The first implements operations in Java, thus it is functional but not optimal.
+The second makes intrinsic, for the HotSpot C2 compiler, those operations with
+special treatment for Vector API types.  This allows for proper translation to
+x64 registers and instructions for the case where architecture support and
+implementation for translation exists.</p>
+<p>The intrinsification process for the Vector API will work by translating
+Vector API method calls to C2 IR Nodes that represent appropriate intended
+semantics.  For example, for <code>Float256Vector.add</code>, the C2 compiler
+will replace the call with a <code>AddVF</code> node plus a <code>VectorBox</code> node.  The <code>AddVF</code>
+represents addition of two <code>float</code> vectors while the <code>VectorBox</code> represents the
+boxing portion to create a valid object. (Thus <code>add</code> on two <code>Vector</code> objects
+will produce a resulting <code>Vector</code> object.)  This way, object creation (if any)
+is submerged under the vector operation, so in cases where the object does not
+need to exist, it can be eliminated.</p>
+<p>The IR nodes generated by intrinsification will overlap with the IR nodes used
+by vectorizer.  However, because the Vector API will support a much larger set
+of operations, additional IR nodes will be added as needed.  In order to keep
+the newly added nodes to a minimum, new nodes will no longer encode the type in
+the operand name.  For example, the <code>VectorBlend</code>  node supports blending and
+masking operations.  There is no <code>VectorBlendI</code> node for <code>int</code> vectors.
+Instead, the extra type
+information is simply encoded using existing type system (<code>TypeVect</code>) which
+encodes element type along with shape.</p>
+<p>It is intended that for all of the vector operations defined by the API, there
+will be a translation implemented that will allow use of x64 instructions on some
+x64 architectures.  For example, <code>Byte256Vector.blend</code> will
+translate to <code>vpblendvb</code> (AVX2) where as <code>Byte512Vector.blend</code> will
+translate to <code>vpblendmb</code> (AVX-512).  The translation may be non-optimal.  If
+<code>Byte512Vector.blend</code> is used on a system that only supports AVX2,
+no translation will occur and instead the default Java implementation will be
+used.  That said, the type-specific vector classes provide the <code>PREFERRED_SPECIES</code>
+field corresponding to the appropriate vector size to use.  Behind the
+scenes, this field is set by calling into
+<code>Matcher::vector_width_in_bytes</code> so that this value is dynamically computed
+depending on the system.  This species can be used for generically sized vector
+computations so no concrete species needs be declared.</p>
+<p>The set of operations on <code>Vector</code>, <code>VectorSpecies</code> and <code>VectorMask</code> will be selected for
+their applicability for C2 intrinsification on x64 architectures.  Additional
+non-intrinsified operations may be placed off to the side in helper classes.
+In future work, these divisions may be adjusted in order to provide more
+fully platform agnostic API.</p>
+<p>To avoid an explosion of intrinsics added to C2, a set of intrinsics will be
+defined that correspond to operation kinds, such as binary, unary, comparison,
+and so on, where constant arguments are passed describing operation specifics.
+Approximately ten new intrinsics will be needed to support intrinsification of
+all parts of the API.</p>
+<p>The C2 compiler will have special knowledge of the <code>Vector</code>, <code>VectorSpecies</code> and
+<code>VectorMask</code> types and all the sub-types.  This will enable C2 to map instances of
+<code>Vector</code>, to vector registers, and aggressively elide allocations when such
+instances do not escape.  C2 will also have knowledge for treatment of vector
+registers and vector objects at safepoints so that it can safely save them and
+also safely reconstruct Vector objects.  Special attention will taken to ensure,
+by default, object semantics (such as identity) are preserved when an instance
+escapes or needs to be materialized as reference to a <code>Vector</code> object.</p>
+<p><code>Vector</code> instances are value-based, morally values where identity-sensitive
+operations should be avoided.  This potentially limits the set of applicable
+optimizations, specifically due to the limitations of escape analysis.  A flag
+will be provided to enable <code>Vector</code> instances to have no guaranteed identity and
+thereby support more aggressive optimizations such as lazy materialization at a
+safepoint.  When value types are fully supported by the Java language and
+runtime (see <a href="//openjdk.java.net/projects/valhalla/">Project Valhalla</a>) then concrete <code>Vector</code> classes can be
+made value types and it is anticipated such a flag and many optimizations will
+no longer be required.</p>
+<p>Mask support will require careful attention on x64 architectures since there are
+two kinds of representations, a vector register representation or an <code>opmask</code>
+register representation (for AVX-512), and different instructions will take one
+or the other.  In the initial implementation, it is expected that all masks will
+be represented as vector registers even for AVX-512.  This means that native
+masking via <code>opmask</code> (or <code>k</code>) registers will not be supported in the first
+implementation.  Platforms like AVX-512 and ARM SVE motivate our treatment of
+<code>Mask</code> as a special type rather than as an ordinary combination of <code>Vector</code> and
+<code>boolean</code> types.</p>
+<h3 id="Future-Work">Future Work</h3>
+<p>The Vector API will benefit significantly from value types when ready (see
+<a href="//openjdk.java.net/projects/valhalla">Project Valhalla</a>).  Instances of a
+<code>Vector&lt;E&gt;</code> can be values, whose concrete classes are value types.  This
+will make it easier to optimize and express vector computations.  Sub-types of
+<code>Vector&lt;E&gt;</code> for specific types, such as <code>IntVector</code>, will no longer be
+required with generic specialization over values and type-specific method
+declaration.  A shift to value types is thought to be backward compatible,
+perhaps after recompilation of Vector API code.  Some abstract classes may need
+conversion to interfaces, if they are supers of value types.</p>
+<p>A future version of the Vector API may make use of enhanced generics,
+as noted above.</p>
+<p>It is expected that the API will incubate over multiple releases of the JDK and will adapt as
+dependent features such as value types become available in a future JDK release and
+newer CPU architectures become more established in the industry.</p>
+<p>API points for loop control, loop boundary processing, and active set
+maintenance are likely to be added or refined in a future version of this API.
+Additional vector shapes with intrinsic masks or lengths, or synthetic tandem
+vector types (vector pairs) may be introduced if they are found to help with
+loop management.  Methods for alignment control may also be introduced, if they
+show benefits in portability or performance.</p>
+<p>Scatter and gather operations which can traverse managed heap pointers may be
+introduced in the future, if a portable and type-safe way can be found to
+express them (such as <code>VarHandle</code>s).  This would allow workloads to be accessed
+directly in Java objects, instead of being buffered through Java arrays or byte
+buffers.</p>
+<p>Additional vector sizes and shapes may be supported in a future version of this
+API, in a follow-on JEP or perhaps during incubation. In principle the API could
+express additional vector shape properties besides bit-size, such as whether a
+vector is dense or not, whether it possesses an intrinsic mask, whether and how
+it may be dynamically sized, whether the size is a power of two, etc.</p>
+<p>A future version of this API may introduce additional, non-primitive lane types
+such as short floats (useful for machine learning) or very long integers (useful
+for cryptography), along with relevant specialized operations.  Such types tend
+to be hardware-specific, and so a challenge of specifying such API points is
+either making them portable, or else properly scoping them to machine-specific
+instances of the JDK.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>HotSpot's auto-vectorization is an alternative approach but it would require
+significant enhancement and would likely still be fragile and limited compared
+to using the Vector API, since auto-vectorization with complex control flow is
+very hard to perform.</p>
+<p>In general, and even after decades of research (especially for FORTRAN and C
+array loops), it seems that auto-vectorization of scalar code is not a reliable
+tactic for optimizing ad hoc user-written loops, unless the user pays unusually
+careful attention to unwritten contracts about exactly which loops a compiler is
+prepared to auto-vectorized.  It's too easy to write a loop that fails to
+auto-vectorize, for a reason that only the optimizer can detect, and not the
+human reader.  Years of work on auto-vectorization (even in HotSpot) have left
+us with lots of optimization machinery that works only on special occasions.  We
+want to enjoy the use of this machinery more often!</p>
+<h2 id="Testing">Testing</h2>
+<p>Combinatorial unit tests will be developed to ensure coverage for all
+operations, for all supported types and shapes, over various data sets. The
+tests will be implemented with TestNG and will be exercisable via <code>jtreg</code>.</p>
+<p>Performance tests will be developed to ensure performance goals are met and
+vector computations map efficiently to vector hardware instructions.  This will
+likely consistent of JMH micro-benchmarks but more realistic examples of useful
+algorithms will also be required.</p>
+<p>As a backup to performance tests, we will create white-box tests to
+force the JIT to report to us that vector API source code did, in
+fact, trigger vectorization.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>There is a risk that the API will be biased to the SIMD functionality supported
+on x64 architectures.  This applies mainly to the explicitly fixed set of
+supported shapes, which bias against coding algorithms in a shape-generic
+fashion.  We consider the majority of other operations of the Vector API to bias
+toward portable algorithms.  To mitigate that risk other architectures will be
+taken into account, specifically the ARM Scalar Vector Extension architecture
+whose programming model adjusts dynamically to the singular fixed shape
+supported by the hardware.  We welcome and encourage OpenJDK contributors working
+on the ARM specific areas of HotSpot to participate in this effort.</p>
+<p>The Vector API uses box types (like <code>Integer</code>) as proxies for primitive types
+(like <code>int</code>).  This decision is forced by the current limitations of Java
+generics (which are hostile to primitive types).  When Project Vahalla
+eventually introduces more capable generics, the current decision will seem
+awkward, and may need changing.  We assume that such changes will be possible
+without excessive backwards incompatibility.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

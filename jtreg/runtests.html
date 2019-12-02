@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Running tests using jtreg</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    dd { margin-left: 1.5em; }
+    dd ul li { margin-left: 0; }
+    dt { font-style: oblique; }
+    .recOpt { background-color: #ccffcc }
+    .othOpt { background-color: #ffffcc }
+    p.note { font-size: smaller; font-style: oblique }
+/**/
+</style></head><body><div id="main">
+<h1>Running tests using jtreg</h1>
+<p>There are various ways to run the unit and regression tests,
+varying in convenience and flexibility.</p>
+<ul>
+<li><a href="#makefile">Use targets in test/Makefile</a></li>
+<li><a href="#script">Use convenience scripts to run jtreg</a></li>
+<li><a href="#jar">Run jtreg.jar directly</a></li>
+</ul>
+<p class="note">In general, you should use a recent build of jtreg
+to run the tests in OpenJDK repositories. It is recommended that
+you use a build corresponding to the most recent "jtreg" tag in the
+source code repository, as seen <a href="//hg.openjdk.java.net/code-tools/jtreg/tags">here</a>. See
+the main <a href="index.html">jtreg page</a> for information on how
+to build or download the latest version.</p>
+<dl>
+<dt><a name="makefile" id="makefile">Use targets in
+test/Makefile</a></dt>
+<dd>
+<p>This method works well for running some standard predefined sets
+of tests, in a predefined manner. To run individual tests, or
+custom sets of tests, it is best to use the convenience scripts to
+run jtreg, or to run jtreg directly.</p>
+<p>The top level repository, and the <code>jdk</code> and
+<code>langtools</code> repositories, in an OpenJDK forest provide
+Makefile targets to run standard blocks of tests. The targets all
+have names of the form <code>jdk_*</code> and
+<code>langtools_*</code>. You can see a summary of the available
+targets in the top level <code>test/Makefile</code>.</p>
+<p>When using these targets, it is recommended to set the following
+variables, either as environment variables or on the "make" command
+line:</p>
+<ul>
+<li><code>JT_HOME</code>: the jtreg installation directory</li>
+<li><code>PRODUCT_HOME</code>: the JDK build to be tested: this is
+typically a file path ending in <i>j2sdk-image</i></li>
+</ul>
+</dd>
+<dt><a name="script" id="script">Use convenience scripts to run
+jtreg</a></dt>
+<dd>
+<p>This method provides the most flexibility for specifying which
+tests are to be run, and how to run them. It is particularly well
+suited to running individual tests to help debug an issue in the
+platform being tested.</p>
+<p>There is very little magic in the script, and anything described
+in this section can be equivalently achieved by running jtreg.jar
+directly.</p>
+<p>In the following list, recommended options are shown with a
+<span class="recOpt">pale green</span> background. Other options
+which may be worth consideration are shown with a <span class="othOpt">pale yellow</span> background.</p>
+<ul>
+<li>
+<p>To specify which version of jtreg to use, add the appropriate
+<i>jtreg-dir</i><code>/</code><i>platform</i><code>/bin</code>
+directory to your execution path.</p>
+<p class="note">Note: the "platform" component is preserved for
+historical reasons. The three supported variants ("solaris",
+"win32" and "linux") are now all equivalent, and suitable for use
+on Mac OS X as well.</p>
+</li>
+<li>
+<p>If you are using jtreg to run tests on a new version of JDK, it
+can be safer to use a different, stable version of JDK to run jtreg
+itself. However, unless your new version of JDK is badly broken, it
+is usually good enough to use the new version of JDK to run jtreg
+as well.</p>
+<p><a name="jt_java" id="jt_java"></a> If you want to explicitly
+specify the JDK used to run jtreg, set the <code>JT_JAVA</code>
+environment variable before running jtreg. Otherwise, leave it
+unset, and jtreg will default to using the same version of JDK to
+run jtreg as is used to execute the tests.</p>
+</li>
+<li>
+<p>To execute one or more tests, you must minimally specify the
+version of JDK to use, and which tests to be run:</p>
+<pre>% jtreg <span class="recOpt">-jdk:<i>test-jdk</i></span> <i>test-or-folder...</i></pre>
+<p><i>test-jdk</i> will be used to run the tests in the specified
+files and/or folders. It will also be used to run jtreg unless you
+have set the <code>JT_JAVA</code> environment variable, as
+described <a href="#jt_java">above</a>.</p>
+</li>
+<li>
+<p>jtreg uses two directories in which to store results, creating
+them if necessary. The <i>work directory</i> is used to store the
+compiled classes for tests, temporary files while tests are
+running, and the detailed results of each test. The <i>report
+directory</i> is used to write HTML and plain text reports at the
+end of the test run.</p>
+<p>By default, these directories are named <code>JTwork</code> and
+<code>JTreport</code>, and are placed in the current directory used
+when jtreg is run.</p>
+<p>It is common to execute jtreg in top level directory of the
+repository in which you are working, such as the <code>jdk</code>
+or <code>langtools</code> repositories. It is also common to place
+the work and report directories in a subdirectory of the main build
+directory, using the <code>-w</code> and <code>-r</code> options.
+For example,</p>
+<pre>% jtreg <span class="recOpt">-w <i>build-dir</i>/jtreg/work</span> <span class="recOpt">-r <i>build-dir</i>/jtreg/report</span> ...</pre></li>
+<li>
+<p>To vary the amount of output written to the console for each
+test, use the <code class="recOpt">-verbose:<i>arg</i></code>
+option.</p>
+</li>
+<li>
+<p>To enable assertions while running tests, use the standard JVM
+options <code class="recOpt">-ea:<i>arg</i></code> and <code class="recOpt">-esa</code>, or their equivalents.</p>
+</li>
+<li>
+<p>Some tests in the test suite may have problems such that the
+tests are currently deemed dysfunctional or invalid, and have
+therefore been disabled. This may be done in two ways.</p>
+<p>A test may be directly labelled with <code>@ignore</code>. By
+default, these tests will cause an error if you try to run them. To
+avoid running them, use the <code class="othOpt">-ignore:quiet</code> option. (You can also ignore the
+<code>@ignore</code> directives by using the <code class="othOpt">-ignore:run</code> option, but this is not common.)</p>
+<p>Tests may also be listed in a <i>problem list</i> or <i>exclude
+list</i> file. This is a more flexible mechanism than
+<code>@ignore</code> and allows the test to be listed as
+problematic on specific platforms. To avoid running these tests,
+use the <code class="othOpt">-exclude:<i>file</i></code>
+option.</p>
+</li>
+<li>
+<p>By default, jtreg runs each test in its own JVM. While this
+provides maximum isolation between tests, it also incurs maximum
+overhead. jtreg provides different modes for running tests, trading
+off isolation for performance. Many groups of tests can be run in
+the faster modes, and work is ongoing to upgrade additional tests.
+In general, it is recommended to use <code class="recOpt">-agentvm</code> to run the tests in "agentvm" mode. See
+<cite><a href="https://blogs.oracle.com/jjg/entry/jtreg_old_and_new">jtreg: old
+and new</a></cite> for a blog entry giving details of the different
+execution modes.</p>
+</li>
+<li>
+<p>Some tests, typically GUI tests, may require manual interaction
+in order to determine whether they pass or fail. To run just those
+tests, use the <code class="othOpt">-m</code> or <code class="othOpt">-manual</code> option. To avoid running such tests, use
+the <code class="recOpt">-a</code> or <code class="recOpt">-automatic</code> option.</p>
+</li>
+<li>
+<p>The tests in some parts of the test suite may be able to run
+concurrently. This feature is only available in the "othervm" and
+"agentvm" modes. To have jtreg run tests concurrently, use the
+<code class="othOpt">-conc:<i>value</i></code> option, where
+<code><i>value</i></code> is either the maximum number of tests
+that should be allowed to run concurrently or the word
+"<code>auto</code>" to set the value to the number of processors on
+your system. Make sure you have enough memory and/or swap space
+when you use this option. For more information, see <a href="concurrency.html">Running tests concurrently with jtreg</a>.</p>
+</li>
+<li>
+<p>If you have built a component of JDK such as the compiler
+(javac), you may be able to test it in conjunction with a complete
+JDK by putting the classes or jar file for new component on the
+system bootstrap classpath:</p>
+<pre>% jtreg -jdk:<i>jdk</i> <span class="othOpt">-Xbootclasspath/p:<i>component.jar</i></span> <i>test-or-folder...</i></pre></li>
+<li>
+<p>You can rerun any selection of tests. Use the <code class="othOpt">-status:<i>arg</i></code> option to filter the set of
+tests to be run, based on their prior result status. For example,
+to rerun tests which previously failed or could not be run:</p>
+<pre>
+% jtreg -jdk:<i>jdk</i> -status:fail,error <i>test-or-folder...</i></pre></li>
+<li>
+<p>For info on all the available options, use the <code class="othOpt">-help</code> option. For info on a specific option or
+topic, use <code class="othOpt">-help
+<i>option-or-word...</i></code> To read the online help, use the
+<code class="othOpt">-onlineHelp</code> command line option, or
+start jtreg with the <code class="othOpt">-gui</code> option, and
+use the <code>Help</code> menu.</p>
+</li>
+<li>
+<p>Here is an example that puts many of the preceding ideas
+together. JDK 6 is used to run jtreg, while jtreg uses JDK 8 to run
+the <code>java/lang/Class</code> tests in the <code>jdk</code>
+repository located at <code>/w/jjg/work/tl/jdk</code>. The tests
+are executed using the "agentvm" execution mode; a one line summary
+for each test is written as each test completes, and the overall
+results are stored in the local build directory.</p>
+<pre>export JT_JAVA=/opt/jdk/1.6.0
+cd /w/jjg/work/tl/jdk
+/opt/jtreg/4.1/linux/bin/jtreg \
+    -jdk:/opt/jdk/1.8.0 -agentvm -verbose:summary \
+    -w build/jtreg/work -r build/jtreg/report \
+    test/java/lang/Class
+            </pre></li>
+</ul>
+</dd>
+<dt><a name="jar" id="jar">Run jtreg.jar directly</a></dt>
+<dd>
+<p>Instead of using the startup scripts provided, you can also
+execute the <code>jtreg.jar</code> file directly, or you can run
+jtreg from Ant. See the online help for details.</p>
+</dd>
+</dl>
+<h2>Test Results</h2>
+<p><i>Summary reports</i> are generated in the report directory, in
+plain text and HTML formats. To generate a detailed report in XML
+as well, use the <code>-xml</code> option.</p>
+<ul>
+<li>The plain text report in
+<code><i>report-dir</i>/text/summary.txt</code> contains one test
+result per line and is well suited for processing with tools like
+<code>grep</code>.</li>
+<li>The XML report can be used with CI systems like <a href="http://hudson-ci.org/">Hudson</a> to generate trend graphs. See
+<a href="jtreg-hudson.html">Regression Test Harness and Hudson
+Continuous Integration System</a> on how to do this.</li>
+</ul>
+<p><i>Detailed results</i> for each test are stored in the work
+directory, in <code><i>.jtr</i></code> files. These are plain text
+files that are easy enough to read directly if needed.</p>
+<p>Individual tests can be in one of four states.</p>
+<ul>
+<li><i>Not run</i>: the test has not yet been run.</li>
+<li><i>Passed</i>: the test has been run successfully.</li>
+<li><i>Failed</i>: the test has been run, but did not succeed.</li>
+<li><i>Error</i>: the test could not be run for some reason.</li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

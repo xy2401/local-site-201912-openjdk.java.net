@@ -1,0 +1,1141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Using the new Doclet API</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script><style>
+
+body { font-family: sans-serif; }
+header {
+    padding-bottom: 1em;
+    /*border-bottom: 1px solid black;*/
+    /*margin-bottom: 1em;*/
+}
+dt { font-weight: bold;  }
+figure {
+    margin: 20px 0;
+}
+figure caption {
+    margin-left:20 px;
+}
+div.code, iframe.code, div.out, iframe.out {
+    display:block;
+    overflow:auto;
+    width: 100%;
+    height: 500px;
+    border: 1px solid gray;
+    margin: 10px;
+}
+div.cmd {
+    border: 1px solid gray;
+    margin: 10px;
+}
+div pre {
+    counter-reset: line;
+}
+div pre code::before {
+    counter-increment: line;
+    content: counter(line);
+    display: inline-block;
+    width: 2em;
+    text-align:right;
+    border-right: 1px solid #ddd;
+    padding: 0 .5em;
+    margin-right: .5em;
+    color: #888;
+}
+main {
+    counter-reset: figure;
+}
+figcaption::before {
+    counter-increment: figure;
+    content: "Figure " counter(figure) ":";
+    margin-right: 5pt;
+    display: inline-block;
+}
+p.small-note::before {
+    content: "Note: "
+}
+p.small-note {
+    font-style: oblique;
+    font-size:smaller;
+}
+table, thead {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+thead tr:last-child {
+    border-bottom: 1px solid black;
+}
+thead {
+    background-color: #ddd;
+}
+tbody tr:nth-child(even) {
+    background-color: #f8f8f8;
+}
+th, td {
+    padding: 2px 5px;
+    border-right: 1px solid #888;
+}
+th:last-child, td:last-child {
+    border-right: inherit;
+}
+nav {
+    font-size: smaller;
+    padding: 10px 0;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    margin-bottom: 1em;
+}
+nav ul {
+}
+nav li {
+    display: inline;
+}
+nav li {
+    white-space: nowrap;
+}
+nav li:first-child::before {
+    /*content: " "*/
+}
+nav li::before {
+    content: "\2022";
+    margin-right:5px;
+}
+
+</style></head><body><div id="main">
+<header>
+<h1>Using the new Doclet API</h1>
+</header>
+<nav>
+<ul>
+<li><a href="#intro">Introduction</a></li>
+<li><a href="#simple">A simple Doclet</a></li>
+<li><a href="#options">Options</a></li>
+<li><a href="#reporters">Reporters</a></li>
+<li><a href="#visitors">Visitors and Scanners</a></li>
+<li><a href="#elements">Elements and Type Mirrors</a></li>
+<li><a href="#tags">Accessing Tags</a></li>
+<li><a href="#files">Accessing File Objects</a></li>
+</ul>
+</nav>
+<main>
+<h2 id="intro">Introduction</h2>
+<p>In JDK 9, <a href="//openjdk.java.net/jeps/221">JEP 221</a>
+introduced a new "Doclet API" to supersede the previous API, which
+was becoming increasing difficult to update to support new language
+features. The new API leverages other Java SE and JDK API, such as
+the <em>Language Model API</em>, added in JDK 6, and the
+<em>Compiler Tree API</em>, added in JDK 6 and extended in JDK
+8.</p>
+<p>While there is some correspondence between features in the old
+API and features in the new API and the APIs that it utilizes, the
+new API is generally more powerful and uses some different idioms,
+so that the correspondence is not directly one-to-one.</p>
+<p>This note describes various aspects of the overall new API,
+illustrating the usage with a series of simple examples.</p>
+<h2>A simple Doclet</h2>
+<p>The following code shows a minimal doclet that just prints out
+the names of elements specified on the command line.</p>
+<figure>
+<figcaption>A minimal doclet</figcaption>
+<div class="code">
+<pre>
+<code>package tips;</code>
+<code> </code>
+<code>import java.util.Collections;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code> </code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A minimal doclet that just prints out the names of the</code>
+<code> * selected elements.</code>
+<code> */</code>
+<code>public class BasicDoclet implements Doclet {</code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) {  }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        // For this doclet, the name of the doclet is just the</code>
+<code>        // simple name of the class. The name may be used in</code>
+<code>        // messages related to this doclet, such as in command-line</code>
+<code>        // help when doclet-specific options are provided.</code>
+<code>        return getClass().getSimpleName();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        // This doclet does not support any options.</code>
+<code>        return Collections.emptySet();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        // This doclet supports all source versions.</code>
+<code>        // More sophisticated doclets may use a more</code>
+<code>        // specific version, to ensure that they do not</code>
+<code>        // encounter more recent language features that</code>
+<code>        // they may not be able to handle.</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code>    private static final boolean OK = true;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        // This method is called to perform the work of the doclet.</code>
+<code>        // In this case, it just prints out the names of the</code>
+<code>        // elements specified on the command line.</code>
+<code>        environment.getSpecifiedElements()</code>
+<code>                .forEach(System.out::println);</code>
+<code>        return OK;</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<p>Here is an example of how to run the doclet and the output it
+generates.</p>
+<figure>
+<figcaption>Running <code>BasicDoclet</code></figcaption>
+<div class="cmd">
+<pre>
+<code>$ /opt/jdk/11/bin/javadoc \</code>
+<code>    -docletpath <em>classes</em> \</code>
+<code>    -doclet tips.BasicDoclet \</code>
+<code>    <em>src</em>/tips/BasicDoclet.java </code>
+<code>Constructing Javadoc information...</code>
+<code>tips.BasicDoclet</code>
+</pre></div>
+</figure>
+<h2 id="options">Options</h2>
+<p>A common requirement of many doclets is to be able to handle
+doclet-specific options. By implementing the method <a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.javadoc/jdk/javadoc/doclet/Doclet.html#getSupportedOptions()">
+Doclet.getSupportedOptions</a> you can declare the options
+supported by a doclet. Options are represented by instances of
+<a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.javadoc/jdk/javadoc/doclet/Doclet.Option.html">
+Doclet.Option</a>. This is an interface, and so it is common to
+declare an abstract class that implements the interface, and to use
+anonymous subclasses to implement the <a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.javadoc/jdk/javadoc/doclet/Doclet.html#run(jdk.javadoc.doclet.DocletEnvironment)">
+run</a> method, to handle occurrences of the option found on the
+command line.</p>
+<p>The following example shows how to declare an option that takes
+no arguments, an option that takes a string-valued argument, and an
+option that takes an numeric argument, generating an error if an
+invalid value is found.</p>
+<figure>
+<figcaption>Declaring options for a doclet</figcaption>
+<div class="code">
+<pre>
+<code>package tips;</code>
+<code> </code>
+<code>import java.util.List;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code> </code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A doclet to illustrate the use of doclet-specific options.</code>
+<code> *</code>
+<code> * The doclet simply prints of the values of the declared options,</code>
+<code> * whether or not given explicitly on the command line.</code>
+<code> */</code>
+<code>public class OptionsDoclet implements Doclet {</code>
+<code>    private static final boolean OK = true;</code>
+<code> </code>
+<code>    private boolean alpha;</code>
+<code>    private String beta;</code>
+<code>    private int gamma;</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A base class for declaring options.</code>
+<code>     * Subtypes for specific options should implement</code>
+<code>     * the {@link #process(String,List) process} method</code>
+<code>     * to handle instances of the option found on the</code>
+<code>     * command line.</code>
+<code>     */</code>
+<code>    abstract class Option implements Doclet.Option {</code>
+<code>        private final String name;</code>
+<code>        private final boolean hasArg;</code>
+<code>        private final String description;</code>
+<code>        private final String parameters;</code>
+<code> </code>
+<code>        Option(String name, boolean hasArg,</code>
+<code>               String description, String parameters) {</code>
+<code>            this.name = name;</code>
+<code>            this.hasArg = hasArg;</code>
+<code>            this.description = description;</code>
+<code>            this.parameters = parameters;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public int getArgumentCount() {</code>
+<code>            return hasArg ? 1 : 0;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public String getDescription() {</code>
+<code>            return description;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Kind getKind() {</code>
+<code>            return Kind.STANDARD;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public List&lt;String&gt; getNames() {</code>
+<code>            return List.of(name);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public String getParameters() {</code>
+<code>            return hasArg ? parameters : null;</code>
+<code>        }</code>
+<code>    }</code>
+<code> </code>
+<code>    private final Set&lt;Option&gt; options = Set.of(</code>
+<code>            // An option that takes no arguments.</code>
+<code>            new Option("--alpha", false, "a flag", null) {</code>
+<code>                @Override</code>
+<code>                public boolean process(String option,</code>
+<code>                                       List&lt;String&gt; arguments) {</code>
+<code>                    alpha = true;</code>
+<code>                    return OK;</code>
+<code>                }</code>
+<code>            },</code>
+<code> </code>
+<code>            // An option that takes a single string-valued argument.</code>
+<code>            new Option("--beta", true, "an option", "&lt;string&gt;") {</code>
+<code>                @Override</code>
+<code>                public boolean process(String option,</code>
+<code>                                       List&lt;String&gt; arguments) {</code>
+<code>                    beta = arguments.get(0);</code>
+<code>                    return OK;</code>
+<code>                }</code>
+<code>            },</code>
+<code> </code>
+<code>            // An option that takes a single integer-valued srgument.</code>
+<code>            new Option("--gamma", true, "another option", "&lt;int&gt;") {</code>
+<code>                @Override</code>
+<code>                public boolean process(String option,</code>
+<code>                                       List&lt;String&gt; arguments) {</code>
+<code>                    String arg = arguments.get(0);</code>
+<code>                    try {</code>
+<code>                        gamma = Integer.parseInt(arg);</code>
+<code>                        return OK;</code>
+<code>                    } catch (NumberFormatException e) {</code>
+<code>                        // Note: it would be better to use</code>
+<code>                        // {@link Reporter} to print an error message,</code>
+<code>                        // so that the javadoc tool "knows" that an</code>
+<code>                        // error was reported in conjunction\ with</code>
+<code>                        // the "return false;" that follows.</code>
+<code>                        System.err.println("not an int: " + arg);</code>
+<code>                        return false;</code>
+<code>                    }</code>
+<code>                }</code>
+<code>            }</code>
+<code>    );</code>
+<code> </code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) {  }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return getClass().getSimpleName();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        return options;</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        System.out.println("alpha: " + alpha);</code>
+<code>        System.out.println("beta: " + beta);</code>
+<code>        System.out.println("gamma: " + gamma);</code>
+<code>        return OK;</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<p>When the doclet is executed with valid options, it will print
+out the specified or default values of <code>alpha</code>,
+<code>beta</code> and <code>gamma</code>. If an invalid value is
+provided for <code>gamma</code>, an error message will be
+generated. If you use the <em>javadoc</em> <code>--help</code>, it
+will display the command-line help, including the standard options
+supported by the tool, and any custom options supported by the
+doclet.</p>
+<h2 id="reporters">Reporters</h2>
+The preceding examples just write directly to
+<code>System.out</code>. Using a <a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.javadoc/jdk/javadoc/doclet/Reporter.html">
+Reporter</a>, you can generate messages that are associated with an
+element or a position in a documentation comment. The
+<em>javadoc</em> tool will try to identify the appropriate source
+file and line within the source file and will include that in the
+message displayed to the user.
+<p>The following example uses the reporter to report the kind of
+the elements specified on the command line.</p>
+<figure>
+<figcaption>Using a reporter</figcaption>
+<div class="code">
+<pre>
+<code>package tips;</code>
+<code> </code>
+<code>import java.util.Collections;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code>import javax.tools.Diagnostic;</code>
+<code> </code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A doclet to illustate the use of a {@link Reporter}.</code>
+<code> *</code>
+<code> * The doclet uses a reporter to print the name of the</code>
+<code> * selected types on the command line.</code>
+<code> *</code>
+<code> * Note: some versions of javadoc may incorrectly generate</code>
+<code> * warnings instead of notes. Bug JDK--8224083.</code>
+<code> */</code>
+<code>public class ReporterDoclet implements Doclet {</code>
+<code>    private Reporter reporter;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) {</code>
+<code>        this.reporter = reporter;</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return getClass().getSimpleName();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        return Collections.emptySet();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code>    private static final boolean OK = true;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        environment.getSpecifiedElements().forEach(e -&gt;</code>
+<code>                reporter.print(Diagnostic.Kind.NOTE,</code>
+<code>                        e,</code>
+<code>                        e.getKind().toString()));</code>
+<code>        return OK;</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<p>When run with the source code as an input file, it generates
+output like the following:</p>
+<pre>
+    <em>src</em>/tips/ReporterDoclet.java:13: CLASS
+</pre>
+<p>Notice the filename and line number, identifying the element,
+preceding the text supplied by the doclet.</p>
+<p class="small-note">There's a <a href="https://bugs.openjdk.java.net/browse/JDK-8224083">bug</a> in the
+current implementation, and notes actually get generated as
+warnings.</p>
+<h2>Visitors and Scanners</h2>
+<p>The <em>Language Model API</em> and <em>Compiler Tree API</em>
+each define a number of class hierarchies, with subtypes of a
+common supertype representing different kinds of the supertype.</p>
+<p>To implement operations based on the class of any of item in
+these hierarchies, you can use a corresponding <em>visitor</em>
+class for the hierarchy. Visitors are a programming pattern that
+allow you to provide different behaviors for different subtypes of
+the base type.</p>
+<table>
+<caption>Class Hierarchies</caption>
+<thead>
+<tr>
+<th>API</th>
+<th>Base Type</th>
+<th>Description</th>
+<th>Visitor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Language Model API</td>
+<td scope="row"><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/element/Element.html">
+Element</a></td>
+<td>Program elements</td>
+<td><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html">
+ElementVisitor</a></td>
+</tr>
+<tr>
+<td>Language Model API</td>
+<td scope="row"><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/type/TypeMirror.html">
+TypeMirror</a></td>
+<td>Types of and within program elements</td>
+<td><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/type/TypeVisitor.html">
+TypeVisitor</a></td>
+</tr>
+<tr>
+<td>Language Model API</td>
+<td scope="row"><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/element/AnnotationValue.html">
+AnnotationValue</a></td>
+<td>Values within an annotation</td>
+<td><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/element/AnnotationValueVisitor.html">
+AnnotationValueVisitor</a></td>
+</tr>
+<tr>
+<td>Compiler Tree API</td>
+<td scope="row"><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.compiler/com/sun/source/tree/Tree.html">
+Tree</a></td>
+<td>Nodes within the abstract syntax tree (AST) for a source file
+(Typically not used within doclets.)</td>
+<td><a href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.compiler/com/sun/source/tree/TreeVisitor.html">
+TreeVisitor</a></td>
+</tr>
+<tr>
+<td>Compiler Tree API</td>
+<td scope="row"><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.compiler/com/sun/source/doctree/DocTree.html">
+DocTree</a></td>
+<td>Nodes within the abstract syntax tree (AST) for a documentation
+comment in a source file.</td>
+<td><a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.compiler/com/sun/source/doctree/DocTreeVisitor.html">
+DocTreeVisitor</a></td>
+</tr>
+</tbody>
+</table>
+<p>For each of the basic visitor classes, various subtypes are
+provided for convenience. For more details, see the appropriate API
+documentation.</p>
+<p>The basic visitor mechanism just processes a single instance of
+any of the base types. For most of the visitor classes, there is a
+special subtype, called a <em>scanner</em>. By default, scanner
+classes recursively visit a node and all of its children, although
+the behavior can be modified by overriding the methods for any kind
+of node, as desired. Scanner classes are particularly useful for
+traversing a hierarchy of nodes, looking for nodes with given
+properties, such as all methods within a class and its nested
+classes.</p>
+<p class="small-note">OpenJDK <a href="https://openjdk.java.net/projects/amber/">Project Amber</a> is
+exploring the use of a new language feature called <a href="https://openjdk.java.net/jeps/305">patterns</a> that will help
+avoid much of the boilerplate found in typical use of the visitor
+classes. See also <a href="https://cr.openjdk.java.net/~briangoetz/amber/pattern-match.html">Pattern
+Matching for Java</a>.</p>
+<p>The following example uses a combination of an
+<code>ElementScanner</code> and a <code>DocTreeScanner</code> to
+display the elements and documentation comments found in the
+elements specified in the command line.</p>
+<figure>
+<figcaption>Using scanners to show elements and documention
+comments</figcaption>
+<div class="code">
+<pre>
+<code>package tips;</code>
+<code> </code>
+<code>import java.io.PrintStream;</code>
+<code>import java.util.List;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code>import javax.lang.model.element.Element;</code>
+<code>import javax.lang.model.util.ElementScanner9;</code>
+<code>import javax.tools.Diagnostic;</code>
+<code> </code>
+<code>import com.sun.source.doctree.DocCommentTree;</code>
+<code>import com.sun.source.doctree.DocTree;</code>
+<code>import com.sun.source.util.DocTreeScanner;</code>
+<code>import com.sun.source.util.DocTrees;</code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A doclet to demonstrate the use of {@link ElementScanner9}</code>
+<code> * and {@link DocTreeScanner}.</code>
+<code> *</code>
+<code> * @version 1.0</code>
+<code> * @author Duke</code>
+<code> */</code>
+<code>public class ScannerDoclet implements Doclet {</code>
+<code>    private static final boolean OK = true;</code>
+<code>    private static final boolean FAILED= false;</code>
+<code> </code>
+<code>    private boolean showElements;</code>
+<code>    private boolean showComments;</code>
+<code> </code>
+<code>    private Reporter reporter;</code>
+<code>    private DocTrees treeUtils;</code>
+<code> </code>
+<code>    abstract class Option implements Doclet.Option {</code>
+<code>        private final String name;</code>
+<code>        private final boolean hasArg;</code>
+<code>        private final String description;</code>
+<code>        private final String parameters;</code>
+<code> </code>
+<code>        Option(String name, boolean hasArg,</code>
+<code>               String description, String parameters) {</code>
+<code>            this.name = name;</code>
+<code>            this.hasArg = hasArg;</code>
+<code>            this.description = description;</code>
+<code>            this.parameters = parameters;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public int getArgumentCount() {</code>
+<code>            return hasArg ? 1 : 0;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public String getDescription() {</code>
+<code>            return description;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Kind getKind() {</code>
+<code>            return Kind.STANDARD;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public List&lt;String&gt; getNames() {</code>
+<code>            return List.of(name);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public String getParameters() {</code>
+<code>            return hasArg ? parameters : null;</code>
+<code>        }</code>
+<code>    }</code>
+<code> </code>
+<code>    private final Set&lt;Option&gt; options = Set.of(</code>
+<code>            new Option("--show-elements", false,</code>
+<code>                    "show selected elements", null) {</code>
+<code>                @Override</code>
+<code>                public boolean process(String option,</code>
+<code>                                       List&lt;String&gt; arguments) {</code>
+<code>                    showElements = true;</code>
+<code>                    return OK;</code>
+<code>                }</code>
+<code>            },</code>
+<code>            new Option("--show-comments", false,</code>
+<code>                    "show comments", null) {</code>
+<code>                @Override</code>
+<code>                public boolean process(String option,</code>
+<code>                                       List&lt;String&gt; arguments) {</code>
+<code>                    showComments = true;</code>
+<code>                    return OK;</code>
+<code>                }</code>
+<code>            }</code>
+<code>    );</code>
+<code> </code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) {</code>
+<code>        this.reporter = reporter;</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return getClass().getSimpleName();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        return options;</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        if (!showElements &amp;&amp; !showComments) {</code>
+<code>            reporter.print(Diagnostic.Kind.ERROR,</code>
+<code>                    "specify either --show-elements or --show-comments");</code>
+<code>            return FAILED;</code>
+<code>        }</code>
+<code>        treeUtils = environment.getDocTrees();</code>
+<code>        ShowElements se = new ShowElements(System.out);</code>
+<code>        se.show(environment.getIncludedElements());</code>
+<code>        return OK;</code>
+<code>    }</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A scanner to display the structure of a series of elements</code>
+<code>     * and their documentation comments.</code>
+<code>     */</code>
+<code>    class ShowElements extends ElementScanner9&lt;Void, Integer&gt; {</code>
+<code>        final PrintStream out;</code>
+<code> </code>
+<code>        ShowElements(PrintStream out) {</code>
+<code>            this.out = out;</code>
+<code>        }</code>
+<code> </code>
+<code>        void show(Set&lt;? extends Element&gt; elements) {</code>
+<code>            scan(elements, 0);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void scan(Element e, Integer depth) {</code>
+<code>            DocCommentTree dcTree = treeUtils.getDocCommentTree(e);</code>
+<code>            String indent = "  ".repeat(depth);</code>
+<code>            if (showElements || showComments &amp;&amp; dcTree != null) {</code>
+<code>                out.println(indent + "| " + e.getKind() + " " + e);</code>
+<code>            }</code>
+<code>            if (showComments &amp;&amp; dcTree != null) {</code>
+<code>                new ShowDocTrees(out).scan(dcTree, depth + 1);</code>
+<code>            }</code>
+<code>            return super.scan(e, depth + 1);</code>
+<code>        }</code>
+<code>    }</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A scanner to display the structure of a documentation comment.</code>
+<code>     */</code>
+<code>    class ShowDocTrees extends DocTreeScanner&lt;Void, Integer&gt; {</code>
+<code>        final PrintStream out;</code>
+<code> </code>
+<code>        ShowDocTrees(PrintStream out) {</code>
+<code>            this.out = out;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void scan(DocTree t, Integer depth) {</code>
+<code>            String indent = "  ".repeat(depth);</code>
+<code>            out.println(indent + "# "</code>
+<code>                    + t.getKind() + " "</code>
+<code>                    + t.toString().replace("\n", "\n" + indent + "#    "));</code>
+<code>            return super.scan(t, depth + 1);</code>
+<code>        }</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<h2 id="elements">Elements and Type Mirrors</h2>
+<p><em>Elements</em> generally represent the <em>declaration</em>
+of an item, such as a module, package, type or member, whereas
+<em>type mirrors</em> generally represent the <em>use</em> of (or
+<em>reference</em> to) an element, that may appear within another
+type mirror or an element. The difference is most notable for
+declarations of generic types: for example, <code>interface
+List&lt;T&gt;</code> declares an element which represents a family
+of type mirrors, of which <code>List&lt;String&gt;</code> is just a
+single instance. The difference can also be seen in the context of
+annotations: annotations on a type mirror represent the annotations
+found on the specific use of the type, whereas annotations on the
+corresponding element represent the annotations found on the
+declaration of the type.</p>
+<p>There is obviously a certain duality between elements and type
+mirrors, and it is possible to move between the two class
+hierarchies with methods like <a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/element/Element.html#asType()">
+Element.asType()</a> and <a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/lang/model/util/Types.html#asElement(javax.lang.model.type.TypeMirror)">
+Types.asElement(TypeMirror)</a>.</p>
+<p>The following example shows how to visit the members of a type,
+and to examine the type mirrors that are part of the declarations
+of those members, and to find the elements to which those type
+mirrors correspond.</p>
+<figure>
+<figcaption>Using elements and type mirrors</figcaption>
+<div class="code">
+<pre>
+<code>package tips;</code>
+<code> </code>
+<code>import java.io.PrintStream;</code>
+<code>import java.util.Collections;</code>
+<code>import java.util.List;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code>import javax.lang.model.element.Element;</code>
+<code>import javax.lang.model.element.ElementKind;</code>
+<code>import javax.lang.model.element.ExecutableElement;</code>
+<code>import javax.lang.model.element.VariableElement;</code>
+<code>import javax.lang.model.type.TypeMirror;</code>
+<code>import javax.lang.model.util.ElementScanner9;</code>
+<code>import javax.lang.model.util.Types;</code>
+<code> </code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A doclet to demonstrate the use of {@link TypeMirror</code>
+<code> * type mirrors}, and the relationship to the corresponding</code>
+<code> * {@link Element elements}.</code>
+<code> */</code>
+<code>public class TypeMirrorDoclet implements Doclet {</code>
+<code>    private static final boolean OK = true;</code>
+<code>    private Types typeUtils;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) { }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return getClass().getSimpleName();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        return Collections.emptySet();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        typeUtils = environment.getTypeUtils();</code>
+<code> </code>
+<code>        ShowElements se = new ShowElements(System.out);</code>
+<code>        se.show(environment.getSpecifiedElements());</code>
+<code>        return OK;</code>
+<code>    }</code>
+<code> </code>
+<code>    class ShowElements extends ElementScanner9&lt;Void, Integer&gt; {</code>
+<code>        final PrintStream out;</code>
+<code> </code>
+<code>        ShowElements(PrintStream out) {</code>
+<code>            this.out = out;</code>
+<code>        }</code>
+<code> </code>
+<code>        void show(Set&lt;? extends Element&gt; elements) {</code>
+<code>            scan(elements, 0);</code>
+<code>        }</code>
+<code>        @Override</code>
+<code>        public Void scan(Element e, Integer depth) {</code>
+<code>            return super.scan(e, depth + 1);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void visitExecutable(ExecutableElement ee, Integer depth) {</code>
+<code>            String indent = "  ".repeat(depth);</code>
+<code>            out.println(indent + ee.getKind() + ": " + ee);</code>
+<code>            if (!ee.getTypeParameters().isEmpty()) {</code>
+<code>                out.println(indent + "[Type Parameters]");</code>
+<code>                scan(ee.getTypeParameters(), depth);</code>
+<code>            }</code>
+<code>            if (ee.getKind() == ElementKind.METHOD) {</code>
+<code>                show("Return type", ee.getReturnType(), depth);</code>
+<code>            }</code>
+<code>            if (!ee.getParameters().isEmpty()) {</code>
+<code>                out.println(indent + "[Parameters]");</code>
+<code>                scan(ee.getParameters(), depth);</code>
+<code>            }</code>
+<code>            show("Throws", ee.getThrownTypes(), depth);</code>
+<code> </code>
+<code>            return super.visitExecutable(ee, depth);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void visitVariable(VariableElement ve, Integer depth) {</code>
+<code>            if (ve.getKind() == ElementKind.PARAMETER) {</code>
+<code>                String indent = "  ".repeat(depth);</code>
+<code>                out.println(indent + ve.getKind() + ": " + ve);</code>
+<code>                show("Type", ve.asType(), depth);</code>
+<code>            }</code>
+<code>            return super.visitVariable(ve, depth);</code>
+<code>        }</code>
+<code> </code>
+<code>        private void show(String label, List&lt;? extends TypeMirror&gt; list,</code>
+<code>                          int depth) {</code>
+<code>            if (!list.isEmpty()) {</code>
+<code>                String indent = "  ".repeat(depth);</code>
+<code>                out.println(indent + "[" + label + "]");</code>
+<code>                int i = 0;</code>
+<code>                for (TypeMirror tm : list) {</code>
+<code>                    show("#" + (i++), tm, depth + 1);</code>
+<code>                }</code>
+<code>            }</code>
+<code>        }</code>
+<code> </code>
+<code>        private void show(String label, TypeMirror tm, int depth) {</code>
+<code>            String indent = "  ".repeat(depth);</code>
+<code>            out.println(indent + "[" + label + "]");</code>
+<code>            out.println(indent + "  TypeMirror: " + tm);</code>
+<code>            out.println(indent + "  as Element: " + typeUtils.asElement(tm));</code>
+<code>        }</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<h2 id="tags">Accessing Tags</h2>
+<p>Compared to the old Doclet API, the new Doclet API provides a
+richer structure to represent documentation comments, rooted in
+<a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.compiler/com/sun/source/doctree/DocCommentTree.html">
+DocCommentTree</a>. However, for some doclets that just wish to
+process selected block tags within the comment, a simpler model may
+be more desirable.</p>
+<p>The following example shows how to use a visitor to access
+individual custom tags within a documentation comment, returning
+the tags in a
+<code>Map&lt;String,&#160;List&lt;String&gt;&gt;</code>. The
+example could obviously be extended to cover selected standard
+tags, and to provide other information about each tag instance,
+such as the position within the enclosing source file.</p>
+<figure>
+<figcaption>Accessing the custom tags in a comment</figcaption>
+<div class="code">
+<pre>
+<code>package tips;</code>
+<code> </code>
+<code>import java.io.PrintStream;</code>
+<code>import java.util.ArrayList;</code>
+<code>import java.util.Collections;</code>
+<code>import java.util.List;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Map;</code>
+<code>import java.util.Set;</code>
+<code>import java.util.TreeMap;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code>import javax.lang.model.element.Element;</code>
+<code>import javax.lang.model.util.ElementScanner9;</code>
+<code> </code>
+<code>import com.sun.source.doctree.DocCommentTree;</code>
+<code>import com.sun.source.doctree.UnknownBlockTagTree;</code>
+<code>import com.sun.source.util.DocTrees;</code>
+<code>import com.sun.source.util.SimpleDocTreeVisitor;</code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A doclet that shows how to access custom tags in a</code>
+<code> * documentatio comment.</code>
+<code> *</code>
+<code> * @tag1 a b c</code>
+<code> * @tag2 name=value</code>
+<code> * @tag1 d e f</code>
+<code> */</code>
+<code>public class TagScannerDoclet implements Doclet {</code>
+<code>    private static final boolean OK = true;</code>
+<code> </code>
+<code>    private DocTrees treeUtils;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) { }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return getClass().getSimpleName();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        return Collections.emptySet();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        treeUtils = environment.getDocTrees();</code>
+<code>        ShowTags st = new ShowTags(System.out);</code>
+<code>        st.show(environment.getSpecifiedElements());</code>
+<code>        return OK;</code>
+<code>    }</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A scanner to search for elements with documentation comments,</code>
+<code>     * and to examine those comments for custom tags.</code>
+<code>     */</code>
+<code>    class ShowTags extends ElementScanner9&lt;Void, Integer&gt; {</code>
+<code>        final PrintStream out;</code>
+<code> </code>
+<code>        ShowTags(PrintStream out) {</code>
+<code>            this.out = out;</code>
+<code>        }</code>
+<code> </code>
+<code>        void show(Set&lt;? extends Element&gt; elements) {</code>
+<code>            scan(elements, 0);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void scan(Element e, Integer depth) {</code>
+<code>            DocCommentTree dcTree = treeUtils.getDocCommentTree(e);</code>
+<code>            if (dcTree != null) {</code>
+<code>                String indent = "  ".repeat(depth);</code>
+<code>                out.println(indent + "| " + e.getKind() + " " + e);</code>
+<code>                Map&lt;String, List&lt;String&gt;&gt; tags = new TreeMap&lt;&gt;();</code>
+<code>                new TagScanner(tags).visit(dcTree, null);</code>
+<code>                tags.forEach((t,l) -&gt; {</code>
+<code>                    out.println(indent + "  @" + t);</code>
+<code>                    l.forEach(c -&gt; out.println(indent + "    " + c));</code>
+<code>                });</code>
+<code>            }</code>
+<code>            return super.scan(e, depth + 1);</code>
+<code>        }</code>
+<code>    }</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A visitor to gather the block tags found in a comment.</code>
+<code>     */</code>
+<code>    class TagScanner extends SimpleDocTreeVisitor&lt;Void, Void&gt; {</code>
+<code>        private final Map&lt;String, List&lt;String&gt;&gt; tags;</code>
+<code> </code>
+<code>        TagScanner(Map&lt;String, List&lt;String&gt;&gt; tags) {</code>
+<code>            this.tags = tags;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void visitDocComment(DocCommentTree tree, Void p) {</code>
+<code>            return visit(tree.getBlockTags(), null);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void visitUnknownBlockTag(UnknownBlockTagTree tree,</code>
+<code>                                         Void p) {</code>
+<code>            String name = tree.getTagName();</code>
+<code>            String content = tree.getContent().toString();</code>
+<code>            tags.computeIfAbsent(name,</code>
+<code>                    n -&gt; new ArrayList&lt;&gt;()).add(content);</code>
+<code>            return null;</code>
+<code>        }</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<h2 id="files">Accessing File Objects</h2>
+<p>It is not currently possible to directly access the source or
+class file containing the declaration of an element. <span style="font-size:smaller">(See <a href="https://bugs.openjdk.java.net/browse/JDK-8224922">JDK-8224922</a>.)</span>
+However, for those cases where the declaration is in a source file,
+you can access the information indirectly, via the <a class="api" href="https://docs.oracle.com/en/java/javase/11/docs/api/jdk.compiler/com/sun/source/util/TreePath.html">
+TreePath</a> object in the <em>DocTree API</em>, as shown in the
+following example.</p>
+<figure>
+<figcaption>Accessing the file for an element</figcaption>
+<div class="code">
+<pre>
+<code>package tips;</code>
+<code> </code>
+<code>import java.io.PrintStream;</code>
+<code>import java.util.Collections;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code>import javax.lang.model.element.Element;</code>
+<code>import javax.lang.model.element.TypeElement;</code>
+<code>import javax.lang.model.util.ElementScanner9;</code>
+<code>import javax.tools.JavaFileObject;</code>
+<code> </code>
+<code>import com.sun.source.util.DocTrees;</code>
+<code>import com.sun.source.util.TreePath;</code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A doclet that prints out the file objects for the selected types.</code>
+<code> */</code>
+<code>public class FileObjectDoclet implements Doclet {</code>
+<code>    DocTrees treeUtils;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) {  }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return getClass().getSimpleName();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        return Collections.emptySet();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code>    private static final boolean OK = true;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        treeUtils = environment.getDocTrees();</code>
+<code>        new ShowFileObjects(System.out)</code>
+<code>                .show(environment.getSpecifiedElements());</code>
+<code>        return OK;</code>
+<code>    }</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A scanner that displays the name of the source file</code>
+<code>     * (if available) for any types that it encounters.</code>
+<code>     */</code>
+<code>    class ShowFileObjects extends ElementScanner9&lt;Void, Void&gt; {</code>
+<code>        final PrintStream out;</code>
+<code> </code>
+<code>        ShowFileObjects(PrintStream out) {</code>
+<code>            this.out = out;</code>
+<code>        }</code>
+<code> </code>
+<code>        void show(Set&lt;? extends Element&gt; elements) {</code>
+<code>            scan(elements, null);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void visitType(TypeElement te, Void p) {</code>
+<code>            TreePath dct = treeUtils.getPath(te);</code>
+<code>            if (dct == null) {</code>
+<code>                out.println(te + ": no source file found");</code>
+<code>            } else {</code>
+<code>                JavaFileObject fo =</code>
+<code>                        dct.getCompilationUnit().getSourceFile();</code>
+<code>                out.println(te + ": " + fo.getName());</code>
+<code>            }</code>
+<code>            return super.visitType(te, p);</code>
+<code>        }</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+</main>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

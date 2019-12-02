@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK: JDK 6</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>JDK 6 Project</h1>
+<p>OpenJDK 6 is an implementation of the <a href="http://www.jcp.org/en/jsr/summary?id=270">Java SE 6
+specification</a> valuing stability, compatibility, and security.
+Various binaries derived from OpenJDK 6 sources have passed the
+Java SE 6 Test Compatibility Kit (TCK) suite, including packages
+for <a href="http://blog.softwhere.org/archives/196">Fedora 9</a>
+and <a href="http://lists.ubuntu.com/archives/ubuntu-devel-announce/2009-July/000587.html">
+Ubuntu 9.04</a>.</p>
+<h2>Process</h2>
+<p>As an implementation of the Java SE 6 specification, all changes
+to OpenJDK 6 must be allowable within that specification. This
+requirement precludes many API changes. Acceptable API changes
+include those permitted by the <a href="http://java.sun.com/javase/6/docs/technotes/guides/standards/" title="Java Endorsed Standards Override Mechanism">endorsed
+standards mechanism</a>, such as upgrading to a newer version of a
+standalone technology, like a component JSR. One example of such an
+API change was the <a href="http://blogs.oracle.com/darcy/entry/openjdk_6_sources_for_b06" title="OpenJDK 6: Sources for b06 Published">upgrade of JAX-WS from
+2.0 to 2.1 in OpenJDK 6 build b06</a>.</p>
+<p>Changes allowable within the Java SE 6 specification may still
+be rejected for inclusion in OpenJDK 6 if the <a href="http://blogs.oracle.com/darcy/entry/kinds_of_compatibility" title="Kinds of Compatibility: Source, Binary, and Behavioral"><i>behavioral
+compatibility</i></a> risk is judged as too large. Behavioral
+compatibility concerns implementation properties of the JDK.
+Clients of the JDK can knowingly or unknowingly come to rely upon
+implementation-specification behaviors not guaranteed by the
+specification and care should be taken to not break such
+applications needlessly. In contrast, if a change is appropriate
+for every other JDK release train, it is generally appropriate for
+OpenJDK 6 too. Examples of such universal changes include security
+fixes and time zone information updates.</p>
+<p>With the above caveats, bug fixes in JDK 7 that do not involve
+specification changes have presumptive validity for OpenJDK 6. That
+is, by default such fixes are assumed to be applicable to OpenJDK
+6, especially if having "soaked" in JDK 7 for a time without
+incident. On a related point, the fixes from the stabilized HotSpot
+forests (for example <a href="//hg.openjdk.java.net/hsx/hsx14/master">HotSpot Express
+14</a> or <a href="//hg.openjdk.java.net/hsx/hsx16/master">HotSpot Express
+16</a>) are suitable for bulk porting to the <a href="//hg.openjdk.java.net/jdk6/jdk6/hotspot">OpenJDK 6 HotSpot
+repository</a> without review of individual bugs.</p>
+<p>As a general guideline, if a change is applicable to both JDK 7
+and OpenJDK 6, the change should be made in JDK 7 no later than the
+change is made in OpenJDK 6.</p>
+<p>With the exception of security fixes, all OpenJDK 6 code review
+traffic should be sent to <a href="//mail.openjdk.java.net/mailman/listinfo/jdk6-dev">jdk6-dev@openjdk.java.net</a>
+for consideration before a commit occurs.<br />
+All fixes require the approval of the release manager and may
+require additional technical review and approval at the discretion
+of the release manager. Security fixes are first kept confidential
+and applied to a private forest before being pushed to the public
+forest as part of the general synchronized publication of the fix
+to effected JDK release trains.</p>
+<p>Since there is only a single master OpenJDK 6 forest, near the
+end of a build period the release manager may defer otherwise
+acceptable changes to the start of the next build.</p>
+<p>The complete release process is documented in the file <a href="//hg.openjdk.java.net/jdk6/jdk6/raw-file/tip/ReleaseProcess.html">
+ReleaseProcess.html</a> in the source repositories.</p>
+<p>The schedule to tag builds of OpenJDK 6 is on an as-needed
+basis. The timing and feature list of a build is coordinated on the
+jdk6-dev alias with the <a href="http://icedtea.classpath.org/wiki/Main_Page">IcedTea 6
+project</a>, a downstream client of OpenJDK 6. Before a build is
+tagged, regression and other testing is performed to verify the
+quality of the build.</p>
+<h2>Bug Ids</h2>
+<p>For OpenJDK 6, you can use the Oracle-internal bug id (if you
+have one) or a bug id from the <a href="https://java.net/jira/browse/OPENJDK6">OpenJDK 6 bug tracker</a>
+to push a changeset. If you are using the bug id from the OpenJDK 6
+bug tracker, please use the complete "issue id" that the OpenJDK 6
+tracker creates: For example, <code>OPENJDK6-42</code> instead of
+just <code>42</code>.</p>
+<p>For OpenJDK 6, both of these are lines are acceptable as valid
+bug id lines:</p>
+<pre>1234567: NPE thrown on FileInputStream("")</pre>
+<pre>OPENJDK6-1234: NPE thrown on FileInputStream("")</pre>
+<p>If you are backporting a changeset from jdk7, jdk7u or jdk8,
+using the original Oracle bug id is preferred, since it makes
+tracking changes easier.</p>
+<h2>Genealogy</h2>
+<p>The OpenJDK 6 code base is distinct from the code base for JDK 7
+and the 6 update train. As shown in the diagram below, the original
+JDK 6 code base begat two lines of heirs: JDK 7 and the sequence of
+6 update releases. The decision to open source the JDK code base
+came late in the life cycle of the development of JDK 6 so a build
+of JDK 7 was the first to be published as open source. By the time
+JDK 7 was published as OpenJDK 7, the first post-GA update to JDK
+6, 6u1, had already shipped. Work continued in both the OpenJDK 7
+and 6 update trains. However, an open source implementation of the
+Java SE 6 specification was needed as well. After considering the
+alternatives, OpenJDK 7 build 20 was chosen as the basis of a
+<a href="http://blogs.oracle.com/darcy/entry/openjdk_6_genealogy">backward
+branch</a> to create OpenJDK 6 by removing from the OpenJDK 7
+sources changes inappropriate for a Java SE 6 implementation. Since
+then, all three trains, 6 update, OpenJDK 7, and OpenJDK 6, have
+continued evolving, with certain fixes being applied to or ported
+between the releases. Security fixes are applied to all release
+trains.</p>
+<p><img title="OpenJDK 6 Genealogy" alt="OpenJDK 6 Genealogy" src="images/OpenJDK6-genealogy.png" /></p>
+<h2>Code</h2>
+<ul>
+<li><a href="//hg.openjdk.java.net/jdk6/jdk6">Mercurial
+forest</a></li>
+<li><a href="https://java.net/projects/openjdk6/downloads/">Source
+bundle download</a></li>
+<li><a href="http://download.java.net/openjdk/jdk6/">Source bundle
+download (RET)</a></li>
+</ul>
+<h2>Community</h2>
+<ul>
+<li>Bug Tracker
+<ul>
+<li><a href="https://java.net/jira/browse/OPENJDK6">OpenJDK 6 Bug
+Tracker</a></li>
+</ul>
+</li>
+<li>Mailing lists
+<ul>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/jdk6-dev">jdk6-dev</a></li>
+</ul>
+</li>
+<li>Bloggers
+<ul>
+<li><a href="http://omajid.wordpress.com">Omair Majid, OpenJDK 6
+Release Manager</a></li>
+<li><a href="http://blogs.oracle.com/kto/">Kelly O'Hair, OpenJDK 6
+Release Manager (RET)</a></li>
+<li><a href="http://blogs.oracle.com/darcy">Joe Darcy, OpenJDK 6
+Release Manager (RET)</a></li>
+</ul>
+</li>
+<li>Related Projects
+<ul>
+<li><a href="http://icedtea.classpath.org/wiki/Main_Page">Iced
+Tea</a></li>
+</ul>
+</li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,1103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Core Libraries Group</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>The Core Libraries Group</h1>
+<p>This <a href="/groups/index.html">Group</a> is comprised of
+developers who participate in the design, implementation, and
+maintanence of the Java core libraries.</p>
+<h2>Introduction</h2>
+<p>The core libraries consist of classes which are used by many
+portions of the JDK. The actual set of files has evolved over time,
+but mostly they include functionality which is close to the VM and
+is not explicitly included in other areas, such as <a href="/groups/security/index.html">Security</a> or <a href="/groups/net/index.html">Networking</a>. Also included are commonly
+used tools which are either built on top of the core libraries
+(such as <a href="#jartool">jar</a>) or are used by developers
+working with them (such as <a href="#rmic">rmic</a>).</p>
+<h2>Feature Areas</h2>
+<p>The following table lists the feature areas of the core
+libraries with their corresponding repository locations and links
+to other developer documentation. (For documentation targeted for
+JDK users rather than contributors, see the section <a href="#endUserDocs">End-User Documentation</a>.)</p>
+<p>Currently there are some libraries which appear in the name
+packages as core libraries but are maintained by other groups.
+These exceptions are mentioned within the corresponding table
+entries.</p>
+<p>Unless otherwise specified, all locations are in the
+<tt>jdk</tt> repository.</p>
+<table class="api" summary="Feature Areas and Packages">
+<colgroup>
+<col width="60%" />
+<col width="20%" />
+<col width="20%" /></colgroup>
+<tr>
+<th class="api" align="left">Feature Area</th>
+<th class="api" align="left">Repository Locations</th>
+<th class="api" align="left">More Information</th>
+</tr>
+<!-- java.lang -->
+<tr>
+<td valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/lang/package-summary.html">
+<b>java.lang</b></a>
+<blockquote>
+<p>Provides classes that are fundamental to the design of the Java
+programming language such as <tt>String</tt>, <tt>Math</tt>,
+<tt>Enum</tt>, and the wrapper classes for primitive types (e.g.
+<tt>Boolean</tt>, <tt>Float</tt>, <tt>Character</tt>).</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/lang</tt><br />
+<tt>src/share/native/java/lang</tt><br />
+<tt>src/solaris/classes/java/lang</tt><br />
+<tt>src/solaris/native/java/lang</tt><br />
+<tt>src/windows/classes/java/lang</tt><br />
+<tt>src/windows/native/java/lang</tt><br />
+<tt>test/java/lang</tt></td>
+<td valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20190">
+Bugs</a></li>
+<li><a href="/groups/core-libs/ClassLoaderProposal.html">Class
+Loader API Modification for Deadlock Fix v.04 (Updated: March 31
+2009)</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.lang [ threading ] -->
+<tr>
+<td valign="top">
+<blockquote>
+<p><b>Threading</b><br />
+Includes basic runtime support for threads.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/lang/Thread*.java</tt><br />
+<tt>src/share/native/java/lang/Thread.c</tt><br />
+<tt>test/java/lang/Thread*</tt></td>
+<td valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%20JDK%20AND%20component%20%3D%20core-libs%20AND%20text%20~%20%22thread%22%20AND%20Subcomponent%20%3D%20%22java.lang%22">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.lang [ process ] -->
+<tr>
+<td class="api" valign="top">
+<blockquote>
+<p><b>Process</b><br />
+Includes basic runtime support for creating processes and
+controlling process I/O.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/lang/Process.java</tt><br />
+<tt>src/share/classes/java/lang/ProcessBuilder.java</tt><br />
+<tt>src/share/classes/java/lang/Runtime.java</tt><br />
+<tt>src/share/native/java/lang/Runtime.c</tt><br />
+<tt>src/solaris/classes/java/lang/*Process*</tt><br />
+<tt>src/windows/classes/java/lang/*Process*</tt><br />
+<tt>src/solaris/native/java/lang/*Process*</tt><br />
+<tt>src/windows/native/java/lang/*Process*</tt><br />
+<tt>test/java/lang/ProcessBuidler</tt><br />
+<tt>test/java/lang/Runtime</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%20JDK%20AND%20component%20%3D%20core-libs%20AND%20text%20~%20%22process%22%20AND%20Subcomponent%20in%20%28%22java.lang%22%2C%20%22java.lang%22%2C%20%22java.lang%22%29">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.lang.annotation -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/lang/annotation/package-summary.html">
+<b>java.lang.annotation</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/annotation/package-summary.html">
+<b>javax.annotation</b></a>
+<blockquote>
+<p>Provides library support for the Java programming language
+annotation facility. (These are closely related to the Compiler API
+and <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/lang/model/package-summary.html">
+javax.lang.model</a>, which are all owned by the <a href="/groups/compiler/index.html">Compiler Group</a>.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt><b>jdk repository:</b></tt><br />
+<tt>src/share/classes/java/lang/annotation</tt><br />
+<tt>src/share/classes/sun/reflect/annotation</tt><br />
+<tt><b>langtools repository:</b></tt><br />
+<tt>src/share/classes/javax/annotation</tt>
+<tt>src/share/classes/javax/lang/model</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://jcp.org/en/jsr/detail?id=269">JSR 269</a>:
+<tt>java.lang.annotation</tt> package</li>
+<li>java.lang.annotation <a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%20JDK%20AND%20component%20%3D%20core-libs%20AND%20text%20~%20%22annotation%22%20AND%20Subcomponent%20%3D%20%22java.lang%22">
+Bugs</a></li>
+<li>javax.annotation <a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20313">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.lang.instrument -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/lang/instrument/package-summary.html">
+<b>java.lang.instrument</b></a>
+<blockquote>
+<p>Provides services that allow Java programming language agents to
+instrument programs running on the JVM. These APIs are owned by the
+<a href="/groups/serviceability/index.html">Serviceability
+Group</a></p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/lang/instrument</tt><br />
+<tt>src/share/classes/sun/instrument</tt><br />
+<tt>src/share/instrument</tt><br />
+<tt>src/solaris/instrument</tt><br />
+<tt>src/windows/instrument</tt><br />
+<tt>test/java/lang/instrument</tt></td>
+<td class="api" valign="top">
+<ul>
+<li>See the <a href="/groups/serviceability/index.html">Serviceability Group</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.lang.management -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/lang/management/package-summary.html">
+<b>java.lang.management</b></a>
+<blockquote>
+<p>Provides the management interface for monitoring and management
+of the JVM as well as the operating system on which the JVM is
+running. These APIs are owned by the <a href="/groups/serviceability/index.html">Serviceability Group</a></p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/lang/management</tt><br />
+<tt>test/java/lang/management</tt></td>
+<td class="api" valign="top">
+<ul>
+<li>See the <a href="/groups/serviceability/index.html">Serviceability Group</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.lang.ref -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/lang/ref/package-summary.html">
+<b>java.lang.ref</b></a>
+<blockquote>
+<p>Provides reference-object classes, which support a limited
+degree of interaction with the garbage collector.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/lang/ref</tt><br />
+<tt>src/share/native/java/lang/ref</tt><br />
+<tt>test/java/lang/ref</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%20JDK%20AND%20component%20%3D%20core-libs%20AND%20text%20~%20%22ref%22%20AND%20Subcomponent%20%3D%20%22java.lang%22">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.lang.reflect -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/lang/reflect/package-summary.html">
+<b>java.lang.reflect</b></a>
+<blockquote>
+<p>Provides classes and interfaces for obtaining reflective
+information about classes and objects.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/lang/reflect</tt><br />
+<tt>src/share/classes/sun/reflect</tt><br />
+<tt>src/share/native/java/lang/reflect</tt><br />
+<tt>src/share/native/sun/reflect</tt><br />
+<tt>test/java/lang/reflect</tt><br />
+<tt>test/java/lang/Class</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20668">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.io -->
+<tr>
+<td valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/io/package-summary.html">
+<b>java.io</b></a>
+<blockquote>
+<p>Provides for system input and output and the file system.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/io</tt><br />
+<tt>src/share/native/java/io</tt><br />
+<tt>src/solaris/classes/java/io</tt><br />
+<tt>src/solaris/native/java/io</tt><br />
+<tt>src/windows/classes/java/io</tt><br />
+<tt>src/windows/native/java/io</tt><br />
+<tt>test/java/io</tt></td>
+<td valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20244">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.io [ serialization ]-->
+<tr>
+<td valign="top">
+<blockquote>
+<p><b>Serialization</b><br />
+Supports encoding of objects to and from byte streams.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/io/Externalizable.java</tt><br />
+<tt>src/share/classes/java/io/ObjectInputStream.java</tt><br />
+<tt>src/share/classes/java/io/ObjectOutputStream.java</tt><br />
+<tt>src/share/classes/java/io/NotSerializableException.java</tt><br />
+
+<tt>src/share/classes/java/io/Serializable.java</tt><br />
+<tt>src/share/classes/java/io/SerializablePermission.java</tt><br />
+
+<tt>src/share/native/java/io/ObjectInputStream.c</tt><br />
+<tt>src/share/native/java/io/ObjectOutputStream.c</tt><br />
+<tt>test/java/io/Externalizable</tt><br />
+<tt>test/java/io/ObjectInputStream</tt><br />
+<tt>test/java/io/Serializable</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/platform/serialization/spec/serialTOC.html">
+Java Object Serialization Specification</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20186">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.io [ serialver ]-->
+<tr>
+<td class="api" valign="top">
+<blockquote>
+<p><b><tt>serialver</tt></b><br />
+Tool retrieves the <tt>serialVersionID</tt> for a class.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/sun/tools/serialver</tt><br />
+<tt>test/java/io/Serializable/serialver</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/serialver.html">
+Unix reference page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/serialver.html">
+Windows reference page</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.nio -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/package-summary.html">
+<b>java.nio</b></a><br />
+<blockquote>
+<p>Provides buffers to contain data of primitive type.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/nio</tt><br />
+<tt>src/share/classes/sun/nio/ByteBuffered.java</tt><br />
+<tt>src/share/native/java/nio</tt><br />
+<tt>src/solaris/native/java/nio</tt><br />
+<tt>src/windows/native/java/nio</tt><br />
+<tt>test/java/nio/Buffer</tt><br />
+<tt>test/java/nio/ByteOrder</tt><br />
+<tt>test/java/nio/MappedByteBuffer</tt><br />
+<tt>make/gensrc/GensrcBuffer.gmk</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://jcp.org/en/jsr/detail?id=51">JSR 51</a>:
+<tt>java.nio</tt> packages for channels and charsets</li>
+<li>buffer, channels, and file system <a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20228">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.nio{.channels{.spi}?} -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/channels/package-summary.html">
+<b>java.nio.channels</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/channels/spi/package-summary.html">
+<b>java.nio.channels.spi</b></a><br />
+<blockquote>
+<p>Defines channels, an abstraction for devices capable of
+performing I/O operations; defines selectors for multiplexed,
+non-blocking I/O.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/nio/channels</tt><br />
+<tt>src/share/classes/sun/nio/ch</tt><br />
+<tt>src/share/native/sun/nio/ch</tt><br />
+<tt>src/share/sample/nio</tt><br />
+<tt>src/solaris/classes/sun/nio/ch</tt><br />
+<tt>src/solaris/native/sun/nio/ch</tt><br />
+<tt>src/windows/classes/sun/nio/ch</tt><br />
+<tt>src/windows/native/sun/nio/ch</tt><br />
+<tt>test/java/nio/channels</tt><br />
+<tt>test/sun/nio/ch</tt><br />
+<tt>src/share/sample/nio</tt></td>
+<td class="api" valign="top">&#160;</td>
+</tr>
+<!-- java.nio{.charsets{.spi} -->
+<tr>
+<td valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/charset/package-summary.html">
+<b>java.nio.charset</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/charset/spi/package-summary.html">
+<b>java.nio.charset.spi</b></a><br />
+<blockquote>
+<p>Defines charsets, decoders, and encoders, for translating
+between bytes and Unicode characters</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/nio/charset</tt><br />
+<tt>src/share/classes/sun/nio/cs</tt><br />
+<tt>src/solaris/classes/sun/nio/cs</tt><br />
+<tt>make/gensrc/GensrcCharsetCoder.gmk</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html">
+Supported Encodings</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20294">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.nio{.charsets{.spi} [ native2ascii ] -->
+<tr>
+<td class="api" valign="top">
+<blockquote>
+<p><b><tt>native2ascii</tt></b><br />
+Tool converts files to and from native encodings.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/sun/tools/native2ascii</tt><br />
+<tt>test/sun/tools/native2ascii</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/native2ascii.html">
+Unix reference page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/native2ascii.html">
+Windows reference page</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%20JDK%20AND%20text%20~%20native2ascii%20ORDER%20BY%20key%20DESC">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.nio.file -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/file/package-summary.html">
+<b>java.nio.file</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/file/attribute/package-summary.html">
+<b>java.nio.file.attribute</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/nio/file/spi/package-summary.html">
+<b>java.nio.file.spi</b></a><br />
+<blockquote>
+<p>Defines interfaces and classes to access files, file attributes,
+and file systems.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/nio/file</tt><br />
+<tt>src/share/classes/com/sun/nio/file</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://jcp.org/en/jsr/detail?id=203">JSR 203</a>:
+<tt>java.nio</tt> packages for file system</li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20228">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util -->
+<tr>
+<td valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/package-summary.html">
+<b>java.util</b></a>
+<blockquote>
+<p>Provides the collections framework, formatted printing and
+scanning, array manipulation utilities, event model, date and time
+facilities, internationalization, and miscellaneous utility
+classes.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/util</tt><br />
+<tt>test/java/util</tt></td>
+<td valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20216">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util [ collections ] -->
+<tr>
+<td valign="top">
+<blockquote>
+<p><b>Collections</b><br />
+Includes all classes which implement the <tt>Collection</tt>
+interface such as data structures implementing lists, queues, maps,
+and sets.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/util/ArrayDeque.java</tt><br />
+<tt>src/share/classes/java/util/ArrayList.java</tt><br />
+<tt>src/share/classes/java/util/Collection.java</tt><br />
+<tt>src/share/classes/java/util/Collections.java</tt><br />
+<tt>src/share/classes/java/util/*Map.java</tt><br />
+<tt>src/share/classes/java/util/*Set.java</tt><br />
+<tt>src/share/classes/java/util/Linked*.java</tt><br />
+<tt>src/share/classes/java/util/Stack.java</tt><br />
+<tt>src/share/classes/java/util/Vector.java</tt><br />
+<tt>test/java/util/ArrayDeque.java</tt><br />
+<tt>test/java/util/ArrayList.java</tt><br />
+<tt>test/java/util/Collection.java</tt><br />
+<tt>test/java/util/Collections.java</tt><br />
+<tt>test/java/util/*Map.java</tt><br />
+<tt>test/java/util/*Set.java</tt><br />
+<tt>test/java/util/Linked*.java</tt><br />
+<tt>test/java/util/Stack.java</tt><br />
+<tt>test/java/util/Vector.java</tt></td>
+<td valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20669">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util [ i18n ] -->
+<tr>
+<td class="api" valign="top">
+<blockquote>
+<p><b>Internationalization Classes</b><br />
+Includes support for internationalization and locale-specific
+output of dates, times, and currencies. These APIs are owned by the
+<a href="/groups/i18n/index.html">Internationalization
+Group</a></p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/*Calendar.java</tt><br />
+<tt>src/share/classes/java/util/Currency.java</tt><br />
+<tt>src/share/classes/java/util/Date.java</tt><br />
+<tt>src/share/classes/java/util/Locale*.java</tt><br />
+<tt>src/share/classes/java/util/ResourceBundle.java</tt><br />
+<tt>src/share/classes/java/util/*TimeZone*.java</tt><br />
+<tt>src/share/classes/sun/util/*.java (except
+PreHashedMap.java)</tt><br />
+<tt>src/share/classes/sun/util/resources</tt></td>
+<td class="api" valign="top">
+<ul>
+<li>See the <a href="/groups/i18n/index.html">Internationalization
+Group</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20239">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.concurrent{.atomic,.locks} -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/concurrent/package-summary.html">
+<b>java.util.concurrent</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/concurrent/atomic/package-summary.html">
+<b>java.util.concurrent.atomic</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/concurrent/locks/package-summary.html">
+<b>java.util.concurrent.locks</b></a>
+<blockquote>
+<p>Provides utility classes used in concurrent programming,
+including support for atomic updates of single variables and a
+locking framework which supplements language-level
+synchronization.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/concurrent</tt><br />
+<tt>src/share/native/java/util/concurrent</tt><br />
+<tt>test/java/util/concurrent</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://jcp.org/en/jsr/detail?id=166">JSR 166</a>:
+<tt>java.util.concurrent*</tt> packages</li>
+<li>Maintainer's <a href="http://gee.cs.oswego.edu/dl/concurrency-interest/index.html">website</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20215">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.jar -->
+<tr>
+<td valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/package-summary.html">
+<b>java.util.jar</b></a><br />
+<blockquote>
+<p>Provides classes for reading and writing the JAR (Java ARchive)
+file format.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/com/sun/java/util/jar</tt><br />
+<tt>src/share/classes/java/util/jar</tt><br />
+<tt>src/share/native/com/sun/java/util/jar</tt><br />
+<tt>test/java/util/jar</tt><br />
+Not strictly part of JAR, but useful:<br />
+<tt>src/share/classes/sun/net/www/protocol/jar</tt><br />
+<tt>src/solaris/classes/sun/net/www/protocol/jar</tt><br />
+<tt>src/windows/classes/sun/net/www/protocol/jar</tt><br />
+<tt>test/sun/net/www/protocol/jar</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html">
+JAR File Specification</a></li>
+<li><tt>java.util.{jar,zip}</tt> <a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20231">
+Bugs</a></li>
+<li><tt>jarsigner</tt> is owned by the <a href="/groups/security/index.html">Security Group</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.jar [ jar tool ] -->
+<tr>
+<td valign="top">
+<blockquote>
+<p><a name="jartool" id="jartool"><b><tt>jar</tt></b></a><br />
+Tool creates and accesses the contents of a <tt>.jar</tt> file.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/sun/tools/jar</tt><br />
+<tt>test/tools/jar</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/jar.html">
+Unix reference page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/jar.html">
+Windows reference page</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010308%20AND%20cf[10008]%20%3D%20260">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.jar [ extcheck ] -->
+<tr>
+<td class="api" valign="top">
+<blockquote>
+<p><b><tt>extcheck</tt></b><br />
+Tool detects conflicts between a target <tt>.jar</tt> file and the
+currently installed extension <tt>.jar</tt> files.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/com/sun/tools/extcheck</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/extcheck.html">
+Unix reference page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/extcheck.html">
+Windows reference page</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%20JDK%20AND%20text%20~%20%22extcheck%22%20ORDER%20BY%20key%20DESC">
+Bugs</a> in the extension mechanism, including
+<tt>extcheck</tt></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.logging -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/logging/package-summary.html">
+<b>java.util.logging</b></a>
+<blockquote>
+<p>Provides support to maintain and service software at customer
+sites.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/logging</tt><br />
+<tt>src/share/classes/sun/util/logging</tt><br />
+<tt>test/java/util/logging</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20250">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.regex -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/regex/package-summary.html">
+<b>java.util.regex</b></a>
+<blockquote>
+<p>Provides classes for matching character sequences against
+patterns specified by regular expressions.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/regex</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20333">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.prefs -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/prefs/package-summary.html">
+<b>java.util.prefs</b></a>
+<blockquote>
+<p>Provides classes to store and retrieve user and system
+preference and configuration data.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/prefs</tt><br />
+<tt>src/solaris/classes/java/util/prefs</tt><br />
+<tt>src/windows/classes/java/util/prefs</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%20JDK%20AND%20text%20~%20%22prefs%22">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.spi -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/spi/package-summary.html">
+<b>java.util.spi</b></a>
+<blockquote>
+<p>Service provider classes for the java.util package. These APIs
+are owned by the <a href="/groups/i18n/index.html">Internationalization Group</a></p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/spi</tt></td>
+<td class="api" valign="top">
+<ul>
+<li>See the <a href="/groups/i18n/index.html">Internationalization
+Group</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.stream -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/stream/package-summary.html">
+<b>java.util.stream</b></a>
+<blockquote>
+<p>Classes to support function-style operations on streams of
+elements, such as map-reduce transformations on collections.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/stream</tt><br />
+<tt>test/java/util/stream</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20726">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.util.zip -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/util/zip/package-summary.html">
+<b>java.util.zip</b></a>
+<blockquote>
+<p>Provides classes for reading and writing the standard ZIP and
+GZIP file formats.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/util/zip</tt><br />
+<tt>src/share/native/java/util/zip</tt><br />
+<tt>test/java/util/zip</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010308%20AND%20cf[10008]%20%3D%20260">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.math -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/math/package-summary.html">
+<b>java.math</b></a>
+<blockquote>
+<p>Provides classes for performing arbitrary-precision integer
+arithmetic (<tt>BigInteger</tt>) and arbitrary-precision decimal
+arithmetic (<tt>BigDecimal</tt>).</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/math</tt><br />
+<tt>src/share/classes/java/lang/Math.java</tt><br />
+<tt>src/share/classes/java/lang/StrictMath.java</tt><br />
+<tt>src/share/classes/sun/misc/FloatConsts.java</tt><br />
+<tt>src/share/classes/sun/misc/FloatingDecimal.java</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://jcp.org/en/jsr/detail?id=13">JSR 13</a>:
+<tt>BigDecimal</tt> enhancements</li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20230">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.rmi{.activation, .dgc, .registry, .server} -->
+<tr>
+<td valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/rmi/package-summary.html">
+<b>java.rmi</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/rmi/activation/package-summary.html">
+<b>java.rmi.activation</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/rmi/dgc/package-summary.html">
+<b>java.rmi.dgc</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/rmi/registry/package-summary.html">
+<b>java.rmi.registry</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/rmi/server/package-summary.html">
+<b>java.rmi.server</b></a><br />
+<blockquote>
+<p>Provides support for remote communication between programs
+written in Java.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/rmi</tt><br />
+<tt>src/share/classes/sun/rmi</tt><br />
+<tt>test/java/rmi</tt><br />
+<tt>test/sun/rmi</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://www.oracle.com/technetwork/java/javase/tech/index-jsp-136424.html">
+Remote Invocation Home Page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/platform/rmi/spec/rmiTOC.html">
+Java RMI Specification</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20247">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.rmi [ rmic ] -->
+<tr>
+<td valign="top">
+<blockquote>
+<p><b><a name="rmic" id="rmic"><tt>rmic</tt></a><br /></b> Tool
+generates stub, skeleton, and tie classes for remote objects using
+either the JRMP or IIOP protocols, and generates OMG IDL.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/java/rmi/rmic</tt><br />
+<tt>test/sun/rmi/rmic</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/rmic.html">
+Unix reference page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/rmic.html">
+Windows reference page</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.rmi [ rmid ] -->
+<tr>
+<td valign="top">
+<blockquote>
+<p><b><tt>rmid</tt></b><br />
+Tool starts the activation system daemon that allows objects to be
+registered and activated in a VM.</p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt>src/share/classes/com/sun/rmi/rmid</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/rmid.html">
+Unix reference page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/rmid.html">
+Windows reference page</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.rmi [ rmiregistry ] -->
+<tr>
+<td class="api" valign="top">
+<blockquote>
+<p><b><tt>rmiregistry</tt></b><br />
+Tool starts a remote object registry on the specified port on the
+current host.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/sun/rmi/registry</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/rmiregistry.html">
+Unix reference page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/rmiregistry.html">
+Windows reference page</a></li>
+</ul>
+</td>
+</tr>
+<!-- java.sql [ javax.sql ] -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/sql/package-summary.html">
+<b>java.sql</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/sql/package-summary.html">
+<b>javax.sql</b></a><br />
+<blockquote>
+<p>Provides the API for accessing and processing data stored in
+data source.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/java/sql</tt><br />
+<tt>src/share/classes/javax/sql</tt><br />
+<tt>src/share/classes/com/sun/rowset</tt></td>
+<td class="api" valign="top">&#160;</td>
+</tr>
+<!-- javax.naming{.directory, .event, .ldap, .spi} -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/naming/package-summary.html">
+<b>javax.naming</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/naming/package-summary.html">
+<b>javax.naming.directory</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/naming/event/package-summary.html">
+<b>javax.naming.event</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/naming/ldap/package-summary.html">
+<b>javax.naming.ldap</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/naming/spi/package-summary.html">
+<b>javax.naming.spi</b></a><br />
+<blockquote>
+<p>Provides access to Naming and Directory Service such as DNS and
+LDAP.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/javax/naming</tt><br />
+<tt>src/share/classes/com/sun/naming</tt><br />
+<tt>test/javax/naming</tt><br />
+<tt>src/share/classes/com/sun/jndi</tt><br />
+<tt>test/com/sun/jndi</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://www.oracle.com/technetwork/java/jndi/index.html">Java
+Naming and Directory Interface Home Page</a></li>
+<li><a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20227">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- javax.script -->
+<tr>
+<td valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/script/package-summary.html">
+<b>javax.script</b></a>
+<blockquote>
+<p>Provides interfaces and classes that define Java Scripting
+Engines and a framework for their use in Java applications.<br />
+<br />
+<em>JDK 8 includes source code for the Nashorn script engine which
+is based on JSR 292's <tt>invokedynamic</tt>.</em></p>
+</blockquote>
+</td>
+<td valign="top"><br />
+<tt><b>jdk repository:</b></tt><br />
+<tt>src/share/classes/javax/script</tt><br />
+<tt>src/share/classes/com/sun/script</tt><br />
+<tt>src/share/demo/scripting/jconsole.plugin</tt><br />
+<tt>src/share/sample/scripting</tt><br />
+<tt>test/javax/script</tt><br />
+<tt><b>nashorn repository:</b></tt><br />
+<tt>src/*</tt></td>
+<td valign="top">
+<ul>
+<li><a href="http://jcp.org/en/jsr/detail?id=223">JSR 223</a>:
+scripting support</li>
+<li><a href="http://jcp.org/en/jsr/detail?id=292">JSR 292</a>:
+<tt>invokedynamic</tt></li>
+<li>javax.script <a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20304">
+Bugs</a></li>
+<li>Nashorn <a href="https://bugs.openjdk.java.net/issues/?jql=project%20%3D%2010100%20AND%20component%20%3D%2010300%20AND%20cf[10008]%20%3D%20746">
+Bugs</a></li>
+</ul>
+</td>
+</tr>
+<!-- javax.script [ jrunscript ]-->
+<tr>
+<td class="api" valign="top">
+<blockquote>
+<p><b><tt>jrunscript</tt></b><br />
+Tool provides a command line script shell both both interactive and
+batch modes of script execution.<br />
+<br />
+<em>This tool is experimental and unsupported.</em></p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt>src/share/classes/com/sun/tools/script</tt><br />
+<tt>test/sun/tools/jrunscript</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/jrunscript.html">
+Unix reference Page</a></li>
+<li><a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/jrunscript.html">
+Windows reference Page</a></li>
+</ul>
+</td>
+</tr>
+<!-- jaxp  -->
+<tr>
+<td class="api" valign="top"><a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/package-summary.html">
+<b>javax.xml</b></a><a name="jaxp" id="jaxp">&#160;</a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/datatype/package-summary.html">
+<b>javax.xml.datatype</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/namespace/package-summary.html">
+<b>javax.xml.namespace</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/parsers/package-summary.html">
+<b>javax.xml.parsers</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/stream/package-summary.html">
+<b>javax.xml.stream</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/stream/events/package-summary.html">
+<b>javax.xml.stream.events</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/stream/util/package-summary.html">
+<b>javax.xml.stream.util</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/transform/package-summary.html">
+<b>javax.xml.transform</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/transform/com/package-summary.html">
+<b>javax.xml.transform.com</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/transform/sax/package-summary.html">
+<b>javax.xml.transform.sax</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/transform/stax/package-summary.html">
+<b>javax.xml.transform.stax</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/transform/stream/package-summary.html">
+<b>javax.xml.transform.stream</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/validation/package-summary.html">
+<b>javax.xml.validation</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/xpath/package-summary.html">
+<b>javax.xml.xpath</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?org/w3c/dom/package-summary.html">
+<b>org.w3c.dom</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?org/w3c/dom/bootstrap/package-summary.html">
+<b>org.w3c.dom.bootstrap</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?org/w3c/dom/ls/package-summary.html">
+<b>org.w3c.dom.ls</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?org/w3c/dom/views/package-summary.html">
+<b>org.w3c.dom.views</b></a> <a href="http://docs.oracle.com/javase/8/docs/api/index.html?org/xml/sax/package-summary.html">
+<b>org/xml/sax</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?org/xml/sax/ext/package-summary.html">
+<b>org/xml/sax.ext</b></a><br />
+<a href="http://docs.oracle.com/javase/8/docs/api/index.html?org/xml/sax/helpers/package-summary.html">
+<b>org/xml/sax.helpers</b></a>
+<blockquote>
+<p>The Java API for XML Processing (JAXP) enables applications to
+parse, transform, validate, and query XML documents using an API
+that is independent of a particular XML processor
+implementation.</p>
+</blockquote>
+</td>
+<td class="api" valign="top"><br />
+<tt><b>jaxp repository:</b></tt><br />
+<tt>src/*</tt></td>
+<td class="api" valign="top">
+<ul>
+<li><a href="https://www.jcp.org/en/jsr/detail?id=206">JSR 206</a>:
+JAXP 1.3</li>
+<li><a href="https://jaxp.java.net/">Java API for XML Processing
+(JAXP)</a> at Project GlassFish</li>
+</ul>
+</td>
+</tr>
+</table>
+<h2>Building</h2>
+<p>Developers are <em>strongly</em> encouraged to perform full
+builds prior to check-in of any changes. (A <em>full</em> build is
+a build performed when there is no pre-existing <tt>build</tt>
+directory; the respository should contain only the desired changes
+and no auto-generated data. Simply performing <tt>make</tt> at the
+top of the build tree is <em>not</em> a full build.) Depending on
+the area, incremental builds are not a reliable indicator of
+whether or not changes will compile successfully in a full build.
+In particular, some files are used early in the bootstrap phase to
+build components like <tt>java.lang.Object</tt>, the launcher, and
+<tt>javac</tt> that are used to build the rest of the JDK. These
+are later re-built once sufficient infrastructure has been
+generated by the bootstrap build. Incremental builds will only
+catch errors that occur in the compile after bootstrap.</p>
+<p>Even when it appears that only <tt>java</tt> code is being
+modified, it is prudent to build on multiple platform families. A
+recommended minimum is one Windows and one Unix target, but
+depending on the code being modified, it may be necessary to
+include a wider spectrum or a specific set of platforms. This is
+necessary because there is no guarantee that the <tt>java</tt> code
+which depends on a change in core is identical on all platforms.
+For instance, <tt>rt.jar</tt> is not portable&#8212;the classes
+within it vary from platform to platform.</p>
+<h2>Testing</h2>
+<p>Tests or modifications of existing tests are required and must
+accompany all changes (both new functionality and any bug fixes).
+There are some exceptions. For example, it is not always possible
+to provide test for fixes for performance problems or other
+conditions that are difficult to simulate or require unusual
+environmental conditions (such as exceptionally low memory, system
+reboot, third-party software, etc.).</p>
+<p>In addition to running the new tests, tests in the modified area
+and any dependent areas should be run. Dependent areas may not be
+immediately obvious. As with builds, it is necessary to run tests
+on multiple platforms.</p>
+<p>Not all areas have tests in the repository. There are two
+possible reasons for this. It may be that there are no tests or
+tests may exist, but have not been audited for open-sourcing. In
+the latter case, the goal is to add them soon. Please ask about
+appropriate testing when considering a modification.</p>
+<h2><a name="endUserDocs" id="endUserDocs">End-User
+Documentation</a></h2>
+<p>The following links reference the canonical end-user
+documentation for the JDK. The features areas listed above will
+have documentation in the corresponding sections of these
+references.</p>
+<ul>
+<li><a href="http://docs.oracle.com/javase/8/docs/">JDK 8
+Documentation</a><br />
+The features areas listed above will have documentation in the
+corresponding sections of this reference which includes release
+notes describing the history of feature updates.</li>
+<li><a href="http://docs.oracle.com/docs/javase/tutorial/">The Java
+Tutorials</a><br />
+The majority of core functionality is described in the section
+"Trails Covering the Basics". Additional topics may be found in the
+"Specialized Trails and Lessons" section.</li>
+</ul>
+<h2>Community</h2>
+<ul>
+<li><strong>Mailing lists</strong>
+<ul>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/core-libs-dev">core-libs-dev</a></li>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/jdbc-spec-discuss">jdbc-spec-discuss</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong>Core libraries bloggers</strong>
+<ul>
+<li><a href="http://blogs.oracle.com/alanb">Alan Bateman</a><br />
+Specification Lead for <a href="http://jcp.org/en/jsr/detail?id=203">JSR 203</a>: "More New I/O
+APIs for the Java Platform ("NIO.2")"</li>
+<li><a href="http://blogs.oracle.com/darcy">Joe Darcy</a><br />
+Specification Lead for <a href="http://jcp.org/en/jsr/detail?id=269">JSR 269</a>:"Pluggable
+Annotation Processing API" and Floating-point Czar</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong><a href="//openjdk.java.net/census#core-libs">Members</a></strong></li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

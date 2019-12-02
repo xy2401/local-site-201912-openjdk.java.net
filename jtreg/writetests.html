@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Writing jtreg tests</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    dd { margin-left: 1.5em; }
+    dd ul li { margin-left: 0; }
+    dt { font-style: oblique; }
+    .recOpt { background-color: #ccffcc }
+    .othOpt { background-color: #ffffcc }
+    p.note { font-size: smaller; font-style: oblique }
+/**/
+</style></head><body><div id="main">
+<h1>Writing jtreg tests</h1>
+<p>The following is a list of guidelines, or points for
+consideration, when writing tests to be run by jtreg.</p>
+<dl>
+<dt><a name="testsShouldBe" id="testsShouldBe">Tests should be
+...</a></dt>
+<dd>
+<dl>
+<dt><a name="robust" id="robust">Robust</a></dt>
+<dd>
+<p>Tests should expect and deal with unexpected failures, even if
+that simply means throwing an exception to be caught by the test
+harness. Don't assume that a test will behave as expected, don't
+ignore return codes that might indicate a failure, and don't ignore
+exceptions. These guidelines apply to all parts of the test code
+including, where appropriate, code to setup the conditions for a
+test, and code to cleanup afterwards.</p>
+</dd>
+<dt><a name="repeatable" id="repeatable">Repeatable</a></dt>
+<dd>
+<p>Successive runs of the test should yield the same results. In
+particular, this means that care should be taken when using random
+numbers to generate data for a test. If a test fails, it is
+important to be able to run the test again and get the same results
+while trying to debug the issue. Likewise, if a test passes, it is
+important that the test should pass for subsequent test runs, such
+as during integration and promotion testing.</p>
+</dd>
+<dt><a name="reliable" id="reliable">Reliable</a></dt>
+<dd>
+<p>When modifying the product, it is really important to be able to
+run all appropriate tests, and to have reasonable confidence that
+if a test fails, it is likely a side effect of the modifications.
+Any time a test fails, the failure needs to be analyzed, to see if
+it is a "known failure", or if it has failed for some other reason,
+and that takes both time and resources.</p>
+</dd>
+<dt><a name="maintain" id="maintain">Maintainable</a></dt>
+<dd>
+<p>Tests are as important as the main source code for the product,
+and need to be well-written, with the expectation that other folk
+may need to read and understand the code, in the event that the
+test uncovers an issue at some point in the future.</p>
+<p>Tests often push API and other components into the dark corners
+of the spec, and may sometimes resort to strange coding tricks to
+do so. Use comments to document any seriously off-brand usage, to
+help readers differentiate between accidental typos and intentional
+cleverness.</p>
+</dd>
+</dl>
+</dd>
+<dt><a name="execMode" id="execMode">Execution mode</a></dt>
+<dd>
+<p>Do not write tests to assume that any particular execution mode
+will be used to run tests. Although othervm mode is still the
+default, for historical reasons, agentvm mode is now generally
+recommended.</p>
+<p>You can use <code>/othervm</code> to force the use of a new JVM
+for specific actions within a test. Use this when you need to force
+particular settings for a JVM, such as specific VM options.</p>
+</dd>
+<dt><a name="clean" id="clean">Cleaning up after a test</a></dt>
+<dd>
+<dl>
+<dt><a name="cleanJVM" id="cleanJVM">JVM state</a></dt>
+<dd>
+<p>In othervm mode, there is obviously no need to clean up any JVM
+state. In the other two modes, jtreg will attempt to clean up JVM
+state that it knows about and which can easily be reset. This
+includes system properties, system streams, the security manager,
+and the default locale. Any other global JVM state that is modified
+by a test should be reset by the test. If the global state cannot
+be reset, consider running the test in othervm mode.</p>
+</dd>
+<dt><a name="cleanFiles" id="cleanFiles">Files</a></dt>
+<dd>
+<p>jtreg will automatically clean up any files written in the
+scratch directory. In general, you should <em>not</em> clean these
+files up within the test because they may provide infomation useful
+to diagnose a test failure, should that be necessary.</p>
+</dd>
+<dt><a name="cleanOther" id="cleanOther">Other resources</a></dt>
+<dd>
+<p>Any other system resources (windows, network connections, etc)
+that are used by a test should be released by the test, unless the
+test is explicitly using othervm mode.</p>
+</dd>
+</dl>
+</dd>
+<dt><a name="conc" id="conc">Concurrency</a></dt>
+<dd>
+<p>It is becoming increasing common to run tests on multi-core
+systems, and to want to run tests concurrently. This requires some
+degree of cooperation between jtreg and the tests it is running. In
+general, it should be acceptable for a test to start a couple of
+extra JVMs while it is running, or to create some number of
+threads, but if it needs to use a significant amount of system
+resources, it should declare itself as needing <em>exclusive
+access</em>, so that jtreg will not run other tests at the same
+time.</p>
+</dd>
+<dt><a name="run" id="run">Make sure tests run</a></dt>
+<dd>
+<p>This is another way of saying, check your test description: that
+is, the comment block near the beginning of the file, which must
+begin <code>@test</code>. Do not put a space between <code>@</code>
+and <code>test</code>. Do not put <code>@ignore</code> or any other
+tag before <code>@test</code>.</p>
+</dd>
+<dt><a name="runCorrectly" id="runCorrectly">Make sure tests run as
+expected</a></dt>
+<dd>
+<p>There is a difference between providing that doesn't fail, and a
+test that does what is expected. The interface between jtreg and
+each test is deliberately simple: a test succeeds if
+<code>main(argv)</code> return normally, and fails if an exception
+is thrown. But, there can be a risk of false positives. Here are
+some real world examples:</p>
+<ul>
+<li>A common pattern is for a test to call an <code>error</code>
+method, to record an error, and to carry on with additional
+testing. When all the testing is complete, the test checks (or
+should check) if any errors have been recorded, and should at that
+point throw an exception to have jtreg take note. If it omits to do
+that, jtreg will presume the test to have pased, even though errors
+might have been reported internally, within the test. Oops.</li>
+<li>Another common pattern is to use reflection to determine test
+cases within a test, perhaps by detecting methods maked with an
+<code>@Test</code> annotation. If you forget the annotation, the
+test will not execute the test case. Oops again.</li>
+</ul>
+</dd>
+<dt><a name="verbosity" id="verbosity">Verbosity</a></dt>
+<dd>
+<p>Provide enough information to diagnose the issue if the test
+should fail. Especially in the case of tests that contain many test
+cases, identify the test case and all pertinent information about
+the test case. If a test can detect different error conditions, use
+a unique error message for each condition. Don't combine checks and
+lose information: It may be more concise to write code like:<br />
+<code><small>&#160;&#160;if (<i>condition-A</i> ||
+<i>condition-B</i>) throw new
+Exception("failed");</small></code><br />
+but if the exception is thrown, you won't know the specific reason
+why.</p>
+<p>Conversely, don't provide too much unnecessary information,
+especially in the case of tests that contain many test cases. jtreg
+does limit the amount of output that is recorded for a test, and
+while the limit can be overriden, you can only do so on the command
+line, and you can't rely on everyone to do so. You might still want
+to give some information for each test cases that is run, just to
+give a warm fuzzy feeling that the test is actually executing the
+appropriate test cases, but maybe you don't need every little
+detail to be written out for those test cases that pass.</p>
+</dd>
+<dt><a name="goldenFiles" id="goldenFiles">Golden files</a></dt>
+<dd>
+<p>Be careful when using "golden files" to check the output of a
+test. As well as the obvious problems, such as filenames,
+timestamps and other host-specific information, you also need to be
+careful handling line separators in text files. Files checked into
+the repository will have <code>\n</code> line separators; files
+written when a test is run on Windows will typically have
+<code>\r\n</code> line separators.</p>
+<p>When comparing files using Java code, it is easy enough to read
+files line by line for the comparison. If you are writing a shell
+test, you can use <code>diff --strip-trailing-cr</code>; however,
+the option is not available on all platforms and so needs to be
+conditional on the platform being used to run the test.</p>
+</dd>
+<dt><a name="shellTests" id="shellTests">Shell tests</a></dt>
+<dd>
+<p>In general, if you are considering to write a shell test,
+consider writing the test in Java instead. These days, it is
+generally easy enough to use Java for anything that you might want
+to do in a shell script, and the result is more likely to be more
+robust and more portable.</p>
+<p>If you must write a shell script, consider the following:</p>
+<ul>
+<li>Watch out for platform differences: file and path separators,
+line separators, and so on.</li>
+<li>Watch out for commands having different options, or different
+names for options, on different platforms.</li>
+<li>Watch out for falling off the end of the script and not
+returning an appropriate exit status. Unless you use <code>set
+-e</code>, the last command in the script should either be a
+command that will return an appropriate status, or <code>exit
+<i>value</i></code> where <i>value</i> is the exit status from some
+earlier command.</li>
+</ul>
+<p>For more information, see <a href="shellTests.html">Shell Tests
+in jtreg</a>.</p>
+</dd>
+<dt><a name="JVMopts" id="JVMopts">Respect command line compiler
+and VM options</a></dt>
+<dd>
+<p>If you need to fork processes to run commands like java, javac,
+and so on, in general, you should use values specified on the
+command line for the JDK to use, and you should propagate any
+relevant compiler and VM options. See the table in <a href="vmoptions.html">Using JVM and javac options with jtreg</a> to see
+how command line options are mapped to environment valiables (for
+use by shell scripts) and system properties (for use by Java
+code.)</p>
+<p class="note">Note: in general, you should not need to fork javac
+from Java code: you can invoke it directly via API.</p>
+</dd>
+<dt><a name="frameworks" id="frameworks">Test frameworks</a></dt>
+<dd>
+<dl>
+<dt><a name="TestNG" id="TestNG">TestNG</a></dt>
+<dd>jtreg supports the use of the standard, open source <a href="testng.org">TestNG</a> testing framework. Individual tests can
+specify the use of TestNG, using <code>@run testng <i>classname</i>
+<i>args</i></code>, or entire directories can be declared to
+contain TestNG tests.</dd>
+<dt><a name="libs" id="libs">Custom libraries</a></dt>
+<dd>Often, many related tests may share a common programming
+pattern or idiom. In this case, you can write a library to provide
+the common code required by the group of tests. One common idiom is
+for the tests to share a common superclass, often called something
+like <i>something</i><code>Tester</code>. Look in the various
+OpenJDK forests for examples of this idiom.</dd>
+</dl>
+</dd>
+</dl>
+<h2>And finally...</h2>
+<dl>
+<dt><a name="test" id="test">Test your test!</a></dt>
+<dd>
+<p><em>Quis custodiet ipsos custodes?</em> Especially in the case
+of a regression test, verify that your test demonstates the issue
+before the fix is applied, and demonstates that the issue is fixed
+after the fix is applied.</p>
+<p>If you have coverage tools available, verify that your test
+exercises all the corresponding parts of the product code.</p>
+</dd>
+</dl>
+<h3><a name="seeAlso" id="seeAlso">See Also</a></h3>
+<ul>
+<li><a href="tag-spec.html">Tag specification</a></li>
+<li><a href="../groups/compiler/tests.html">Guidelines for tests in
+the "langtools" repository</a></li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

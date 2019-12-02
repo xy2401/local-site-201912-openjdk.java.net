@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="content-type" content="text/html; charset=us-ascii" /><title>OpenJDK: jol</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>Code Tools: jol</h1>
+<p><b>JOL</b> (Java Object Layout) is the tiny toolbox to analyze
+object layout schemes in JVMs. These tools are using Unsafe, JVMTI,
+and Serviceability Agent (SA) heavily to decoder the <i>actual</i>
+object layout, footprint, and references. This makes JOL much more
+accurate than other tools relying on heap dumps, specification
+assumptions, etc.</p>
+<h2>Building JOL from source</h2>
+You may skip this step and use the published binaries instead, see
+the usage below. It is generally preferred to use the latest source
+version, that hopefully has the most issues fixed. Follow these
+steps to compile JOL from the source.
+<ol>
+<li>Check out the JOL source with <a href="http://mercurial.selenic.com/">Mercurial</a>:
+<blockquote>
+<pre>
+$ hg clone http://hg.openjdk.java.net/code-tools/jol/ jol</pre></blockquote>
+</li>
+<li>Build JOL with <a href="http://maven.apache.org/">Maven</a>:
+<blockquote>
+<pre>$ cd jol/
+$ mvn clean install</pre></blockquote>
+<p>You only need to do this step once, and Maven will deploy JOL
+into your local repo. If you have the Maven repository manager
+installed, it might be a good idea to deploy the artifact there. If
+not, you can just go with the local build.</p>
+</li>
+</ol>
+<p>There are two major ways to use this project.</p>
+<h2>Use as Library Dependency</h2>
+OpenJDK Community semi-regularly pushes the releases to <a href="http://central.maven.org/maven2/org/openjdk/jol/">Maven
+Central</a>. Therefore, you can use it right away by setting up the
+Maven dependency:
+<blockquote>
+<pre>
+&lt;dependency&gt;
+    &lt;groupId&gt;org.openjdk.jol&lt;/groupId&gt;
+    &lt;artifactId&gt;jol-core&lt;/artifactId&gt;
+    &lt;version&gt;put-the-version-here&lt;/version&gt;
+&lt;/dependency&gt;</pre></blockquote>
+<p>It is a good idea to review <a href="//hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/">
+JOL Samples</a> and <a href="//hg.openjdk.java.net/code-tools/jol/file/tip/jol-cli/src/main/java/org/openjdk/jol/operations/">
+CLI tools source</a> before using the tool at its full capacity as
+the library.</p>
+<h2>Use as Command Line Tool</h2>
+<p>Build produces the self-contained executable JAR in
+<code>jol-cli/target/jol-cli.jar</code>. Published Maven artifacts
+also include the executable JAR that one can download and start
+using right away. To do that, look for the latest version of
+<code>jol-cli-$version-full.jar</code> <a href="http://central.maven.org/maven2/org/openjdk/jol/jol-cli/">here</a>.</p>
+<p>Run it with <code>help</code> argument to get the list of
+operations it has. The brief list of operations we have goes
+below:</p>
+<ul>
+<li>Get the object internals, that is, the field layout within the
+object, header information, field values, the data on alignment
+losses.
+<blockquote>
+<pre>
+$ java -jar jol-cli/target/jol-cli.jar internals java.util.HashMap
+Running 64-bit HotSpot VM.
+Using compressed oop with 3-bit shift.
+Using compressed klass with 3-bit shift.
+Objects are 8 bytes aligned.
+Field sizes by type: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+Array element sizes: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+
+java.util.HashMap object internals:
+ OFFSET  SIZE       TYPE DESCRIPTION                    VALUE
+      0     4            (object header)                05 00 00 00 (0000 0101 0000 0000 0000 0000 0000 0000)
+      4     4            (object header)                00 00 00 00 (0000 0000 0000 0000 0000 0000 0000 0000)
+      8     4            (object header)                8c 3b 00 f8 (1000 1100 0011 1011 0000 0000 1111 1000)
+     12     4        Set AbstractMap.keySet             null
+     16     4 Collection AbstractMap.values             null
+     20     4        int HashMap.size                   0
+     24     4        int HashMap.modCount               0
+     28     4        int HashMap.threshold              0
+     32     4      float HashMap.loadFactor             0.75
+     36     4     Node[] HashMap.table                  null
+     40     4        Set HashMap.entrySet               null
+     44     4            (loss due to the next object alignment)
+Instance size: 48 bytes (reported by Instrumentation API)
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+</pre></blockquote>
+</li>
+<li>Get the object externals, that is, the objects reachable from
+the instance, their addresses, paths through the reachability
+graphs, etc (is is more convenient with API though):
+<blockquote>
+<pre>
+$ java -jar jol-cli/target/jol-cli.jar externals java.util.PriorityQueue
+Running 64-bit HotSpot VM.
+Using compressed oop with 3-bit shift.
+Using compressed klass with 3-bit shift.
+Objects are 8 bytes aligned.
+Field sizes by type: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+Array element sizes: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+
+java.util.PriorityQueue object externals:
+    ADDRESS     SIZE TYPE                    PATH      VALUE
+  719231ad0       32 java.util.PriorityQueue           (object)
+  719231af0       64 [Ljava.lang.Object;     .queue    [null, null, null, null, null, null, null, null, null, null, null]
+</pre></blockquote>
+</li>
+<li>Get the object footprint estimate, same as the object
+externals, but tabulated:
+<blockquote>
+<pre>
+$ java -jar jol-cli/target/jol-cli.jar footprint java.util.Hashtable
+Running 64-bit HotSpot VM.
+Using compressed oop with 3-bit shift.
+Using compressed klass with 3-bit shift.
+Objects are 8 bytes aligned.
+Field sizes by type: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+Array element sizes: 4, 1, 1, 2, 2, 4, 4, 8, 8 [bytes]
+
+java.util.Hashtable instance footprint:
+     COUNT       AVG       SUM   DESCRIPTION
+         1        64        64   [Ljava.util.Hashtable$Entry;
+         1        48        48   java.util.Hashtable
+         2                 112   (total)
+</pre></blockquote>
+</li>
+<li>Get the estimated object layout in different VM modes
+(EXPERIMENTAL):
+<blockquote>
+<pre>
+$ java -jar jol-cli/target/jol-cli.jar estimates java.math.BigInteger
+java.math.BigInteger object internals:
+ OFFSET  SIZE  TYPE DESCRIPTION                    VALUE
+      0     8       (object header)                N/A
+      8     4   int BigInteger.signum              N/A
+     12     4 int[] BigInteger.mag                 N/A
+     16     4   int BigInteger.bitCount            N/A
+     20     4   int BigInteger.bitLength           N/A
+     24     4   int BigInteger.lowestSetBit        N/A
+     28     4   int BigInteger.firstNonzeroIntNum  N/A
+Instance size: 32 bytes (estimated, the sample instance is not available)
+Space losses: 0 bytes internal + 0 bytes external = 0 bytes total
+
+***** 64-bit VM: **********************************************************
+java.math.BigInteger object internals:
+ OFFSET  SIZE  TYPE DESCRIPTION                    VALUE
+      0    16       (object header)                N/A
+     16     8 int[] BigInteger.mag                 N/A
+     24     4   int BigInteger.signum              N/A
+     28     4   int BigInteger.bitCount            N/A
+     32     4   int BigInteger.bitLength           N/A
+     36     4   int BigInteger.lowestSetBit        N/A
+     40     4   int BigInteger.firstNonzeroIntNum  N/A
+     44     4       (loss due to the next object alignment)
+Instance size: 48 bytes (estimated, the sample instance is not available)
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+***** 64-bit VM, compressed references enabled: ***************************
+java.math.BigInteger object internals:
+ OFFSET  SIZE  TYPE DESCRIPTION                    VALUE
+      0    12       (object header)                N/A
+     12     4   int BigInteger.signum              N/A
+     16     4 int[] BigInteger.mag                 N/A
+     20     4   int BigInteger.bitCount            N/A
+     24     4   int BigInteger.bitLength           N/A
+     28     4   int BigInteger.lowestSetBit        N/A
+     32     4   int BigInteger.firstNonzeroIntNum  N/A
+     36     4       (loss due to the next object alignment)
+Instance size: 40 bytes (estimated, the sample instance is not available)
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+***** 64-bit VM, compressed references enabled, 16-byte align: ************
+java.math.BigInteger object internals:
+ OFFSET  SIZE  TYPE DESCRIPTION                    VALUE
+      0    12       (object header)                N/A
+     12     4   int BigInteger.signum              N/A
+     16     4 int[] BigInteger.mag                 N/A
+     20     4   int BigInteger.bitCount            N/A
+     24     4   int BigInteger.bitLength           N/A
+     28     4   int BigInteger.lowestSetBit        N/A
+     32     4   int BigInteger.firstNonzeroIntNum  N/A
+     36    12       (loss due to the next object alignment)
+Instance size: 48 bytes (estimated, the sample instance is not available)
+Space losses: 0 bytes internal + 12 bytes external = 12 bytes total
+</pre></blockquote>
+</li>
+<li>Consume the heap dump and figure the perceived footprint in
+different VM modes (EXPERIMENTAL):
+<blockquote>
+<pre>$ java -jar jol-cli/target/jol-cli.jar heapdump heapdump.hprof
+  Heap Dump: heapdump.hprof
+  Estimated heap consumed, bytes:
+              173,564,985: Raw data (X32 model)
+              179,480,339: VM Layout Simulation (X32 model)
+  -0.000%     179,480,067: VM Layout Simulation (X32 model, hierarchy gaps)
+  -0.000%     179,480,043: VM Layout Simulation (X32 model, super gaps)
+  -2.692%     174,649,167: VM Layout Simulation (X32 model, autoalign)
+  -2.693%     174,647,815: VM Layout Simulation (X32 model, hierarchy gaps, autoalign)
+  -2.693%     174,647,803: VM Layout Simulation (X32 model, super gaps, autoalign)
+
+              232,120,233: Raw data (X64 model)
+              237,629,451: VM Layout Simulation (X64 model)
+  -0.000%     237,629,155: VM Layout Simulation (X64 model, hierarchy gaps)
+  -0.001%     237,626,779: VM Layout Simulation (X64 model, super gaps)
+  -0.059%     237,488,735: VM Layout Simulation (X64 model, autoalign)
+  -0.059%     237,488,439: VM Layout Simulation (X64 model, hierarchy gaps, autoalign)
+  -0.060%     237,486,063: VM Layout Simulation (X64 model, super gaps, autoalign)
+
+              190,397,793: Raw data (X64 model (compressed oops))
+              199,205,031: VM Layout Simulation (X64 model (compressed oops))
+  -0.001%     199,202,303: VM Layout Simulation (X64 model (compressed oops), hierarchy gaps)
+  -0.014%     199,177,791: VM Layout Simulation (X64 model (compressed oops), super gaps)
+  -3.845%     191,544,859: VM Layout Simulation (X64 model (compressed oops), autoalign)
+  -3.846%     191,543,211: VM Layout Simulation (X64 model (compressed oops), hierarchy gaps, autoalign)
+  -3.859%     191,518,687: VM Layout Simulation (X64 model (compressed oops), super gaps, autoalign)
+</pre></blockquote>
+</li>
+</ul>
+<h2>Links</h2>
+<ul>
+<li><a href="//hg.openjdk.java.net/code-tools/jol/file/tip/jol-samples/src/main/java/org/openjdk/jol/samples/">
+JOL Samples</a></li>
+<li><a href="//hg.openjdk.java.net/code-tools/jol/">JOL Source
+Repository</a></li>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/jol-dev">JOL Mailing
+List</a></li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

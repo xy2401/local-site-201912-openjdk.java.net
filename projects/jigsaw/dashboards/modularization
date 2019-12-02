@@ -1,0 +1,299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Jigsaw: Modularization Dashboard</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    TABLE.dash { border-collapse: collapse; }
+    TD, TH { padding-left: 1em; }
+    TD:first-child, TH:first-child { padding-left: 0; }
+    TABLE.dash TD { vertical-align: top; }
+    TABLE.dash TH { text-align: left; vertical-align: bottom;
+                    padding-bottom: .5ex; }
+    TABLE.dash TD { border-top: 1px solid black;
+                    padding-top: 1ex; }
+/**/
+</style></head><body><div id="main">
+<h1>Project Jigsaw: Modularization Dashboard</h1>
+<p>This page contains the list of outstanding work required to
+modularize the JDK.</p>
+<p>See the <a href="module-system">module-system dashboard</a> for
+tasks related to the module system itself.</p>
+<h2 id="static">Static Modularization</h2>
+<p>This table lists the areas where changes are required to allow
+the desired modules to be packaged appropriately, essentially the
+<a href="../doc/jdk-modularization.html">module graph</a>.</p>
+<p>Many of the items in this table also need to be addressed as
+part of the <a href="//openjdk.java.net/jeps/161">Compact
+Profiles (JEP 161)</a> proposal.</p>
+<table class="dash" summary="Static Modularization Tasks">
+<tr>
+<th>Area</th>
+<th>Description</th>
+<th>Status</th>
+<th>Last Update</th>
+</tr>
+<tr>
+<td>Core Libraries</td>
+<td>
+<p>java.util.logging.LogManager dependency on
+java.beans.PropertyChangeListener</p>
+<p>java.util.jar.Pack200 dependency on
+java.beans.PropertyChangeListener</p>
+</td>
+<td>
+<p>The plan is to (a) Deprecate the 6 methods in JDK 8 with a
+warning that they will be removed, and (b) Remove the methods in
+JDK 9.</p>
+<p>Status: Problematic methods have been deprecated in JDK 8.</p>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>Management</td>
+<td>JMX Remote API dependency on RMI-IIOP protocol.
+<p>The IDL Mapping specification requires that the CORBA Tie
+classes be in javax.management.remote.rmi. The result is that
+remote management (without CORBA) is not possible without splitting
+this package between two modules (management and management-iiop in
+the current Jigsaw prototype).</p>
+</td>
+<td>
+<p>For JDK 8 the tentative plan is to change the JSR-160
+specification so that the RMI-IIOP transport is optional. The JMX
+Remote API is proposed to be included in compact3 without CORBA.
+RMI-IIOP will be present in the full JRE along with CORBA.</p>
+<p>Further discussion is required for JDK 9, options include</p>
+<ul>
+<li>Drop support for RMI-IIOP from this API (removes problematic
+tie/stub classes)</li>
+<li>Leave problematic tie/stub classes in the management module and
+make use of scopes so the management module "requires corba for
+reflection"</li>
+<li>Allow for alternative implementations of the management
+module</li>
+</ul>
+<p>Status: Spec changes to the JMX Remote API to allow the IIOP
+transport be optional have been pushed to JDK 8.</p>
+</td>
+<td>2013/01/07</td>
+</tr>
+<tr>
+<td>Networking</td>
+<td>java.net.SecureCache dependency on
+javax.net.ssl.SSLPeerUnverifiedException.
+<p>This causes a dependency from the base module to the jdk.tls
+module.</p>
+</td>
+<td>Potential solution is to include TLS in the base module. An
+alternative proposal is to use a scoped declaration so that the
+base module has a compile time dependency on the TLS module.</td>
+<td>2012/9/19</td>
+</tr>
+<tr>
+<td>Core Libraries</td>
+<td>java.util.Properties dependency on XML parser</td>
+<td>
+<p>Status: A small footprint XML parser based on the JSR-280 RI has
+been pushed to JDK 8 for use by java.util.Properties.</p>
+</td>
+<td>2013/01/07</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>sun.security.provider.ConfigSpiFile dependency on
+com.sun.security.auth.login.ConfigFile
+<p>This dependency forces com.sun.security.auth.login to be split
+between modules.</p>
+</td>
+<td>Status: A proposal to add an "implies" method to
+java.security.Principal is currently in review on security-dev. As
+part of this then the dependency on
+com.sun.security.auth.PrincipalComparator has been removed.</td>
+<td>2013/01/07</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>com.sun.security.auth.callback.DialogCallbackHandler dependency
+on Swing classes</td>
+<td>The tentative plan for this one is:
+<ul>
+<li>Deprecate com.sun.security.auth.callback.DialogCallbackHandler
+in JDK 8.</li>
+<li>Remove this class in JDK 9.</li>
+</ul>
+<p>Status: DialogCallbackHandler has been deprecated in JDK 8.</p>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>Management</td>
+<td>
+<p>DefaultMXBeanMappingFactory dependency on
+java.beans.ConstructorProperties</p>
+</td>
+<td>
+<p>This dependency has been eliminated in JDK 8, see <a href="http://bugs.sun.com/view_bug.do?bug_id=7193302">7193302</a></p>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>Client</td>
+<td>javax.swing BeanInfo classes in dt.jar</td>
+<td>
+<p>See <a href="http://bugs.sun.com/view_bug.do?bug_id=7179078">7179078</a> for
+more details.</p>
+</td>
+<td>2012/9/11</td>
+</tr>
+<tr>
+<td>JAXP</td>
+<td>Change JAXP specification to allow the API be used without
+requiring validating parsers, xpath, etc. installed.</td>
+<td>
+<p>Preliminary changes to the specification prepared but there is a
+lot of implementation work required.</p>
+<p>In light of the Profiles work with JAXP in compact2 then we need
+to re-evaluate whether this effort is absolutely necessary as it is
+a significant project.</p>
+</td>
+<td>2012/9/7</td>
+</tr>
+<tr>
+<td>Tools</td>
+<td>
+<p>All debugging, serviceability and profiling tools are currently
+in the jdk.tools module. This is too coarse grain for embedded
+environments.</p>
+<p>The main work required here is likely to be in SA due to the GUI
+tools.</p>
+</td>
+<td></td>
+<td>2012/9/7</td>
+</tr>
+</table>
+<h2 id="dynamic">Dynamic Modularization</h2>
+<p>This table lists the areas where more in-depth analysis and
+changes are required to allow these areas run in <a href="../doc/jdk-modularization-tips.html#module-mode">module
+mode</a>.</p>
+<p>A complete audit of all code and specifications that relate to
+dynamic class loading needs to be done. That audit will likely
+result in additional areas being added to this table.</p>
+<p>See <a href="/projects/jigsaw/doc/jdk-modularization-tips">JDK
+Modularization Tips</a> for issues to consider.</p>
+<table class="dash" summary="Dynamic Modularization Areas">
+<tr>
+<th>Area</th>
+<th>Description</th>
+<th>Status</th>
+<th>Last Update</th>
+</tr>
+<tr>
+<td>JMX</td>
+<td>
+<p>Requires a detailed analysis but MBean class loading, default
+loader repository and all class loading usages (both spec and
+implementation) need to be examined.</p>
+</td>
+<td>Auditing of spec/implementation under way</td>
+<td>2012/9/7</td>
+</tr>
+<tr>
+<td>Serialization</td>
+<td>
+<p>An analysis of the Java Object Serialization Specification, and
+the APIs for serialization defined in java.io, is required in order
+to determine if and how Java Object Serialization can or should
+work with modules.</p>
+<p>See <a href="../doc/serialization-notes">Serialization Notes</a>
+with some initial notes on this topic.</p>
+</td>
+<td><b>Not assigned</b></td>
+<td>2012/11/8</td>
+</tr>
+<tr>
+<td>RMI</td>
+<td>
+<p>RMI is based on Java Object Serialization and furthermore
+supports dynamic class loading. An in-depth analysis is required to
+understand if and how RMI will work in module mode.</p>
+</td>
+<td><b>Not assigned</b></td>
+<td>2012/11/8</td>
+</tr>
+<tr>
+<td>CORBA/RMI-IIOP</td>
+<td>
+<p>CORBA needs to be analyzed to see if any changes will be
+required to work in module mode. Minimally we know that
+ORB.create_impl requires changes to load the ORB implementation
+will the appropriate class loader.</p>
+<p>RMI-IIOP also requires in-depth analysis to determine if
+anything beyond support for serialization in module mode is
+required.</p>
+</td>
+<td><b>Not assigned</b></td>
+<td>2012/11/8</td>
+</tr>
+<tr>
+<td>JAXP</td>
+<td>
+<p>Update JAXP to use ServiceLoader. This will require a JCP MR as
+there are small specification changes required.</p>
+</td>
+<td>
+<p>This work has been split into six areas and is currently in
+review on the core-libs-dev list.</p>
+</td>
+<td>2013/01/07</td>
+</tr>
+<tr>
+<td>JAX-WS</td>
+<td>
+<p>Update JAX-WS, JAXB and SAAJ to use ServiceLoader; will likely
+require MR for all 3.</p>
+</td>
+<td>JAX-WS project has plans to do this</td>
+<td>2102/9/7</td>
+</tr>
+<tr>
+<td>Client area</td>
+<td>
+<p>This includes AWT, 2D, Swing, JavaBeans JavaSound, image I/O and
+all other areas in "client". This is mostly an audit of code that
+uses Class.forName, ServiceLoader or otherwise makes assumptions on
+class loading with fixes so that this code works in module mode.
+Some small specification changes are expected.</p>
+</td>
+<td><b>Not assigned</b></td>
+<td>2012/9/7</td>
+</tr>
+<tr>
+<td>JDBC</td>
+<td>
+<p>JDBC will likely require API changes, in particular for cases
+such as using a system property to specify the JDBC driver class.
+Some other minor changes expected, for example the code assumes
+that the rowset RI is loaded by the same class loader as the rowset
+API.</p>
+</td>
+<td><b>Not assigned</b></td>
+<td>2012/9/7</td>
+</tr>
+</table>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

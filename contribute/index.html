@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK: How to contribute</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>How to contribute</h1>
+<p>This page describes the sponsored-contribution process for the
+<a href="/projects/jdk">JDK</a> and <a href="/projects/jdk-updates">JDK&#160;Updates</a> Projects. Other
+<a href="/bylaws#project">Projects</a> may follow these conventions
+or may establish their own; please consult the appropriate Project
+pages for details.</p>
+<p>This process is intended for developers who already have the
+skills required to work on the JDK but who do not yet have full
+<a href="/bylaws#committer">Committer</a> rights. It allows such
+developers to demonstrate their abilities by submitting meaningful
+contributions in the form of patches and by pairing them with
+<em>sponsors</em>, <em>i.e.</em>, existing <a href="/census">Committers</a> for the Project who can offer advice, help
+them become familiar with the JDK development process, and
+eventually push their patches into the appropriate <a href="http://mercurial.selenic.com">Mercurial repository</a>. Over time,
+it's expected that skilled <a href="/bylaws#contributor">Contributors</a> will eventually earn full
+<a href="/projects/#project-committer">commit</a> rights for
+themselves.</p>
+<p>This page focuses on the contributing side of the process; a
+companion page describes <a href="../sponsor/">how to sponsor</a> a
+contribution.</p>
+<h2>0. Become a Contributor</h2>
+<p>Like many other open-source communities, the OpenJDK Community
+requires <a href="/bylaws#contributor">Contributors</a> to jointly
+assign their copyright on contributed code. If you haven't yet
+signed the <a href="http://www.oracle.com/technetwork/oca-405177.pdf">Oracle
+Contributor Agreement</a> (OCA) then please do so, scan it and
+e-mail the result to oracle-ca_us(at)oracle.com. Please make sure
+to specify OpenJDK as the project you'd like to contribute to so
+that we can process and store your OCA. Allow at least two weeks
+for processing. If your request is urgent contact the appropriate
+<a href="/census">Project Lead</a>.</p>
+<p>The OCA gives Oracle and the Contributor joint copyright
+interests in the code. The Contributor retains copyrights while
+also granting those rights to Oracle as the Community's sponsor.
+You only need to sign the OCA once in order to cover all changes
+that you might contribute to any Oracle-sponsored open-source
+community including not just OpenJDK but also, for example,
+<a href="http://glassfish.java.net">GlassFish</a>, <a href="http://netbeans.org">NetBeans</a>, and <a href="http://mysql.com">MySQL</a>. If you've already signed the OCA or
+the former SCA (Sun Contributor Agreement) for any Oracle-sponsored
+open-source community, then you do not need to sign it again in
+order to contribute to OpenJDK. Please note that you do <b>not</b>
+need to sign an OCA if you work at Oracle or a company which has
+negotiated an equivalent agreement. (You can learn more about the
+OCA by consulting its <a href="http://www.oracle.com/technetwork/oca-faq-405384.pdf">FAQ</a>.)</p>
+<h2>1. Find something interesting to work on</h2>
+<p>The most obvious thing to work on is a bug or enhancement (RFE)
+about which you are passionate. Please check the "JDK" Project of
+the <a href="https://bugs.openjdk.java.net">bug database</a> to see
+if your idea is already described there, and if so then use that
+bug/RFE's id number when writing about your work. If there's no
+existing bug or RFE then that's fine too; we just ask that you use
+a relevant id for tracking purposes, if one exists.</p>
+<p>If you're interested in a particular area but don't have any
+specific ideas about what to do then feel free to post a query to
+the appropriate Group or Project <a href="//mail.openjdk.java.net">development list</a> to ask for
+suggestions that match your skills and knowledge. A list of all the
+<a href="/bylaws#group">Groups</a> and <a href="/bylaws#project">Projects</a> may be found at the left-hand side
+of this page; you are more than welcome to <a href="//mail.openjdk.java.net">subscribe</a> to any of their
+mailing lists. A complete list of all of the Groups, Projects,
+people and their roles may be found in the <a href="/census">census</a>.</p>
+<h2>2. Discuss your intended change</h2>
+<p>Before you invest significant time working on a change it may be
+worth discussing what you're trying to do with other engineers
+working on the same code. They're likely to be able to offer
+comments and suggestions that will result in a higher-quality
+change and a smoother submission process. Announcing that you're
+working on a particular item can also help to avoid wasted effort
+in case someone else is already working on it.</p>
+<p>If you're thinking of working on an existing bug or RFE that's
+already tracked in the <a href="https://bugs.openjdk.java.net">bug
+database</a> then the best way to start such a discussion is to
+post a message to the appropriate development list with a subject
+line of the form</p>
+<blockquote>
+<p><tt><span class="param">6543210</span>: <span class="param">My
+favorite bug</span></tt></p>
+</blockquote>
+<p>where <tt class="param">6543210</tt> is replaced with the actual
+OpenJDK bug or RFE id number and <tt class="param">My favorite
+bug</tt> is replaced with the bug or RFE's synopsis.</p>
+<h2>3. Submit a patch</h2>
+<p>Your patch must be built and tested on all relevant platforms
+before submission. Refer to the appropriate release-specific build
+and test instructions for JDK (<a href="//hg.openjdk.java.net/jdk/jdk/file/tip/doc/building.html">build</a>,
+<a href="//hg.openjdk.java.net/jdk/jdk/file/tip/doc/testing.html">test</a>)
+or JDK&#160;Updates (<a href="//hg.openjdk.java.net/jdk-updates/jdk9u/file/tip/common/doc/building.html">build</a>,
+<a href="//hg.openjdk.java.net/jdk-updates/jdk9u/file/tip/common/doc/testing.html">
+test</a>). If you have problems building, you may send your
+questions to the <a href="/groups/build">Build</a> Group's <a href="//mail.openjdk.java.net/mailman/listinfo/build-dev">mailing
+list</a>. Note that a full build against recently synchronized
+sources with only your applied patch is required for each submitted
+change.</p>
+<p>When your change is ready, send a message to the appropriate
+development list with a subject line of the form</p>
+<blockquote>
+<p><tt>[PATCH] <span class="param">6543210</span>: <span class="param">My favorite bug</span></tt></p>
+</blockquote>
+<p>where <tt class="param">6543210</tt> and <tt class="param">My
+favorite bug</tt> are replaced as above. If no existing bug or RFE
+describes your change then omit the id number and one will be
+created and assigned.</p>
+<p>The message should contain three things, either directly, or in
+the body as attachments:</p>
+<ul>
+<li>
+<p>A description of the change, including a rationale for your
+approach and a discussion of any alternative approaches that were
+considered, if relevant. If no existing bug or RFE describes your
+change then also include a description of the problem that it
+solves or the need that it addresses.</p>
+</li>
+<li>
+<p>The code change itself, relative to an existing changeset in the
+appropriate Mercurial repository. The preferred form is generated
+by Mercurial's <tt>hg&#160;export</tt> command, with the
+<tt>-g</tt> option so that file renames are tracked correctly. The
+output of <tt>hg&#160;diff&#160;-g</tt> is also acceptable, and in
+the worst case traditional <a href="http://www.gnu.org/software/diffutils/manual/html_mono/diff.html#Unified%20Format">
+unified diffs</a> (<tt>-u</tt>) are okay too, at least for simple
+changes.</p>
+</li>
+<li>
+<p>A unit test, written for the <a href="/jtreg">jtreg</a> test
+harness, that validates your change. The test should fail when run
+against a build without the change and succeed when run against a
+build with the change. Unit tests aren't always practical,
+especially for changes such as performance improvements or fixes to
+bugs that are highly platform-dependent, but if practical then a
+unit test is required.</p>
+</li>
+</ul>
+<h2>4. Work with your sponsor</h2>
+<p>If an existing <a href="/census#jdk">JDK</a> or <a href="/census#jdk-updates">JDK&#160;Updates</a> Committer decides to
+sponsor your proposed change then that person will take ownership
+of your bug.</p>
+<p>Your sponsor will evaluate your patch for correctness,
+compatibility, stability, performance, coding style, and overall
+appropriateness to the current phase of the intended Project's
+development. Your sponsor will work with you to address any
+remaining deficiencies and then guide you through the rest of the
+development process, navigating the relevant internal Oracle
+engineering processes on your behalf and ultimately, if all goes
+well, pushing your patch into the appropriate Mercurial
+repository.</p>
+<h2>5. Know what to expect</h2>
+<p>Only the best patches submitted will actually make it all the
+way into a JDK code base. The goal is not to take in the maximum
+number of contributions possible, but rather to accept only the
+highest-quality contributions. The JDK is used daily by millions of
+people and thousands of businesses, often in mission-critical
+applications, and so we can't afford to accept anything less than
+the very best.</p>
+<p>If you're relatively new to the Java platform then we recommend
+that you gain more experience writing Java applications before you
+attempt to work on the JDK itself. The purpose of the
+sponsored-contribution process is to bring developers who already
+have the skills required to work on the JDK into the existing
+development community. The members of that community have neither
+the time nor the patience required to teach basic Java programming
+skills or platform implementation techniques. (Oracle offers
+<a href="http://education.oracle.com/pls/web_prod-plq-dad/db_pages.getpage?page_id=402&amp;p_nl=JJAV&amp;p_key=Java_Training&amp;intcmp=WWOU11042412MPP012C010">
+formal training</a> if that's what you're looking for.)</p>
+<p>The feature releases currently under development are in the
+<a href="/projects/jdk">JDK Project</a>. Most development work is
+focused on the newest release, so generally you should be working
+against the latest JDK <a href="//hg.openjdk.java.net/jdk/jdk">sources</a> rather than the
+<a href="/projects/jdk-updates">JDK&#160;Updates</a> sources. Fixes
+for critical bugs may eventually be backported, but only after they
+"soak" in JDK for at least one full test cycle (about six
+weeks).</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

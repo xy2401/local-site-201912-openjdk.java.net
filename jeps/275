@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 275: Modular Java Application Packaging</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 275: Modular Java Application Packaging</h1><table class="head"><tr><td>Author</td><td>Danno Ferrin</td></tr><tr><td>Owner</td><td>Chris Bensen</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>deploy&#8201;/&#8201;packager</td></tr><tr><td>Discussion</td><td>openjfx dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="282">JEP 282: jlink: The Java Linker</a></td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Kevin Rushforth, Mandy Chung</td></tr><tr><td>Endorsed by</td><td>Kevin Rushforth</td></tr><tr><td>Created</td><td>2015/05/15 19:33</td></tr><tr><td>Updated</td><td>2017/04/27 21:15</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8080531">8080531</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Integrate features from <a href="//openjdk.java.net/projects/jigsaw">Project Jigsaw</a> into the Java Packager, including module awareness and custom run-time creation.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>The Java Packager (<code>javapackager</code>) has always generated huge binaries when it is asked to bundle a run-time as part of its packaging due to the size of the JRE. <a href="//openjdk.java.net/projects/jigsaw">Project Jigsaw</a> will develop a tool defined in <a href="//openjdk.java.net/jeps/282">JEP 282 jlink: The Java Linker</a> that allows creation of run-time images that contain a subset of the standard and JDK modules enabling the Java Packager to reduce the size of the bundled runtime image.</p>
+<h2 id="Description">Description</h2>
+<p>For the most part, the Java Packager workflow will stay the same.  New tools from Jigsaw will be added, and in some cases replace some steps.</p>
+<h3 id="Only-Generate-Java-9-Applications">Only Generate Java 9 Applications</h3>
+<p>The Java Packager will only create applications that use the JDK 9 run-time. This will simplify a lot of code paths and assumptions with regard to tools used to assemble applications and java run-times. If a user wants to create a Java 8 application then the Java 8 version of Java Packager shipped with JDK 8 will continue to work. We assume that
+the number of self-contained applications that need to work simultaneously on Java 8 and Java 9 will be essentially zero, since the application brings its own JVM with it.</p>
+<h3 id="Use-jlink-to-generate-embedded-Java-Run-time-and-Application-Images">Use <code>jlink</code> to generate embedded Java Run-time and Application Images</h3>
+<p>Currently JREs are copied and unneeded portions are deleted from the copied run-time.</p>
+<p>The <a href="//openjdk.java.net/jeps/282">Java linker tool</a>, <code>jlink</code>, provides a means to generate a JRE image that contains only the required modules. Furthermore <code>jlink</code> may expose some hooks for its image-generation process that we may take advantage of to further customize the image by, for example, adding the removal of executables to the <code>jlink</code> processing, or compression.</p>
+<p>The Java Packager will call <code>jlink</code> to create an application run-time image that will be embedded in the application image. The Java Packager will fail with an appropriate error if <code>jlink</code> fails. It is expected that the packaged modules will ship with JDK 9.</p>
+<p>The <code>jlink</code> tool includes a plugin and extension mechanism. When using <code>jlink</code> to generate the application image we will integrate with those mechanisms so that the output of the <code>jlink</code> process is the application image in a proper platform-specific layout. This will have the desirable side effect of making application image generation not dependent on the Java Packager process.</p>
+<h3 id="javapackager-CLI-Arguments-Ant-Tasks-and-Java-Packager-API"><code>javapackager</code> CLI Arguments, Ant Tasks and Java Packager API</h3>
+<p>The Java Packager has new CLI arguments to match the rest of the Java toolchain specified in JEP 261 for option syntax and values:</p>
+<pre><code>--add-modules &lt;module&gt;(,&lt;module&gt;)*
+--limit-modules &lt;module&gt;(,&lt;module&gt;)*
+--module-path &lt;path&gt;(:&lt;path&gt;)*
+-p &lt;path&gt;(:&lt;path&gt;)*
+--module &lt;module&gt;/&lt;classname&gt;
+-m &lt;module&gt;/&lt;classname&gt;</code></pre>
+<p>To specify an argument for a long option, you can use --&lt;name&gt;=&lt;value&gt; or --&lt;name&gt; &lt;value&gt;.</p>
+<p>NOTE: <code>--module-path</code> maps to jlink's <code>--module-path</code> but with an optional default value. More information below.</p>
+<p>There will be new ANT tasks off the &lt;fx:application&gt;, &lt;fx:secondaryLauncher&gt; and the new &lt;fx:runtime&gt; task.</p>
+<p>For example:</p>
+<pre><code>&lt;fx:deploy outdir="${bundles.dir}"
+           outfile="MinesweeperFX"
+           nativeBundles="all"
+           verbose="true"&gt;
+
+    &lt;fx:runtime strip-native-commands="false"&gt; &lt;-- new
+        &lt;fx:add-modules value="java.base"/&gt;
+        &lt;fx:add-modules value="jdk.packager.services,javafx.controls"/&gt;
+        &lt;fx:limit-modules value="java.sql"/&gt;
+        &lt;fx:limit-modules value="jdk.packager.services,javafx.controls"/&gt;
+        &lt;fx:module-path value="${java.home}/../images/jmods"/&gt;
+        &lt;fx:module-path value="${build.dir}/modules"/&gt;
+    &lt;/fx:runtime&gt;
+
+    &lt;fx:application id="MinesweeperFX"
+                    name="MinesweeperFX"
+                    module="fx.minesweeper" &lt;-- new
+                    mainClass="minesweeper.Minesweeper"
+                    version="1.0"&gt;
+    &lt;/fx:application&gt;
+
+    &lt;fx:secondaryLauncher name="Test2"
+                          module="hello.world" &lt;-- new
+                          mainClass="com.greetings.HelloWorld"&gt;
+    &lt;/fx:secondaryLauncher&gt;
+&lt;/fx:deploy&gt;</code></pre>
+<p>&lt;fx:runtime&gt;, &lt;fx:limit-modules&gt;, &lt;fx:add-modules&gt;, &lt;fx:modular-path&gt; are optional arguments. The module="module name" argument on &lt;fx:application&gt; is used if bundling with a modular application, otherwise if the application is a non-modular application it is invalid. The arguments &lt;fx:limit-modules&gt;, &lt;fx:add-modules&gt;, &lt;fx:modular-path&gt; are interchangeable with --add-mods, --limit-mods and --module-path used in this document. See the section Module Configurations for additional module are argument information.</p>
+<p>The Java Packager API will get new methods for modular options.</p>
+<h3 id="Strip-Native-Commands">Strip Native Commands</h3>
+<p>Stripping the commands such as java.exe has been the default for the Java Packager but some developers need the command line tools such as java.exe. So there will be an option to include the native commands by turning off the removal of stripping of commands:</p>
+<pre><code>--strip-native-commands false</code></pre>
+<h3 id="Add-support-for-modules-and-module-paths">Add support for modules and module paths</h3>
+<p>Jigsaw introduces the notion of a "module path" in addition to a classpath. The module path consists of paths to the libraries, JDK modules and the application module. The paths that contain these modules are specified with the command line argument:</p>
+<pre><code>--module-path &lt;path&gt;(:&lt;path&gt;)*</code></pre>
+<p>It can be supplied only once and it is a platform path. The root modules and their transitive dependences are linked to create a modular run-time image (<a href="//openjdk.java.net/jeps/220">JEP 220</a>).</p>
+<p>The developer can supply a path with packaged modules to bundle with a different version of the Java Runtime than the default. If no JDK packaged modules are provided by the developer then the Java Packager will default to using the packaged modules supplied with the version of the JDK that the Java Packager ships with ($JAVA_HOME/jmods).</p>
+<p>The Java Packager does not currently provide a mechanism to copy packaged modules to the application run-time image instead of linking into the <code>jimage</code>. The most likely need for this scenario would be if the application supports plugins and these modules live outside of the bundled image. If that is the case, the developer will need to override the --module-path and --add-modules using the user JVM argument overrides.</p>
+<h3 id="Module-Configurations">Module Configurations</h3>
+<p>There are two types of Java applications that will be bundled using the Java Packager: Non-modular JARs and Modular Applications.</p>
+<p>Non-modular JARs consist of a JAR without a module-info.class in the JAR file. Use <code>-appClass</code> and <code>-BmainJar=</code>. for applications. Developers will use the Java Packager with the same arguments as with previous versions prior to JDK 9 using the <code>-srcfiles</code>, <code>-Bclasspath=</code>, <code>-appClass</code> and <code>-BmainJar=</code> arguments. For backwards compatibility no new modular arguments are required and by default the embedded Java Runtime will consist of all redistributable modules, so there will be no size reduction of the bundled runtime. Developers can use <code>--module-path</code>, <code>--add-modules</code> and <code>--limit-modules</code> to include 3rd party modules.</p>
+<p>For example:</p>
+<pre><code>javapackager -deploy -v -outdir output -name HelloWorld -Bclasspath=hello.world.jar -native -BsignBundle=false -BappVersion=1.0 -Bmac.dmg.simple=true -srcfiles hello.world.jar -appClass HelloWorld -BmainJar=hello.world.jar</code></pre>
+<p>Modular Applications consist of a JAR, exploded module, or packaged module containing a module-info.class. To bundle with a Modular Application the <code>--module</code> and <code>--module-path</code> arguments must be specified. <code>--module</code> is mutually exclusive to <code>-appClass</code> and <code>-BmainJar=</code>.  <code>--module-path</code> must provide a path containing the main module (the module referenced with <code>--module</code>). Other modules can be added to the <code>run-time image</code> using <code>--add-modules</code> and <code>--limit-modules</code>. Modules dynamically loaded through core reflection or services must be manually specified with <code>--add-modules</code>. The main module and the modules provided by --add-modules will define the root modules. <code>jlink</code> will create a run-time image with the specified root modules and their transitive dependencies.</p>
+<p>For example:</p>
+<pre><code>javapackager -deploy -v -outdir output -name Test -native -BsignBundle=false -BappVersion=1.0 -Bmac.dmg.simple=true --module-path /path/to/jmod --module hello.world/com.greetings.HelloWorld</code></pre>
+<p>This command will produce a run-time image consisting of the main module and all of its transitive dependencies. Other modules can be added via --add-modules option.</p>
+<h3 id="Modules">Modules</h3>
+<p>The packager will be split into two modules:</p>
+<pre><code>jdk.packager
+jdk.packager.services</code></pre>
+<p>jdk.packager contains the Java Packager that builds the app bundle and the installers. jdk.packager.services is a module that is bundled with the app bundle that provides access to packager services at runtime such as JVM user arguments.</p>
+<h3 id="JNLP">JNLP</h3>
+<p>The bundles that are generated will depend on the input and the options provided. Historically -deploy would generate all native bundles and .jnlp files. Now, -deploy in conjunction with -module will not generate .jnlp files since JNLP does not support the new modular options. -native with no options will generate all native bundles available.</p>
+<h2 id="Testing">Testing</h2>
+<p>First and foremost, existing API, command line, and Ant invocations of the Java Packager that worked in JDK 8 should work in JDK 9, so existing tests for the JDK 8 packager should be run.</p>
+<p>New tests will need to be written to exercise the new flags exposed to to support <code>run-time image</code> generation, module-path specifications, and <code>jeeps</code> process interactions.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>We assume that the project will be delivered substantially as it has been described.  If large functional parts are moved to later releases, such as the module path and module system, then the corresponding portions of
+this JEP will slip as well.</p>
+<h2 id="Dependences">Dependences</h2>
+<ul>
+<li><a href="//openjdk.java.net/jeps/200">200: The Modular JDK</a></li>
+<li><a href="//openjdk.java.net/jeps/201">201: Modular Source Code</a></li>
+<li><a href="//openjdk.java.net/jeps/220">220: Modular Run-Time Images</a></li>
+<li><a href="//openjdk.java.net/jeps/261">261: Module System</a></li>
+<li><a href="//openjdk.java.net/jeps/282">282: jlink: The Java Linker</a></li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

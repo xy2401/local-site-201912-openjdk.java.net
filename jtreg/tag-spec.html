@@ -1,0 +1,1373 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><!--
+ Copyright (c) 2006, 2018, Oracle and/or its affiliates. All rights reserved.
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+
+ This code is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License version 2 only, as
+ published by the Free Software Foundation.
+
+ This code is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ version 2 for more details (a copy is included in the LICENSE file that
+ accompanied this code).
+
+ You should have received a copy of the GNU General Public License version
+ 2 along with this work; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+
+ Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ or visit www.oracle.com if you need additional information or have any
+ questions.
+--><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>The JDK Test Framework: Tag Language Specification</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><link rel="stylesheet" type="text/css" href="help.css" title="Style" /><style type="text/css">
+/**/
+    h2.appendix { margin-top:.5in }
+    dfn { font-style: oblique }
+    var { font-style: oblique }
+    pre { font-family: monospace }
+    pre.example { margin-left: 0.5in }
+    dl.tags &gt; dt { font-family: monospace; font-size:smaller }
+    dl.terms &gt; dt { font-style: italic }
+    dl dd { margin-bottom: 1em } 
+    table { border: 1px black solid; border-collapse: collapse }
+    td { border-right: 1px black solid }
+    th { border-right: 1px black solid; border-bottom: 1px black solid }
+    td { padding: 2px 2em 2px 5px }
+    thead tr:first-child { background-color: lightgray }
+    tr:nth-child(even) { background-color: gainsboro }
+    tr:nth-child(odd) { background-color: white }
+/**/
+</style></head><body><div id="main">
+<div style="text-align:center">
+<h1>The JDK Test Framework: Tag Language Specification</h1>
+<p>Comments and questions to: <a href="mailto:jtreg-use@openjdk.java.net">jtreg-use@openjdk.java.net</a>.<br />
+
+1.43 (draft), 23 April, 2018</p>
+</div>
+<p>This is a specification document, not a tutorial. For more basic
+information please consult the jtreg FAQ at <a href="//openjdk.java.net/jtreg">http://openjdk.java.net/jtreg</a>.</p>
+<p style="margin: 10pt 15pt"><b>Contents:</b> <a href="#LEADING_COMMENTS">Leading comments and defining files</a> &#183;
+<a href="#TAG_SYNTAX">Tag syntax</a> &#183; <a href="#INFORMATIONAL_TAGS">Informational tags</a> &#183; <a href="#DECLARATIVE_TAGS">Declarative tags</a> &#183; <a href="#ACTION_TAGS">Action tags</a> (<a href="#ACTION_OPTIONS">action
+options</a>, <a href="#CLASS_NAMES">class names as action
+arguments</a>, <a href="#WILDCARDS">class name wildcards</a>,
+<a href="#ACTION_TYPES">action types</a>) &#183; <a href="#TESTNG">TestNG</a> &#183; <a href="#DIRECTORY_CONTEXT">Directory
+context</a> &#183; <a href="#TEST_GROUPS">Test groups</a> &#183;
+<a href="#SOURCE_STRUCTURE">Source-directory structure and test
+suite configuration files</a> &#183; <a href="#DEFAULTS">Defaults</a> &#183; <a href="#SHORTHANDS">Shorthands</a> &#183; <a href="#EXAMPLES">Examples</a> &#183; <a href="#requires_names">Supported
+names for @requires</a> &#183; <a href="#testvars">Test-specific
+system properties and environment variables</a></p>
+<h2><a name="LEADING_COMMENTS" id="LEADING_COMMENTS">LEADING
+COMMENTS AND DEFINING FILES</a></h2>
+<p>A particular test may involve several files of various types,
+but the test is specified in just one of them. Let this be called
+the <dfn>defining file</dfn> of the test.</p>
+<p>The defining file of a test may be one of several types of
+files. Test tags must be enclosed in a comment at the head of the
+file, optionally preceded by comments which do not contain test
+tags. The comment in the defining file which includes the test tags
+is called the <dfn>leading comment</dfn>. The following types of
+defining files are recognized:</p>
+<ul>
+<li>A Java source file, with file extension ".java". Only the
+"<code>/*</code>" to "<code>*/</code>" comment syntax is
+recognized. On each comment line leading asterisks, if any, are
+ignored.</li>
+<li>A Bourne shell file, with file extension ".sh". The leading
+comment is the first contiguous set of lines each of whose first
+character is '#'. The comment is terminated by the first line whose
+first character is not '#'. Note that shell tests should not
+contain "#!/bin/sh" on the first line; they are intended to be run
+only via explicit invocation of a shell.</li>
+<li>An HTML file, with file extension ".html". The leading comment
+is enclosed within the usual "<code>&lt;!--</code>" to
+"<code>--&gt;</code>" HTML tag.</li>
+</ul>
+<p>The contents of a leading comment are parsed into a sequence of
+tokens. A token is a maximal contiguous sequence of non-whitespace
+characters. Whitespace characters, which include newline and
+carriage-return characters, are significant only insofar as they
+separate tokens.</p>
+<p>Some files within the source directory structure may be
+configured to implicitly be defining files. For all other files,
+the first token in the leading comment in the defining file of a
+test must be "<code>@test</code>". The harness discovers defining
+files by looking for such tokens: a file without comments is not a
+defining file; a file whose leading comment does not start with
+"<code>@test</code>" is not a defining file.</p>
+<h2><a name="TAG_SYNTAX" id="TAG_SYNTAX">TAG SYNTAX</a></h2>
+<p>Within a leading comment, a tag consists of a tag token followed
+by some number of arguments. A tag token is any token whose first
+character is '@'. There is at present no syntax for quoting a
+leading '@' character. Case is significant when comparing tag
+tokens; all tag tokens defined here are in lower case. It is an
+error for the leading comment of a defining file to contain any tag
+token not defined here.</p>
+<p>As a special case, the token "<code>@(#)</code>" is not treated
+as a tag token. This token may appear in the arguments to an
+<code>@test</code> tag as part of the SCCS identification
+string.</p>
+<p>The arguments of a tag are simply the tokens that follow it. The
+argument tokens of a tag extend from the first token after the tag
+token to the end of the comment, the end of the file, or the next
+tag token, whichever comes first. Argument tokens are separated by
+whitespace; if commas are used, they will be considered to be part
+of the tokens to which they are adjacent.</p>
+<h2><a name="INFORMATIONAL_TAGS" id="INFORMATIONAL_TAGS">INFORMATIONAL TAGS</a></h2>
+<p>Informational tags document the test. They do not affect the
+operation of the harness, but may be used by the harness in
+generating reports.</p>
+<dl class="tags">
+<dt>@test <var>&lt;token&gt;*</var></dt>
+<dd>
+<p>Defining-file identifier; <var>&lt;token&gt;*</var> is typically
+SCCS identification info</p>
+</dd>
+<dt>@bug <var>&lt;bugid&gt;+</var></dt>
+<dd>
+<p>Java bug system numbers</p>
+</dd>
+<dt>@summary <var>&lt;token&gt;+</var></dt>
+<dd>
+<p>Textual summary</p>
+</dd>
+<dt>@author <var>&lt;token&gt;+</var></dt>
+<dd>
+<p>Original author</p>
+</dd>
+<dt>@comment <var>&lt;token&gt;*</var></dt>
+<dd>
+<p>A comment; ignored</p>
+</dd>
+</dl>
+<p>Any particular informational tag, except the @comment tag, may
+occur at most once in a given test. The <code>@comment</code> tag
+may be used multiple times.</p>
+<h2><a name="DECLARATIVE_TAGS" id="DECLARATIVE_TAGS">DECLARATIVE
+TAGS</a></h2>
+<p>Declarative tags govern the execution of the tags that follow
+them.</p>
+<dl class="tags">
+<dt>@library <var>&lt;path|jar&gt;+</var></dt>
+<dd>
+<p>Add one or more pathnames or jar filenames to the library path
+list. Each argument must use forward slash to separate file name
+components, and may use ".." to denote parent directories.</p>
+<ul>
+<li>If an argument is relative (that is, it does not begin with
+'/'), it will be evaluated relative to the directory containing the
+test. It is an error if the resulting path is outside the test
+suite.</li>
+<li>If an argument begins with '/', it will first be evaluated
+relative to the root directory of the test suite. It is an error if
+the resulting path is outside the test suite. If the result does
+not identify an existing directory, it will be further evaluated
+against each entry of a search path in turn, until an existing
+directory is found. The search path is specified by the
+<code>external.lib.roots</code> entry in the test suite <a href="#config">configuration files</a>.</li>
+<li>An argument may begin with <code>${java.home}/</code> to refer
+to libraries bundled with the JDK being tested. An argument may
+begin with <code>${jtreg.home}/</code> to refer to libraries
+bundled with the jtreg test harness.</li>
+</ul>
+<p>It is an error if any of the entries in the library path list
+does not identify an existing directory or jar file.</p>
+<p>Each entry in the library path list is categorized according to
+its content.</p>
+<ul>
+<li><b>packages</b>: the contents are one or more source files
+arranged in a standard package hierarchy.</li>
+<li><b>user modules</b>: the contents are one or more directories,
+each containing the complete source code for a user module. Each
+directory must be named for the module it contains, and the
+directory must directly contain a module declaration
+(<i>module-info.java</i>).</li>
+<li><b>system module patch</b>: the contents are one or more
+directories, each containing source files to be compiled and used
+to patch modules in the system image being tested. Each directory
+must be named for the module to be patched, and the directory must
+<i>not</i> contain a module declaration (<i>module-info.java</i> or
+<i>module-info.class</i>). The source files in each directory must
+be organized in a standard package hierarchy.</li>
+<li><b>precompiled jar file</b>: the entry is a jar file containing
+precompiled class files.</li>
+</ul>
+<p>It is an error if any entry in the library path list cannot be
+categorized. In particular, any one entry in the library path
+cannot contain more than one type of content. It is highly
+recommended that a library directory should only contain content
+directly related to the library; it should not contain
+subdirectories containing other content, such as tests, or other
+separate libraries.</p>
+<p>In general, classes in library directories are not automatically
+compiled as part of a compilation command explicitly naming the
+source files containing those classes. A test that relies upon
+library classes should contain appropriate <code>@build</code>
+directives to ensure that the classes will be compiled. It is
+strongly recommended that tests do not rely on the use of implicit
+compilation by the Java compiler. Such an approach is generally
+fragile, and may lead to incomplete recompilation when a test or
+library code has been modified.</p>
+<p>If a library directory is used by a directory of <a href="#TESTNG">TestNG</a> tests, all the classes in a library directory
+will be automatically compiled by means of implicit
+<code>@build</code> tags.</p>
+<p>When the harness compiles a test, the source code for each entry
+(if any) will be placed on the appropriate source path, and any
+previously compiled classes for each entry will be placed on the
+class path, application module path or module patch path as
+appropriate. When the harness runs a test, the compiled classes for
+each entry will be placed on the class path, application module
+path or module patch path as appropriate.</p>
+<p>The <code>@library</code> tag may be used more than once. It may
+only be used before the first <code>@run</code> tag (either
+explicit or implicit.) Specifically, it must appear before any use
+of <code>@run</code>, <code>@build</code>, <code>@compile</code>,
+and <code>@ignore</code>.</p>
+<p>The <code>@library</code> tag and the library path list have
+nothing to do with the search path (i.e., the PATH environment
+variable) defined in shell actions.</p>
+</dd>
+<dt>@key <var>&lt;keyword&gt;+</var></dt>
+<dd>
+<p>Label this test with the given keyword(s). Some harnesses allow
+tests to be selected via boolean expressions on keywords. The list
+of acceptable keywords may be specified in the <a href="#TEST_ROOT">TEST.ROOT</a> file (see below). The <code>@key</code>
+tag may be used at most once in a given test.</p>
+</dd>
+<dt>@modules
+<var>&lt;module&gt;[/&lt;package&gt;[:&lt;flag&gt;]]+</var></dt>
+<dd>
+<p>Express a dependence on modules in the system being tested, and
+optionally, on selected internal packages in some or all of those
+modules.</p>
+<p>If no dependencies are specified explicitly, a default set of
+dependencies will be read from the <code>modules</code> entry in
+test suite <a href="#config">configuration files</a>.</p>
+<p>The dependencies will be ignored if the version of JDK used to
+run the tests does not support the use of modules. Otherwise, a
+test will not be run if the system being tested does not contain
+all of the specified modules. All of the specified modules will be
+present in the configuration when the test is run.</p>
+<p>A flag may be specified to indicate the desired access to a
+specified package.</p>
+<table summary="Modules: Flag and Access">
+<thead>
+<tr class="head">
+<th>Flag</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><i>none</i></td>
+<td>The package should be exported, so that its public types will
+be available for use by the test at compile time and run time.</td>
+</tr>
+<tr>
+<td><code>open</code></td>
+<td>The package should be opened, so that its types will be
+available for use by the test at run time using deep
+reflection.</td>
+</tr>
+<tr>
+<td><code>+open</code></td>
+<td>The package should be both exported and opened, so that its
+public types will be available for use by the test at compile time
+and run time, and other types will be available at run time using
+deep reflection.</td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt>@requires <var>&lt;expression&gt;</var></dt>
+<dd>
+<p>Express a dependence on characteristics of the system being
+tested. Some harnesses allow tests to be selected according to the
+characteristics of the system being tested. The expression may be
+composed of the following elements:</p>
+<ul>
+<li>Named characteristics. See <a href="#requires_names">Appendix
+1</a> for a complete list of the standard supported names, and
+details of the test-suite <a href="#config">configuration files</a>
+for information on how to extend the set with additional names
+specific to the test-suite.</li>
+<li>Numeric values. Values must be decimal integers, optionally
+followed a suffix '<code>K</code>', '<code>M</code>' or
+'<code>G</code>', which as a a multiplier of 1024, 1024*1024 and
+1024*1024*1024 respectively. The resulting value must fit in a
+<code>long</code> variable.</li>
+<li>String values, enclosed in double quotes '"'.</li>
+<li>Boolean values '<code>true</code>' and
+'<code>false</code>'.</li>
+<li>Operators: &#160;<code>(&#160;)</code>&#160;
+&#160;<code>*</code>&#160; &#160;<code>/</code>&#160;
+&#160;<code>%</code>&#160; &#160;<code>+</code>&#160;
+&#160;<code>-</code>&#160; &#160;<code>==</code>&#160;
+&#160;<code>~=</code>&#160; &#160;<code>&lt;</code>&#160;
+&#160;<code>&lt;=</code>&#160; &#160;<code>&gt;</code>&#160;
+&#160;<code>&gt;=</code>&#160; &#160;<code>&amp;</code>&#160;
+&#160;<code>|</code>&#160; &#160;<code>!</code></li>
+</ul>
+<p>The <code>@requires</code> tag may be used multiple times in a
+given test. If it is used more than once, the expressions in the
+individual instances will be enclosed in parentheses and combined
+with '&amp;'.</p>
+</dd>
+</dl>
+<h2><a name="ACTION_TAGS" id="ACTION_TAGS">ACTION TAGS</a></h2>
+<p>Action tags tell the harness how to perform the test. They are
+executed in the order in which they are given. Each action either
+passes or fails. If an action fails, no following actions, if any,
+are performed. A test passes if, and only if, all of its actions
+pass.</p>
+<p>Action tags begin with the tag token "<code>@run</code>", and
+have the following syntax:</p>
+<pre style="margin-left:0.5in">
+@run <var>&lt;type&gt;</var><var>&lt;option&gt;*</var> <var>&lt;arg&gt;*</var>
+</pre>
+<p>The <var>&lt;type&gt;</var> describes the basic type of the
+action; the <var>&lt;option&gt;</var>s further describe how the
+action is to be performed. The <var>&lt;arg&gt;</var>s are passed
+to the test in a manner appropriate to the
+<var>&lt;type&gt;</var>.</p>
+<p>The first token after the "<code>@run</code>" token contains
+both the action type and options, if any. To parse the type and the
+options, this token is broken down into subtokens. A subtoken is
+either the character '=', the character '/', or a maximal
+contiguous sequence of characters not containing either of these
+characters.</p>
+<p>The type of an action tag is named by the first subtoken of the
+tag's first token. The remaining subtokens of the first token form
+the options. Options have the syntax</p>
+<p style="margin-left:0.5in"><code>/<var>&lt;name&gt;</var></code>
+&#160;&#160;or&#160;&#160;
+<code>/<var>&lt;name&gt;</var>=<var>&lt;value&gt;</var></code></p>
+<p>where <var>&lt;name&gt;</var> and <var>&lt;value&gt;</var> are a
+single subtokens. The <var>&lt;value&gt;</var> may be enclosed in
+double quotes to prevent the usual interpretation of '=', '/', and
+whitespace.</p>
+<h3><a name="ACTION_OPTIONS" id="ACTION_OPTIONS">ACTION
+OPTIONS</a></h3>
+<p>Not all action types support all options.</p>
+<dl class="tags">
+<dt>/fail</dt>
+<dd>
+<p>Negate the result of the action. If the action fails it is
+treated as though it passed, and vice versa.</p>
+</dd>
+<dt>/timeout=<var>&lt;seconds&gt;</var></dt>
+<dd>
+<p>Specify the timeout value. The default timeout is two minutes.
+If an action does not finish before the timeout expires, it fails.
+The timeout period applies to the entire action, not to particular
+steps of the action. A value of zero means there is no timeout. The
+/timeout option may not be given in conjunction with the
+<code>/manual</code> option.</p>
+</dd>
+<dt>/ref=<var>&lt;file&gt;</var></dt>
+<dd>
+<p>Capture the standard output and error of the action and compare
+it to the content of <var>&lt;file&gt;</var>, which is in the same
+directory as the test. The action succeeds only if the output
+matches the content of the file. Even if <code>/fail</code> is
+specified, the output must match in order for the action to
+pass.</p>
+</dd>
+<dt>/othervm</dt>
+<dd>
+<p>Some test harnesses reuse a VM between tests. This option forces
+the action to be run in a fresh VM subprocess. Use this option if
+you need to specify VM options, or if the action might crash the
+VM.</p>
+</dd>
+<dt>/manual[=(yesno|done)]</dt>
+<dd>
+<p>Indicates that this is a manual action requiring user
+interaction. If the harness has been instructed to run only
+automatic actions, then this action will be skipped and will be
+considered to have passed. The <code>/manual</code> option may not
+be given in conjunction with the <code>/timeout</code> option.</p>
+<p>If no option value is given, then the harness assumes that the
+test itself will handle whatever user interaction is necessary. If
+"<code>yesno</code>" is given, then the harness will ask the user
+whether the action is to pass or fail. If "<code>done</code>" is
+given, then the harness will wait until the user indicates that the
+test has completed. When the harness queries the user it does so in
+a manner appropriate to the action type; e.g., for applet actions
+it will either display "<code>pass</code>" or "<code>fail</code>"
+buttons or a single "<code>done</code>" button. In the failure
+case, some harnesses may provide a way for the user to submit text
+describing the failure.</p>
+</dd>
+<dt>/policy=<var>&lt;file&gt;</var></dt>
+<dd>
+<p>Define the Java system property "java.security.policy" to have
+the value "<code>=${TESTSRC}/</code><var>&lt;file&gt;</var>", where
+TESTSRC is the name of the directory containing the defining file
+of the test. This definition has the effect of making the given
+file the sole source of security policies to be used by the
+security manager. In particular, the system security policy and the
+user's security policy will be ignored. If the <code>/secure</code>
+option is not used then the default security manager will be
+installed.</p>
+<p>Property expansion will be performed in the policy file as
+usual; in particular, the "<code>test.src</code>" and
+"<code>test.classes</code>" properties will name the source and
+class directories of the test being run (see <a href="DIRECTORY_CONTEXT">DIRECTORY CONTEXT</a> below).</p>
+<p>This option may only be used in conjunction with the
+<code>/othervm</code> option.</p>
+</dd>
+<dt>/secure=<var>&lt;class&gt;</var></dt>
+<dd>
+<p>Specify a subclass of <code>java.lang.SecurityManager</code> to
+be installed as the security manager. An appropriate
+<code>@build</code> tag should be provided to ensure that the class
+is compiled. If the <code>/secure</code> option is used without the
+<code>/policy</code> option then the system's built-in policy,
+equivalent to the original sandbox policy, will be assumed.</p>
+<p>This option may only be used in conjunction with the
+<code>/othervm</code> option.</p>
+</dd>
+</dl>
+<h3><a name="CLASS_NAMES" id="CLASS_NAMES">CLASS NAMES AS ACTION
+ARGUMENTS</a></h3>
+<p>Some actions take one or more class names as arguments. Each
+such argument is the name of a class, not the name of a class file,
+so the ".class" suffix should not be given.</p>
+<p>A class name may be specified in one of the following ways:</p>
+<ul>
+<li>a simple class name: e.g., "Foo"</li>
+<li>a package name followed by a simple name: e.g., "bar.Foo",
+"baz.bar.Foo"</li>
+<li>a module name followed by either <code>module-info</code> or a
+fully qualified class name: e.g., "myModule/module-info",
+"myModule/baz.bar.Foo"</li>
+</ul>
+If a class in a non-Java package is specified, then the source file
+for that class must be in the corresponding directory relative to
+the directory containing the defining file of the test.
+<h3><a name="WILDCARDS" id="WILDCARDS">CLASS-NAME
+WILDCARDS</a></h3>
+<p>Some actions take either class names or class-name wildcards as
+arguments. A class-name wildcard can be specified in one of the
+following ways:</p>
+<ul>
+<li>"*", meaning all classes in the default package</li>
+<li>"<var>&lt;package-name&gt;</var>.*", meaning all classes in the
+named package</li>
+<li>
+"<var>&lt;module-name&gt;</var>/<var>&lt;package-name&gt;</var>.*",
+meaning all classes in the named package in the named module</li>
+<li>"<var>&lt;module-name&gt;</var>/*", meaning all classes in the
+named module</li>
+</ul>
+<h3><a name="ACTION_TYPES" id="ACTION_TYPES">ACTION TYPES</a></h3>
+<dl class="tags">
+<dt>build <var>&lt;classname-or-wildcard&gt;+</var></dt>
+<dd>
+<p>Build classes on demand. Each argument may be a class name, as
+described above, or a class-name wildcard. To locate a source file
+for a named class, the harness takes the first matching file found
+by looking in the test-source directory and then in each
+appropriate directory of the library path list. To locate the
+source files denoted by a wildcard, the harness evaluates the
+wildcard relative to test-source directory and relative to each
+directory of the library path list, taking all matches. Each
+discovered class will be compiled if its corresponding class file
+does not exist or is older than its source file. Intended primarily
+for use before main and applet actions that require more than one
+class to be compiled. Passes only if the compiler finishes without
+error, or if none of the specified classes need to be compiled.</p>
+<p>It is an error for a build action to be the last action in a
+test description.</p>
+</dd>
+<dt>clean <var>&lt;classname-or-wildcard&gt;+</var></dt>
+<dd>
+<p>Remove the class files for the named classes, if they exist.
+Each argument may be a class name or a class-name wildcard.
+Intended primarily for compiler tests. Always passes.</p>
+</dd>
+<dt>
+compile[/fail][/ref=<var>&lt;file&gt;</var>][/timeout=<var>&lt;seconds&gt;</var>][/process][/module=<var>&lt;module-name&gt;</var>]
+<var>&lt;arg&gt;+</var></dt>
+<dd>
+<p>Invoke the compiler on the given <var>&lt;arg&gt;</var>s, which
+may include any compiler option other than the "<code>-d</code>"
+option. Equivalent to "javac <var>&lt;arg&gt;+</var>", therefore to
+specify source files the ".java" suffix must be included. Source
+file names should be relative pathnames using forward slashes and
+".." to denote parent directories; they are normally interpreted
+relative to the directory containing the defining file of the test.
+Standard output and standard error are concatenated (not
+interleaved) so that <code>/ref</code> may be used. Intended
+primarily for compiler tests; non-compiler tests should generally
+use build actions. The timeout period, if specified, applies to the
+entire compile action, not to the compilation of each individual
+source file. Passes only if the compiler finishes without
+error.</p>
+<p>The <code>/process</code> option can be given to indicate that
+the compilation includes the use of an annotation processor and
+that no source files are being compiled. If <code>/process</code>
+is not given, at least one source file must be specified.</p>
+<p>The <code>/module=<var>&lt;module-name&gt;</var></code> option
+is used to compile a patch for a module in the system image. In
+this one situation, the source files must be in a subdirectory
+named for the module, relative to the directory containing the
+defining file of the test. Neither the module directory nor the
+list of source files may contain a <code>module-info.java</code>
+file. Internally, this option corresponds to using the javac
+<code>--patch-module=<var>&lt;module-name&gt;</var>=<var>&lt;path&gt;</var></code>
+option.</p>
+<p>User modules can be compiled by placing the code for the modules
+in subdirectories named for the modules. Each directory should have
+a corresponding <code>module-info.java</code> file.No other options
+are required: in particular,
+<code>/module=<var>&lt;module-name&gt;</var></code> should
+<i>not</i> be used; that option is just used for patches to system
+modules. To avoid confusion, it is highly recommended that tests
+containing user modules should be placed in their own directory,
+and should not contain any other directories apart from the
+directories used to contain module source code.</p>
+<p>The use of the <code>-classpath</code> and
+<code>-sourcepath</code> options as arguments to the compile action
+is discouraged; the <code>@library</code> tag is often more
+appropriate.</p>
+</dd>
+<dt>
+main[/fail][/manual][/othervm][/policy=<var>&lt;file&gt;</var>][/secure=<var>&lt;class&gt;</var>]
+[/timeout=<var>&lt;seconds&gt;</var>] <var>&lt;vm-opt&gt;*</var>
+<var>&lt;class&gt;</var> <var>&lt;arg&gt;*</var></dt>
+<dd>
+<p>Invoke the main method of the specified class, passing any
+arguments after the class name. Roughly equivalent to "java
+<var>&lt;vm-opt&gt;*</var> <var>&lt;class&gt;</var>
+<var>&lt;arg&gt;*</var>". All initial argument tokens beginning
+with a dash are considered to be VM options; the first argument not
+beginning with a dash is the <var>&lt;class&gt;</var> to be
+invoked, and any remaining arguments are passed to the main method
+of that class. Passes only if the main method returns normally and
+does not cause an exception to be thrown, from the main thread or
+from any other thread. A "main" action is considered to be finished
+when the main method returns; if a test involves multiple threads,
+some synchronization may be necessary to ensure that the other
+threads finish their work before the thread running the main method
+returns.</p>
+<p>The named <var>&lt;class&gt;</var> will be compiled on demand,
+just as though an "<code>@run</code> build
+<var>&lt;class&gt;</var>" action had been inserted before this
+action. If this action requires classes other than
+<var>&lt;class&gt;</var> to be up to date, insert an appropriate
+build action before this action. If any <var>&lt;vm-opt&gt;</var>s
+are given then <code>/othervm</code> should be specified. If the
+<code>/manual</code> option is specified then the harness will skip
+this action when instructed to run only automatic tests; no
+arguments to the <code>/manual</code> option are supported.</p>
+<p>The use of the <code>-classpath</code> option as an argument to
+a <code>main/othervm</code> action is discouraged; the
+<code>@library</code> tag is often more appropriate. The setting of
+the system properties "<code>java.security.manager</code>" and
+"<code>java.security.policy</code>" in <code>main/othervm</code>
+actions is also discouraged; the <code>/policy</code> and
+<code>/secure</code> options should be used instead.</p>
+</dd>
+<dt>driver[/fail][/timeout=<var>&lt;seconds&gt;</var>]
+<var>&lt;class&gt;</var> <var>&lt;arg&gt;*</var></dt>
+<dd>
+<p>Invoke the main method of the specified class, passing any
+arguments after the class name. Although superficially similar to
+<code>@run main</code>, this is for use when it is desirable to
+perform additional setup or configuration before running the class
+containing the actual test code, possibly in a child VM.</p>
+<p>The named <var>&lt;class&gt;</var> will be compiled on demand,
+just as though an "<code>@run</code> build
+<var>&lt;class&gt;</var>" action had been inserted before this
+action. If this action requires classes other than
+<var>&lt;class&gt;</var> to be up to date, insert an appropriate
+build action before this action.</p>
+</dd>
+<dt>
+junit[/fail][/manual][/othervm][/policy=<var>&lt;file&gt;</var>][/secure=<var>&lt;class&gt;</var>]
+[/timeout=<var>&lt;seconds&gt;</var>] <var>&lt;vm-opt&gt;*</var>
+<var>&lt;class&gt;</var></dt>
+<dd>
+<p>Invoke the specified class as a JUnit 4.5 test. Roughly
+equivalent to "<code>@run main org.junit.runner.JUnitCore
+<var>&lt;class&gt;</var></code>". All initial argument tokens
+beginning with a dash are considered to be VM options; the first
+argument not beginning with a dash is the <var>&lt;class&gt;</var>
+to be invoked. No additional arguments are allowed. Passes only if
+the main method of JUnitCore returns normally and does not cause an
+exception to be thrown, from the main thread or from any other
+thread. As with a "main" action, a "junit" action is considered to
+be finished when the main method of JUnitCore returns.</p>
+<p>The named <var>&lt;class&gt;</var> will be compiled on demand,
+just as though an "<code>@run</code> build
+<var>&lt;class&gt;</var>" action had been inserted before this
+action. If this action requires classes other than
+<var>&lt;class&gt;</var> to be up to date, insert an appropriate
+build action before this action. If any <var>&lt;vm-opt&gt;</var>s
+are given then <code>/othervm</code> should be specified.</p>
+<p>The use of the <code>@library</code> tag, and of the
+<code>/othervm</code>, <code>/manual</code>, <code>/policy</code>,
+and <code>/secure</code> options, are the same for a "junit" action
+as for a "main" action; see above.</p>
+<p>In order to use a "junit" action, the JUnit 4.5 jar file may
+need to be placed manually alongside the jtreg and javatest jar
+files in the jtreg installation. If junit.jar file is not found,
+and if no class named <code>org.junit.runner.JUnitCore</code> can
+be found, any "junit" actions will fail, regardless of whether the
+<code>/fail</code> option was selected.</p>
+<p>This action executes all the tests in a single JUnit test file.
+All the tests in that one file will be grouped as a single jtreg
+test for reporting purposes.</p>
+</dd>
+<dt>
+testng[/fail][/manual][/othervm][/policy=<var>&lt;file&gt;</var>][/secure=<var>&lt;class&gt;</var>]
+[/timeout=<var>&lt;seconds&gt;</var>] <var>&lt;vm-opt&gt;*</var>
+<var>&lt;class&gt;</var></dt>
+<dd>
+<p>Invoke the specified class as a TestNG test. Roughly equivalent
+to "<code>@run main org.testng.TestNG
+<var>&lt;class&gt;</var></code>". All initial argument tokens
+beginning with a dash are considered to be VM options; the first
+argument not beginning with a dash is the <var>&lt;class&gt;</var>
+to be invoked. No additional arguments are allowed. Passes only if
+the main method of TestNG returns normally and does not cause an
+exception to be thrown, from the main thread or from any other
+thread. As with a "main" action, a "testng" action is considered to
+be finished when the main method of TestNG returns.</p>
+<p>The named <var>&lt;class&gt;</var> will be compiled on demand,
+just as though an "<code>@run</code> build
+<var>&lt;class&gt;</var>" action had been inserted before this
+action. If this action requires classes other than
+<var>&lt;class&gt;</var> to be up to date, insert an appropriate
+build action before this action. If any <var>&lt;vm-opt&gt;</var>s
+are given then <code>/othervm</code> should be specified.</p>
+<p>The use of the <code>@library</code> tag, and of the
+<code>/othervm</code>, <code>/manual</code>, <code>/policy</code>,
+and <code>/secure</code> options, are the same for a "testng"
+action as for a "main" action; see above.</p>
+<p>In order to use a "testng" action, the TestNG jar file may need
+to be placed manually alongside the jtreg and javatest jar files in
+the jtreg installation. If testng.jar file is not found, and if no
+class named <code>org.testng.TestNG</code> can be found, any
+"testng" actions will fail, regardless of whether the
+<code>/fail</code> option was selected.</p>
+<p>This action executes all the tests in a single TestNG test file.
+All the tests in that one file will be grouped as a single jtreg
+test for reporting purposes.</p>
+<p>Note: this action allows individual tests to be written as
+TestNG tests, and placed alongside other tests using other
+combinations of actions. See <a href="TESTNG">below</a> for details
+on how to set up a directory containing only standard TestNG
+tests.</p>
+</dd>
+<dt>
+applet[/fail][/manual[=(yesno|done)]][/othervm][/policy=<var>&lt;file&gt;</var>]
+[/secure=<var>&lt;class&gt;</var>][/timeout=<var>&lt;sec&gt;</var>]
+<var>&lt;html-file&gt;</var></dt>
+<dd>
+<p>Run the applet described by the first
+<code>&lt;applet&gt;</code> HTML tag in the given
+<var>&lt;html-file&gt;</var>, ignoring any other
+<code>&lt;applet&gt;</code> tags. The applet action is roughly
+equivalent to "appletviewer <var>&lt;html-file&gt;</var>"; the
+major difference is that the applet is not run in the restricted
+security environment implemented by the appletviewer. Intended
+primarily for tests of graphics functionality; tests of the
+appletviewer itself can be written using shell actions. Passes if
+the applet does not throw any exceptions from any thread and, if
+the <code>/manual</code> option is specified with a value of
+"<code>yesno</code>", the user indicates that the test passes.</p>
+<p>The class named in the <code>&lt;applet&gt;</code> tag will be
+compiled on demand, just as though an "<code>@run</code> build
+<var>&lt;class&gt;</var>" action had been inserted before this
+action. If this action requires classes other the class named in
+the <code>&lt;applet&gt;</code> tag to be up to date, insert an
+appropriate build action before this action.</p>
+<p>If <code>/manual</code> is not specified, then the applet will
+be run by invoking its <code>init</code>, <code>start</code>, and
+<code>setVisible(true)</code> methods (in that order), delaying for
+a few seconds, and then invoking its stop and destroy methods (in
+that order).</p>
+<p>The <code>/manual</code> option may be specified to indicate
+that the test requires human interaction. In this case the HTML
+file itself will be displayed; it should contain any instructions
+for the user. When displaying the HTML file, a harness may or may
+not interpret HTML tags other than the <code>&lt;applet&gt;</code>
+tag; thus the instructions should be written in a way that does not
+depend upon HTML rendering.</p>
+<p>If <code>/manual</code> is specified alone, i.e., without any
+value argument, then the applet will be run just as in the
+non-manual case. The harness will skip this action, and treat it as
+though it had passed, when instructed to run only automatic
+tests.</p>
+<p>If <code>/manual=yesno</code> is specified, then the harness
+will ask the user whether the test passes or fails, typically by
+displaying "<code>pass</code>" and "<code>fail</code>" buttons. The
+applet will be run by invoking its <code>init</code>,
+<code>start</code>, and <code>setVisible(true)</code> methods (in
+that order), waiting for the user to click on "<code>pass</code>"
+or "<code>fail</code>", and then invoking the applet's
+<code>stop</code> and <code>destroy</code> methods (in that
+order).</p>
+<p>If <code>/manual=done</code> is specified, then the harness will
+wait for the user to indicate that the test is complete, typically
+by displaying a "<code>done</code>" button. The applet will be run
+by invoking its <code>init</code>, <code>start</code>, and
+<code>setVisible(true)</code> methods (in that order), waiting for
+the user to click on "<code>done</code>", and then invoking the
+applet's <code>stop</code> and <code>destroy</code> methods (in
+that order).</p>
+<p>The setting of the system properties
+"<code>java.security.manager</code>" and
+"<code>java.security.policy</code>" in applet/othervm actions is
+also discouraged; the <code>/policy</code> and <code>/secure</code>
+options should be used instead.</p>
+</dd>
+<dt>shell[/fail][/manual][/timeout=<var>&lt;seconds&gt;</var>]
+<var>&lt;script&gt;</var> <var>&lt;arg&gt;*</var></dt>
+<dd>
+<p>Invoke the Bourne shell to run <var>&lt;script&gt;</var> on the
+given <var>&lt;arg&gt;</var>s. The <var>&lt;script&gt;</var>
+argument should the name of a file relative to the test source
+directory (see below), using "/" to separate directories and ".."
+to refer to parent directories. Passes only if the script exits
+with an exit status of 0.</p>
+<p>On Unix systems, the <code>PATH</code> will be set to
+<code>/bin:/usr/bin</code> and the following variables will be
+propagated if they are set: <code>DISPLAY</code>,
+<code>GNOME_DESKTOP_SESSION_ID</code>, <code>HOME</code>,
+<code>LANG</code>, <code>LC_ALL</code>, <code>LC_CTYPE</code>,
+<code>LPDEST</code>, <code>PRINTER</code>, <code>TZ</code> and
+<code>XMODIFIERS</code>.</p>
+<p>On Windows systems, the following variables will be propagated
+if they are set: <code>PATH</code>, <code>SystemDrive</code>,
+<code>SystemRoot</code>, <code>TEMP</code>, <code>TMP</code>,
+<code>TZ</code> and <code>windir</code>.</p>
+<p>In addition, a number of test-specific environment variables
+will be set, giving details about the test itself. See <a href="#testvars">Appendix 2</a> for the complete list of these
+variables.</p>
+<p>If the <code>/manual</code> option is specified then the harness
+will skip this action when instructed to run only automatic tests;
+no arguments to the <code>/manual</code> option are supported.</p>
+</dd>
+<dt>ignore <var>&lt;word&gt;*</var></dt>
+<dd>
+<p>Ignore this and all following <code>@run</code> tags. A test
+harness may treat this test as a failure or as some other type of
+error. The <var>&lt;word&gt;</var> tokens, if any, should describe
+why the test is being ignored. These tokens may be displayed by the
+harness in some appropriate fashion.</p>
+</dd>
+</dl>
+<h2><a name="TESTNG" id="TESTNG">TESTNG</a></h2>
+<p>A directory within the source directory structure may be
+configured to be the root of a set of TestNG tests. When so
+configured, all Java source files in or under the directory are
+considered to be defining files, and thus considered to be a test
+to be executed. If a file has a leading comment, the comment may
+only contain informative tags and declarative tags, and may not
+contain any action tags.</p>
+<p>Each test within the set is deemed to have any implicit
+<code>@build</code> action specifying all the Java source files in
+the set, followed by an implicit action to execute the test as a
+TestNG test.</p>
+<h2><a name="DIRECTORY_CONTEXT" id="DIRECTORY_CONTEXT">DIRECTORY
+CONTEXT</a></h2>
+<p>Each test is run in a context that defines the following
+directories.</p>
+<dl class="terms">
+<dt>Working directory</dt>
+<dd>The directory in which the harness is running.</dd>
+<dt>Source directory</dt>
+<dd>The directory containing the defining file of the test, as well
+as any associated files (e.g., input data files). Generally not the
+same as the working directory.</dd>
+<dt>Class directory</dt>
+<dd>The directory into which class files compiled from source files
+in the source directory are compiled. May be the source directory,
+or may be some other directory.</dd>
+<dt>Java home directory</dt>
+<dd>The directory containing the JDK build or release being
+tested.</dd>
+</dl>
+<p>A test may create temporary files in the working directory as
+needed. Test harnesses will typically delete such files before or
+after each test is run. In order to work properly when run
+standalone, however, tests should not rely upon this behavior. This
+can be done having each test's initialization code delete any files
+that the test may have created in a previous invocation.</p>
+<p>For each source directory in the test hierarchy there is a
+corresponding class directory, which may or may not the same as the
+source directory. Classes in different source directories are,
+therefore, in different name spaces and their names will not
+collide. Simple test harnesses may place class files in source
+directories, while more sophisticated harnesses will generally
+place class files in a parallel directory hierarchy.</p>
+<p>The names of the source, class, and Java home directories of a
+test are made available to shell-action scripts via the environment
+variables <code>TESTSRC</code>, <code>TESTCLASSES</code>, and
+<code>TESTJAVA</code>, respectively. The directory names do not
+have trailing separators.</p>
+<p>The names of the source and class directories of a test are made
+available to main and applet actions via the system properties
+"test.src" and "test.classes", respectively. The directory names do
+not have trailing separators. Main and applet actions can read data
+files defined in the test's source directory using this idiom:</p>
+<pre class="example">
+File f = new File(System.getProperty("test.src", "."), "foo");
+InputStream in = new FileInputStream(f);
+</pre>
+<p>By defaulting the directory to ".", this technique allows the
+test to be run standalone in its source directory.</p>
+<h2><a name="TEST_GROUPS" id="TEST_GROUPS">TEST GROUPS</a></h2>
+<p>Groups are defined in a test suite using one or more Java
+properties files. The names of these files must be listed in the
+"<code>groups</code>" entry in <a href="#TEST_ROOT">TEST.ROOT</a>.
+If the filename is enclosed in square brackets, no error message
+will be given if the file cannot be found. Within the property
+files, each entry specifies items to be included or excluded from
+the group.</p>
+<ul>
+<li>To include a test or directory of tests, simply specify the
+name of the test or directory.</li>
+<li>To exclude a test or directory of tests, use '-' followed by
+the name of the test or directory. There must be no spaces between
+the "-" and the name that follows.</li>
+<li>To include the contents of another group, use ':' followed by
+the name of the group. There must be no spaces between the ":" and
+the name that follows.</li>
+</ul>
+<h2><a name="SOURCE_STRUCTURE" id="SOURCE_STRUCTURE">SOURCE-DIRECTORY STRUCTURE</a> AND <a name="config" id="config">TEST-SUITE CONFIGURATION FILES</a></h2>
+<p>This specification places few constraints upon the structure of
+a tree of source directories. Some test harnesses may be able to
+provide more robust behavior or more succinct reports when they can
+identify the root of such a tree. The root of a test-source tree
+must therefore be identified by placing a file named TEST.ROOT in
+the root directory. Exactly one such file must exist in every
+test-source tree.</p>
+<p>The <a name="TEST_ROOT" id="TEST_ROOT">TEST.ROOT</a> file
+contains test-suite configuration information. It is in the
+standard Java property-file format as described in the
+specification of the <code>java.util.Properties</code> class.
+Properties defined in this file apply to the entire test suite.
+Additional properties files named TEST.properties may appear in
+subdirectories of the test suite, and may be used to provide
+additional configuration values that apply to files in that
+directory and its subdirectories.</p>
+<p>The following properties may only appear in TEST.ROOT:</p>
+<dl>
+<dt><code>checkBugId true|false</code></dt>
+<dd>
+<p>Whether or not to check the format of strings in @bug tags.
+Checking is disabled if this property is set to
+<code>false</code>.</p>
+</dd>
+<dt><code>defaultExecMode agentvm|othervm|samevm</code></dt>
+<dd>
+<p>The default execution mode for tests in the test suite. A
+harness that supports multiple test execution modes may use this
+value to determine the default execution mode for tests in this
+test-suite.</p>
+</dd>
+<dt><code>groups <var>&lt;files&gt;</var></code></dt>
+<dd>
+<p>Where to find group definition files. A space separated list of
+files. Optional files should be enclosed in square brackets.</p>
+</dd>
+<dt><code>requiredVersion <var>&lt;version&gt;</var></code></dt>
+<dd>
+<p>Minimal version of the harness required for this test-suite. A
+version string in the format "[0-9.]+ ?b[0-9]+" (without the
+quotes). For example a value of "4.1 b03" declares that at least
+that version of the harness is required to run all the tests in the
+test suite.</p>
+</dd>
+<dt><code>requires.extraPropDefns
+<var>&lt;source-files&gt;</var></code><br /></dt>
+<dd>
+<p>This option is used to provide source files for classes that
+will be used at the beginning of each test suite run, to determine
+additional characteristics of the system for use with the
+<code>@requires</code> tag. Each class must implement
+<code>java.util.concurrent.Callable&lt;java.util.Map&lt;String,
+String&gt;&gt;</code>. When invoked, the <code>call()</code> method
+should return properties that can be referenced in an expression in
+a <code>@requires</code> tag. <i>Note:</i> the names of the new
+properties that may be returned by calling these classes must also
+be declared in a <code>requires.properties</code> entry.</p>
+<p>If this option is specified, the following additional options
+may also be specified:</p>
+<ul>
+<li><code>requires.extraPropDefns.libs
+<var>&lt;source-files&gt;</var></code> &#8212; source files for
+classes that will be put on the classpath when the primary classes
+are run.</li>
+<li><code>requires.extraPropDefns.bootlibs
+<var>&lt;source-files&gt;</var></code> &#8212; source files for
+classes that will be put on the bootclasspath when the primary
+classes are run.</li>
+<li><code>requires.extraPropDefns.javacOpts
+<var>&lt;options&gt;</var></code> &#8212; options that will be
+passed to javac when the source files are compiled.</li>
+<li><code>requires.extraPropDefns.vmOpts
+<var>&lt;options&gt;</var></code> &#8212; options that will be
+passed to VM when the classes are executed.</li>
+</ul>
+<p>In this family of options, if a source file is enclosed in
+square brackets, no error message will be given if the file is not
+available.</p>
+</dd>
+</dl>
+<p>The following properties may appear in either TEST.ROOT or any
+TEST.properties file:</p>
+<dl>
+<dt><code>keys <var>&lt;keywords&gt;</var></code></dt>
+<dd>
+<p>The set of valid keywords that can be used in @key tags. A
+harness that supports keyword-based test selection should reject
+any test containing keywords that are not present in this list. If
+this property is not present then no keywords should be
+accepted.</p>
+</dd>
+<dt><code>bootclasspath.dirs
+<var>&lt;directories&gt;</var></code></dt>
+<dd>
+<p>Directories that when used should be placed on the
+bootclasspath.</p>
+</dd>
+<dt><code>othervm.dirs <var>&lt;directories&gt;</var></code></dt>
+<dd>
+<p>Directories containing tests which should all be run in othervm
+mode. A harness that supports multiple test execution modes should
+ensure that all tests in the specified directories are run in
+<code>othervm</code> mode.</p>
+</dd>
+<dt><code>exclusiveAccess.dirs
+<var>&lt;directories&gt;</var></code></dt>
+<dd>
+<p>Directories containing tests which should not be run
+concurrently at the same time as other tests. A harness that
+supports concurrent test execution should ensure that all tests in
+the specified directories are run when no other tests in the same
+directory is being run.</p>
+</dd>
+<dt><code>TestNG.dirs <var>&lt;directories&gt;</var></code></dt>
+<dd>
+<p>Directories containing TestNG-style tests.</p>
+</dd>
+<dt><code>lib.dirs <var>&lt;directories&gt;</var></code></dt>
+<dd>
+<p>Default library directories used by all tests in or under the
+directory containing this property declaration.</p>
+</dd>
+<dt><code>lib.build <var>&lt;build-arguments&gt;</var></code></dt>
+<dd>
+<p>Default library components that will be built by tests in TestNG
+directories in or under the directory containing this property
+declaration. The values should be of a form that can be accepted by
+an <code>@build</code> tag. If not specified, the entire contents
+of any currently specified libraries will be built.</p>
+</dd>
+<dt><code>external.lib.roots
+<var>&lt;directories&gt;</var></code></dt>
+<dd>
+<p>A search path for libraries specified in an
+<code>@library</code> tag. Relative paths will be evaluated
+relative to the directory containing the configuration file.</p>
+</dd>
+<dt><code>modules
+<var>&lt;module[/package[:flag]]&gt;+</var></code></dt>
+<dd>
+<p>Express a default dependence, for tests in this directory and
+its subdirectories, on modules in the system being tested, and
+optionally, on selected internal packages in some or all of those
+modules.</p>
+</dd>
+<dt><code>requires.properties
+<var>&lt;property-name&gt;+</var></code></dt>
+<dd>Declare property names that may be used in a
+<code>@requires</code> expression. The names may identify either
+system properties or additional test-suite specific properties
+return by calling the classes defined by the
+<code>@requires.extraPropDefns</code> family of configuration
+values.</dd>
+<dt><code>maxOutputSize <var>&lt;int-value&gt;+</var></code></dt>
+<dd>Override the default limit for the amount of output that will
+be saved on any stream being recorded by the test harness. For
+jtreg, the default limit for all tests is 100,000 characters, or
+can be set on the command line by setting the system property
+<code>javatest.maxOutputSize</code>.
+<p style="font-size:smaller"><i>Note:</i>To set a system property
+for jtreg on the command line, use
+<code>-J-D<i>&lt;name&gt;</i>=<i>&lt;value&gt;</i></code>.</p>
+</dd>
+</dl>
+<h2><a name="DEFAULTS" id="DEFAULTS">DEFAULTS</a></h2>
+<p>If no <code>@run</code> tags are present in a defining file, a
+default is assumed depending upon the file's filename
+extension.</p>
+<table summary="Default Actions">
+<caption>Default Actions</caption>
+<thead>
+<tr>
+<th>File type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.java</td>
+<td><code>@run main <var>&lt;name&gt;</var></code></td>
+<td><var>&lt;name&gt;</var> is the name of the file without the
+".java" suffix</td>
+</tr>
+<tr>
+<td>.sh</td>
+<td><code>@run shell <var>&lt;file&gt;</var></code></td>
+<td></td>
+</tr>
+<tr>
+<td>.html</td>
+<td><code>@run applet <var>&lt;file&gt;</var></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2><a name="SHORTHANDS" id="SHORTHANDS">SHORTHANDS</a></h2>
+<table summary="Shorthands">
+<caption>Shorthands</caption>
+<thead>
+<tr>
+<th>Shorthand</th>
+<th>Equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>@build <var>&lt;classname&gt;+</var></td>
+<td>@run build <var>&lt;classname&gt;+</var></td>
+</tr>
+<tr>
+<td>@clean <var>&lt;classname&gt;+</var></td>
+<td>@run clean <var>&lt;classname&gt;+</var></td>
+</tr>
+<tr>
+<td>@compile<var>&lt;option&gt;*</var> <var>&lt;arg&gt;+</var></td>
+<td>@run compile<var>&lt;option&gt;*</var>
+<var>&lt;arg&gt;+</var></td>
+</tr>
+<tr>
+<td>@ignore <var>&lt;word&gt;*</var></td>
+<td>@run ignore <var>&lt;word&gt;*</var></td>
+</tr>
+</tbody>
+</table>
+<h2 class="appendix"><a name="EXAMPLES" id="EXAMPLES">EXAMPLES</a></h2>
+<p>Run <code>Foo</code> in a separate VM, with the heap limited to
+2MB and the verifier turned on:</p>
+<pre class="example">
+/* @test
+ * @run main/othervm -mx2m -verify Foo arg1 arg2
+ */
+</pre>
+<p>Run <code>Foo</code> in the same VM, with a two-second
+timeout:</p>
+<pre class="example">
+/* @test
+ * @run main/timeout=2 Foo
+ */
+</pre>
+<p>Compile <code>Foo</code> with debugging, expecting failure, and
+check the error message against a reference file:</p>
+<pre class="example">
+/* @test
+   @compile/fail/ref=Foo.ref -debug Foo.java
+ */
+</pre>
+<p>Remove <code>Bar</code>'s class file, if it exists, then compile
+<code>Foo</code>, then compile <code>Bar</code>, and finally run
+<code>Bar</code>, which is expected to fail:</p>
+<pre class="example">
+/* @test
+   @clean Bar
+   @compile Foo.java
+   @compile Bar.java
+   @run main/fail Bar
+ */
+</pre>
+<p>Run the applet described in the file Foo.html, waiting for the
+user to indicate success or failure.</p>
+<pre class="example">
+/* @test
+ * @run applet/manual=yesno Foo.html
+ */
+</pre>
+<p>Run the class <code>Snidely</code> with the security manager
+<code>Pinkerton</code>, using the paranoid.sp policy file:</p>
+<pre class="example">
+/* @test
+   @build Pinkerton
+   @run main/othervm/secure=Pinkerton/policy=paranoid.sp Snidely
+ */
+</pre>
+<p>Run the class <code>SnowWhite</code> using classes in the
+library directory dwarfs:</p>
+<pre class="example">
+/* @test
+   @library ../dwarfs
+   @build Bashful Doc Dopey Grumpy Happy Sleepy Sneezy
+   @run main SnowWhite
+ */
+</pre>
+<h2 class="appendix"><a name="requires_names" id="requires_names">APPENDIX 1: SUPPORTED NAMES FOR @requires</a></h2>
+<p><i>Note:</i> See the details for the test-suite <a href="#config">configuration files</a> for information on how to extend
+the set of supported names for a particular test suite.</p>
+<table summary="Supported names for @requires">
+<caption>Supported names for <code>@requires</code></caption>
+<thead>
+<tr>
+<th>@requires name</th>
+<th>Description</th>
+<th>value if set</th>
+<th>default value<br />
+<span style="font-size:smaller">if not null</span></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jdk.version</code></td>
+<td>The JDK version, as given by
+<code>java.specification.version</code> system property of the test
+JDK.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>jdk.version.major</code></td>
+<td>The major component of the version string, i.e. ignoring any
+leading "1." for versions prior to JDK 9.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>os.name</code></td>
+<td>The operating system name, as given by the corresponding system
+property.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>os.family</code></td>
+<td>The operation system family, derived from the operating sytsem
+name.</td>
+<td>One of <code>linux</code> <code>mac</code> <code>solaris</code>
+<code>windows</code></td>
+<td>first word of <code>os.name</code></td>
+</tr>
+<tr>
+<td><code>os.arch</code></td>
+<td>The operating system architecture, as given by the
+corresponding system property.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>os.simpleArch</code></td>
+<td>A simplified representation of the operating system
+architecture.</td>
+<td>One of <code>x64</code> <code>i586</code> <code>ppc</code></td>
+<td>same as <code>os.arch</code></td>
+</tr>
+<tr>
+<td><code>os.version</code></td>
+<td>The operating system version, as given by the corresponding
+system property.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>os.simpleVersion</code></td>
+<td>A simplified representation of the operating system
+version.</td>
+<td><code><i>N</i>.0</code> or <code><i>N</i>.<i>M</i></code>,
+where <code><i>N</i></code> and <code><i>M</i></code> are first two
+numbers in <code>os.version</code></td>
+<td><code>99.99</code></td>
+</tr>
+<tr>
+<td><code>os.processors</code></td>
+<td>The number of processors on this system</td>
+<td>The value as determined by
+<code>Runtime::availableProcessors</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>os.maxMemory</code></td>
+<td>The maximum amount of memory available on this system.</td>
+<td>The value as determined by
+<code>OperatingSystemMXBean::getTotalPhysicalMemorySize</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>os.maxSwap</code></td>
+<td>The maximum amount of swap space available on this system.</td>
+<td>The value as determined by
+<code>OperatingSystemMXBean::getTotalSwapSpaceSize</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>vm.gc</code></td>
+<td>The garbage collection strategy, derived from the option
+<code>-XX:+Use<i>name</i>GC</code></td>
+<td><code><i>name</i></code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>vm.opt.<i>switch</i></code></td>
+<td>A boolean VM option, derived from option
+<code>-XX:+<i>switch</i></code> or
+<code>-XX:-<i>switch</i></code></td>
+<td><code>true</code> <code>false</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>vm.opt.<i>name</i></code></td>
+<td>A VM option, derived from option
+<code>-XX:<i>name</i>=<i>value</i></code></td>
+<td><code><i>value</i></code></td>
+<td></td>
+</tr>
+<tr style="color:gray">
+<td><code>profile</code></td>
+<td>The name of the highest profile supported by the test JDK.</td>
+<td>One of <code>compact1</code> <code>compact2</code>
+<code>compact3</code></td>
+<td></td>
+</tr>
+<tr style="color:gray">
+<td><code>module:<i>name</i></code></td>
+<td>Whether or not a module is available in the test JDK.</td>
+<td>One of <code>true</code> <code>false</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 class="appendix"><a name="testvars" id="testvars">APPENDIX 2:
+TEST-SPECIFIC SYSTEM PROPERTIES and ENVIRONMENT VARIABLES</a></h2>
+<p>The system properties in the following table will be set while
+executing any class specified in an action tag; the environment
+variables will be set while executing a shell action tag.</p>
+<table summary="Test-specific system properties and environment variables">
+<caption>Test-specific system properties and environment
+variables</caption>
+<thead>
+<tr class="head">
+<th>System property</th>
+<th>Environment variable</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test.src</code></td>
+<td><code>TESTSRC</code></td>
+<td>The directory containing the defining file of the test</td>
+</tr>
+<tr>
+<td><code>test.src.path</code></td>
+<td><code>TESTSRCPATH</code></td>
+<td>The series of directories, including library directories, for
+the source of the test.</td>
+</tr>
+<tr>
+<td><code>test.classes</code></td>
+<td><code>TESTCLASSES</code></td>
+<td>The directory containing the compiled classes for source files
+in the directory containing the defining file of the test.</td>
+</tr>
+<tr>
+<td><code>test.class.path</code></td>
+<td><code>TESTCLASSPATH</code></td>
+<td>The series of directories for all the classes for the
+test.</td>
+</tr>
+<tr>
+<td><code>test.vm.opts</code></td>
+<td><code>TESTVMOPTS</code></td>
+<td>Additional VM options for all JVMs used in the test.</td>
+</tr>
+<tr>
+<td><code>test.tool.vm.opts</code></td>
+<td><code>TESTTOOLVMOPTS</code></td>
+<td>Additional VM options for all JVMs used in the test, each
+preceded by '<code>-J</code>', suitable for use in tool commands
+like "javac".</td>
+</tr>
+<tr>
+<td><code>test.compiler.opts</code></td>
+<td><code>TESTJAVACOPTS</code></td>
+<td>Additional Java compiler options.</td>
+</tr>
+<tr>
+<td><code>test.java.opts</code></td>
+<td><code>TESTJAVAOPTS</code></td>
+<td>Additional VM options for all invocations of the main Java
+launcher used in the test. (<i>i.e.</i>excluding JDK tools like
+"javac".)</td>
+</tr>
+<tr>
+<td><code>test.jdk</code></td>
+<td><code>TESTJAVA</code></td>
+<td>The location of the JDK being used to run the tests.</td>
+</tr>
+<tr>
+<td><code>compile.jdk</code></td>
+<td><code>COMPILEJAVA</code></td>
+<td>The location of the JDK being used to compile the tests. By
+default, this is the same as <code>test.jdk</code> and
+<code>TESTJAVA</code>.</td>
+</tr>
+<tr>
+<td><code>test.timeout.factor</code></td>
+<td><code>TESTTIMEOUTFACTOR</code></td>
+<td>The timeout factor to be applied to the default timeout for the
+test.</td>
+</tr>
+<tr>
+<td><code>test.nativepath</code></td>
+<td><code>TESTNATIVEPATH</code></td>
+<td>The location of native executables used in the tests.</td>
+</tr>
+<tr>
+<td><code>test.modules</code></td>
+<td><code>TESTMODULES</code></td>
+<td>The module dependencies of the test, if any, defined in the
+<code>@modules</code> tag. The dependencies will be ignored, and
+the system property and environment variable will be unset or
+empty, if the version of JDK used to run the tests does not support
+modules.</td>
+</tr>
+</tbody>
+</table>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

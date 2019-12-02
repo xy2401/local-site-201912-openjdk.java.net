@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: unboxed argument lists for method handles</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: unboxed argument lists for method handles</h1><table class="head"><tr><td>Owner</td><td>John Rose</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.lang.invoke</td></tr><tr><td>Created</td><td>2017/06/26 06:28</td></tr><tr><td>Updated</td><td>2017/06/26 06:31</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8182862">8182862</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Add API points to <code>java.lang.invoke</code> for working with unboxed argument lists.</p>
+<h2 id="Goals">Goals</h2>
+<p>A common theme with <code>java.lang.invoke</code> is transforming calls which
+work with variable-length argument lists, especially of type
+<code>Object[]</code> or <code>List&lt;Object&gt;</code>.  These lists often serve as a
+dynamically-typed proxy for a more strongly typed collection of
+arguments, maybe described by a <code>MethodType</code>.  The reference-based
+homogeneous argument list boxes primitives, and will also box future
+value types.  This boxing, as well as the containing array itself,
+creates inefficiencies.</p>
+<p>The root cause of the inefficiency is a mismatch between what an
+argument list really is and the envelope (homogeneous array or list)
+that carries it.  We will remove this inefficiency by adding a new
+value-based class <code>ArgumentList</code> which will polymorphically "box" any
+valid argument list into a single heap node.</p>
+<p>When value types arrive, this class may be upgraded to an interface
+implemented by value types, allowing on-stack buffering of arbitrary
+argument lists with zero heap activity.</p>
+<h2 id="Success-Criteria">Success Criteria</h2>
+<p>If successful, this feature will allow performance-sensitive programmers
+to use <code>ArgumentList</code> as an alternative to homogeneous lists or arrays
+when working with method handle signature polymorphism.</p>
+<p>This feature will also be useful as a utility type for ad hoc
+collections of data values, such as are produced by pattern match
+"extractor" APIs currently under development.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>New API design with method handles (such as pattern matching) is
+sometimes blocked or constrained by performance losses from boxing
+multiple value groups.  As value types are adopted, boxing will
+increase.</p>
+<p>Existing code using method handles can in some cases be made more
+efficient by using box-free (or box-minimal) alternatives to boxed
+varargs arrays.</p>
+<p>A better argument list envelope will allow us to develop more
+efficient "varargs" mechanisms for the Java language.  (A sketch is
+included below, but is not part of this JEP.)</p>
+<h2 id="Description">Description</h2>
+<p>The type <code>ArgumentList</code> is either a value-based class or an interface
+to a family of private value-based classes.</p>
+<p>An instance of an argument list represents a constant set of up to 255
+values, each one conforming to an associated (constant) runtime type
+(a <code>java.lang.Class</code> object).</p>
+<p>The API for an argument list allows individual arguments to be
+extracted under either static or dynamic types.  Dynamic typing is
+provided by a view of type <code>List&lt;Object&gt;</code>, which can also be used
+to materialize an array of possibly boxed object references.
+Static typing is mediated by method handles.</p>
+<p>The nested type <code>ArgumentList.Type</code> provides an API for querying the
+type an argument list.  There is a 1-1 relation between distinct
+argument list types and <code>MethodType</code>s after return types are
+disregarded.  (Conventionally the return type is regarded as <code>void</code>.)
+Each argument list type offers a list of method handles, tailored to
+<code>ArgumentList</code> instances of that type, to efficiently extract each
+argument from the argument list, without the boxing overheads required
+by the dynamically typed view.</p>
+<p>An argument list type will also provide a method handle for gathering
+a list of arguments (of the corresponding static types) efficiently
+into an <code>ArgumentList</code> instance.</p>
+<p>API points in <code>java.lang.invoke</code> which currently work with variable
+arity argument lists (<code>invokeWithArguments</code>, <code>asSpreader</code>) or other
+groups of arguments (<code>insertArguments</code>) will acquire additional API
+points which operate on <code>ArgumentList</code> parameters as an alternative
+to existing varargs-like APIs.</p>
+<p>One or more factory methods for argument lists will be provided also.
+These are public API points which can used to create argument lists
+with arbitrary component types, determined by the user.  Such API
+points will be <em>signature polymorphic</em> in the same sense that the
+<code>MethodHandle</code> and <code>VarHandle</code> invocation points are signature
+polymorphic.  A likely such API point is <code>ArgumentList.of</code>.</p>
+<h3 id="Possible-future-varargs-extensions">Possible future varargs extensions</h3>
+<p>In a later JEP, the varargs mechanism itself may be upgraded in the
+Java language to allow polymorphic calls with heterogeneous argument
+lists, including the full signature polymorphism enjoyed by method
+handle APIs, but also including more limited patterns such as an
+alternating key/value argument list for a <code>Map</code> factory method.</p>
+<p>The key insight of this is that a variable-arity API point must
+specify both an internal type and an external bundling method for a
+group of arguments.  The internal type is what the method "sees" after
+it is called, but the extern bundling method is used by the caller to
+assemble a polymorphically-typed group of arguments into a single
+argument.  Also, <code>invokedynamic</code> can play a mediating role.</p>
+<p>In the current state of the Java language, the internal type <em>must</em> be
+an array type, and the bundling method <em>must</em> be the creation of a new
+array of that type.  These procedures can and should be generalized.</p>
+<p>A signature polymorphic API point for building argument lists (as
+proposed by this JEP) is an initial building block for an varargs
+bundling method, and such bundling methods can be built on top of
+other bundling methods also.  The net result would be allowing library
+designers or even end-users to create new forms of strongly-typed
+generic API points with variable arity.</p>
+<h3 id="Possible-use-with-pattern-matching-combinators">Possible use with pattern matching combinators</h3>
+<p>Pattern matching consists of examining a single value, comparing it
+against a user-specified pattern, and giving a "yes" answer if it
+matches.  The "yes" answer is optionally accompanied by a set of
+<em>range values</em> extracted from points in the pattern which correspond
+to "wild cards" or "bound variables".  This is also like regular
+expression "groups", whose substrings can be queried after a match is
+successful.</p>
+<p>An object-oriented API for pattern matching must be able (somehow) to
+return the values and/or locations of any number of range values that
+are expressed by a pattern.  Sometimes this is possible by using a
+static set of locators (such as method handles) to "pick out" the
+range values from the originally matched object.</p>
+<p>But in the general case, a pattern match operation sometimes needs to
+buffer up the range values into an ad hoc tuple or record.  In the
+general case, the matched data structure might be mutable, and the
+record needs to record the state which <em>did</em> match, despite the fact
+that the state might <em>not</em> match a microsecond later.</p>
+<p>In any case, an ad hoc record of match values can be perfectly
+represented by an argument list of those values, and it can be
+conveniently handed on to the next computation in the chain simply by
+calling <code>invokeWithArguments</code>.  Thus, the argument list API is likely
+to be a useful component of a general-purpose matching API.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>Low-risk compatible extension to <code>java.lang.invoke</code> APIs.</p>
+<p>Small risk of upgrade path being blocked, from object class to
+interface to polymorphic value class.  Worst case scenario is having
+to add a new value-type that inter-converts with <code>ArgumentList</code> object
+class.  This is a similar risk to those faced by <code>java.lang.Integer</code>
+and <code>java.util.Optional</code> when value types arrive.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>None.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

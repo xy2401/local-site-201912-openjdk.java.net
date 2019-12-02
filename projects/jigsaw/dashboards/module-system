@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Jigsaw: Module-System Dashboard</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    TABLE.dash { border-collapse: collapse; }
+    TD, TH { padding-left: 1em; }
+    TD:first-child, TH:first-child { padding-left: 0; }
+    TABLE.dash TD { vertical-align: top; }
+    TABLE.dash TH { text-align: left; vertical-align: bottom;
+                    padding-bottom: .5ex; }
+    TABLE.dash TD { border-top: 1px solid black;
+                    padding-top: 1ex; }
+/**/
+</style></head><body><div id="main">
+<h1>Project Jigsaw: Module-System Development Dashboard</h1>
+<p>This page contains the list of outstanding work that is
+currently known to be required in order to fully prototype the
+Jigsaw module system. The tasks are organized by milestone so as to
+serve as a high-level plan.</p>
+<p>See the <a href="modularization">modularization dashboard</a>
+for tasks related to JDK modularization.</p>
+<h2>Move to new build, Feb/March 2013 (tentative)</h2>
+<p>JDK 8 is transitioning to the <a href="/projects/build-infra/">new build system</a>. The transition date
+is not set in stone at this time but once the transition is done
+then the old build system will be on life support. It is critical
+to Jigsaw development to transition to the new build system as soon
+as possible after the JDK 8 mainline transitions.</p>
+<table class="dash" summary="">
+<tr>
+<th>Task</th>
+<th>Owner</th>
+<th>Effort</th>
+<th>Description/Status</th>
+<th>Last Update</th>
+</tr>
+<tr>
+<td>
+<p>Write up module/directory structure layout, including details as
+to how each tool (jpkg for example) handles the structure</p>
+</td>
+<td>Alan/Jon</td>
+<td>S</td>
+<td>Plan to have this done by early/mid Nov 2012.</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>Sync up jigsaw/jigsaw</td>
+<td>Karen/Jon/Mandy/Alan</td>
+<td>S</td>
+<td>
+<p>jigsaw/jigsaw is still at jdk8-b48, need to get to jdk8-latest
+before the build work can continue.</p>
+<p>Big merges required in langtools and hotspot repository due to
+significant changes in the upstream forst.</p>
+<p>The sync up will require several updates to the module
+definitions too.</p>
+<p>Status: done, jigsaw/jigsaw now up to jdk8-b63.</p>
+</td>
+<td>2012/11/15</td>
+</tr>
+<tr>
+<td>
+<p>Build system for Jigsaw. Initially this may require the source
+code to be in shuffled form (build shuffle script). It may also
+require that the runtime support for modulepath to be in place.</p>
+</td>
+<td>Eric + Jigsaw Team</td>
+<td>L</td>
+<td>Build team resources currently focused on completing new build
+system in JDK 8.</td>
+<td>2012/11/1</td>
+</tr>
+</table>
+<h2>Main Design Points Prototyped, June 2013 (tentative)</h2>
+<p>The primary goal is to have brought the code to the point where
+the main design points have been prototyped and demonstrated, in
+preparation for submitting the module-system JSR.</p>
+<table class="dash" summary="">
+<tr>
+<th>Task</th>
+<th>Owner</th>
+<th>Effort</th>
+<th>Status</th>
+<th>Last Update</th>
+</tr>
+<tr>
+<td>Publish design document</td>
+<td>Mark</td>
+<td>M</td>
+<td>
+<p>First version of <a href="//cr.openjdk.java.net/~mr/jigsaw/notes/jigsaw-big-picture-01">
+"Big Picture"</a> published. Needs to be refreshed and follow-on
+draft needs to be published covering other aspects of the
+design/approach.</p>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>javac changes to enforce exports</td>
+<td>Jon</td>
+<td></td>
+<td>Implemented but not pushed due to concerns about test impact.
+<p>Will re-visit after JDK 8 M6 milestone</p>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td><a href="../doc/topics/scopes.html">Scopes</a></td>
+<td>Alex, Jon, Mandy, maybe Paul</td>
+<td>M</td>
+<td>
+<p>Alex has written up the Language/VM changes <a href="../doc/lang-vm.html">here</a>.</p>
+<p>Scopes requires support in javac and also changes to the
+runtime, in particular the resolver.</p>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>Visibility and Accessibility</td>
+<td>Karen</td>
+<td>L</td>
+<td>Goals of visibility and access checking for modules:
+<ul class="spread">
+<li>Ensure that applications cannot see or access components that
+are intended for a restricted audience.</li>
+<li>Ensure consistent visibility and accessibility across all
+stages of a module's life-cycle, including consistent distinctions
+between visibility and accessibility exceptions.</li>
+<li>Continue to support existing visibility and access boundaries,
+while adding new ones.</li>
+<li>Create visibility and accessibility rules that are explicit and
+clear to users.</li>
+</ul>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>Runtime support for modulepath</td>
+<td>Alan</td>
+<td>M</td>
+<td>
+<p>More complicated than the original working prototype because of
+the VM/Jigsaw interface and other changes.</p>
+<p>Plan to also look into supporting augmenting existing modules to
+allow for patching (-Xbootclasspath/p replacement) and white-box
+testing. Need further investigate/prototyping first.</p>
+<p>Goal to have in jigsaw/jigsaw by end 2012.</p>
+</td>
+<td>2012/10/19</td>
+</tr>
+<tr>
+<td>Container Support</td>
+<td>Mark</td>
+<td>XL</td>
+<td>
+<p>Containers are critical to supporting application servers, test
+harnesses, maybe annotation processors and also critical for Java
+agents.</p>
+<p>Current goal is to scope this out by end 2012.</p>
+</td>
+<td>2012/10/30</td>
+</tr>
+</table>
+<h2>Source Code Restructuring, no target date</h2>
+<p>The goal for this milestone is to restructure the JDK source as
+modules.</p>
+<table class="dash" summary="">
+<tr>
+<th>Task</th>
+<th>Owner</th>
+<th>Effort</th>
+<th>Description and Status</th>
+</tr>
+<tr>
+<td>Source code restructure</td>
+<td></td>
+<td>M</td>
+<td>
+<p>Script to shuffle to/from module layout checked in.</p>
+<p>Still to do:</p>
+<ul>
+<li>Platform specific declarations in module-info, can we avoid
+needing to have more than one module-info per module?</li>
+<li>Check in module-info.java sources into source tree</li>
+<li>Run experiments to validate and refine proposed source code
+restructure (need to get experience with wider teams on whether
+module path layout works for bug fixing, implementation features,
+one module, multiple modules, etc)</li>
+<li>Do to the big hg move, need to decide when is the appropriate
+time to do this.</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>Jigsaw build work, phase 2</td>
+<td>Erik</td>
+<td>M</td>
+<td>
+<p>This is placeholder for a second phase of (likely) build
+work.</p>
+</td>
+</tr>
+</table>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

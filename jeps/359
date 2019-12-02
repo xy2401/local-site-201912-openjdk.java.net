@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 359: Records (Preview)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 359: Records (Preview)</h1><table class="head"><tr><td>Author</td><td>Brian Goetz</td></tr><tr><td>Owner</td><td>Vicente Arturo Romero Zaldivar</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Targeted</td></tr><tr><td>Release</td><td>14</td></tr><tr><td>Component</td><td>specification&#8201;/&#8201;language</td></tr><tr><td>Discussion</td><td>amber dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Alex Buckley</td></tr><tr><td>Created</td><td>2019/04/19 19:30</td></tr><tr><td>Updated</td><td>2019/11/30 15:56</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8222777">8222777</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enhance the Java programming language with <a href="//cr.openjdk.java.net/~briangoetz/amber/datum.html">records</a>.  Records provide a
+compact syntax for declaring classes which are transparent holders for
+shallowly immutable data.</p>
+<h2 id="Motivation-and-Goals">Motivation and Goals</h2>
+<p>It is a common complaint that "Java is too verbose" or has too much
+"ceremony". Some of the worst offenders are classes that are nothing
+more than plain "data carriers" that serve as simple aggregates.
+To write a data carrier class properly, one has to write a lot of low-value, repetitive, error-prone
+code: constructors, accessors, <code>equals()</code>, <code>hashCode()</code>, <code>toString()</code>,
+etc.  Developers are sometimes tempted to cut corners
+such as omitting these important methods (leading to surprising
+behavior or poor debuggability), or pressing an alternate but not
+entirely appropriate class into service (because it has the "right
+shape" and they don't want to declare yet another class).</p>
+<p>IDEs will help <em>write</em> most of the code in a data carrier class, but don't do anything to
+help the <em>reader</em> distill the design intent of "I'm a data carrier for <code>x</code>, <code>y</code>, and <code>z</code>" from the dozens of lines of
+boilerplate.  Writing Java code that models simple aggregates should be easier -- to write, to read, and to verify as correct.</p>
+<p>While it is superficially tempting to treat records as primarily
+being about boilerplate reduction, we instead choose a more semantic
+goal: <em>modeling data as data</em>.  (If the semantics are right, the
+boilerplate will take care of itself.)  It should be easy, clear, and
+concise to declare shallowly-immutable, well-behaved nominal data
+aggregates.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>It is not a goal to declare "war on boilerplate"; in particular, it is
+not a goal to address the problems of mutable classes using the
+JavaBean naming conventions.  It is not a goal to add features such as
+properties, metaprogramming, and annotation-driven code generation,
+even though they are frequently proposed as "solutions" to this
+problem.</p>
+<h2 id="Description">Description</h2>
+<p><em>Records</em> are a new kind of type declaration in the Java language. Like an <code>enum</code>, a <code>record</code> is a restricted form of class. It declares its representation, and commits to an API that matches that representation. Records give up a freedom that classes usually enjoy: the ability to decouple API from representation. In return, records gain a significant degree of concision.</p>
+<p>A record has a name and a state description. The state description declares the <em>components</em> of the record. Optionally, a record has a body. For example:</p>
+<pre><code>record Point(int x, int y) { }</code></pre>
+<p>Because records make the semantic claim of being simple, transparent
+holders for their data, a record acquires many standard members automatically:</p>
+<ul>
+<li>A private final field for each component of the state description;</li>
+<li>A public read accessor method for each component of the state description,
+with the same name and type as the component;</li>
+<li>A public constructor, whose signature is the same as the state
+description, which initializes each field from the corresponding
+argument;</li>
+<li>Implementations of <code>equals</code> and <code>hashCode</code> that say two records
+are equal if they are of the same type and contain the same state; and</li>
+<li>An implementation of <code>toString</code> that includes the string representation of all the record components,
+with their names.</li>
+</ul>
+<p>In other words, the representation of a record is derived mechanically and completely from the state description, as are the protocols for construction, deconstruction (accessors initially, and deconstruction patterns when we have pattern matching), equality, and display.</p>
+<h3 id="Restrictions-on-records">Restrictions on records</h3>
+<p>Records cannot extend any other class, and cannot declare instance fields other than the private final fields which correspond to components of the state description. Any other fields which are declared must be static. These restrictions ensure that the state description alone defines the representation.</p>
+<p>Records are implicitly final, and cannot be abstract. These restrictions emphasize that the API of a record is defined solely by its state description, and cannot be enhanced later by another class or record.</p>
+<p>The components of a record are implicitly final. This restriction embodies an <em>immutable by default</em> policy that is widely applicable for data aggregates.</p>
+<p>Beyond the restrictions above, records behave like normal classes: they can be declared top level or nested, they can be generic, they can implement interfaces, and they are instantiated via the <code>new</code> keyword. The record's body may declare static methods, static fields, static initializers, constructors, instance methods, instance initializers, and nested types. The record, and the individual components in a state description, may be annotated. If a record is nested, then it is implicitly static; this avoids an immediately enclosing instance which would silently add state to the record.</p>
+<h3 id="Explicitly-declaring-members-of-a-record">Explicitly declaring members of a record</h3>
+<p>Any of the members that are automatically derived from the state description can also be declared explicitly. However, carelessly implementing accessors or <code>equals</code>/<code>hashCode</code> risks undermining the semantic invariants of records.</p>
+<p>Special consideration is provided for explicitly declaring the canonical constructor (the one whose signature matches the record's state description).  The constructor may be declared without a formal parameter list (in this case, it is assumed identical to the state description), and any record fields which are <em>definitely unassigned</em> when the constructor body completes normally are implicitly initialized from their corresponding formal parameters (<code>this.x = x</code>) on exit.  This allows an explicit canonical constructor to perform only validation and normalization of its parameters, and omit the obvious field initialization.  For example:</p>
+<pre><code>record Range(int lo, int hi) {
+  public Range {
+    if (lo &gt; hi)  /* referring here to the implicit constructor parameters */
+      throw new IllegalArgumentException(String.format("(%d,%d)", lo, hi));
+  }
+}</code></pre>
+<h3 id="Grammar">Grammar</h3>
+<pre><code>RecordDeclaration:
+  {ClassModifier} record TypeIdentifier [TypeParameters] 
+    (RecordComponents) [SuperInterfaces] [RecordBody]
+
+RecordComponents:
+  {RecordComponent {, RecordComponent}}
+
+RecordComponent:
+  {Annotation} UnannType Identifier
+
+RecordBody:
+  { {RecordBodyDeclaration} }
+
+RecordBodyDeclaration:
+  ClassBodyDeclaration
+  RecordConstructorDeclaration
+
+RecordConstructorDeclaration:
+  {Annotation} {ConstructorModifier} [TypeParameters] SimpleTypeName
+    [Throws] ConstructorBody</code></pre>
+<h3 id="Annotations-on-record-components">Annotations on record components</h3>
+<p>Declaration annotations are permitted on record components if they are applicable to record components, parameters, fields, or methods. Declaration annotations that are applicable to any of these targets are propagated to implicit declarations of any mandated members.</p>
+<p>Type annotations that modify the types of record components are propagated to the types in implicit declarations of mandated members (e.g., constructor parameters, field declarations, and method declarations). Explicit declarations of mandated members must match the type of the corresponding record component exactly, not including type annotations.</p>
+<h3 id="Reflection-API">Reflection API</h3>
+<p>The following public methods will be added to <code>java.lang.Class</code>:</p>
+<ul>
+<li><code>RecordComponent[] getRecordComponents()</code></li>
+<li><code>boolean isRecord()</code></li>
+</ul>
+<p>The method <code>getRecordComponents()</code> returns an array of <code>java.lang.reflect.RecordComponent</code> objects, where <code>java.lang.reflect.RecordComponent</code> is a new class.  The elements of this array correspond to the record&#8217;s components, in the same order as they appear in the record declaration. Additional information can be extracted from each <code>RecordComponent</code> in the array, including its name, type, generic type, annotations, and its accessor method.</p>
+<p>The method <code>isRecord()</code> returns true if the given class was declared as a record. (Compare with <code>isEnum()</code>.)</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Records can be considered a nominal form of <em>tuples</em>. Instead of records, we could implement structural tuples. However, while tuples might offer a lighterweight means of expressing some aggregates, the result is often inferior aggregates:</p>
+<ul>
+<li>
+<p>A central aspect of Java's philosophy is that <em>names matter</em>. Classes and their members have meaningful names, while tuples and tuple components do not. That is, a <code>Person</code> class with properties <code>firstName</code> and <code>lastName</code> is clearer and safer than an anonymous tuple of <code>String</code> and <code>String</code>.</p>
+</li>
+<li>
+<p>Classes support state validation through their constructors; tuples do not. Some data aggregates (such as numeric ranges) have invariants that, if enforced by the constructor, can thereafter be relied upon; tuples do not offer this ability.</p>
+</li>
+<li>
+<p>Classes can have behavior that is based on their state; co-locating the state and behavior makes the behavior more discoverable and easier to access. Tuples, being raw data, offer no such facility.</p>
+</li>
+</ul>
+<h2 id="Dependencies">Dependencies</h2>
+<p>Records go well with <a href="https://openjdk.java.net/jeps/360">sealed types (JEP 360)</a>; records and sealed types taken together form a construct often referred to as <a href="https://en.wikipedia.org/wiki/Algebraic_data_type">algebraic data types</a>.  Further, records lend themselves naturally to <a href="https://cr.openjdk.java.net/~briangoetz/amber/pattern-match.html">pattern matching</a>.  Because records couple their API to their state description, we will eventually be
+able to derive deconstruction patterns for records as well, and use sealed type
+information to determine exhaustiveness in <code>switch</code> expressions with type patterns or
+deconstruction patterns.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

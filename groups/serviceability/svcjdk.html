@@ -1,0 +1,783 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta content="text/html; charset=us-ascii" http-equiv="content-type" /><title>Serviceability in the J2SE Repository</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>Serviceability in the J2SE Repository</h1>
+This page describes the Serviceability technologies in the J2SE
+repository. These technologies use the following serviceability
+technologies in the HotSpot repository:
+<ul>
+<li>Java Virtual Machine Tools Interface (JVM TI)</li>
+<li>HotSpot Monitoring and Management Interface (jmm.h)</li>
+<li>Dynamic attach</li>
+<li>Serviceability Agent</li>
+<li>jvmstat performance counters (sometimes called perfdata)</li>
+</ul>
+<p>Please see <a href="/groups/hotspot/docs/Serviceability.html">HotSpot
+Serviceability</a> for more information on these technologies in
+the HotSpot repository.</p>
+<p>The following table shows where the Serviceability technologies
+reside in the J2SE repository and in the binary release, and
+contains links to user level information and
+building/implementation notes. The building/implementation notes
+are not intended to be complete documentation but just some high
+level notes that will help the reader get started understanding how
+these technologies work.<br />
+For JPDA, the reader is advised to read the <a href="http://java.sun.com/javase/6/docs/technotes/guides/jpda">User
+Guide</a> to learn the architecture of JPDA before reading the
+build/implementation notes.</p>
+<h3>Notes:</h3>
+<ul>
+<li>Each row represents both the API for the technology (if there
+is one), and the implementation of the technology.</li>
+<li>In the <b>Binary Location</b> column, a path that starts with
+<i>jdk</i> means the component is contained in the jdk but not in
+the jre. A component whose path starts with <i>jre</i> is contained
+in both the jdk and the jre.</li>
+<li>Paths that begin with 'hotspot' are in the HotSpot repository
+instead of the J2SE repository</li>
+</ul>
+<br />
+<br />
+<table style="text-align: left;" summary="Serviceability Technologies" border="1" cellpadding="2" cellspacing="0">
+<tbody>
+<tr>
+<th><big><big>Technology<br /></big></big></th>
+<th><big><big>Source Location<br /></big></big></th>
+<th><big><big>Binary Location</big><br /></big></th>
+<th><big><big>More Info</big><br /></big></th>
+</tr>
+<tr>
+<td valign="top"><b>JPDA-Java Platform Debugger
+Architecture</b></td>
+<td valign="top">---</td>
+<td valign="top">---</td>
+<td valign="top"><a href="http://java.sun.com/javase/technologies/core/toolsapis/jpda/index.jsp">
+Home Page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=debugger">
+Bugs</a></td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;<a name="tJDI" href="#bJDI" id="tJDI">JDI-Java Debug Interface</a></td>
+<td valign="top">j2se/src/share/classes/com/sun/jdi/<br />
+j2se/src/share/classes/com/sun/tools/jdi/<br />
+j2se/build/<i>&lt;arch&gt;</i>/gensrc/com/sun/tools/jdi/JDWP.java<br />
+
+j2se/test/com/sun/jdi/<br />
+j2se/make/jpda/front/<br /></td>
+<td valign="top">jdk/lib/tools.jar</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdi">
+User Guide</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=debugger">
+Bugs</a> | grep -i jdi</td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;<a name="tJDWP" href="#bJDWP" id="tJDWP">JDWP-Java Debug Wire Protocol</a></td>
+<td valign="top">
+j2se/src/share/classes/com/sun/tools/jdwpgen/jdwp.spec<br />
+j2se/src/share/classes/com/sun/tools/jdwpgen/*.java<br />
+j2se/src/share/back/<br />
+j2se/src/share/javavm/export/jdwpTransport.h<br />
+j2se/build/<i>&lt;arch&gt;</i>/gensrc/com/sun/tools/jdi/JDWP.java<br />
+
+j2se/build/<i>&lt;arch&gt;</i>/tmp/jpda/com.sun.tools.jdwpgen/\<br />
+
+&#160;&#160;&#160;jdwp/JDWPCommands.h j2se/make/jpda/back/<br />
+j2se/make/jpda/jdwp/<br />
+j2se/make/jpda/jdwpgen/</td>
+<td valign="top">jre/lib/<i>&lt;arch&gt;</i>/libjdwp.so<br />
+jre/bin/jdwp.dll</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdwp">
+User Guide</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=debugger">
+Bugs</a> | grep -i jdwp</td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;<a name="ttransports" href="#btransports" id="ttransports">Transports / Connectors</a></td>
+<td valign="top">j2se/src/solaris/transport/<br />
+j2se/src/windows/transport/<br />
+j2se/src/windows/classes/com/sun/tools/jdi/<br />
+j2se/src/share/transport/shmem/<br />
+j2se/src/share/transport/socket/<br />
+j2se/src/share/native/com/sun/tools/jdi/SharedMemory*<br />
+j2se/make/jpda/transport/<br /></td>
+<td valign="top">jre/lib/<i>&lt;arch&gt;</i>/libdt_socket.so<br />
+jre/bin/dt_shmem.dll<br />
+jre/bin/dt_socket.dll</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/conninv.html">
+User Guide</a></td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;<a name="tjvmti" href="#bjvmti" id="tjvmti">JVM TI- Java Virtual Machine Tools Interface</a></td>
+<td valign="top">j2se/src/share/javavm/export/jvmti.h</td>
+<td valign="top">libjvm.so<br />
+jvm.dll</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/jvmti/index.html">
+User Guide</a><br />
+<a href="/groups/hotspot/docs/Serviceability.html#tjvmti">Hotspot
+Info</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=hotspot&amp;bugStatus=open&amp;subcategory=jvmti">
+Bugs</a></td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;jdb: See <a href="#t1jdb">demo
+entry below</a></td>
+<td valign="top">---</td>
+<td valign="top">---</td>
+<td valign="top">---</td>
+</tr>
+<tr>
+<td valign="top">&#160;<br />
+<b>Other APIs</b><br />
+&#160;</td>
+</tr>
+<tr>
+<td valign="top"><a name="tinstrumentation" href="#binstrumentation" id="tinstrumentation">Profiling and Bytecode
+Instrumentation</a></td>
+<td valign="top">j2se/src/share/classes/java/lang/instrument/<br />
+j2se/src/share/classes/sun/instrument/<br />
+j2se/src/share/instrument/<br />
+j2se/make/java/lang/instrument/<br />
+j2se/test/java/lang/instrument/<br />
+j2se/test/sun/instrument/<br /></td>
+<td valign="top">jre/lib/<i>&lt;arch&gt;</i>/libinstrument.so<br />
+jre/bin/instrument.dll<br /></td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/instrumentation/index.html">
+User Guide</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep -i instrument</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjmx" href="/groups/jmx/index.html" id="tjmx">Java Management Extension (JMX)</a></td>
+<td valign="top">j2se/src/share/classes/javax/management/<br />
+j2se/src/share/classes/com/sun/jmx/</td>
+<td valign="top">jre/lib/rt.jar</td>
+<td valign="top"><a href="http://java.sun.com/javase/technologies/core/mntr-mgmt/JavaManagement/index.jsp">
+Home Page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=monitoring">
+Bugs</a></td>
+</tr>
+<tr>
+<td valign="top"><a name="tmanagement" href="#bmanagement" id="tmanagement">Monitoring and Management</a></td>
+<td valign="top">j2se/src/share/classes/java/lang/management/<br />
+j2se/src/share/classes/com/sun/management/<br />
+j2se/src/share/classes/sun/management/<br />
+j2se/src/share/lib/management/<br />
+j2se/src/share/native/sun/management/<br />
+j2se/src/solaris/classes/com/sun/management/<br />
+j2se/src/solaris/classes/sun/management/<br />
+j2se/src/solaris/native/com/sun/management/<br />
+j2se/src/solaris/native/sun/management/<br />
+j2se/src/windows/classes/com/sun/management/<br />
+j2se/src/windows/classes/sun/management/<br />
+j2se/src/windows/native/com/sun/management/<br />
+j2se/src/windows/native/sun/management/<br />
+j2se/src/share/javavm/export/jmm.h<br />
+j2se/make/java/lang/management/<br />
+j2se/test/java/lang/management/<br />
+j2se/test/com/sun/management/<br />
+j2se/test/sun/management/</td>
+<td valign="top">jre/lib/rt.jar jre/lib/management-agent.jar<br />
+jre/lib/management<br />
+jre/lib/<i>&lt;arch&gt;</i>/libmanagement.so<br />
+jre/bin/management.dll<br /></td>
+<td valign="top"><a href="http://java.sun.com/javase/technologies/core/mntr-mgmt/index.jsp">Home
+Page</a><br />
+<a href="/groups/hotspot/docs/Serviceability.html#tmanagement">Hotspot
+Info</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=classes_management">
+Bugs</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=hotspot&amp;bugStatus=open&amp;subcategory=monitor_management">
+HotSpot Bugs</a></td>
+</tr>
+<tr>
+<td valign="top">NPT - Native Platform Toolkit</td>
+<td valign="top">j2se/src/share/npt/<br />
+j2se/src/solaris/npt/<br />
+j2se/src/windows/npt/<br />
+j2se/make/java/npt/</td>
+<td valign="top">jre/lib/<i>&lt;arch&gt;</i>/libnpt.so<br />
+jre/bin/npt.dll</td>
+<td valign="top">j2se/src/share/npt/method.html</td>
+</tr>
+<tr>
+<td valign="top"><a name="tattach" href="#battach" id="tattach">Dynamic Attach Mechanism</a></td>
+<td valign="top">j2se/src/share/classes/com/sun/tools/attach/<br />
+j2se/src/share/classes/sun/tools/attach/<br />
+j2se/src/solaris/classes/sun/tools/attach/<br />
+j2se/src/solaris/native/sun/tools/attach/LinuxVirtualMachine.c<br />
+
+j2se/src/solaris/native/sun/tools/attach/SolarisVirtualMachine.c<br />
+
+j2se/src/windows/classes/sun/tools/attach/<br />
+j2se/src/windows/native/sun/tools/attach/<br />
+j2se/test/com/sun/tools/attach/</td>
+<td valign="top">jdk/lib/tools.jar<br />
+jdk/jre/lib/<i>&lt;arch&gt;</i>/libattach.so<br />
+jdk/jre/bin/attach.dll</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/attach/index.html">
+User Guide</a><br />
+<a href="/groups/hotspot/docs/Serviceability.html#tattach">Hotspot
+Info</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep -i attach</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjvmstat" href="#bjvmstat" id="tjvmstat">Jvmstat Performance Counters</a></td>
+<td valign="top">j2se/src/share/classes/sun/jvmstat/monitor/<br />
+j2se/src/share/classes/sun/jvmstat/perfdata/</td>
+<td valign="top">jdk/lib/tools.jar<br /></td>
+<td valign="top"><a href="jvmstat/index.html">Javadoc</a><br />
+<a href="/groups/hotspot/docs/Serviceability.html#tjvmstat">Hotspot
+Info</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep -i jvmstat<br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=hotspot&amp;bugStatus=open&amp;subcategory=perfdata">
+HotSpot Bugs</a></td>
+</tr>
+<tr>
+<td valign="top"><a name="tsa" href="#bsa" id="tsa">ServiceabilityAgent</a></td>
+<td valign="top">All the SA code is currently in the HotSpot<br />
+repository, in the agent/ directory.</td>
+<td valign="top">jre/lib/<i>&lt;arch&gt;</i>/libsaproc.so<br />
+jdk/lib/sa-jdi.jar<br />
+<b>As of JDK 6, SA is not released on Windows</b></td>
+<td valign="top"><a href="/groups/hotspot/docs/Serviceability.html#tsa">Hotspot
+Info</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep SA</td>
+</tr>
+<tr>
+<td valign="top">&#160;<br />
+<b>Demos and sample code</b><br />
+&#160;</td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;<a name="t1jdb" id="t1jdb">jdb</a></td>
+<td valign="top">
+j2se/src/share/classes/com/sun/tools/example/debug/tty/<br />
+j2se/make/jpda/bdi/<br />
+j2se/make/jpda/expr/<br />
+j2se/make/jpda/tty/<br />
+j2se/make/jpda/gui/</td>
+<td valign="top">jdk/bin/jdb<br />
+jdk/demo/jpda/examples.jar</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/jdb.html">User
+Guide</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=debugger">
+Bugs</a> | grep -i tty</td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;hprof<br /></td>
+<td valign="top">j2se/src/*/demo/jvmti/hprof/<br />
+j2se/src/share/classes/sun/tools/hprof/Tracker.java<br />
+j2se/make/java/java_hprof_demo</td>
+<td valign="top">jdk/demo/jvmti/hprof<br />
+jre/lib/<i>&lt;arch&gt;</i>/libhprof.so<br />
+jre/bin/hprof.dll<br />
+jre/lib/jvm.hprof.txt</td>
+<td valign="top">jdk/demo/jvmti/hprof/src/manual.html <a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=profiling">
+Bugs</a></td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;java_crw_demo</td>
+<td valign="top">j2se/src/share/demo/jvmti/java_crw_demo/<br />
+j2se/src/share/javavm/export/classfile_constants.h<br />
+j2se/make/java/java_crw_demo/</td>
+<td valign="top">jdk/demo/jvmti/java_crw_demo</td>
+<td valign="top">jdk/demo/jvmti/\<br />
+&#160;&#160;&#160;java_crw_demo/README.txt</td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;JVM TI demos</td>
+<td valign="top">j2se/src/share/demo/jvmti/<br />
+j2se/make/mkdemo/jvmti/</td>
+<td valign="top">jdk/demo/jvmti/</td>
+<td valign="top">jdk/demo/<i>NAME</i>/README.txt</td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;JConsole plugin demo</td>
+<td valign="top">
+j2se/src/share/demo/scripting/jconsole-plugin/<br /></td>
+<td valign="top">jdk/demo/scripting/jconsole-plugin/<br /></td>
+<td valign="top">jdk/demo/jconsole-plugin/README.txt</td>
+</tr>
+<tr>
+<td valign="top">&#160;&#160;&#160;Management demos:<br />
+&#160;&#160;&#160;&#160;&#160;FullThreadDump<br />
+&#160;&#160;&#160;&#160;&#160;JTop<br />
+&#160;&#160;&#160;&#160;&#160;MemoryMonitor<br />
+&#160;&#160;&#160;&#160;&#160;VerboseGC<br /></td>
+<td valign="top">j2se/src/share/demo/management/*</td>
+<td valign="top">jdk/demo/nbproject/management/*<br />
+jdk/demo/management/*<br /></td>
+<td valign="top">jdk/demo/management/*/README.txt</td>
+</tr>
+<tr>
+<td valign="top">&#160;<br />
+<a name="tools" id="tools"><b>Serviceability Tools</b></a><br />
+&#160;</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjconsole" href="#bjconsole" id="tjconsole">jconsole</a></td>
+<td valign="top">j2se/src/share/classes/sun/tools/jconsole/<br />
+j2se/src/share/classes/com/sun/tools/jconsole/<br />
+j2se/make/sun/jconsole/<br />
+j2se/make/netbeans/jconsole/<br />
+j2se/make/netbeans/jconsole/README</td>
+<td valign="top">jdk/lib/jconsole.jar<br />
+jdk/bin/jconsole</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jconsole.html">
+Man page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=jconsole">
+Bugs</a></td>
+</tr>
+<tr>
+<td valign="top">jdb - See <a href="#t1jdb">jdb demo entry
+above</a></td>
+<td valign="top">---</td>
+<td valign="top">---</td>
+<td valign="top">---</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjhat" href="#bjhat" id="tjhat">jhat</a></td>
+<td valign="top">jdk/src/share/classes/com/sun/tools/hat/<br />
+j2se/make/sun/hat/</td>
+<td valign="top">jdk/bin/jhat</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jhat.html">
+Man page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep jhat</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjinfo" href="#bjinfo" id="tjinfo">jinfo</a></td>
+<td valign="top">jdk/src/share/classes/sun/tools/jinfo/<br />
+j2se/make/sun/jinfo/</td>
+<td valign="top">jdk/bin/jinfo</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jinfo.html">
+Man page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep jinfo</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjmap" href="#bjmap" id="tjmap">jmap</a></td>
+<td valign="top">jdk/src/share/classes/sun/tools/jmap/<br />
+j2se/make/sun/jmap/</td>
+<td valign="top">jdk/bin/jmap</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jmap.html">
+Man page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep jmap</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjps" href="#bjps" id="tjps">jps</a></td>
+<td valign="top">jdk/src/share/classes/sun/tools/jps/<br />
+j2se/make/sun/jps/</td>
+<td valign="top">jdk/bin/jps</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jps.html">Man
+page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep jps</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjcontrol" href="#bjcontrol" id="tjcontrol">jcontrol</a></td>
+<td valign="top">deploy/src/plugin/solaris/controlpanel/
+deploy/src/plugin/win32/controlpanel/
+deploy/src/common/share/classes/com/sun/deploy/panel/</td>
+<td valign="top">jre/bin/jcontrol<br />
+jre/lib/deploy.jar<br />
+jre/bin/javacpl.exe<br />
+jre/bin/javacpl.cpl</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/guides/deployment/deployment-guide/jcp.html">
+User Guide</a></td>
+</tr>
+<tr>
+<td valign="top"><a name="tjsadebugd" href="#bjsadebugd" id="tjsadebugd">jsadebugd</a></td>
+<td valign="top">
+hotspot/agent/src/share/classes/sun/jvm/hotspot/jdi/\<br />
+&#160;&#160;&#160;SADebugServer.java<br />
+j2se/make/sun/jsadebugd/</td>
+<td valign="top">jdk/bin/jsadebugd</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jsadebugd.html">
+Man page</a></td>
+</tr>
+<tr>
+<td valign="top"><a name="tjstack" href="#bjstack" id="tjstack">jstack</a></td>
+<td valign="top">jdk/src/share/classes/sun/tools/jstack/<br />
+j2se/make/sun/jstack/</td>
+<td valign="top">jdk/bin/jstack</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jstack.html">
+Man page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep jstack</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjstat" href="#bjstat" id="tjstat">jstat</a></td>
+<td valign="top">j2se/src/share/classes/sun/tools/jstat/<br />
+j2se/make/sun/jstat/</td>
+<td valign="top">jdk/bin/jstat</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jstat.html">
+Man page</a><br />
+<a href="http://bugs.sun.com/bugdatabase/search.do?process=1&amp;category=java&amp;bugStatus=open&amp;subcategory=serviceability">
+Bugs</a> | grep jstat</td>
+</tr>
+<tr>
+<td valign="top"><a name="tjstatd" href="#bjstatd" id="tjstatd">jstatd</a></td>
+<td valign="top">jdk/src/share/classes/sun/tools/jstatd/<br />
+j2se/make/sun/jstatd/</td>
+<td valign="top">jdk/bin/jstatd</td>
+<td valign="top"><a href="http://java.sun.com/javase/6/docs/technotes/tools/share/jstatd.html">
+Man page</a></td>
+</tr>
+</tbody>
+</table>
+<br />
+<h2><u>Build and Implementation Notes</u></h2>
+<h2><a name="bJDI" id="bJDI">JDI-Java Debug Interface and the
+Front-end</a></h2>
+The Java Debug Interface consists of the API in com.sun.jdi and the
+implementation in com.sun.tools.jdi. The API is an optional part of
+the Java platform. Please refer to the <a href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/index.html">
+JPDA documentation</a> for more information about how JDI and its
+implementation fits into JPDA, and how requests and events flow
+through JPDA. Please see <a href="jpdaFEThreads.jpg">JPDA Front-end
+Threads</a> for information about the thread structure of the
+front-end.
+<p>The front-end can register to receive events on its own. It
+currently needs to keep track of classes that are loaded so it
+registers to receive class prepare events and class unload events.
+These events are handled by the front-end's Internal Event Handler
+thread.</p>
+<p>The front-end uses a class named JDWP whose .java file is
+generated by the jdwpgen program, see below. JDWP contains all the
+methods that the front-end calls to create JDWP command packets.
+These methods then call transport methods to actually send the
+packets down the wire to the back-end.</p>
+<p>The front-end also contains the code for the default connectors
+and contains the Java code for the socket transport. The socket
+transport uses the socket support in the JDK libraries so no native
+code is needed in the front-end.</p>
+<p>This is not true of the shared memory transport, so it is
+implemented in native code which executes as part of the front-end.
+Note that the shared memory transport is only available on Windows,
+and so its code is in a Windows specific directory. See the
+<a href="#ttransports">Transports and Connectors</a> section for
+more information.<br />
+<a href="#tJDI"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br /></p>
+<h2><a name="bJDWP" id="bJDWP">JDWP-Java Debug Wire Protocol and
+the Back-end</a></h2>
+File jdwp.spec contains the base definition of JDWP. During the
+build of JPDA, the jdwpgen program is built and is then called to
+process jdwp.spec. This creates three files:
+<ul>
+<li>jdwp.html - the JDWP specification</li>
+<li>JDWP.java - the class used by the front-end to create and write
+JDWP packets</li>
+<li>JDWPCommands.h - the JDWP constants needed by the C code in the
+back-end.</li>
+</ul>
+<p>JDWP and JDI are generally isomorphic, but there are exceptions.
+In addition, for each front-end file, eg, VirtualMachineImpl.java,
+there tends to be a back-end file, eg, VirtualMachineImpl.c that
+contains the code that handles the JDWP commands that originate
+from the JDI methods defined in the corresponding front-end
+file.</p>
+<p>The structure of the JDWP packets for the various commands is
+embedded in the back-end files. For example to read the
+redefineClasses command, back-end file VirtualMachineImpl.c does
+this:</p>
+<pre>
+static jboolean 
+redefineClasses(PacketInputStream *in, PacketOutputStream *out) 
+{
+    jvmtiClassDefinition *classDefs;
+    jboolean ok = JNI_TRUE;
+    jint classCount;
+    jint i;
+    JNIEnv *env;
+
+    if (gdata-&gt;vmDead) {
+        /* quietly ignore */                
+        return JNI_TRUE;
+    }
+
+    classCount = inStream_readInt(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    if ( classCount == 0 ) {
+        return JNI_TRUE;
+    }
+    /*LINTED*/
+    classDefs = jvmtiAllocate(classCount*(int)sizeof(jvmtiClassDefinition));
+    if (classDefs == NULL) {
+        outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+        return JNI_TRUE;
+    }
+    /*LINTED*/
+    (void)memset(classDefs, 0, classCount*sizeof(jvmtiClassDefinition));
+  
+    env = getEnv();
+
+    for (i = 0; i &lt; classCount; ++i) {
+        int byteCount;
+        unsigned char * bytes;
+        jclass clazz;
+        
+        clazz = inStream_readClassRef(env, in);
+        if (inStream_error(in)) {
+            ok = JNI_FALSE;
+            break;
+        }
+        byteCount = inStream_readInt(in);
+        if (inStream_error(in)) {
+            ok = JNI_FALSE;
+            break;
+        }
+        if ( byteCount &lt;= 0 ) {
+            outStream_setError(out, JDWP_ERROR(INVALID_CLASS_FORMAT));
+            ok = JNI_FALSE;
+            break;
+        }
+        bytes = (unsigned char *)jvmtiAllocate(byteCount);
+        if (bytes == NULL) {
+            outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+            ok = JNI_FALSE;
+            break;
+        }        
+        (void)inStream_readBytes(in, byteCount, (jbyte *)bytes);
+        if (inStream_error(in)) {
+            ok = JNI_FALSE;
+            break;
+        }
+
+    </pre>
+<p>The back-end calls JVM TI functions to actually interrogate the
+JVM. To do this, it uses file jvmti.h which defines JVM TI. See
+<a href="#bjvmti">JVM TI</a> for more information on jvmti.h</p>
+<p>See <a href="jpdaBEThreads.jpg">JPDA Back-end Threads</a> for
+information about the threads used in the back-end.<br />
+<a href="#tJDWP"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br /></p>
+<h2><a name="btransports" id="btransports">JPDA Transports and
+Connectors</a></h2>
+Currently, each JPDA transport is wrapped in a JDPA connector.
+These all reside in .jar files and are discovered by the
+VirtualMachineManagerImpl constructor which is called from class
+com.sun.jdi.Bootstrap during front-end initialization. See <a href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/conninv.html#SPI">
+Service Provider Interfaces</a> for information on adding custom
+connectors/transports to a JPDA installation.<br />
+<a href="#ttransports"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjvmti" id="bjvmti">JVM TI</a></h2>
+The code for JVM TI is in the HotSpot repository; please see
+<a href="/groups/hotspot/docs/Serviceability.html#tjvmti">JVM
+TI</a>.
+<p>The HotSpot build process creates interface file jvmti.h which
+is used by JVM TI agents such as the JPDA back-end. jvmti.h is
+copied from the HotSpot build area and checked into the J2SE
+repository whenever changes are made to the interface. This file
+contains a JVM TI version number which is compiled into the
+back-end and is checked against the JVM TI version that is compiled
+into HotSpot during back-end startup.<br />
+<a href="#tjvmti"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br /></p>
+<h2><a name="binstrumentation" id="binstrumentation">Profiling and
+Instrumentation</a></h2>
+java.lang.instrument uses a native JVM TI agent called the
+JPLISAgent. The JPLISAgent manages the initialization of all the
+Java programming language Agents. It also supports the native
+method bridge between the JPLIS and the JVM TI. It maintains a
+single JVMTI Env that all JPL agents share. It parses command line
+requests and creates individual Java agents. The code for this
+agent is contained in j2se/src/share/instrument. At runtime, it
+resides in libinstrument.so/instrument.dll and is dynamically
+loaded by code in sun.instrument.InstrumentationImpl.<br />
+<a href="#tinstrumentation"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bmanagement" id="bmanagement">Monitoring and
+Management</a></h2>
+Java SE contains a JMX MBean Server called the Platform MBean
+Server (see <a href="http://java.sun.com/javase/6/docs/api/java/lang/management/ManagementFactory.html#getPlatformMBeanServer()">
+java.lang.management.ManagementFactory.getPlatformMBeanServer</a>)
+which can be used to make MBeans available for remote access. The
+Platform MBean Server is started by code in
+j2se/src/share/classes/sun/management/Agent.java. This class is
+named as the Premain-class and Agent-class in JPLIS agent
+jre/lib/management-agent.jar which allows the agent (and thus the
+Platform MBean Server) to be started dynamically via the loadAgent
+method of <a href="#tattach">Dynamic Attach</a>. The agent can also
+be started at JVM startup time by use of the
+-Dcom.sun.management.jmxremote or the -Dcom.sun.management.snmp
+command line options on the java command.
+<p>The classes in java.lang.managment define a set of MBeans that
+are used to access information from the JVM and the operating
+system upon which it is running. These MBeans are registered with
+the Platform MBean Server when it is started.</p>
+<p>The platform MBeans are implemented by classes in
+sun.management. These classes contain native methods that call
+functions defined in jmm.h to extract the required information from
+the JVM. jmm.h is implemented by the Java Virtual Machine.</p>
+<p>See <a href="/groups/hotspot/docs/Serviceability.html#tmanagement">Monitoring
+and Management in HotSpot</a> for more information.<br />
+See <a href="/groups/jmx/index.html">JMX- Java Management
+Extensions API</a> for information about JMX.<br />
+<a href="#tmanagement"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br /></p>
+<h2><a name="battach" id="battach">Dynamic Attach
+Mechanism</a></h2>
+This is a Sun extension that allows a tool to 'attach' to another
+process running Java code and launch a JVM TI agent or a
+java.lang.instrument agent in that process. This also allows the
+system properties to be obtained from the target JVM.
+<p>The Sun implementation of this API also includes some HotSpot
+specific methods that allow additional information to be obtained
+from HotSpot:</p>
+<ul>
+<li>The ctrl-break output from the local JVM</li>
+<li>The ctrl-break output from the remote JVM</li>
+<li>A dump of the heap</li>
+<li>A histogram showing the number of instances of the classes
+loaded in the target JVM. Either all instances or just 'live'
+instances can be counted.</li>
+<li>The value of a manageable command line flag. Such flags can
+also be set.</li>
+</ul>
+See
+j2se/src/share/classes/sun/tools/attach/HotSpotVirtualMachine.java
+for more information.
+<p>Dynamic attach is used by <a href="#tjconsole">jconsole</a>
+<a href="#tjstack">jstack</a> <a href="#tjmap">jmap</a> <a href="#tjinfo">jinfo</a><br />
+<a href="#tattach"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br /></p>
+<h2><a name="bjvmstat" id="bjvmstat">Jvmstat Performance
+Counters</a></h2>
+Hotspot exports the performance counters to a memory area that is
+mapped to a file. The jvmstat classes in the J2SE repository use
+java.io to read this data and make it available to callers. For
+examples of the use of the sun.jvmstat API, see:
+<ul>
+<li>j2se/src/share/classes/sun/tools/jps/Jps.java</li>
+<li>j2se/src/share/classes/sun/tools/jstat/Jstat.java</li>
+</ul>
+<p>This data is used by <a href="#tattach">Dynamic Attach</a>,
+<a href="#tjconsole">jconsole</a>, <a href="#tjps">jps</a>,
+<a href="#tjstat">jstat</a><br />
+<a href="#tjvmstat"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br /></p>
+<h2><a name="bsa" id="bsa">Serviceability Agent</a></h2>
+Serviceability Agent components are built as part of the standard
+build of the HotSpot repository. These components are:
+<ul>
+<li>libsaproc.so: this is the native code component of SA.</li>
+<li>sa-jdi.jar: This is contains the Java classes of SA. It
+includes an implementation of <a href="#bjdi">JDI</a> which allows
+JDI clients to do read-only debugging on core files and hung
+processes.</li>
+</ul>
+<p>These two files are copied from the HotSpot build area to the
+JDK build area during a control build (a control build is a build
+of the control repository which first builds HotSpot and then
+builds the J2SE repository, so that the files built by the HotSpot
+build are available to the J2SE build.)</p>
+<p>SA is used by <a href="#tjinfo">jinfo</a>, <a href="#tjmap">jmap</a>, <a href="#tjstack">jstack</a><br /></p>
+<blockquote><i>NOTE: The Serviceability Agent and the technologies
+that use it are not currently included in JDK releases on the
+Windows platforms.</i></blockquote>
+<a href="#tsa"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjconsole" id="bjconsole">jconsole</a></h2>
+JConsole uses <a href="#tattach">dynamic attach</a> to show
+monitorable Java processes, and to attach to them. It uses JMX to
+obtain information from a monitored JVM. Please see the <a href="/tools/svc/jconsole/index.html">jconsole tool page</a> for more
+information on JConsole.<br />
+<a href="#tjconsole"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjhat" id="bjhat">jhat</a></h2>
+jhat was derived from <a href="http://hat.java.net">hat.java.net</a>. The jhat source directory
+contains a build.xml file that can be used by ant to just build
+jhat.<br />
+<a href="#tjhat"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjinfo" id="bjinfo">jinfo</a></h2>
+jinfo uses <a href="#battach">dynamic attach</a> for the -flag
+option and uses <a href="#bsa">Serviceability Agent</a> for the
+-flags and -sysprops options.<br />
+<a href="#tjinfo"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjmap" id="bjmap">jmap</a></h2>
+jmap uses <a href="#battach">dynamic attach</a> for the -dump and
+-histo options and <a href="#bsa">Serviceability Agent</a> for the
+other options. However, the -F option causes jmap to use SA for
+-dump and -histo also.<br />
+<a href="#tjmap"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjps" id="bjps">jps</a></h2>
+jps uses the <a href="#bjvmstat">jvmstat mechanism</a> to obtain
+the list of monitorable Java processes.<br />
+<a href="#tjps"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjcontrol" id="bjcontrol">jcontrol</a></h2>
+Note that the source for jcontrol is in the deploy respository
+instead of the J2SE repository.<br />
+<a href="#tjcontrol"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjsadebugd" id="bjsadebugd">jsadebugd</a></h2>
+jsadebugd is a Serviceability Agent 'server' that allows SA based
+tools to observe processes on remote machines. The code for
+jsadebugd resides in the HotSpot repository with the rest of the SA
+code. The J2SE repository just contains a makefile that creates the
+wrapper script that runs the sun.jvm.hotspot.jdi.SADebugServer
+class.<br />
+<a href="#tjsadebugd"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjstack" id="bjstack">jstack</a></h2>
+jstack uses <a href="#tattach">dynamic attach</a> to print a
+non-mixed mode stack trace (ie, no native frames) and <a href="#bsa">Serviceability Agent</a> to do the rest.<br />
+<a href="#tjstack"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjstat" id="bjstat">jstat</a></h2>
+jstat (formerly jvmstat) is the primary user interface to the
+jvmstat performance counters. You can find the mapping between the
+options shown by 'jstat -options' and the names of the performance
+counters in the file
+j2se/src/share/classes/sun/tools/jstat/resources/jstat_options
+<p>jstat contains several unpublished features:</p>
+<ul>
+<li>You can create your own output display by creating
+<i>$HOME/.jvmstat/jstat_options</i> containing data in the form of
+the installed jstat_options file.</li>
+<li>'jstat -snap pid' will show name/value pairs for all the
+counters. To see Sun-internal counters, add option
+<i>-J-Djstat.showUnsupported=true</i>. Note these internal counters
+are even more unsupported than is jstat itself.</li>
+<li>See file j2se/src/share/classes/sun/tools/jstat/Arguments.java
+for more undocumented options</li>
+</ul>
+<a href="#tjstat"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<br />
+<h2><a name="bjstatd" id="bjstatd">jstatd</a></h2>
+jstatd starts a server that allows jstat to access performance
+counters from a remote machine via Java Remote Method
+Invocation.<br />
+<a href="#tjstatd"><img src="upArrow.jpg" alt="up arrow" /></a><br />
+<hr />
+<font size="-1">Last Modified: 06/29/07</font><br />
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

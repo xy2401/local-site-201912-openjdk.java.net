@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>The Compiler Group</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>The Java programming language Compiler Group</h1>
+<p><a href="/census#compiler">This group</a> is comprised of
+developers involved in the design, implementation, and maintenance
+of the <em>javac</em> compiler for the Java&#8482; programming
+language, and associated components such as <em>javadoc</em> and
+<em>javap</em>.</p>
+<h2>Introduction</h2>
+<p>The <em>javac</em> compiler reads source files written in the
+Java programming language, and compiles them into class files. The
+Java programming language is defined by <a href="http://docs.oracle.com/javase/specs/jls/se11/html/index.html">The
+Java Language Specification</a> (JLS) and class files are defined
+by <a href="http://docs.oracle.com/javase/specs/jvms/se11/html/index.html">The
+Java Virtual Machine Specification</a> (JVMS).</p>
+<p>Optionally, the compiler can also process annotations found in
+source and <code>class</code> files using the <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/annotation/processing/package-summary.html">
+Pluggable Annotation Processing API</a> (<a href="http://jcp.org/en/jsr/summary?id=269">JSR 269</a>).</p>
+<p>The compiler is a command-line tool but can also be invoked
+using the <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/tools/package-summary.html">
+Java Compiler API</a> (<a href="http://jcp.org/en/jsr/summary?id=199">JSR 199</a>).</p>
+<h2>Source Code</h2>
+<p>The <code>javac</code> compiler source code is available in the
+OpenJDK Mercurial repositories, at <a href="//hg.openjdk.java.net/">http://hg.openjdk.java.net/</a>.</p>
+<ul>
+<li>The master sources are in <a href="//hg.openjdk.java.net/jdk/jdk">http://hg.openjdk.java.net/jdk/jdk</a>.</li>
+</ul>
+<p>For general information about the OpenJDK repositories, and how
+to clone them, see <a href="//openjdk.java.net/guide/">The
+OpenJDK Developer's Guide</a>.</p>
+<p>Note that the code for the native launcher for <em>javac</em> is
+shared with all the other JDK tools, and is customized for
+<em>javac</em> during the build.</p>
+<h2>Issues</h2>
+Issues are tracked in the <a href="https://bugs.openjdk.java.net">JDK Bug System</a>. Most compiler
+bugs are tracked in the <em>tools</em> component, <em>javac</em>
+subcomponent.
+<h2>Documentation</h2>
+<ul><!--
+    <li>If you've cloned the <code>langtools</code> repository, here's how to ...
+      <ul>
+        <li><a href="README.html#build">Build the compiler with Ant, Make, 
+            or the NetBeans IDE Version 5.5 or later.</a></li>
+        <li><a href="README.html#test">Run the unit and regression tests</a></li>
+        <li><a href="README.html#run">Run the compiler that you built</a></li>
+      </ul>
+    </li>
+-->
+<li><a href="doc/hhgtjavac/index.html">The Hitchhiker's Guide to
+javac</a></li>
+<li><a href="doc/package-overview/index.html">Compiler Package
+Overview</a></li>
+<li><a href="doc/compilation-overview/index.html">Compilation
+Overview</a></li>
+<li><a href="tests.html">Guidelines for &#8220;langtools&#8221;
+tests</a></li>
+</ul>
+<ul>
+<li><a href="change.html">So you want to change "javac"
+...</a></li>
+<li><a href="http://blogs.oracle.com/darcy/entry/so_you_want_to_change">So you
+want to change the Java Programming Language...</a></li>
+</ul>
+<ul>
+<li><a href="processing-code.html">Processing Code <span style="font-size:smaller">(Or: <em>Doclets, Annotation Processors and
+Plugins: Oh My!</em>)</span></a></li>
+<li><a href="using-new-doclet.html">Using the new Doclet
+API</a></li>
+<li><a href="javadoc-architecture.html">javadoc
+Architecture</a></li>
+</ul>
+<ul>
+<li><a href="https://docs.oracle.com/en/java/javase/11/tools/javac.html">Oracle
+home page for <em>javac</em></a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/11/tools/javadoc.html">Oracle
+home page for <em>javadoc</em></a></li>
+</ul>
+<h2>Presentations</h2>
+<ul>
+<li><a href="https://blogs.oracle.com/darcy/resource/SpeakingArchive.html">Joe
+Darcy's Talk Archive</a></li>
+<li><a href="https://blogs.oracle.com/mcimadamore/resource/09J1_langtools_all.pdf">
+Java Programming Language Tools in JDK7</a> (JavaOne 2009)</li>
+</ul>
+<h2>Resources</h2>
+<p>The following links are for resources about the compiler,
+provided by non-Oracle contributors. These resources may not be
+completely up to date.</p>
+<ul><!--
+    <li><a href="http://www.oraclejavamagazine-digital.com/javamagazine/20120708?pg=51#pg51">How
+        to Modify javac</a> by Raoul-Gabriel Urma, Janina Voigt, and
+        Martijn Verburg (Java Magazine, 2012)</li>
+-->
+<!--
+    <li><a href="http://www.ahristov.com/tutorial/java-compiler.html">Hacking the OpenJDK compiler</a> by Alexander Hristov (2010)</li>
+-->
+<li><a href="http://scg.unibe.ch/archive/projects/Erni08b.pdf">The
+Hacker's Guide to javac</a> (PDF) by David Erni and Adrian Kuhn
+(2008)</li>
+<!--
+    <li><a href="http://crazyjavahacking.org/tag/javac/">javac posts</a> on crazyjavahacking.org</li>
+--></ul>
+<h2>Related Projects</h2>
+<ul><!--
+    <li><a href="//openjdk.java.net/projects/jdk6/">JDK 6</a>,
+          <a href="//openjdk.java.net/projects/jdk7/">JDK 7</a>,
+          <a href="//openjdk.java.net/projects/jdk8/">JDK 8</a>,
+          <a href="//openjdk.java.net/projects/jdk9/">JDK 9</a>
+    </li>
+    <li><a href="//openjdk.java.net/projects/coin/">Coin</a></li>
+    <li><a href="//openjdk.java.net/projects/jigsaw/">Jigsaw</a></li>
+    <li><a href="//openjdk.java.net/projects/lambda/">Lambda</a></li>
+    <li><a href="//openjdk.java.net/projects/type-annotations/">Type Annotations</a></li>
+-->
+<li><a href="//openjdk.java.net/projects/amber/">Amber</a></li>
+<li><a href="//openjdk.java.net/projects/valhalla/">Valhalla</a></li>
+<li><a href="//openjdk.java.net/projects/code-tools/">Code
+Tools</a></li>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/enhanced-metadata-spec-discuss">
+Mailing list for enhanced metadata in Java SE 8</a></li>
+</ul>
+<h2>Community</h2>
+<ul>
+<li style="margin-bottom:1em"><strong>Mailing lists</strong>
+<ul>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/compiler-dev">compiler-dev</a></li>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/javadoc-dev">javadoc-dev</a></li>
+</ul>
+</li>
+<li style="margin-bottom:1em"><strong>Compiler bloggers</strong>
+<ul>
+<!--<li><a href="http://blogs.oracle.com/abuckley/">Alex Buckley</a></li>-->
+<li><a href="http://blogs.oracle.com/mcimadamore/">Maurizio
+Cimadamore</a></li>
+<!--<li><a href="http://blogs.oracle.com/darcy/">Joe Darcy</a></li>-->
+<!--<li><a href="http://blogs.oracle.com/jjg/">Jonathan Gibbons</a></li>--></ul>
+</li>
+<li style="margin-bottom:1em"><strong>Alumni</strong>
+<ul>
+<li><a href="http://blogs.oracle.com/ahe/">Peter von der
+Ah&#233;</a></li>
+<li><a href="http://gafter.blogspot.com/">Neal Gafter</a></li>
+</ul>
+</li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

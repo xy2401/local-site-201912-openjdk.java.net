@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: javadoc tags to distinguish API, implementation, specification, and notes</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: javadoc tags to distinguish API, implementation, specification, and notes</h1><table class="head"><tr><td>Owner</td><td>Stuart Marks</td></tr><tr><td>Type</td><td>Informational</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Submitted</td></tr><tr><td>Discussion</td><td>jdk9 dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>S</td></tr><tr><td>Duration</td><td>S</td></tr><tr><td>Reviewed by</td><td>Alex Buckley, Chris Hegarty, Jonathan Gibbons</td></tr><tr><td>Created</td><td>2015/01/06 23:58</td></tr><tr><td>Updated</td><td>2018/03/22 21:13</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8068562">8068562</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>This informational JEP describes certain JDK-specific javadoc tags that have been introduced in JDK 8 in order to improve the clarity of the specification and related documentation, and also to improve the inheritability of documentation by subclasses.</p>
+<h2 id="Goals">Goals</h2>
+<p>Prior to JDK 8, the "javadoc" consisted mainly of the Java SE API specification, with some documentation about implementation and informative notes mixed in. These different kinds of documentation were not always denoted clearly, and the normative force of statements about implementation was also often unclear. This JEP describes javadoc tags that allow these different kinds of documentation to be placed into separate documentation sections and also that allow subclasses to inherit them selectively.</p>
+<p>This JEP is also initially intended to document existing usage of these tags in JDK 8. It is not intended to develop new javadoc tags or other enhancements.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>The new tags are JDK-specific and are not intended to become standard javadoc tags at the present time.</p>
+<p>This JEP is not a proposal to develop new javadoc tags, but is limited in scope to documenting the tags that were introduced in JDK 8.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>What many people refer to as "the javadoc" is officially titled the "Java(tm) Platform, Standard Edition <em>N</em> API Specification". The specification primarily describes <em>what</em> a piece of the API should do (often in terms of preconditions and postconditions) and not <em>how</em> the API is implemented. It's thus tempting to conclude that the specification applies only to the API. However, this is not the case. An abstract class contains an implementation, and subclasses must be able to rely on specific behavior of this implementation (such as when <code>super.method()</code> is called), and also to determine whether they should inherit or override the implementation. This implies that the specification must also include requirements on implementations. With the introduction of default methods on interfaces in Java SE 8, interfaces can also now include implementations. We expect default methods will be used quite frequently; thus the need to specify implementations is much greater in Java SE 8 than it was in previous releases.</p>
+<p>For example, consider the specification for <code>AbstractMap.putAll</code>. It says in part,</p>
+<blockquote>
+<p>This implementation iterates over the specified map's
+<code>entrySet()</code> collection, and calls this map's <code>put</code> operation
+once for each entry returned by the iteration.</p>
+</blockquote>
+<p>This is essential information for subclassers. It specifies that <code>putAll</code> doesn't bypass the <code>put</code> method, so subclassers need only override <code>put</code> in order to implement some custom behavior, and they need not override <code>putAll</code>. However, if they do override <code>putAll</code>, the overriding method can call <code>super.putAll()</code> and rely on the specified behavior of <code>AbstractMap.putAll</code>. The situation is similar with default methods. Classes that implement interfaces containing a default method will need to know whether they can rely on the default method's implementation, or whether it is useful or necessary to override the default method.</p>
+<p>Note the difference between the specification of <code>AbstractMap.putAll</code> and the specification of <code>Map.putAll</code>:</p>
+<blockquote>
+<p>The effect of this call is equivalent to that of calling <code>put(k, v)</code> on this map once for each mapping from key <code>k</code> to value <code>v</code> in the specified map.</p>
+</blockquote>
+<p>The words <em>effect</em> and <em>equivalent to</em> make it clear that the <code>Map.putAll</code> specification is describing the results or postconditions of calling the method, but not how the method does its work. (Other specifications may use other words with similar meaning, such as "The effect is as if ....") By contrast, the specification of <code>AbstractMap.putAll</code> states directly that it calls the <code>put</code> operation: no "as if" or "equivalent" words here. It is clearly a specification of how <code>AbstractMap.putAll</code> must do its work.</p>
+<p>The above excerpt from the <code>AbstractMap</code> specification used the phrase "this implementation." In this context, it means "the implementation of the <code>putAll</code> method that resides in the <code>AbstractMap</code> class." Although this describes the implementation, this is just as much a part of the specification of the <code>AbstractMap</code> class as the API specifications. The <code>AbstractMap.putAll</code> method of every release of every Java SE product should behave the same way. We would expect a conformance test suite to test that the <code>putAll</code> method indeed calls the <code>put</code> method for each entry.</p>
+<p>By contrast, consider the following excerpt from the <code>Runtime.loadLibrary</code> method:</p>
+<blockquote>
+<p>The details of this process are implementation-dependent.</p>
+</blockquote>
+<p>In this context, "implementation" means the particular implementation of Java SE, such as OpenJDK, the Oracle JDK, an independent implementation of Java SE, or even the "same" version of a JDK running on a different operating system. For example, it should not be surprising if the behavior of <code>Runtime.loadLibrary</code> were to differ between OpenJDK running on Linux and OpenJDK running on Windows. Unlike the <code>AbstractMap</code> example, the behavior of <code>Runtime.loadLibrary</code> is allowed to vary across products and platforms. Thus, the statements about the implementation of <code>Runtime.loadLibrary</code> lack the force of specification of the statements about <code>AbstractMap</code>.</p>
+<p>One might argue that that implementation specification example of <code>AbstractMap.putAll</code> given above is really an API specification at an unusually fine-grained level of detail. This is not really the case, and it's illustrated when we consider inheritance.</p>
+<p>The API specification for <code>putAll</code> is defined in the <code>Map</code> interface. It applies to all subtypes of <code>Map</code>. It is generally considered a design error for some descendant of <code>Map</code> to have a <code>putAll</code> method that violates assertions made in the <code>Map.putAll</code> specification.</p>
+<p>On the other hand, the implementation specification for <code>AbstractMap.putAll</code> applies only to <code>AbstractMap</code> itself and its descendants that have <em>chosen to</em> inherit <code>putAll</code>. It's quite possible for a descendant of <code>AbstractMap</code> to have its own implementation of <code>putAll</code> that bypasses the <code>put</code> method. Of course, that implementation would still need to conform to the requirements laid out by the <code>Map.putAll</code> specification. Thus, there is a need for this descendant class to <em>selectively inherit</em> portions of its ancestors' documentation. It needs to inherit the API specification from <code>Map.putAll</code>, but it needs to avoid inheriting the implementation specification from <code>AbstractMap.putAll</code>.</p>
+<p>Specifications typically consist of assertions, preconditions, postconditions, and the like. The documentation, however, contains other information, such as background, rationale, usage considerations, and the like. Standards documents refer to the specification statements as "normative" and other documentation as "non-normative" (sometimes "informative"). For brevity, this document will use the terms "spec" and "notes" for these concepts.</p>
+<p>We have laid out two dichotomies: between API and implementation, and between specifications and notes. There are thus four different categories of documentation that appear in "the javadoc." We have further identified the need for subtypes to selectively inherit pieces of documentation from their supertypes. We have therefore introduced several new javadoc tags that can be used to separate documentation into different sections corresponding to these different categories. We have also modified the behavior of the @inheritDoc tag to inherit only the particular section of the documentation in which the tag occurs.</p>
+<h2 id="Description">Description</h2>
+<p>There are four categories of documentation that we need to distinguish using javadoc tags:</p>
+<ol>
+<li>API Specification &#8211; <em>(no tag)</em></li>
+<li>API Notes &#8211; <code>@apiNote</code></li>
+<li>Implementation Specification &#8211; <code>@implSpec</code></li>
+<li>Implementation Notes &#8211; <code>@implNote</code></li>
+</ol>
+<p>The initial text of a javadoc comment is in the API Specification category. When one of these tags is used, the subsequent text is put into the associated category. All of these tags are optional. If none of the tags is provided, all of the documentation is considered to be API Specification.</p>
+<p>The category definitions are:</p>
+<p><em>API Specification</em>.  This is the most familiar, as most of the javadoc is already API specification. This includes specifications that apply to all valid implementations, including preconditions, postconditions, etc. Documentation is considered to be API specification by default, so there is no tag for this category.</p>
+<p><em>API Notes</em>.  This category consists of commentary, rationale, or examples pertaining to the API.</p>
+<p><em>Implementation Specification</em>. This is where the default implementation (or an overrideable implementation in a class) is specified. Interface implementors or class subclassers use the information here in order to decide whether it is sensible or necessary to override a particular method, and what behavior they can rely on if a method is called via <code>super</code>.</p>
+<p><em>Implementation Notes</em>.  This section contains informative notes about the implementation, such as advice to implementors, or performance characteristics that are specific to the implementation in this class of this version of the JDK. The information in this section is subject to change from release to release.  These characteristics are also allowed to vary across platforms, vendors, and versions.</p>
+<p>The <code>@inheritDoc</code> tag's behavior has changed to inherit only the documentation for the section within which it appears. This allows finer-grained control over what portions of documentation are inherited. For example, a default method usually will include both API specification (which should apply to all implementations) and implementation specification (which applies only to the implementation of the default method). If an implementing class were to specify <code>@inheritDoc</code> without specifying any category tags, it would inherit only the API specification and not the default method's implementation specification. This is usually the right behavior for implementing classes that override a default method. If the implementing class wants to inherit the implementation specification as well, it should start an <code>@implSpec</code> section and have another <code>@inheritDoc</code> tag within it.</p>
+<p>These tags are of most use in method documentation, but they can also appear in class and field documentation.
+A typical documentation comment that uses these tags will look like this:</p>
+<pre><code>/**
+ * ... API specifications ...
+ *
+ * @apiNote
+ * ... API notes ...
+ *
+ * @implSpec
+ * ... implementation specification ...
+ *
+ * @implNote
+ * ... implementation notes ...
+ *
+ * @param ...
+ * @return ...
+ * @throws ...
+ */</code></pre>
+<h3 id="Implementation">Implementation</h3>
+<p>Support for these tags was not added to javadoc itself, nor the standard doclet (which is responsible for producing the usual HTML output). Instead, the standard doclet supports a <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/javadoc.html#tag">custom tag</a> feature that is configured by supplying the <code>-tag</code> command-line option. The new tags were implemented by adding suitable <code>-tag</code> options to the javadoc command line invocation in the JDK makefiles. See <a href="https://bugs.openjdk.java.net/browse/JDK-8008632">JDK-8008632</a>. An example javadoc command line to support these tags would
+look something like this:</p>
+<pre><code>javadoc -tag 'apiNote:a:API Note:' \
+        -tag 'implSpec:a:Implementation Requirements:' \
+        -tag 'implNote:a:Implementation Note:'</code></pre>
+<p>The standard doclet needed to be enhanced to support the @inheritDoc tag in the desired way. See <a href="https://bugs.openjdk.java.net/browse/JDK-8008768">JDK-8008768</a>.</p>
+<h3 id="Examples">Examples</h3>
+<p>A class <code>WombatFactory</code> might have a method documented as follows:</p>
+<pre><code>/**
+ * Returns a list of Wombat instances retrieved from the platform's
+ * Wombat repository. The returned list will not contain any duplicates;
+ * that is, the result of calling w1.equals(w2) will always be false, where
+ * w1 and w2 are any two different elements of the returned list. The
+ * returned Wombat instances match the name given as an argument.
+ * Whether name matching is case-sensitive or -insensitive is
+ * platform-specific behavior. 
+ *
+ * @apiNote
+ * This method returns a List instead of a Collection or Stream,
+ * because processing of multiple Wombats usually involves traversing
+ * the list in alternating forward and reverse directions.
+ *
+ * @implSpec
+ * The implementation in this class returns a List where
+ * access to elements by index is O(1). The returned List is
+ * serializable, but it is not guaranteed to be thread-safe.
+ *
+ * @implNote
+ * The JDK Reference Implementation returns the list of wombats sorted
+ * by weight, although this is not required of all implementations.
+ */
+public List&lt;Wombat&gt; getWombats(String name) { ... }</code></pre>
+<p>There might be a <code>LazyWombatFactory</code> subclass that selectively inherits the API specification
+but not the implementation specification:</p>
+<pre><code>/**
+ * {@inheritDoc}
+ *
+ * @implSpec
+ * The implementation in this class returns a List that is populated
+ * with Wombat instances that might not be fully initialized. If
+ * get() is called on a not-initialized Wombat instance, the call
+ * blocks until the instance has been initialized; otherwise, it
+ * returns immediately. The returned List is not serializable, but
+ * it is thread-safe.
+ */
+@Override
+public List&lt;Wombat&gt; getWombats(String name) { ... }</code></pre>
+<h3 id="References">References</h3>
+<p>The <a href="//mail.openjdk.java.net/pipermail/lambda-libs-spec-experts/2013-January/001211.html">initial proposal</a> was discussed on the JSR-335 (Lambda Libraries) Expert Group mailing list. The discussion continued into February, with messages having the Subject line, "Javadoc conventions in the presence of default methods."</p>
+<p>The implementation changes to support these new custom tags are covered by bug <a href="https://bugs.openjdk.java.net/browse/JDK-8008632">JDK-8008632</a>.</p>
+<p>The implementation changes necessary to support the new @inheritDoc model are covered by bug <a href="https://bugs.openjdk.java.net/browse/JDK-8008768">JDK-8008768</a>.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>An early proposal considered modifying the standard doclet or javadoc itself to support these tags. It was considered premature to "bake" these tags directly into those components without any experience. Instead, these tags were implemented using the standard doclet's custom tags feature.</p>
+<p>An alternative would be to do nothing and to just live with the current mechanisms. The issues described above could simply be described in prose, without any formatting or markup changes. While this is true in principle, prior to Java SE 8, the issue of implementation specification occurred relatively infrequently (in abstract classes that provided implementations in support of their subclasses) and so the platform was able to muddle through without any specific markup support. The introduction of default methods on interfaces in Java SE 8 is expected increase the frequency with which these specification issues occur, leading to a greater need for the tools to support these cases more formally.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

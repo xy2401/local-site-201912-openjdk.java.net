@@ -1,0 +1,309 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Da Vinci Machine Sub-Projects</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<table border="0" cellpadding="5" cellspacing="0" width="100%" summary="Sub-Projects">
+<tbody>
+<tr>
+<td valign="top" style="width:80%">
+<h1>Sub-Projects and Investigations</h1>
+<p>This project is hosts a number of&#160;independent sub-projects.
+Some are under active development towards immediate standardization
+and delivery, while others lean more toward the middle future. In
+several cases, the projects are waiting for JVM developers who are
+willing and able to pursue them.</p>
+</td>
+<td valign="top" style="width:20%"><a href="index.html"><img title="virtual flying machine" style="border: 0px solid ; width: 237 px; height: 202px;" alt="virtual flying machine" src="images/helicopter.png" />alt="Helicopter"</a></td>
+</tr>
+</tbody>
+</table>
+<p>Any virtual machine produced by this project will be
+standards-conforming, in that it will not change the meaning or
+behavior of existing Java classes and classfile formats. They may
+define variations or extensions of the class format, or new kinds
+of objects, whose meaning and behavior are beyond the scope of
+current Java and JVM specifications.</p>
+<p>However, these extended codes and data structures will
+interoperate as much as possible with Java objects.</p>
+<p>In addition, as a way of delimiting separate prototyping
+efforts, each non-standard JVM feature must be controlled by a
+command line option of the form <span style="font-family: monospace;">-XX:+Foo</span> and disabled by
+default.</p>
+<h3>Summary and Table of Contents</h3>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2" summary="TOC">
+<tbody>
+<tr>
+<th>sub-project</th>
+<th>-XX: flag</th>
+<th>reference</th>
+<th>bug ID</th>
+<th>priority</th>
+<th>status</th>
+</tr>
+<tr>
+<td><a href="#InvokeDynamic">Dynamic invocation</a></td>
+<td>InvokeDynamic</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/notes_on_an_architecture_for">jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6655646">6655646</a></td>
+<td>high (JSR 292)</td>
+<td>spec EDR, implem 80%</td>
+</tr>
+<tr>
+<td><a href="#MethodHandles">Lightweight method objects</a></td>
+<td>MethodHandleSupport</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/tuples_in_the_vm">jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6655638">6655638</a></td>
+<td>high (JSR 292)</td>
+<td>spec EDR, implem 80%</td>
+</tr>
+<tr>
+<td><a href="#AnonymousClasses">Lightweight bytecode
+loading</a></td>
+<td>AnonymousClasses</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/anonymous_classes_in_the_vm">jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653858">6653858</a></td>
+<td>med</td>
+<td>integrated in JDK 7</td>
+</tr>
+<tr>
+<td><a href="#InterfaceInjection">Interface injection</a></td>
+<td>InterfaceInjection</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/interface_injection_in_the_vm">
+jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6804588">6804588</a></td>
+<td>med (JSR 292)</td>
+<td>proto begun</td>
+</tr>
+<tr>
+<td><a href="#StackContinuations">Continuations and stack
+introspection</a></td>
+<td>StackContinuations</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/continuations_in_the_vm">jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6655643">6655643</a></td>
+<td>med-low</td>
+<td>proto 80%</td>
+</tr>
+<tr>
+<td><a href="#TailCalls">Tail calls and tail recursion</a></td>
+<td>TailCalls</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/tail_calls_in_the_vm">jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6804517">6804517</a></td>
+<td>med</td>
+<td>proto 80%</td>
+</tr>
+<tr>
+<td><a href="#TupleSignatures">Tuples and value-oriented
+types</a></td>
+<td>TupleSignatures</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/tuples_in_the_vm">jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6804523">6804523</a></td>
+<td>med</td>
+<td>no owner yet</td>
+</tr>
+<tr>
+<td><a href="#ImmediateWrappers">Immediate wrapper types</a></td>
+<td>ImmediateWrappers</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/fixnums_in_the_vm">jrose-blog</a></td>
+<td><a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6674617">6674617</a></td>
+<td>med</td>
+<td>no owner yet</td>
+</tr>
+<tr>
+<td><a href="#closure-rt">Runtime support for closures</a></td>
+<td>(no JVM changes?)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#multimethod-rt">Runtime support for
+multimethods</a></td>
+<td>(no JVM changes)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#interface-perf">Faster interface invocation</a></td>
+<td>(performance only)</td>
+<td></td>
+<td>(multiple)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#reflection-perf">Faster reflection</a></td>
+<td>(performance only)</td>
+<td></td>
+<td>(multiple)</td>
+<td></td>
+<td>ongoing</td>
+</tr>
+<tr>
+<td><a href="#extnames-rt">Symbolic freedom (non-Java
+names)</a></td>
+<td>(no JVM changes)</td>
+<td><a href="http://blogs.oracle.com/jrose/entry/symbolic_freedom_in_the_vm">jrose-blog</a></td>
+<td><br /></td>
+<td>high</td>
+<td>proto</td>
+</tr>
+</tbody>
+</table>
+<h3><a name="InvokeDynamic" id="InvokeDynamic"></a>Dynamic
+invocation</h3>
+<p>A language compiler can compile a non-Java call site with a
+language-specific handler which determines call site linkage at
+runtime. &#160;Linkage can be sensitive to dynamic argument types,
+and can be updated or revoked over time.</p>
+<p>This key feature is tracked by bug <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6655646">6655646</a>.</p>
+<h3><a name="MethodHandles" id="MethodHandles"></a>Lightweight
+method objects</h3>
+<p>A <span style="font-style: italic;">method handle</span> is a
+lightweight reference to a method. &#160;A caller may invoke the
+method through the method handle without knowing the method&#8217;s
+name, enclosing class, or exact signature, yet the call runs at
+nearly the speed of a statically linked Java call. &#160;Method
+handles are required to glue together dynamic call sites, and are
+also useful in other settings.</p>
+<p>There was a <a href="http://groups.google.com/group/jvm-languages/t/dbc3a4a382868904">recent
+conversation</a> in the Google jvm-languages group touching on
+these issues.</p>
+<p>This feature is tracked by bug <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6655638">6655638</a>.</p>
+<h3><a name="AnonymousClasses" id="AnonymousClasses"></a>Lightweight bytecode loading</h3>
+<p>Anonymous classes are a start; see <a href="http://blogs.oracle.com/jrose/entry/anonymous_classes_in_the_vm">http://blogs.oracle.com/jrose/entry/anonymous_classes_in_the_vm</a>.
+They can provide a basis for experimenting with <a href="http://blogs.oracle.com/jrose/entry/autonomous_methods_for_the_jvm">
+autonomous methods</a>.</p>
+<p>This feature is tracked by bug <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653858">6653858</a>.</p>
+<h3><a name="InterfaceInjection" id="InterfaceInjection"></a>Interface injection</h3>
+<p>It is a common occurrence in dynamic languages for pre-existing
+objects or classes to be given new supertypes. On the JVM, this
+would appear as a class which acquired a new interface, and the
+necessary method implementations. In Hotspot, an interface works
+like a tiny vtable which is placed inside the class. When an
+interface method is invoked, first the vtable is located, and then
+a more or less normal virtual call ensues. Adding a new vtable to
+an old class does not seem like a difficult problem.</p>
+<p>Adjoining a new method to an old class is also not difficult,
+especially if the method is allowed to be static (explicit receiver
+argument) and access only public features of the target class. This
+is a natural and powerful tactic for languages (like <a href="http://www.scala-lang.org/">Scala</a> and <a href="http://research.sun.com/projects/plrg/">Fortress</a>) which
+feature traits and open-ended type relationships (such as
+contravariance in function types).</p>
+<p>A mechanism to change an object&#8217;s class is a related,
+perhaps harder problem, which needs further investigation. A very
+restrictive version of class changing called &#8220;class
+splitting&#8221; might work well. It would allow an object&#8217;s
+class to be updated to a slightly edited (perhaps
+interface-injected) copy of its original class.</p>
+<h3><a name="StackContinuations" id="StackContinuations"></a>Continuations and stack introspection</h3>
+<p>Continuations are a powerful way to gaining control over a
+thread's future execution. &#160;They are a standard feature of a
+few dynamic languages (notably Scheme) and have more recently been
+used to implement mobile or restartable computation sessions in
+some application frameworks. &#160;See: <a href="http://lambda-the-ultimate.org/node/1002">http://lambda-the-ultimate.org/node/1002</a>
+for an existing approach to this based on massive bytecode
+rewriting. &#160;The JVM can supply stack introspection primitives
+(<span style="font-family: monospace;">copyStack</span>,
+<span style="font-family: monospace;">resumeStack</span>) to get
+similar effects on standard (non-rewritten) bytecodes.</p>
+<p>This feature is tracked by bug <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6655643">6655643</a>.</p>
+<h3><a name="TailCalls" id="TailCalls"></a>Tail calls and tail
+recursion</h3>
+<p>See: <a href="http://blogs.oracle.com/jrose/entry/tail_calls_in_the_vm">http://blogs.oracle.com/jrose/entry/tail_calls_in_the_vm</a>.</p>
+<p>Recent work in the Python community has shown that tail calls
+can be used to build high-performance dynamic language
+implementations, based on lazy typestate elaboration. &#160;(See
+<a href="http://blogs.oracle.com/jrose/entry/a_day_with_pypy">http://blogs.oracle.com/jrose/entry/a_day_with_pypy</a>.)
+&#160;This should be followed up in the JVM.</p>
+<h3><a name="TupleSignatures" id="TupleSignatures"></a>Tuples and
+value-oriented types</h3>
+<p>See: <a href="http://blogs.oracle.com/jrose/entry/tuples_in_the_vm">http://blogs.oracle.com/jrose/entry/tuples_in_the_vm</a>.</p>
+<h3><a name="ImmediateWrappers" id="ImmediateWrappers"></a>Immediate wrapper types</h3>
+<p>Dynamic languages frequently interconvert (on the JVM) between
+primitive values (often ints) and their corresponding wrapper
+objects. This has been made easy with autoboxing in the Java
+language, and <span style="font-family: monospace;">Integer.valueOf</span> and similar
+methods. The frequent interconversion between boxes and primitives
+is also a matter of ongoing compiler optimization, including escape
+analysis. It would be possible to simplify both interpreted and
+optimized execution of these conversions by adding a Lisp-like
+&#8220;fixnum&#8221; object format into the JVM. On 64-bit systems
+the pointer format could easily pack both a (restricted) klass
+pointer and a 32-bit payload within the pointer format itself; on
+32-bit systems more classic &#8220;low-tag&#8221; techniques would
+work better. This is an experiment work carrying out.</p>
+<h3><a name="closure-rt" id="closure-rt"></a>Runtime support for
+closures</h3>
+<p>It is clear there is some relationship between the JVM&#8217;s
+notion of lightweight method handles and various proposals for
+extending the Java langauge with closures. &#160;The details need
+to be worked out.</p>
+<h3><a name="multimethod-rt" id="multimethod-rt"></a>Runtime
+support for multimethods</h3>
+<p>Again, it is clear that JVM functionality for dynamic calls must
+remain fairly low-level, and that large amounts of library is
+needed to match the JVM capabilities to the requirements of
+high-level dynamic languages. An example of such ongoing work
+(independent of this project) is <a href="http://groups.google.com/group/jvm-languages/web/implementation-of-multimethods-in-jvm-languages">
+http://groups.google.com/group/jvm-languages/web/implementation-of-multimethods-in-jvm-languages</a></p>
+<p>The <a href="http://dynalang.sourceforge.net/">Dynamic Languages
+MOP Library project</a> should be integrated with the new VM
+features.</p>
+<h3><a name="interface-perf" id="interface-perf"></a>Faster
+interface invocation</h3>
+<p>JVM users would generically benefit, and dynamic languages would
+specifically benefit, from further performance work on interface
+calls (and extensions described here). The performance work should
+cover profile-driven work (such as PICs or loop customization) and
+old-fashioned vtable tuning, for megamorphic calls. For the latter,
+see bug <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6580709">6580709</a>.</p>
+<p>Some recent work in the JVM has prepared the ground for this
+work, but more may be desirable. &#160;See bugs ,&#160;<a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6525802">6525802</a>,&#160;<a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6516101">6516101</a>,&#160;<a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6461827">6461827</a>,
+and <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6428387">6428387</a>.</p>
+<h3><a name="reflection-perf" id="reflection-perf"></a>Faster
+reflection</h3>
+<p>The package <span style="font-family: monospace;">java.lang.reflect</span> provides the
+current standard for invoking methods without static linking.
+&#160;Method handles are likely to provide a more efficient way to
+implement this important API. &#160;A rework of the reflection
+package may be warranted, see bug&#160;<a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6567922">6567922</a>.</p>
+<p>Some recent work in the JVM has prepared the ground for this
+work, but more may be desirable. &#160;See bugs <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6516018">6516018</a>,&#160;<a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6525802">6525802</a>,&#160;<a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6516101">6516101</a>,&#160;<a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6461827">6461827</a>,
+and <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6428387">6428387</a>.</p>
+<h3><a name="extnames-rt" id="extnames-rt"></a>Symbolic freedom
+(non-Java names)</h3>
+<p>Non-Java languages have non-Java conventions for identifier
+formation. In the extreme case (Lisp) any string can serve as a
+name. Taking that most general case as a design motivation, a
+canonical &#8220;mangling&#8221; for arbitary name spelling is
+desirable, and <a href="http://blogs.oracle.com/jrose/entry/symbolic_freedom_in_the_vm">has
+been prototyped</a>. It may need extension to support structured
+names (such as package prefixes or intentional names).</p>
+<p>This work mostly independent of the JVM, but may interact with
+some APIs which surface JVM symbols to error reports and other
+human-readable messages.</p>
+<p><br />
+<br />
+<br />
+<br /></p>
+<p><a href="index.html"><img title="bytecode crank" style="border: 0px solid ; width: 237px; height: 202px;" alt="bytecode crank" src="images/barrel_stretcher.jpg" /></a></p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

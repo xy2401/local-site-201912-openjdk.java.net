@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 165: Compiler Control</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 165: Compiler Control</h1><table class="head"><tr><td>Owner</td><td>Nils Eliasson</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;compiler</td></tr><tr><td>Discussion</td><td>hotspot dash compiler dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Jesper Wilhelmsson</td></tr><tr><td>Endorsed by</td><td>Mikael Vidstedt</td></tr><tr><td>Created</td><td>2011/12/02 20:00</td></tr><tr><td>Updated</td><td>2019/04/17 09:16</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046155">8046155</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>This JEP proposes an improved way to control the JVM compilers. It enables runtime manageable, method dependent compiler flags. (Immutable for the duration of a compilation.)</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Fine-grained and method-context dependent control of the JVM
+compilers (C1 and C2)</p>
+</li>
+<li>
+<p>The ability to change the JVM compiler control options in run time</p>
+</li>
+<li>
+<p>No performance degradation</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Method-context dependent control of the compilation process is a powerful
+tool for writing small contained JVM compiler tests that can be run
+without restarting the entire JVM. It is also very useful for creating
+workarounds for bugs in the JVM compilers. A good encapsulation of the
+compiler options is also good hygiene.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Directives">Directives</h3>
+<p>All options that control the JVM compilers will be gathered into a set of
+options. A set of options with values is called a compiler directive and is an instruction for
+how to compile. A directive is supplied to the VM together with a method
+matcher that decides what methods it applies to. Several directives can
+be active in the runtime at the same time but only one is applied to a specific compilation. Directives can be added and
+removed during run time.</p>
+<h3 id="Directives-format">Directives format</h3>
+<p>Directives files have a specified standardized and human readable file format. Directives files can be loaded via command line and diagnostic command. A directives file has one or more defined directives. A directive contains one method pattern and a number of options with values. The order of the directives are significant. The compilerBroker will apply the first directive whose pattern match to a compilation.</p>
+<p>The directives file format will be a subset of JSON with some additions. The format deviates from JSON in the following manners:</p>
+<ul>
+<li>Only support numbers that is compatible with the command line options - int and doubles.</li>
+<li>Comments are allowed  - lines starting with "//"</li>
+<li>Extra trailing ''," are allowed in arrays and objects</li>
+<li>Escaped characters will probably not be allowed (TBD)</li>
+<li>Option names are strings but are optionally quoted</li>
+</ul>
+<p>The file can use all UTF-8 charcters as supported by the JVM specification. These characters are reserved for the file format:</p>
+<pre><code>{ - curly brace open
+ } - curly brace end
+ [ - square brace open
+ ] - square brace end
+ " - quoutes
+ : - colon
+ , - comma</code></pre>
+<h3 id="Directives-Example-1">Directives Example 1</h3>
+<pre><code>[    // Start if array of directives
+    {   // Start of directive block
+        // Excactly one match with one or several patterns
+        // The array is not required with a single pattern
+        match: ["java*::*", "oracle*::*"],   
+        // A directives block that only apply to a single compiler
+        c1: {   
+             // A bool option. Extra trailing comma should not cause a parse error 
+             PrintAssembly:true,  
+        },
+        // Another compiler block
+        c2: {
+             // force inline patters prepended with +, prevent with -
+             inline: ["+vm*::*","-*::*" ] 
+        },
+        // Options outside compiler block apply to all compilers
+        BreakAtExecute: true   // enable break in compiled code 
+        BreakAtCompile: true   // enable break in compiler
+    },
+    {  // start of another directives block
+        // match ant method whose class end with 'Concurrent'
+        match: ["*Concurrent::*"],    
+        c2: {
+             // disable compilation
+             Exclude:true,    
+        }    
+        // with the c1 directive unspecified the options remains default.
+    }
+]</code></pre>
+<h3 id="Directives-Example-2">Directives Example 2</h3>
+<pre><code>[   
+   {   
+         // pattern to match against class+method+signature
+         // leading and trailing wildcard (*) allowed
+         match: "apa.Dingo::*",
+ 
+         // override defaults for specified compiler
+         // the innermost option has the highest priority
+         c1: {
+           //override c1 presets 
+           PrintInlining: false  // Example - this option may not exist
+         }
+
+         c2: {
+           // control inlining of method
+           // + force inline, - dont inline
+           inline : [ "+java.util::*", "-com.sun::*"],
+         }
+
+         // directives outside a specific preset applies to all compilers          
+         inline : [ "+java.util::*", "-com.sun::*"],
+         PrintAssembly: true
+   },
+   {
+         // matching several patterns require an array
+         match: ["steve::*","alex::*"]
+
+         c2: {
+              Enable: false,    // Ignore this directive for c2. 
+              BreakAtExecute: true // This will not be applied since Enable is false above                  
+         }
+
+         // applies to all compilers                   
+         // + force inline, - dont inline
+         inline : [ "+java.util::*", "-com.sun::*"],         
+         PrintInlining: true
+   },
+]</code></pre>
+<h3 id="Directives-options-list">Directives options list</h3>
+<p>The first implementation contains the following options. All options have previously been used in CompileCommand option commands. More options will be added.</p>
+<p>Common flags:
+Enable,                  bool
+Exclude,                 bool
+BreakAtExecute,          bool
+BreakAtCompile,          bool
+Log,                     bool
+PrintAssembly,           bool
+PrintInlining,           bool
+PrintNMethods,           bool
+ReplayInline,            bool
+DumpReplay,              bool
+DumpInline,              bool
+CompilerDirectivesIgnoreCompileCommands, bool
+Inline,  ccstr[]</p>
+<p>C2 only:
+BlockLayoutByFrequency,  bool
+PrintOptoAssembly,       bool
+PrintIntrinsics,         bool
+raceOptoPipelining,     bool
+TraceOptoOutput,         bool
+TraceSpilling,           bool
+Vectorize,               bool
+VectorizeDebug,          bool
+CloneMapDebug,           bool
+IGVPrintLevel,           intx
+MaxNodeLimit,            intx
+DisableIntrinsics,       ccstr</p>
+<pre><code>inline:&lt;one pattern or an array of string patterns&gt;
+The pattern is a string that matches a method name in the same way as directives are matched. 
+A '+' prepended to the pattern signifies that methods matching should be force-inlined. 
+A '-' that it should be prevented from inlining. 
+The command from the first pattern that matches is used. 
+Example1: inline:["+java.lang.*::*", -"sun*::*"]
+Example2: inline:"+java.lang.*::*"</code></pre>
+<h3 id="Directives-patterns">Directives patterns</h3>
+<p>Method patterns that are used in the "match" and "inline"-option has the following patterns:
+Class.method(signature)</p>
+<p>Class includes package names separated by a /
+Class and method can be wildcarded with a leading and trailing *, or substituted for a *
+If the signature is left out it defaults to *</p>
+<p>These are valid patterns:
+"java.lang.String::indexOf"
+"java/lang/String.indexOf"
+"<em>.lang.String::indexOf(I)"
+"java/lang/String.</em>(I)"
+"java/lang/String.<em>(</em>)"
+"<em>.</em>"
+"<em>::</em>"
+"java.lang.<em>::</em>"</p>
+<h3 id="Directives-parser">Directives parser</h3>
+<p>The directives parser is responsible for parsing the directives file and adding the information to an VM internal format.</p>
+<p>If a malformed directives file is specified on the command line the VM will print an error and exit. If a malformed directives file is added through diagnostic command it will be ignored and a proper warning will be printed.</p>
+<p>The parser will validate that all options are valid. Platform dependent options will print warnings on platforms that do not support them. The rationale is that the same directives files should be usable regardless of which platform it is deployed on.</p>
+<p>Unspecified options will use the default value. If a command line option is specified that will be the default value. The default value for the method pattern is "<em>.</em>" (match all methods).</p>
+<h3 id="CompilerBroker">CompilerBroker</h3>
+<p>The compilerBroker has a directives stack that contains all applied directives. The bottom directive is the default set and can never be removed. When a file is loaded with additional directives they will be added in reverse order, with the first directive in the file ending up on top of the stack. This is a usability feature.</p>
+<p>When a method is submitted for a compilation - the compilerBroker will select first directive that matches and pass it to the compiler. The compilerBroker and compilers will ignore options that would create bad code (forcing a hardware instruction on a platform that doesn't support it for example) and a proper warning will be emitted. The directives options has the same limitations as the normal commandline flags - for example forcing inlinings will only be respected as long the IR don't grow to large.</p>
+<h3 id="Command-line-interface">Command line interface</h3>
+<p>A directives file can be added one the command line. The VM will exit with an error message if the flag is wrong (normal commandline parsing), the file is missing, or if the file contents are malformed.</p>
+<pre><code>-XX:CompilerDirectivesFile=&lt;file&gt;</code></pre>
+<h3 id="Diagnostic-command-interface">Diagnostic command interface</h3>
+<p>These are the diagnostic commands that will be used with compiler control:</p>
+<pre><code>jcmd &lt;pid&gt; Compiler.add_directives &lt;file&gt;   
+Add additional directives from the file. The new directives will be added on top of the old, with the first directive in the file ending up on the top of the directives stack.
+
+jcmd &lt;pid&gt; Compiler.list_directives        
+List all directives on the directives stack from top to bottom.
+
+jcmd &lt;pid&gt; Compiler.clear_directives     
+Clear the directives stack
+
+jcmd &lt;pid&gt; Compiler.remove_directives     
+Remove the top element from the directives stack</code></pre>
+<h3 id="CompileCommand-and-backwards-compatibility">CompileCommand and backwards compatibility</h3>
+<p>CompilerControl is supposed to replace CompileCommand in all use cases. CompileCommand will be kept for backwards compatibility and the goal is to keep the behaviour as much as possible.</p>
+<p>There are four layers of control that can be applied. Compiler Control will have the highest priority and override any other flag or command. Second is CompileCommand, third is any commandline flag, and fourth is the default flag value. If both Compiler control and CompileCommand are used, Compiler control will consider that CompileCommand is overriding the default value.</p>
+<p>The JVM should print a warning if both CompileCommand and compiler directives are used.</p>
+<h3 id="Method-patterns">Method patterns</h3>
+<p>Compiler Control will use the same method pattern format as CompileCommand. The pattern consists of three parts package&amp;class name, method name and signature. Any of these three may be wildcarded with a leading or trailing *. The default value of any part is *.</p>
+<p>Example:</p>
+<pre><code>java/example/Test.split</code></pre>
+<p>Is composed by three parts</p>
+<pre><code>java/example/Test + split + (Ljava/lang/String;)Ljava/lang/String;</code></pre>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The sheer amount of compiler options will limit us to focus on a subset initially. We will focus on a subset and expand from there.</p>
+<h2 id="Dependences">Dependences</h2>
+<ul>
+<li>Diagnostic command - Already in place</li>
+<li>Working with full JDK - Already in place</li>
+</ul>
+<h2 id="Impact">Impact</h2>
+<ul>
+<li>Documentation: Flags and API</li>
+<li>CCC: A CCC request will be required for directives format, JVM
+compiler flag changes and API.</li>
+<li>Performance: Standard regression testing</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

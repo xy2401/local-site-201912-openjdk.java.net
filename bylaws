@@ -1,0 +1,874 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK Bylaws</title><link rel="shortcut icon" href="./images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="./page.css" /><script type="text/javascript" src="./page.js"><noscript></noscript></script><style type="text/css">
+/**/
+
+      BODY { margin-bottom: 150%; }
+
+      A { text-decoration: none; }
+      A:link, A:visited { color: #437291; }
+      A.ref:visited, A.ref:link, DIV.toc A:link, DIV.toc A:visited { color: #555; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover, DIV.toc A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+      PRE { font-family: monospace; }
+
+      P { margin: 1ex 0em; }
+      PRE { padding: 1ex; margin: 0px; background: #eee; width: 45em; }
+      BLOCKQUOTE { margin: 1.5ex 0ex; margin-left: 2em; }
+      LI BLOCKQUOTE { margin-left: 0em; }
+      LI { margin: 1ex 0em; margin-right: 2em; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+
+      TABLE { border-collapse: collapse; padding: 0px; }
+      TD { padding: 0px; vertical-align: top; }
+
+      .warn { color: #ee0000; font-size: small; font-weight: bold; }
+      DIV.doctitle { font-size: x-large; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-size: smaller; font-weight: bold;
+                  margin-bottom: 1.5ex; }
+      DIV.authors { margin-top: 1ex; margin-bottom: 1.5em; font-size: medium; }
+      SPAN.author { white-space: nowrap; }
+      DIV.author A { font-style: italic; }
+      DIV.version { font-size: medium; margin-top: 1ex; }
+      DIV.copyright { font-size: small; margin-top: 1ex; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+
+      DIV.section { margin-top: 3ex; }
+      DIV.section DIV.title, DIV.section DIV.number SPAN {
+        font-size: large; font-weight: bold; }
+      DIV.section DIV.number { float: left; width: 1.5em; text-align: left; }
+      DIV.section DIV.body { margin-left: 1.5em; margin-top: 1ex; }
+
+      P.subsection { margin-top: 2ex; }
+
+      P.subsection SPAN.title { font-weight: bold; padding-right: 1em; }
+
+      DIV.toc { width: 80%; margin-left: 1.5em; margin-top: 2ex; margin-bottom: 2ex; }
+      TABLE.toc TD:first-child { font-weight: bold; padding-right: 1em;
+                                 text-align: right; }
+      TABLE.toc TH { font-size: large; font-weight: bold; text-align: left; }
+      TABLE.toc TD.subcontent { padding-left: 1.5em; font-size: smaller; }
+
+      A.title, A.def, SPAN.def { font-weight: bold; }
+
+      P A.title { padding-right: .75em; }
+
+/**/
+</style></head><body><div id="main">
+<div class="head">
+<h1>Bylaws</h1>
+<div class="authors">
+<div class="author"></div>
+</div>
+</div>
+<div class="section">
+<div class="number">&#160;</div>
+<div class="title">Preamble</div>
+<div class="body">
+<p>The <a href="//openjdk.java.net">OpenJDK Community</a> is
+an association of developers who collaborate upon <a class="ref" href="#licenses-trademarks-and-availability-of-data">open-source</a>
+implementations of present and future versions of the Java
+Platform, Standard Edition, as defined by the <a href="http://jcp.org">Java Community Process</a>, and upon
+closely-related projects. The goal of these Bylaws is to foster the
+long-term health and growth of the Community by enabling and
+encouraging its members to act in an open, transparent, and
+meritocratic manner.</p>
+<p>These Bylaws were <a href="/poll/bylaws-ratification">ratified</a> on 28&#160; June 2011.</p>
+</div>
+</div>
+<div class="toc">
+<table class="toc" summary="Contents">
+<tr>
+<th colspan="2">Contents</th>
+</tr>
+<tr>
+<td>1</td>
+<td><a href="#_1">Overview</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="#_2">General Roles</a></td>
+</tr>
+<tr>
+<td></td>
+<td class="subcontent"><a href="#participant"><span style="white-space: nowrap">Participant</span></a>&#160;&#183; <a href="#contributor"><span style="white-space: nowrap">Contributor</span></a>&#160;&#183; <a href="#openjdk-lead"><span style="white-space: nowrap">OpenJDK
+Lead</span></a></td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="#_3">Voting</a></td>
+</tr>
+<tr>
+<td></td>
+<td class="subcontent"><a href="#consensus-voting"><span style="white-space: nowrap">Consensus voting</span></a>&#160;&#183;
+<a href="#veto"><span style="white-space: nowrap">Veto</span></a>&#160;&#183; <a href="#lazy-consensus"><span style="white-space: nowrap">Lazy
+Consensus</span></a>&#160;&#183; <a href="#three-vote-consensus"><span style="white-space: nowrap">Three-Vote Consensus</span></a>&#160;&#183;
+<a href="#majority-voting"><span style="white-space: nowrap">Majority voting</span></a>&#160;&#183;
+<a href="#simple-majority"><span style="white-space: nowrap">Simple
+Majority</span></a>&#160;&#183; <a href="#two-thirds-majority"><span style="white-space: nowrap">Two-Thirds
+Majority</span></a>&#160;&#183; <a href="#absolute"><span style="white-space: nowrap">Absolute</span></a>&#160;&#183; <a href="#absolute-simple-majority"><span style="white-space: nowrap">Absolute Simple
+Majority</span></a>&#160;&#183; <a href="#absolute-two-thirds-majority"><span style="white-space: nowrap">Absolute Two-Thirds Majority</span></a></td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="#_4">Groups</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="#_5">Group Roles</a></td>
+</tr>
+<tr>
+<td></td>
+<td class="subcontent"><a href="#group-member"><span style="white-space: nowrap">Group Member</span></a>&#160;&#183; <a href="#group-lead"><span style="white-space: nowrap">Group
+Lead</span></a></td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="#_6">Projects</a></td>
+</tr>
+<tr>
+<td></td>
+<td class="subcontent"><a href="#sponsor"><span style="white-space: nowrap">Sponsor</span></a>&#160;&#183; <a href="#jdk-release-projects"><span style="white-space: nowrap">JDK
+Release Projects</span></a>&#160;&#183; <a href="#availability-of-specifications-and-tests"><span style="white-space: nowrap">Availability of Specifications and
+Tests</span></a></td>
+</tr>
+<tr>
+<td>7</td>
+<td><a href="#_7">Project Roles</a></td>
+</tr>
+<tr>
+<td></td>
+<td class="subcontent"><a href="#author"><span style="white-space: nowrap">Author</span></a>&#160;&#183; <a href="#committer"><span style="white-space: nowrap">Committer</span></a>&#160;&#183; <a href="#reviewer"><span style="white-space: nowrap">Reviewer</span></a>&#160;&#183; <a href="#project-lead"><span style="white-space: nowrap">Project
+Lead</span></a></td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="#_8">OpenJDK Members</a></td>
+</tr>
+<tr>
+<td></td>
+<td class="subcontent"><a href="#expiration"><span style="white-space: nowrap">Expiration</span></a>&#160;&#183; <a href="#openjdk-members-group"><span style="white-space: nowrap">OpenJDK
+Members Group</span></a></td>
+</tr>
+<tr>
+<td>9</td>
+<td><a href="#_9">Governing Board</a></td>
+</tr>
+<tr>
+<td></td>
+<td class="subcontent"><a href="#chair"><span style="white-space: nowrap">Chair</span></a>&#160;&#183; <a href="#vice-chair"><span style="white-space: nowrap">Vice-Chair</span></a>&#160;&#183; <a href="#meetings"><span style="white-space: nowrap">Meetings</span></a>&#160;&#183; <a href="#private-session"><span style="white-space: nowrap">Private
+Session</span></a>&#160;&#183; <a href="#open-meeting"><span style="white-space: nowrap">Open Meeting</span></a>&#160;&#183; <a href="#votes"><span style="white-space: nowrap">Votes</span></a>&#160;&#183; <a href="#observers"><span style="white-space: nowrap">Observers</span></a>&#160;&#183; <a href="#quarterly-reports"><span style="white-space: nowrap">Quarterly
+Reports</span></a>&#160;&#183; <a href="#annual-review"><span style="white-space: nowrap">Annual
+Review</span></a>&#160;&#183; <a href="#at-large-members"><span style="white-space: nowrap">At-Large
+Members</span></a>&#160;&#183; <a href="#expansion-and-contraction"><span style="white-space: nowrap">Expansion and
+Contraction</span></a>&#160;&#183; <a href="#technical-appeals-process"><span style="white-space: nowrap">Technical Appeals Process</span></a></td>
+</tr>
+<tr>
+<td>A</td>
+<td><a href="#_A">Licenses, Trademarks, and Availability of
+Data</a></td>
+</tr>
+<tr>
+<td>B</td>
+<td><a href="#_B">Transitioning to these Bylaws</a></td>
+</tr>
+</table>
+</div>
+<div class="section">
+<div class="number"><span>1</span></div>
+<div class="title"><a name="_1" id="_1"></a><a class="title" name="overview" id="overview">Overview</a></div>
+<div class="body">
+<p>The OpenJDK Community is structured as a set of <a class="ref" href="#group">Groups</a>, which are collections of individuals who
+engage in open conversation about a common interest, and a set of
+<a class="ref" href="#project">Projects</a>, which are
+collaborative efforts to produce specific artifacts. There are
+Community-wide <a class="ref" href="#general-roles">general
+roles</a> as well as <a class="ref" href="#group-roles">roles
+specific to Groups</a> and to <a class="ref" href="#project-roles">Projects</a>.</p>
+<p>The <a class="ref" href="#governing-board">Governing Board</a>
+manages the structure and operation of the Community, monitoring
+its health relative to the principles set forth in the Preamble. It
+upholds and maintains these Bylaws, resolves procedural disputes,
+and ensures that sufficient infrastructure is available. The
+Governing Board has no direct authority over technical or release
+decisions.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>2</span></div>
+<div class="title"><a name="_2" id="_2"></a><a class="title" name="general-roles" id="general-roles">General Roles</a></div>
+<div class="body">
+<p>A <a class="def" name="participant" id="participant">Participant</a> is an individual who has subscribed
+to one or more OpenJDK mailing lists. A Participant may post
+messages to a list, submit simple patches, and make other kinds of
+small contributions.</p>
+<p>A <a class="def" name="contributor" id="contributor">Contributor</a> is a Participant who has signed the
+<a href="http://oss.oracle.com/oca.pdf">Oracle Contributor
+Agreement</a> (OCA), or who works for an organization that has
+signed that agreement or its equivalent and makes contributions
+within the scope of that work and subject to that agreement. A
+Contributor may submit changes larger than a simple patch, may
+propose new <a class="ref" href="#project">Projects</a>, and may
+take on various roles within <a class="ref" href="#group">Groups</a> and Projects.</p>
+<p>If a Contributor&#8217;s employment situation changes such that
+contributions would no longer be covered by the OCA or its
+equivalent then the Contributor must relinquish that role by
+notifying the <a class="ref" href="#openjdk-lead">OpenJDK
+Lead</a>.</p>
+<p>An <span class="def"><a class="ref" href="#openjdk-member">OpenJDK Member</a></span> is a Contributor who
+has demonstrated a history of significant contributions to the
+Community as recognized by a vote of the existing OpenJDK Members.
+An OpenJDK Member may propose new Groups, may lead a Group, and is
+eligible to vote on new <a class="ref" href="#project">Projects</a>, new OpenJDK Members, and the selection of
+new <a class="ref" href="#at-large-members">At-Large Members</a> of
+the <a class="ref" href="#governing-board">Governing Board</a>.</p>
+<p>The <a class="def" name="openjdk-lead" id="openjdk-lead">OpenJDK
+Lead</a> is an OpenJDK Member, appointed by Oracle, who directs the
+major efforts of the Community, which are new implementations of
+the Java SE Platform known as <a class="ref" href="#jdk-release-projects">JDK Release Projects</a>. The OpenJDK Lead
+is responsible for the openness and transparency of the development
+process used in those Projects and can also settle certain kinds of
+procedural disputes. The OpenJDK Lead sits on the <a class="ref" href="#governing-board">Governing Board</a>.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>3</span></div>
+<div class="title"><a name="_3" id="_3"></a><a class="title" name="voting" id="voting">Voting</a></div>
+<div class="body">
+<p>Many of the actions defined in these Bylaws are approved or
+ratified by a group of individuals using one of the following
+voting methods.</p>
+<p>For all of the methods:</p>
+<ul>
+<li>
+<p>Votes take place over a period of two weeks, unless otherwise
+specified.</p>
+</li>
+<li>
+<p>Voters may change their votes at any time during a voting
+period. Only a voter&#8217;s most recent vote is counted.</p>
+</li>
+<li>
+<p>The individuals participating in a vote must act in good
+faith.</p>
+</li>
+<li>
+<p>The individual who proposes an action must respond in a timely
+fashion to all questions and objections raised during the voting
+period.</p>
+</li>
+<li>
+<p>Except where noted, all votes are to be conducted transparently
+on the appropriate public OpenJDK mailing list. All voters cast
+their votes on that list, and the individual who calls a vote is
+responsible for announcing the result at the end of the specified
+voting period.</p>
+</li>
+</ul>
+<p>The Governing Board will monitor votes to ensure that they
+proceed in accordance with these Bylaws. In exceptional
+circumstances the Board may invalidate an individual&#8217;s vote,
+invalidate the entire vote, or take some other unspecified
+action.</p>
+<p class="subsection"><a class="title" name="consensus-voting" id="consensus-voting">Consensus voting</a> These methods are used for
+decisions that do not require the full attention of the set of
+eligible voters.</p>
+<p>In the consensus methods the possible votes are Yes, Veto, and
+Abstain.</p>
+<p>A <a class="def" name="veto" id="veto">Veto</a> must be
+accompanied by a justification; a Veto without a justification is
+invalid. If&#160;a Veto is raised then the voter who raised the
+veto and those who support the proposed action must work together
+to reach a mutually-agreeable resolution. If&#160;a Veto is
+resolved then the voter who raised the Veto must withdraw that vote
+by explicitly abstaining or by casting a Yes vote.</p>
+<p>These Bylaws use two methods of consensus voting:</p>
+<ul>
+<li>
+<p><a class="def" name="lazy-consensus" id="lazy-consensus">Lazy
+Consensus</a> &#8212; There are no vetoes.</p>
+</li>
+<li>
+<p><a class="def" name="three-vote-consensus" id="three-vote-consensus">Three-Vote Consensus</a> &#8212; There are
+no vetoes, and at least three Yes votes or else unanimity if there
+are fewer than three eligible voters.</p>
+</li>
+</ul>
+<p>As an optimization, if all eligible voters vote Yes before the
+voting period ends then the action is approved at that time.</p>
+<p>The <a class="ref" href="#openjdk-lead">OpenJDK Lead</a> may, in
+exceptional circumstances, choose to overrule an unresolved Veto;
+such a decision may be appealed to the <a class="ref" href="#governing-board">Governing Board</a>.</p>
+<p class="subsection"><a class="title" name="majority-voting" id="majority-voting">Majority voting</a> These methods are used for
+higher-level decisions in which it is best to have the full
+attention of many, if not nearly all, of the eligible voters.</p>
+<p>In the majority methods the possible votes are Yes, No, and
+Abstain. A No vote is not a veto, it is simply a negative vote. A
+No vote may be accompanied by a justification, but that is not
+required.</p>
+<p>These Bylaws use two basic methods of majority voting:</p>
+<ul>
+<li>
+<p><a class="def" name="simple-majority" id="simple-majority">Simple Majority</a> &#8212; There are more Yes
+votes than No votes.</p>
+</li>
+<li>
+<p><a class="def" name="two-thirds-majority" id="two-thirds-majority">Two-Thirds Majority</a> &#8212; There are at
+least twice as many Yes votes as No votes, and at least three Yes
+votes or else unanimity if there are fewer than three eligible
+voters.</p>
+</li>
+</ul>
+<p>The majority methods have corresponding though rarely-used
+<a class="def" name="absolute" id="absolute">Absolute</a>
+variants:</p>
+<ul>
+<li>
+<p><a class="def" name="absolute-simple-majority" id="absolute-simple-majority">Absolute Simple Majority</a> &#8212;
+There are more Yes votes than No votes, and at least half (rounded
+up) of all eligible voters vote Yes.</p>
+</li>
+<li>
+<p><a class="def" name="absolute-two-thirds-majority" id="absolute-two-thirds-majority">Absolute Two-Thirds Majority</a>
+&#8212; There are at least twice as many Yes votes as No votes, and
+at least two thirds (rounded up) of all eligible voters vote Yes or
+else unanimity if there are fewer than three eligible voters.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>4</span></div>
+<div class="title"><a name="_4" id="_4"></a><a class="title" name="group" id="group">Groups</a></div>
+<div class="body">
+<p>A <span class="def">Group</span> is a collection of <a class="ref" href="#participant">Participants</a> who engage in open
+conversation about a common interest. That interest may be in the
+creation, enhancement, or maintenance of a specific body of code or
+it may lie in other areas, <i>e.g.</i>, quality or
+documentation.</p>
+<p>Groups may have web content and one or more mailing lists.
+Groups do not have code repositories of their own but they may
+<a class="ref" href="#sponsor">sponsor</a> <a class="ref" href="#project">Projects</a>, which do.</p>
+<p>Groups are expected to operate in an open, transparent, and
+meritocratic manner. Their alignment with these principles will be
+monitored by the <a class="ref" href="#governing-board">Governing
+Board</a>.</p>
+<p>Any <a class="ref" href="#openjdk-member">OpenJDK Member</a> may
+propose the creation of a new Group or the dissolution of an
+existing Group. The <a class="ref" href="#governing-board">Governing Board</a> may approve the creation of
+a new Group by a <a class="ref" href="#simple-majority">Simple
+Majority</a> vote; it may dissolve an existing Group by a <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> vote.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>5</span></div>
+<div class="title"><a name="_5" id="_5"></a><a class="title" name="group-roles" id="group-roles">Group Roles</a></div>
+<div class="body">
+<p>A <a class="def" name="group-member" id="group-member">Group
+Member</a> is a <a class="ref" href="#contributor">Contributor</a>
+who has demonstrated a history of significant contributions to a
+Group and, as a result, has been granted Membership in that Group.
+A Member of a Group has write access to the Group&#8217;s web
+content and file repositories.</p>
+<p>A Member of a Group may nominate any Contributor to be a new
+Member of that Group. Such nominations are approved by a <a class="ref" href="#lazy-consensus">Lazy Consensus</a> of the
+Group&#8217;s Members.</p>
+<p>A Member of a Group may raise a motion to remove another of that
+Group&#8217;s Members. Such a motion must be approved by a
+<a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a>
+of the Group&#8217;s Members, with the Member who is the subject of
+the motion abstaining.</p>
+<p>A <a class="def" name="group-lead" id="group-lead">Group
+Lead</a> is a Member of a Group and an OpenJDK Member who is
+responsible for directing and coordinating that Group&#8217;s
+activities. A Group&#8217;s Lead has:</p>
+<ul>
+<li>
+<p>The authority to sponsor <a class="ref" href="#project">Projects</a>;</p>
+</li>
+<li>
+<p>The obligation to act as a contact point for the Group and to
+look after the Group&#8217;s mailing lists and web content; and</p>
+</li>
+<li>
+<p>The obligation, once per quarter, to publish a written report
+summarizing the recent activities of the Group.</p>
+</li>
+</ul>
+<p>A Group&#8217;s Lead may delegate selected obligations, but not
+authorities, to other of that Group&#8217;s <a class="ref" href="#group-member">Members</a> as desired. A Group&#8217;s Lead may
+delegate all authorities to another of that Group&#8217;s Members
+who is also an <a class="ref" href="#openjdk-member">OpenJDK
+Member</a>, but only on a temporary basis.</p>
+<p>Any procedural decision by a Group&#8217;s Lead may be appealed
+to the <a class="ref" href="#governing-board">Governing
+Board</a>.</p>
+<p>When a Group is created its initial Group Lead is nominated by
+the proposing <a class="ref" href="#openjdk-member">OpenJDK
+Member</a> and approved by a <a class="ref" href="#simple-majority">Simple Majority</a> of the <a class="ref" href="#governing-board">Governing Board</a>.</p>
+<p>When a Group is created then its initial Group Lead, once
+selected, appoints the initial <a class="ref" href="#group-member">Members</a>.</p>
+<p>If a Group Lead resigns or departs then a new Group Lead may be
+nominated by any <a class="ref" href="#openjdk-member">OpenJDK
+Member</a>. The nomination must be approved by a <a class="ref" href="#simple-majority">Simple Majority</a> of the Group&#8217;s
+Members and ratified by a Simple Majority of the <a class="ref" href="#governing-board">Governing Board</a>.</p>
+<p>Any <a class="ref" href="#openjdk-member">OpenJDK Member</a> may
+raise a motion to remove a Group&#8217;s Lead. Such a motion must
+be approved by a <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> of the Group&#8217;s
+Members, with the Group Lead abstaining, and ratified by a
+<a class="ref" href="#simple-majority">Simple Majority</a> of the
+<a class="ref" href="#governing-board">Governing Board</a>.</p>
+<p>The Governing Board may, in exceptional circumstances, remove a
+Group Lead by a <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> vote.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>6</span></div>
+<div class="title"><a name="_6" id="_6"></a><a class="title" name="project" id="project">Projects</a></div>
+<div class="body">
+<p>A <span class="def">Project</span> is a collaborative effort to
+produce a specific artifact, which may be a body of code, or
+documentation, or some other material. Projects may range in scope
+from small features to <a class="ref" href="#jdk-release-projects">entire JDK releases</a>.</p>
+<p>A Project may have web content, one or more code repositories,
+and one or more mailing lists.</p>
+<p>Projects are expected to operate in an open, transparent, and
+meritocratic manner. Their alignment with these principles will be
+monitored by the <a class="ref" href="#governing-board">Governing
+Board</a>.</p>
+<p>Any <a class="ref" href="#contributor">Contributor</a> may
+propose the creation of a new Project. If supported by at least one
+<a class="ref" href="#group-lead">Group Lead</a>, whose <a class="ref" href="#group">Group</a> will <a class="ref" href="#sponsor">Sponsor</a> the Project, and approved by a <a class="ref" href="#lazy-consensus">Lazy Consensus</a> of the <a class="ref" href="#openjdk-member">OpenJDK Members</a>, then the Project
+will be created.</p>
+<p>A Group&#8217;s Lead may declare that Group to be a <a class="def" name="sponsor" id="sponsor">Sponsor</a> of an existing
+Project. The Members of a Group that is Sponsoring a Project may
+decide, by <a class="ref" href="#lazy-consensus">Lazy
+Consensus</a>, to withdraw that Sponsorship. A Project may have
+more than one Sponsoring Group.</p>
+<p>If a Project loses all of its Sponsoring Groups then it is
+dissolved. A Project&#8217;s <a class="ref" href="#committer">Committers</a> may decide, by <a class="ref" href="#lazy-consensus">Lazy Consensus</a>, to request explicitly that
+the Project be dissolved. The <a class="ref" href="#governing-board">Governing Board</a> may, in exceptional
+circumstances, dissolve a Project by a <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> vote.</p>
+<p>When a Project is dissolved its materials are archived. A
+dissolved Project may be re-created by being re-proposed.</p>
+<p class="subsection"><a class="title" name="jdk-release-projects" id="jdk-release-projects">JDK Release Projects</a> New releases of
+Java SE Platform implementations are Projects. Such Projects may
+only be proposed by the <a class="ref" href="#openjdk-lead">OpenJDK
+Lead</a> and may only be sponsored by the <a class="ref" href="#governing-board">Governing Board</a>. The OpenJDK Lead is the
+<a class="ref" href="#project-lead">Project Lead</a> for all JDK
+Release Projects. Every OpenJDK Member will have the opportunity to
+propose features for inclusion in JDK Release Projects, and
+decisions about which features to include will be made in a
+transparent manner.</p>
+<p class="subsection"><a class="title" name="availability-of-specifications-and-tests" id="availability-of-specifications-and-tests">Availability of
+Specifications and Tests</a> Insofar as a Project involves the use
+of specifications of, and tests for, the code being developed, then
+all such material as may be required for a <a class="ref" href="#contributor">Contributor</a> to make timely and effective
+contributions to the Project should be made available in the
+Project&#8217;s repositories under the appropriate <a class="ref" href="#licenses-trademarks-and-availability-of-data">open-source
+license</a> when possible. If a relevant specification or test is
+not available under such terms, and a contribution is refused
+because it violates that specification or fails to pass that test,
+then those who require the use of that specification or test are
+obligated to explain the problem to the submitting Contributor and
+provide reasonable assistance to help resolve it.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>7</span></div>
+<div class="title"><a name="_7" id="_7"></a><a class="title" name="project-roles" id="project-roles">Project Roles</a></div>
+<div class="body">
+<p>An <a class="def" name="author" id="author">Author</a> for a
+Project is a <a class="ref" href="#contributor">Contributor</a> who
+has been granted the right to create changesets intended to be
+pushed into a specific Project&#8217;s code repositories, but does
+not have the right to push such changesets directly.</p>
+<p>A <a class="def" name="committer" id="committer">Committer</a>
+to a Project is an Author who has been granted direct push access
+to the Project&#8217;s code repositories.</p>
+<p>A Committer to a Project may nominate any <a class="ref" href="#contributor">Contributor</a> to be a new Committer to that
+Project. Such nominations are approved by a <a class="ref" href="#lazy-consensus">Lazy Consensus</a> of the Project&#8217;s
+Committers.</p>
+<p>A Committer to a Project may raise a motion to remove another of
+that Project&#8217;s Committers. Such a motion must be approved by
+a <a class="ref" href="#two-thirds-majority">Two-Thirds
+Majority</a> of the Project&#8217;s Committers, with the Committer
+who is the subject of the motion abstaining.</p>
+<p>A <a class="def" name="reviewer" id="reviewer">Reviewer</a> for
+a Project is an experienced Committer who has the authority to
+approve changesets destined for code repositories designated by the
+<a class="ref" href="#project-lead">Project Lead</a> as requiring
+formal change review. Projects that do not require any formal
+change review will not have any Reviewers.</p>
+<p>A Reviewer for a Project may nominate any of that
+Project&#8217;s Committers to be a new Reviewer for that Project.
+Such nominations are approved by a <a class="ref" href="#three-vote-consensus">Three-Vote Consensus</a> of the
+Project&#8217;s Reviewers.</p>
+<p>A Reviewer for a Project may raise a motion to revoke the
+Reviewer role of another of that Project&#8217;s Committers, unless
+that Reviewer is the Project&#8217;s Lead. Such a motion must be
+approved by a <a class="ref" href="#two-thirds-majority">Two-Thirds
+Majority</a> of the Project&#8217;s Reviewers, with the Reviewer
+who is the subject of the motion abstaining.</p>
+<p>A <a class="def" name="project-lead" id="project-lead">Project
+Lead</a> is a Committer to that Project who is responsible for
+directing and coordinating the Project&#8217;s activities. A
+Project&#8217;s Lead has:</p>
+<ul>
+<li>
+<p>Full authority over all technical matters relating to the
+Project;</p>
+</li>
+<li>
+<p>The authority to appoint and remove <a class="ref" href="#author">Authors</a> who are not also <a class="ref" href="#committer">Committers</a>;</p>
+</li>
+<li>
+<p>The authority to designate specific code repositories as
+requiring formal <a class="ref" href="#reviewer">change
+review</a>;</p>
+</li>
+<li>
+<p>The obligation to act as a contact point for the Project and to
+look after the Project&#8217;s mailing lists, web content, and code
+repositories.</p>
+</li>
+<li>
+<p>The obligation, once per quarter, to publish a written report
+summarizing the recent activities of the Project.</p>
+</li>
+</ul>
+<p>A Project&#8217;s Lead may delegate selected obligations, but
+not authorities, to other of that Project&#8217;s <a class="ref" href="#committer">Committers</a> as desired. A Project&#8217;s Lead
+may delegate all authorities to another of that Project&#8217;s
+Committers, but only on a temporary basis.</p>
+<p>Any procedural decision by a Project&#8217;s Lead may be
+appealed to the <a class="ref" href="#governing-board">Governing
+Board</a>.</p>
+<p>A Project&#8217;s Lead is automatically considered to be a
+<a class="ref" href="#reviewer">Reviewer</a>, and remains a
+Reviewer even after leaving the Project Lead role.</p>
+<p>When a Project is created, or when its Project Lead resigns or
+departs, candidates for a new Project Lead may be nominated by the
+<a class="ref" href="#group-lead">Group Leads</a> of a
+Project&#8217;s <a class="ref" href="#sponsor">Sponsoring</a>
+<a class="ref" href="#group">Groups</a>. Such a nomination must be
+approved by a <a class="ref" href="#three-vote-consensus">Three-Vote Consensus</a> of these Group
+Leads. If agreement amongst these Group Leads cannot be reached
+then the <a class="ref" href="#openjdk-lead">OpenJDK Lead</a> will
+select one of the nominees; this decision may be appealed to the
+<a class="ref" href="#governing-board">Governing Board</a>.</p>
+<p>When a Project is created then its initial Project Lead, once
+selected, appoints the initial <a class="ref" href="#author">Authors</a>, <a class="ref" href="#committer">Committers</a>, and <a class="ref" href="#reviewer">Reviewers</a>.</p>
+<p>Any <a class="ref" href="#openjdk-member">OpenJDK Member</a> may
+raise a motion to remove a Project&#8217;s Lead, unless the Project
+is a <a class="ref" href="#jdk-release-projects">JDK Release
+Project</a>. Such a motion must be approved by a <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> of the
+Project&#8217;s Committers, with the Project Lead abstaining, and
+ratified by a <a class="ref" href="#simple-majority">Simple
+Majority</a> of the <a class="ref" href="#governing-board">Governing Board</a>.</p>
+<p>The Governing Board may, in exceptional circumstances, remove a
+Project Lead by a <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> vote.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>8</span></div>
+<div class="title"><a name="_8" id="_8"></a><a class="title" name="openjdk-member" id="openjdk-member">OpenJDK Members</a></div>
+<div class="body">
+<p>Any <a class="ref" href="#group-member">Group Member</a> or
+<a class="ref" href="#committer">Committer</a> may be nominated to
+be an <span class="def">OpenJDK Member</span> by an existing
+OpenJDK Member. Such a nomination must be approved by a <a class="ref" href="#three-vote-consensus">Three-Vote Consensus</a> of the
+OpenJDK Members.</p>
+<p>Any OpenJDK Member may raise a motion to remove another OpenJDK
+Member. Such a motion must be approved by a <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> of the OpenJDK
+Members, with the Member who is the subject of the motion
+abstaining.</p>
+<p>The <a class="ref" href="#governing-board">Governing Board</a>
+may, in exceptional circumstances, remove an OpenJDK Member by a
+<a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a>
+vote.</p>
+<p>Every OpenJDK Membership is subject to automatic <a class="def" name="expiration" id="expiration">Expiration</a> after one year,
+but will be renewed upon request. A request for renewal must be
+received within one year of expiration. An OpenJDK Member whose
+Membership has expired and not yet been renewed may not exercise
+the privileges of Membership, except that roles requiring OpenJDK
+Membership may be retained.</p>
+<p>If an OpenJDK Member&#8217;s employment situation changes such
+that contributions would no longer be covered by the <a class="ref" href="#contributor">OCA</a> or its equivalent then the Member must
+relinquish the <a class="ref" href="#contributor">Contributor</a>
+role by notifying <a class="ref" href="#openjdk-lead">OpenJDK
+Lead</a>. At this point the Membership will be considered to have
+expired.</p>
+<p>The <a class="def" name="openjdk-members-group" id="openjdk-members-group">OpenJDK Members Group</a> consists of all
+OpenJDK Members. The <a class="ref" href="#openjdk-lead">OpenJDK
+Lead</a> is its Group Lead. The usual rules for dissolving Groups,
+adding and removing Group Members, and selecting and removing Group
+Leads do not apply to the OpenJDK Members Group.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>9</span></div>
+<div class="title"><a name="_9" id="_9"></a><a class="title" name="governing-board" id="governing-board">Governing Board</a></div>
+<div class="body">
+<p>The <span class="def">Governing Board</span> manages the
+structure and operation of the OpenJDK Community.</p>
+<p>The Governing Board consists of five <a class="ref" href="#contributor">Contributors</a>:</p>
+<ul>
+<li>The <a class="def" name="chair" id="chair">Chair</a>, appointed
+by Oracle;</li>
+<li>The <a class="def" name="vice-chair" id="vice-chair">Vice-Chair</a>, appointed by IBM;</li>
+<li>The <a class="ref" href="#openjdk-lead">OpenJDK Lead</a>,
+appointed by Oracle; and</li>
+<li>Two <a class="ref" href="#at-large-members">At-Large
+Members</a>, nominated and elected as described below.</li>
+</ul>
+<p>The Governing Board is, in part, a legislative body: It is
+empowered to revise these Bylaws to refine existing processes, to
+define new processes, and to dispose of processes that are no
+longer required. Any revision of these Bylaws must be approved by
+an <a class="ref" href="#absolute">Absolute</a> <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> of the
+Governing Board and then ratified by Two-Thirds Majority of OpenJDK
+Members.</p>
+<p>The Governing Board is also, in part, a judiciary body: It is
+empowered to resolve any procedural disputes which may arise within
+the Community. Any procedural decision made by an individual, as
+described in these Bylaws, may be appealed to the Governing Board.
+If the Governing Board decides to hear an appeal then a proposed
+judgement must be approved by a <a class="ref" href="#simple-majority">Simple Majority</a> vote.</p>
+<p>The Governing Board is not an executive body: It has no direct
+authority over technical or release decisions. That authority is
+held, for any given <a class="ref" href="#project">Project</a>, by
+that Project&#8217;s <a class="ref" href="#project-lead">Lead</a>,
+and in particular by the <a class="ref" href="#openjdk-lead">OpenJDK Lead</a> for <a class="ref" href="#jdk-release-projects">JDK Release Projects</a>.</p>
+<p>The Governing Board is a <a class="ref" href="#group">Group</a>,
+with the Chair as its Lead. This allows the Governing Board to
+sponsor Projects. The usual rules for dissolving Groups, adding and
+removing Group Members, and selecting and removing Group Leads do
+not apply to the Governing Board.</p>
+<p class="subsection"><a class="title" name="meetings" id="meetings">Meetings</a> The Governing Board shall meet at least
+once per calendar quarter, either in person or via teleconference.
+Meeting minutes will be posted publicly, after being reviewed and
+approved by the Governing Board.</p>
+<p>The Governing Board may decide, by a <a class="ref" href="#simple-majority">Simple Majority</a> vote, to hold a meeting or
+part of a meeting in <a class="def" name="private-session" id="private-session">Private Session</a>, in which case the public
+meeting minutes will only record any votes that were taken.</p>
+<p>The Governing Board may also decide, by a <a class="ref" href="#simple-majority">Simple Majority</a> vote, to hold an <a class="def" name="open-meeting" id="open-meeting">Open Meeting</a> to
+which all OpenJDK Members are invited.</p>
+<p class="subsection"><a class="title" name="votes" id="votes">Votes</a> Governing Board votes may be conducted during
+meetings. A meeting of the Governing Board is considered quorate if
+a simple majority of its members are present; that is, more members
+are present than absent.</p>
+<p>Votes may also be conducted asynchronously, via e-mail or
+similar mechanisms, in which case the voting period shall be seven
+calendar days unless otherwise stated in the call for votes, but in
+any case not less than 48 hours. In an asynchronous vote a majority
+of members must declare themselves present before the end of the
+voting period, even if they do not vote. An asynchronous vote is
+conducted transparently unless the Governing Board first votes, by
+a <a class="ref" href="#simple-majority">Simple Majority</a>, to
+conduct it privately.</p>
+<p class="subsection"><a class="title" name="observers" id="observers">Observers</a> The Governing Board may, by a <a class="ref" href="#simple-majority">Simple Majority</a> vote, invite
+specific individuals to attend Governing Board meetings as
+<span class="def">Observers</span>. Such individuals need not be
+OpenJDK Members. Observers are welcome to both listen and
+contribute to the conversation, but they do not have any voting
+rights. The Governing Board may remove an Observer by a Simple
+Majority vote.</p>
+<p class="subsection"><a class="title" name="quarterly-reports" id="quarterly-reports">Quarterly Reports</a> Once per calendar
+quarter, and one week prior to that quarter&#8217;s scheduled
+meeting of the Governing Board, the <a class="ref" href="#openjdk-lead">OpenJDK Lead</a> shall publish a written report
+summarizing recent activities in the Community. This report should
+include:</p>
+<ul>
+<li>
+<p>A summary of notable recent activities of <a class="ref" href="#group">Groups</a> and <a class="ref" href="#project">Projects</a>, including noteworthy procedural
+decisions;</p>
+</li>
+<li>
+<p>A list of Projects that have made major state changes such as
+publishing a release, integrating into a <a class="ref" href="#jdk-release-projects">JDK Release Project</a>, or submitting or
+completing a JSR;</p>
+</li>
+<li>
+<p>A list of Projects that should, in the OpenJDK Lead&#8217;s
+opinion, be considered for inclusion in a future JDK Release
+Project and its corresponding Umbrella JSR;</p>
+</li>
+<li>
+<p>An assessment of the openness and transparency of the
+development process and its supporting infrastructure; and</p>
+</li>
+<li>
+<p>Statistics on committer activity, bug-fix rates, and Community
+growth.</p>
+</li>
+</ul>
+<p class="subsection"><a class="title" name="annual-review" id="annual-review">Annual Review</a> The Governing Board shall conduct
+an annual review of all of the Community&#8217;s <a class="ref" href="#group">Groups</a> and <a class="ref" href="#project">Projects</a>, dissolving any such that are determined to
+have become inactive.</p>
+<p class="subsection"><a class="title" name="at-large-members" id="at-large-members">At-Large Members</a> The At-Large Members of the
+Governing Board are chosen by a vote of the <a class="ref" href="#openjdk-member">OpenJDK Members</a>. At-Large Members serve for a
+term of one calendar year, starting on the first day of April each
+year.</p>
+<p>During a two-week nomination period any OpenJDK Member may
+nominate an individual who does not currently hold an appointed
+Governing Board seat to fill one of the At-Large seats. That
+individual need not already be an OpenJDK Member. An OpenJDK Member
+may make more than one such nomination.</p>
+<p>During a two-week voting period, commencing shortly after the
+nomination period, the new At-Large Members are chosen from the set
+of nominees by a vote of all OpenJDK Members.</p>
+<ul>
+<li>
+<p>If there are no more nominees than there are open seats then
+each nominee must be approved by a <a class="ref" href="#simple-majority">Simple Majority</a> of voting Members. If any
+seat remains empty after this process then a new election will be
+held to fill it.</p>
+</li>
+<li>
+<p>If there are more nominees than there are open seats then the
+required number of At-Large Members will be selected from the
+nominees using the <a href="http://en.wikipedia.org/wiki/Single_Transferable_Vote">Single
+Transferable Vote</a> method with the <a href="http://en.wikipedia.org/wiki/Meek%27s_method#Meek.27s_method">Meek
+algorithm</a>.</p>
+</li>
+</ul>
+<p>If an At-Large Member resigns or departs mid-term, with at least
+two months remaining in the term, then a special election will be
+held to fill that seat for the remainder of the term.</p>
+<p class="subsection"><a class="title" name="expansion-and-contraction" id="expansion-and-contraction">Expansion and Contraction</a> The
+Governing Board shall never consist of fewer than five individuals.
+It shall always include a <a class="ref" href="#chair">Chair</a>, a
+<a class="ref" href="#vice-chair">Vice-Chair</a>, an <a class="ref" href="#openjdk-lead">OpenJDK Lead</a>, and at least two <a class="ref" href="#at-large-members">At-Large</a> seats as described
+above.</p>
+<p>The Governing Board may, by an <a class="ref" href="#absolute">Absolute</a> <a class="ref" href="#two-thirds-majority">Two-Thirds Majority</a> vote, add or remove
+both appointed and At-Large Governing Board seats.</p>
+<p class="subsection"><a class="title" name="technical-appeals-process" id="technical-appeals-process">Technical Appeals Process</a> If a
+Governing Board member objects in good faith to a technical or
+release decision made by the <a class="ref" href="#openjdk-lead">OpenJDK Lead</a> then that decision may be appealed
+via the following process.</p>
+<ol>
+<li>
+<p>An objection to a decision made by the OpenJDK Lead must be
+raised no later than two weeks after that decision.</p>
+</li>
+<li>
+<p>Within two weeks of the initial objection, the objecting Board
+member and the OpenJDK Lead will each nominate a neutral
+third-party technical expert to arbitrate the decision. Within two
+further weeks these two arbiters will together agree on a suitable
+third neutral expert to join them in creating an Arbitration Panel
+of three individuals. These experts need not be OpenJDK Members or
+even Participants.</p>
+</li>
+<li>
+<p>Within two weeks of the selection of the Panel the objecting
+Board member will submit to the Panel and the OpenJDK Lead a
+written description, not to exceed 1,000 words, of the
+objection.</p>
+</li>
+<li>
+<p>Within two weeks of the objecting Board member&#8217;s
+submission the OpenJDK Lead will submit to the Panel and the
+objecting Board member a written rebuttal, also not to exceed 1,000
+words, describing the rationale behind the decision and the way in
+which it is reasonable.</p>
+</li>
+<li>
+<p>Within two weeks of the OpenJDK Lead&#8217;s rebuttal the Panel
+will render a decision, made by an <a class="ref" href="#absolute">Absolute</a> <a class="ref" href="#simple-majority">Simple Majority</a> vote. The Panel may, during
+its deliberations, consider any other information it deems
+appropriate and may consult with other individuals as
+necessary.</p>
+</li>
+</ol>
+<p>Both the written submissions and the judgment of the Panel will
+be published as soon as they are available unless the Panel, on
+petition from the objecting Board member or the OpenJDK Lead,
+determines that publication is not in the best interest of the
+OpenJDK Community.</p>
+<p>Only three unsuccessful appeals by any particular Governing
+Board member are permitted in any twelve-month period.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>A</span></div>
+<div class="title"><a name="_A" id="_A"></a><a class="title" name="licenses-trademarks-and-availability-of-data" id="licenses-trademarks-and-availability-of-data">Licenses,
+Trademarks, and Availability of Data</a></div>
+<div class="body">
+<p><a class="ref" href="#participant">Participants</a> in the
+OpenJDK Community collaborate on code licensed under the <a href="//openjdk.java.net/legal/gplv2+ce.html">GNU General Public
+License (GPL) version 2 with the Classpath Exception</a> and the
+<a href="//openjdk.java.net/legal/assembly-exception.html">OpenJDK
+Assembly Exception</a>, and under other licenses approved by either
+the <a href="http://fsf.org">Free Software Foundation</a> or the
+<a href="http://opensource.org">Open Source Initiative</a>.</p>
+<p>The &#8220;OpenJDK&#8221; trademark is owned by Oracle
+Corporation but will continue to be available for use by others
+under the terms of the <a href="//openjdk.java.net/legal/openjdk-trademark-notice.html">OpenJDK
+Trademark Notice</a>, or similar terms.</p>
+<p>The data stored in any infrastructure provided for use by
+Community members must be made available by some means that
+enables, without undue effort, the construction of a complete
+functional clone of that infrastructure and its data as seen by the
+entire Community.</p>
+</div>
+</div>
+<div class="section">
+<div class="number"><span>B</span></div>
+<div class="title"><a name="_B" id="_B"></a><a class="title" name="transitioning-to-these-bylaws" id="transitioning-to-these-bylaws">Transitioning to these
+Bylaws</a></div>
+<div class="body">
+<p>The OpenJDK Community has, since its inception in 2006, been
+operating under a set of informal guidelines for <a href="//openjdk.java.net/groups">Groups</a> and <a href="//openjdk.java.net.projects">Projects</a>. The following
+changes will be implemented when these Bylaws take effect:</p>
+<ul>
+<li>
+<p>The initial set of <a class="ref" href="#group">Groups</a> will
+be the current set of Groups, with their existing <a class="ref" href="#group-member">Group Members</a>.</p>
+</li>
+<li>
+<p>The <a class="ref" href="#openjdk-members-group">OpenJDK Members
+Group</a> will be created, and the initial set of <a class="ref" href="#openjdk-member">OpenJDK Members</a> will be those <a class="ref" href="#contributor">Contributors</a> previously voted into
+Group Membership. Each such new Membership will expire on the
+anniversary of the initial registration of that Member in the
+OpenJDK Community database.</p>
+</li>
+<li>
+<p>The initial set of <a class="ref" href="#project">Projects</a>
+will be the current set of Projects, with their existing <a class="ref" href="#committer">Committers</a>.</p>
+</li>
+<li>
+<p>The initial <a class="ref" href="#group-lead">Group Leads</a>,
+<a class="ref" href="#project-lead">Project Leads</a>, and
+<a class="ref" href="#reviewer">Reviewers</a> will be appointed by
+the <a class="ref" href="#openjdk-lead">OpenJDK Lead</a>.</p>
+</li>
+<li>
+<p>The initial <a class="ref" href="#at-large-members">At-Large
+Members</a> of the <a class="ref" href="#governing-board">Governing
+Board</a> will be appointed by mutual agreement of the <a class="ref" href="#chair">Chair</a> and the <a class="ref" href="#vice-chair">Vice-Chair</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="./images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="./images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

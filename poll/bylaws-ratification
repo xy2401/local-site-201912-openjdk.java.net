@@ -1,0 +1,590 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK Bylaws Ratification</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    TABLE.voters { font-size: 8pt; line-height: 1.3; border-collapse: collapse; }
+    .voters TH, TD { padding: 1pt 2pt; white-space: nowrap; vertical-align: top; text-align: left; }
+    .voters TH + TH, TD + TD { padding-left: 1em; }
+    .voters TH { font-weight: bold; padding-bottom: .5ex; }
+    TR.t1 TD { background: #d8d8d8; }
+    P.ts { font-size: 8pt; text-align: right; }
+    TR.ts TD { padding-top: 1ex; }
+    PRE { font-size: inherit; }
+    #results-table TD:first-child { text-align: right; }
+    #results-table { margin-left: 2em; padding: 0; border-collapse: collapse; }
+    #results-table TD + TD { padding-left: .5em; }
+    TD.Yes { color: green; }
+    TD.No { color: red; }
+    TD.Abstain { color: gray; }
+/**/
+</style></head><body><div id="main">
+<h1>Bylaws Ratification</h1>
+<p>The vote to ratify the <a href="//openjdk.java.net/groups/gb/bylaws/draft-openjdk-bylaws-10">OpenJDK
+Community Bylaws</a> started at <a href="http://timeanddate.com/worldclock/fixedtime.html?msg=OpenJDK+Bylaws+Ratification+Start&amp;iso=20110614T16&amp;sort=1">
+16:00&#160;UTC on Tuesday, 14&#160;June 2011</a> and ended at the
+same time two weeks later, on Tuesday 28&#160;June 2011.</p>
+<h2>Results</h2>
+<p>To approve the Bylaws required a <a href="//openjdk.java.net/groups/gb/bylaws/draft-openjdk-bylaws-10#two-thirds-majority">
+Two-Thirds Majority</a> of the Ratification Electorate. That is,
+there needed to be at least twice as many Yes votes as No votes,
+and at least three Yes votes.</p>
+<p>The final tally was</p>
+<table id="results-table" summary="vote results">
+<tr>
+<td>70</td>
+<td class="Yes">Yes</td>
+</tr>
+<tr>
+<td>0</td>
+<td class="No">No</td>
+</tr>
+<tr>
+<td>9</td>
+<td class="Abstain">Abstain</td>
+</tr>
+</table>
+<p>and so the Bylaws were ratified.</p>
+<p>For details see the <a href="//mail.openjdk.java.net/poll/bylaws-ratification/votes">summary
+of votes</a>, the <a href="//mail.openjdk.java.net/poll/bylaws-ratification/log">complete
+log of all ballots recorded</a>, and <a href="//mail.openjdk.java.net/pipermail/bylaws-ratification/2011-June.txt">
+the actual ballots themselves, including comments</a>.</p>
+<h2>Who could vote?</h2>
+<p>The Ratification Electorate was composed of those Contributors
+who created at least five unique nontrivial changesets in the
+OpenJDK Mercurial repositories in the two years preceding the start
+of the Ratification Vote. A nontrivial changeset has only one
+parent (<i>i.e.</i>, it's not a merge changeset) and does not just
+add or remove a tag.</p>
+<p>This definition was chosen by the <a href="/groups/gb/">Governing Board</a> because it's based on verifiable,
+publicly-available data and is likely to admit only serious
+contributors while not going so far as to limit the electorate to
+just those who have been contributing from the start. For more
+information please see the <a href="/groups/gb/minutes/2011-05-26">minutes of the relevant Board
+meeting</a>.</p>
+<p>Here is the complete Ratification Electorate:</p>
+<blockquote>
+<table summary="electorate" class="voters">
+<tr>
+<th>full name</th>
+<th>address</th>
+</tr>
+<tr class="t0">
+<td>Abhijit Saha</td>
+<td>abhi.saha at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Alan Bateman</td>
+<td>alan.bateman at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Alex Menkov</td>
+<td>alex.menkov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Alex Strange</td>
+<td>astrange at apple.com</td>
+</tr>
+<tr class="t0">
+<td>Alexander Kouznetsov</td>
+<td>alexander.kouznetsov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Alexander Potochkin</td>
+<td>alexander.potochkin at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Alexey Utkin</td>
+<td>alexey.utkin at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Andrei Dmitriev</td>
+<td>andrei.dmitriev at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Andrew Bachmann</td>
+<td>andrewbachmann at gmail.com</td>
+</tr>
+<tr class="t1">
+<td>Andrew Brygin</td>
+<td>andrew.brygin at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Andrew Haley</td>
+<td>aph at redhat.com</td>
+</tr>
+<tr class="t1">
+<td>Andrew John Hughes</td>
+<td>ahughes at redhat.com</td>
+</tr>
+<tr class="t0">
+<td>Andrey Petrusenko</td>
+<td>UNKNOWN</td>
+</tr>
+<tr class="t1">
+<td>Andy Herrick</td>
+<td>andy.herrick at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Anthony Petrov</td>
+<td>anthony.petrov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Anton Tarasov</td>
+<td>anton.tarasov at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Antonios Printezis</td>
+<td>tony.printezis at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Artem Ananiev</td>
+<td>artem.ananiev at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>A. Sundararajan</td>
+<td>sundararajan.athijegannathan at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Bengt Rutisson</td>
+<td>bengt.rutisson at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Bhavesh Patel</td>
+<td>bhavesh.x.patel at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Bob Vandette</td>
+<td>bob.vandette at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Bradford Wetmore</td>
+<td>bradford.wetmore at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Brian Goetz</td>
+<td>brian.goetz at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Changpeng Fang</td>
+<td>UNKNOWN</td>
+</tr>
+<tr class="t1">
+<td>Chris Hegarty</td>
+<td>chris.hegarty at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Christian Thalinger</td>
+<td>christian.thalinger at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Clemens Eisserer</td>
+<td>linuxhippy at gmail.com</td>
+</tr>
+<tr class="t0">
+<td>Coleen Phillimore</td>
+<td>coleen.phillimore at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Dalibor Topic</td>
+<td>dalibor.topic at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Daniel D. Daugherty</td>
+<td>daniel.daugherty at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>David Holmes</td>
+<td>david.holmes at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>David Katleman</td>
+<td>david.katleman at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Denis Fokin</td>
+<td>denis.fokin at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Denis Lila</td>
+<td>dlila at redhat.com</td>
+</tr>
+<tr class="t1">
+<td>Dmitriy Samersoff</td>
+<td>dmitry.samersoff at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Dmitry Cherepanov</td>
+<td>dmitry.cherepanov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Doug Felt</td>
+<td>dougfelt at google.com</td>
+</tr>
+<tr class="t0">
+<td>Doug Lea</td>
+<td>dl at cs.oswego.edu</td>
+</tr>
+<tr class="t1">
+<td>Eamonn McManus</td>
+<td>eamonn.mcmanus at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Erik Trimble</td>
+<td>erik.trimble at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Frederic Parain</td>
+<td>frederic.parain at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Gary Benson</td>
+<td>gbenson at redhat.com</td>
+</tr>
+<tr class="t1">
+<td>Greg Lewis</td>
+<td>glewis at eyesbeyond.com</td>
+</tr>
+<tr class="t0">
+<td>Hiroshi Yamauchi</td>
+<td>yamauchi at google.com</td>
+</tr>
+<tr class="t1">
+<td>Igor Nekrestyanov</td>
+<td>igor.nekrestyanov at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Igor Veresov</td>
+<td>igor.veresov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Jean-Christophe Collet</td>
+<td>UNKNOWN</td>
+</tr>
+<tr class="t0">
+<td>Jeff Dinkins</td>
+<td>jeff.dinkins at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Jennifer Godinez</td>
+<td>jennifer.godinez at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Jeremy Manson</td>
+<td>jeremymanson at google.com</td>
+</tr>
+<tr class="t1">
+<td>Jesse Glick</td>
+<td>jesse.glick at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Jim Graham</td>
+<td>james.graham at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Jim Holmlund</td>
+<td>james.holmlund at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Joe Darcy</td>
+<td>joe.darcy at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>John Coomes</td>
+<td>john.coomes at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>John Cuthbertson</td>
+<td>john.cuthbertson at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>John R Rose</td>
+<td>john.r.rose at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Jon Masamitsu</td>
+<td>jon.masamitsu at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Jon VanAlten</td>
+<td>jvanalte at redhat.com</td>
+</tr>
+<tr class="t0">
+<td>Jonathan Gibbons</td>
+<td>jonathan.gibbons at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Josh Bloch</td>
+<td>jjb at google.com</td>
+</tr>
+<tr class="t0">
+<td>Karen Kinnear</td>
+<td>karen.kinnear at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Karl Helgason</td>
+<td>kalli at midverk.is</td>
+</tr>
+<tr class="t0">
+<td>Keith McGuigan</td>
+<td>keith.mcguigan at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Kelly O'Hair</td>
+<td>kelly.ohair at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Kevin Miller</td>
+<td>kevin_m_miller at apple.com</td>
+</tr>
+<tr class="t1">
+<td>Kevin Walls</td>
+<td>kevin.walls at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Kumar Srinivasan</td>
+<td>kumar.x.srinivasan at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Kurt Miller</td>
+<td>kurt at intricatesoftware.com</td>
+</tr>
+<tr class="t0">
+<td>Lance Andersen</td>
+<td>lance.andersen at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Lillian Angel</td>
+<td>langel at redhat.com</td>
+</tr>
+<tr class="t0">
+<td>Lukas Stadler</td>
+<td>lukas.stadler at jku.at</td>
+</tr>
+<tr class="t1">
+<td>Mahmood Ali</td>
+<td>mali at csail.mit.edu</td>
+</tr>
+<tr class="t0">
+<td>Mandy Chung</td>
+<td>mandy.chung at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Mario Torre</td>
+<td>neugens.limasoftware at gmail.com</td>
+</tr>
+<tr class="t0">
+<td>Mark Reinhold</td>
+<td>mark.reinhold at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Martin Buchholz</td>
+<td>martinrb at google.com</td>
+</tr>
+<tr class="t0">
+<td>Masayoshi Okutsu</td>
+<td>masayoshi.okutsu at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Maurizio Cimadamore</td>
+<td>maurizio.cimadamore at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Max Weijun Wang</td>
+<td>weijun.wang at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Michael Ernst</td>
+<td>mernst at cs.washington.edu</td>
+</tr>
+<tr class="t0">
+<td>Michael Fang</td>
+<td>michael.fang at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Michael McMahon</td>
+<td>michael.x.mcmahon at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Mike Duigou</td>
+<td>mike.duigou at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Mike Swingler</td>
+<td>swingler at apple.com</td>
+</tr>
+<tr class="t0">
+<td>Naoto Sato</td>
+<td>naoto.sato at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Neil Richards</td>
+<td>neil.richards at ngmr.net</td>
+</tr>
+<tr class="t0">
+<td>Omair Majid</td>
+<td>omajid at redhat.com</td>
+</tr>
+<tr class="t1">
+<td>Paul Hohensee</td>
+<td>paul.hohensee at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Pavel Porvatov</td>
+<td>pavel.porvatov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Pavel Tisnovsky</td>
+<td>ptisnovs at redhat.com</td>
+</tr>
+<tr class="t0">
+<td>Peter Zhelezniakov</td>
+<td>peter.zhelezniakov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Phil Race</td>
+<td>philip.race at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Poonam Bajaj</td>
+<td>poonam.bajaj at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Robert Field</td>
+<td>robert.field at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Roger Hoover</td>
+<td>rhoover at apple.com</td>
+</tr>
+<tr class="t1">
+<td>Roland Westrelin</td>
+<td>roland.westrelin at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Roman Kennke</td>
+<td>roman at kennke.org</td>
+</tr>
+<tr class="t1">
+<td>Sean Coffey</td>
+<td>sean.coffey at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Sean Mullan</td>
+<td>sean.mullan at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Sergey Malenkov</td>
+<td>sergey.malenkov at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Staffan Larsen</td>
+<td>staffan.larsen at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Stefan Karlsson</td>
+<td>stefan.karlsson at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Steven Loomis</td>
+<td>steven.loomis at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Stuart Marks</td>
+<td>stuart.marks at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Sunita Koppar</td>
+<td>sunita.koppar at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Tim Bell</td>
+<td>tim.bell at gmail.com</td>
+</tr>
+<tr class="t0">
+<td>Tom Rodriguez</td>
+<td>tom.rodriguez at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Ulf Zibis</td>
+<td>ulf.zibis at gmx.de</td>
+</tr>
+<tr class="t0">
+<td>Valerie Peng</td>
+<td>valerie.peng at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Vinnie Ryan</td>
+<td>vincent.x.ryan at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Vladimir Kozlov</td>
+<td>vladimir.kozlov at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Vladimir Yaroslavskiy</td>
+<td>vladimir.yaroslavskiy at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Volker Simonis</td>
+<td>volker.simonis at gmail.com</td>
+</tr>
+<tr class="t1">
+<td>Xiaobin Lu</td>
+<td>UNKNOWN</td>
+</tr>
+<tr class="t0">
+<td>Xiomara Jayasena</td>
+<td>xiomara.jayasena at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Xue-Lei Andrew Fan</td>
+<td>xuelei.fan at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Xueming Shen</td>
+<td>xueming.shen at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Y. Srinivas Ramakrishna</td>
+<td>y.s.ramakrishna at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Yong Jeffrey Huang</td>
+<td>UNKNOWN</td>
+</tr>
+<tr class="t1">
+<td>Yuka Kamiya</td>
+<td>yuka.kamiya at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Yumin Qi</td>
+<td>yumin.qi at oracle.com</td>
+</tr>
+<tr class="t1">
+<td>Yuri Nesterenko</td>
+<td>yuri.nesterenko at oracle.com</td>
+</tr>
+<tr class="t0">
+<td>Zhengyu Gu</td>
+<td>zhengyu.gu at oracle.com</td>
+</tr>
+</table>
+</blockquote>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

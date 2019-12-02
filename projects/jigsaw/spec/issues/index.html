@@ -1,0 +1,922 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Java Platform Module System: Issue Summary</title><meta name="viewport" content="width=device-width, initial-scale=.6" /><link rel="stylesheet" type="text/css" href="//openjdk.java.net/.fonts/dejavu.css" /><style type="text/css">
+
+      HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,
+      BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,
+      IMG, INS, KBD, Q, S, SAMP, SMALL, STRIKE, STRONG, SUB, SUP, TT, VAR, B, U,
+      I, CENTER, DL, DT, DD, OL, UL, LI, FIELDSET, FORM, LABEL, LEGEND, TABLE,
+      CAPTION, TBODY, TFOOT, THEAD, TR, TH, TD, ARTICLE, ASIDE, CANVAS, DETAILS,
+      EMBED, FIGURE, FIGCAPTION, FOOTER, HEADER, HGROUP, MENU, NAV, OUTPUT, RUBY,
+      SECTION, SUMMARY, TIME, MARK, AUDIO, VIDEO {
+        margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit;
+        vertical-align: baseline; }
+      ARTICLE, ASIDE, DETAILS, FIGCAPTION, FIGURE, 
+      FOOTER, HEADER, HGROUP, MENU, NAV, SECTION { display: block; }
+      BLOCKQUOTE, Q { quotes: none; }
+      BLOCKQUOTE:before, BLOCKQUOTE:after, Q:before, Q:after {
+              content: ''; content: none; }
+      TABLE { border-collapse: collapse; border-spacing: 0; }
+
+      A { text-decoration: none; }
+      A:link { color: #437291; }
+      A:visited { color: #666666; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+
+      HTML { font-size: 20px; } /* baseline grid */
+      HTML > BODY { font-size: 14px; }
+      BODY {
+        background: white;
+        margin: 40px;
+        margin-bottom: 150%;
+        width: 560px;
+        line-height: 20px;
+        -webkit-text-size-adjust: 100%; /* iOS */
+        color: #222;
+      }
+
+      /* BODY { background: url("grid.png") repeat 0 5px; } */
+
+      BODY { font-family: "DejaVu Serif", "Bitstream Vera Serif",
+                          "Lucida Bright", "Bookman Old Style",
+                          Georgia, serif; }
+      CODE, TT, .jref, DIV.spec .open, TABLE.profiles {
+        font-family: "DejaVu Sans", "Bitstream Vera Sans",
+                     "Lucida Sans", Helvetica, sans-serif; }
+      PRE, PRE > CODE { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+                        Monaco, "Courier New", monospace; }
+
+      @media only screen
+      and (min-device-width: 320px) and (max-device-width: 480px) {
+        BODY { width: 90%; }
+      }
+
+      I, EM { font-style: italic; }
+      B, STRONG, TH { font-weight: bold; }
+      SPAN.open { font-weight: bold; font-size: 12px; }
+
+      P { text-indent: 40px; }
+      P:first-child, UL + P, OL + P, BLOCKQUOTE + P, TABLE + P, P.subsection,
+        P.br, P.intro, DIV.profiles-table + P, DIV.image + P { text-indent: 0; }
+      P.br { margin-top: 10px; }
+      P.intro { margin-top: 30px; }
+
+      P.subsection { margin-top: 20px; }
+      P.subsection SPAN.title { font-weight: bold; padding-right: 20px; }
+
+      UL, OL { margin: 10px 0; padding-left: 40px; }
+      LI { margin-bottom: 10px; }
+      UL.compact LI { margin-bottom: 0; }
+
+      PRE { padding: 0; margin: 10px 0 10px 40px; ZZwidth: 45em; }
+      BLOCKQUOTE { margin: 10px 0; margin-left: 40px; }
+      LI BLOCKQUOTE { margin-left: 0; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+      .error { color: red; font-weight: bold; }
+      .warn { color: #ee0000; font-weight: bold; }
+
+
+      H1 + P, H2 + P, H3 + P, PRE + P, BLOCKQUOTE + P { text-indent: 0; }
+      P.small { font-size: 11px; line-height: 16px; }
+
+      H1, H2, H3 { font-weight: bold; }
+
+      /*
+      H1 { margin-top: -13px; font-size: 22px; line-height: 40px; }
+      H2 { font-size: 17px; margin-top: 20px; margin-bottom: 10px; }
+      H3 { margin-top: 14px; margin-bottom: 10px; font-style: italic; }
+      */
+
+      DIV.doctitle, H1 { margin-top: -13px;
+        font-size: 20px; line-height: 40px; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-weight: bold; margin-bottom: 9px; }
+      DIV.subtitle { margin-top: 2px; font-size: 18px; font-weight: bold; }
+      DIV.authors { margin-top: 10px; margin-bottom: 10px; font-size: 16px; }
+      DIV.author A { font-style: italic; }
+      DIV.version { margin-top: 10px; }
+      DIV.version, DIV.legal-notice { font-size: 11px; line-height: 15px; }
+      SPAN.hash { font-size: 11px; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+      DIV.head { margin-bottom: 20px; }
+
+      DIV.section > DIV.title, DIV.section DIV.number SPAN, H2 {
+        font-size: 15px; font-weight: bold;
+        ZZline-height: 40px; margin-top: 20px; margin-bottom: 10px; }
+      H2 { font-size: 15px; }
+      H2.meta { font-size: 13px;
+                letter-spacing: 1px; text-transform: uppercase; }
+
+      H1 + H2 { margin-top: 0; }
+
+      H3 { margin-top: 10px; margin-bottom: 10px; font-style: italic; }
+
+      DIV.section DIV.number { float: left; width: 20px; }
+      DIV.section DIV.body { margin-left: 20px; }
+
+      DIV.toc { padding-left: 40px; font-size: 13px; }
+      DIV.toc-section { margin-top: 10px; }
+      P.toc-items { text-indent: 0; margin-left: 20px; }
+      SPAN.toc-item { ZZwhite-space: nowrap; }
+
+      TABLE.toc { font-size: 13px; } /* Hack to ensure 20px rows */
+      TABLE.toc TD:first-child { font-weight: bold; padding-right: 10px; }
+      TABLE.toc TH { font-weight: bold; text-align: left; }
+      TABLE.toc TD.subcontent { padding-left: 40px; font-size: 11px; }
+
+      DIV.feature-details { margin-left: 0; }
+      DIV.feature-details DIV.group { margin-top: 20px; margin-left: 20px; }
+      DIV.feature-details DIV.group DIV.title { font-weight: bold; margin-left: -20px; }
+
+      DIV.feature { margin-top: 10px; margin-left: 20px; }
+      DIV.feature DIV.jep, DIV.feature DIV.title { font-weight: bold; }
+      DIV.feature DIV.jep { float: right; }
+      DIV.feature DIV.summary, DIV.feature DIV.refs, DIV.feature DIV.spec { margin-top: 10px; }
+      DIV.feature DIV.refs SPAN.what { font-weight: bold; }
+      DIV.spec .body { margin-left: 20px; }
+      DIV.spec .open { float: left; width: 20px; }
+
+      TABLE.features { margin: 10px 0 10px 0; }
+      TABLE.features TR.new-group TD { padding-top: 10px; }
+      TABLE.features TD:first-child { text-align: right; padding-right: 20px; }
+      TABLE.features TR:first-child TD { padding-top: 0; }
+      TABLE.features SPAN.jsrs-wrapper { padding-left: 6px; }
+      TABLE.features SPAN.jsrs { ZZfont-size: 11px; }
+      TABLE.features TD { white-space: nowrap; }
+
+      SPAN.new { color: #e76f00; font-size: smaller; }
+      SPAN.update { font-size: smaller; }
+
+      TABLE.jsr-list TD { vertical-align: baseline; }
+      TABLE.jsr-list TD.name { padding-left: 10px; }
+      TABLE.jsr-list TD.stage { padding-left: 40px; font-style: italic; white-space: nowrap; }
+
+      DIV.profiles-table { margin: 20px 0 20px 20px; }
+      TABLE.profiles { font-size: 12px; line-height: 16px; }
+      TABLE.profiles TH { text-align: left; }
+      TABLE.profiles TH + TH { padding-left: 40px; }
+      TABLE.profiles TD + TD { padding-left: 40px; }
+
+      DIV.image { margin: 20px 0 20px 40px; }
+
+      /* specific to issue list */
+      P.issue { text-indent: 0; margin: 10px 0; }
+      BLOCKQUOTE > P > STRONG:first-child { padding-right: 1em; }
+      SPAN.resolved { color: #6cb33f; }
+      SPAN.proposed { color: #e76f00; font-weight: bold; }
+
+  </style></head><body>
+<h1>Java Platform Module System: Issue Summary</h1>
+<p class="br"> Mark Reinhold  </p>
+<div class="version">2017/8/22 15:24 -0700<span class="hash">&#8192;[ba144b3d5aa3]</span></div><div class="legal-notice">Copyright &#169; 2017 Oracle and/or its affiliates &#183; All Rights Reserved</div><div class="legal-notice">This version: <a href="//openjdk.java.net/projects/jigsaw/spec/issues/2017-08-22"><code>http://openjdk.java.net/projects/jigsaw/spec/issues/2017-08-22</code></a><br />Latest version: <a href="//openjdk.java.net/projects/jigsaw/spec/issues/"><code>http://openjdk.java.net/projects/jigsaw/spec/issues/</code></a></div><div class="legal-notice">Comments to: <code><a href="//mail.openjdk.java.net/mailman/listinfo/jpms-spec-comments">jpms-spec-comments@openjdk.java.net</a></code></div>
+<p class="intro"> This is the issue list for <a href="//openjdk.java.net/projects/jigsaw/spec/">JSR 376</a>, the Java
+Platform Module System.  The issues documented here were collected
+from the <a href="//mail.openjdk.java.net/mailman/listinfo/jpms-spec-experts">JSR 376 Expert Group mailing list</a>, the <a href="//mail.openjdk.java.net/mailman/listinfo/jpms-spec-comments">JSR
+376 comments list</a>, the <a href="//mail.openjdk.java.net/mailman/listinfo/jpms-spec-observers">JSR 376 observers&#8217;
+list</a>, and the <a href="//mail.openjdk.java.net/mailman/listinfo/jigsaw-dev">OpenJDK <code>jigsaw-dev</code>
+list</a>.  References to pertinent messages, though not all
+related messages, are included.</p>
+<p>During the course of the work on the JSR this was a living document,
+updated regularly issues were raised, discussed, and resolved; it is now
+a permanent record of that work.  Each issue was assigned a unique
+<em>#HashTag</em> for use in the e-mail messages and other textual media in
+which these issues are discussed so that such discussions could be
+discovered, tracked, and summarized.</p>
+<h2 id="issues-by-category">Issues by category</h2>
+<div class="toc"><div class="toc-section"><div class="title"><a href="#module-declarations">Module declarations</a></div><p class="toc-items"> <span class="toc-item"><a href="#ModuleNameSyntax">#ModuleNameSyntax</a>&#160;&#183;</span> <span class="toc-item"><a href="#ModuleNameCharacters">#ModuleNameCharacters</a>&#160;&#183;</span> <span class="toc-item"><a href="#CompileTimeDependences">#CompileTimeDependences</a>&#160;&#183;</span> <span class="toc-item"><a href="#ModuleAnnotations">#ModuleAnnotations</a>&#160;&#183;</span> <span class="toc-item"><a href="#ModuleDeprecation">#ModuleDeprecation</a>&#160;&#183;</span> <span class="toc-item"><a href="#ExportAnnotation">#ExportAnnotation</a>&#160;&#183;</span> <span class="toc-item"><a href="#CompilationWithConcealedPackages">#CompilationWithConcealedPackages</a>&#160;&#183;</span> <span class="toc-item"><a href="#ResolutionAtCompileTime">#ResolutionAtCompileTime</a>&#160;&#183;</span> <span class="toc-item"><a href="#RestrictedKeywords">#RestrictedKeywords</a></span></p></div><div class="toc-section"><div class="title"><a href="#module-artifacts">Module artifacts</a></div><p class="toc-items"> <span class="toc-item"><a href="#MultiModuleExecutableJARs">#MultiModuleExecutableJARs</a>&#160;&#183;</span> <span class="toc-item"><a href="#MultiModuleJARs">#MultiModuleJARs</a>&#160;&#183;</span> <span class="toc-item"><a href="#ReifiedModuleGraphs">#ReifiedModuleGraphs</a>&#160;&#183;</span> <span class="toc-item"><a href="#AddExportsInManifest">#AddExportsInManifest</a></span></p></div><div class="toc-section"><div class="title"><a href="#module-descriptors">Module descriptors</a></div><p class="toc-items"> <span class="toc-item"><a href="#ClassFileModuleName">#ClassFileModuleName</a>&#160;&#183;</span> <span class="toc-item"><a href="#ClassFileAccPublic">#ClassFileAccPublic</a>&#160;&#183;</span> <span class="toc-item"><a href="#ClassFileAccModule">#ClassFileAccModule</a>&#160;&#183;</span> <span class="toc-item"><a href="#StandardModuleAttributes">#StandardModuleAttributes</a></span></p></div><div class="toc-section"><div class="title"><a href="#automatic-modules">Automatic modules</a></div><p class="toc-items"> <span class="toc-item"><a href="#CustomizableAutomaticModuleNameMapping">#CustomizableAutomaticModuleNameMapping</a>&#160;&#183;</span> <span class="toc-item"><a href="#ModuleNameInManifest">#ModuleNameInManifest</a>&#160;&#183;</span> <span class="toc-item"><a href="#AutomaticModuleNames">#AutomaticModuleNames</a></span></p></div><div class="toc-section"><div class="title"><a href="#module-graphs">Module graphs</a></div><p class="toc-items"> <span class="toc-item"><a href="#CyclicDependences">#CyclicDependences</a>&#160;&#183;</span> <span class="toc-item"><a href="#MutableConfigurations">#MutableConfigurations</a>&#160;&#183;</span> <span class="toc-item"><a href="#LazyConfigurationAndInstantiation">#LazyConfigurationAndInstantiation</a></span></p></div><div class="toc-section"><div class="title"><a href="#services">Services</a></div><p class="toc-items"> <span class="toc-item"><a href="#ServiceLoaderEnhancements">#ServiceLoaderEnhancements</a></span></p></div><div class="toc-section"><div class="title"><a href="#reflection">Reflection</a></div><p class="toc-items"> <span class="toc-item"><a href="#ClassFilesAsResources">#ClassFilesAsResources</a>&#160;&#183;</span> <span class="toc-item"><a href="#ResourceEncapsulation">#ResourceEncapsulation</a>&#160;&#183;</span> <span class="toc-item"><a href="#ResourceExistenceAndSize">#ResourceExistenceAndSize</a>&#160;&#183;</span> <span class="toc-item"><a href="#ReflectiveAccessToNonExportedTypes">#ReflectiveAccessToNonExportedTypes</a>&#160;&#183;</span> <span class="toc-item"><a href="#AwkwardStrongEncapsulation">#AwkwardStrongEncapsulation</a>&#160;&#183;</span> <span class="toc-item"><a href="#ReflectionWithoutReadability">#ReflectionWithoutReadability</a>&#160;&#183;</span> <span class="toc-item"><a href="#ReadabilityAddedByLayerCreator">#ReadabilityAddedByLayerCreator</a>&#160;&#183;</span> <span class="toc-item"><a href="#IndirectQualifiedReflectiveAccess">#IndirectQualifiedReflectiveAccess</a>&#160;&#183;</span> <span class="toc-item"><a href="#MoveModuleAndLayerClasses">#MoveModuleAndLayerClasses</a></span></p></div><div class="toc-section"><div class="title"><a href="#class-loaders">Class loaders</a></div><p class="toc-items"> <span class="toc-item"><a href="#AvoidConcealedPackageConflicts">#AvoidConcealedPackageConflicts</a>&#160;&#183;</span> <span class="toc-item"><a href="#PlatformClassLoader">#PlatformClassLoader</a>&#160;&#183;</span> <span class="toc-item"><a href="#ClassLoaderNames">#ClassLoaderNames</a></span></p></div><div class="toc-section"><div class="title"><a href="#versioning">Versioning</a></div><p class="toc-items"> <span class="toc-item"><a href="#StaticLayerConfiguration">#StaticLayerConfiguration</a>&#160;&#183;</span> <span class="toc-item"><a href="#MultipleModuleVersions">#MultipleModuleVersions</a>&#160;&#183;</span> <span class="toc-item"><a href="#VersionsInModuleNames">#VersionsInModuleNames</a>&#160;&#183;</span> <span class="toc-item"><a href="#VersionedDependences">#VersionedDependences</a>&#160;&#183;</span> <span class="toc-item"><a href="#VersionSyntax">#VersionSyntax</a>&#160;&#183;</span> <span class="toc-item"><a href="#ModuleIdentifiers">#ModuleIdentifiers</a></span></p></div><div class="toc-section"><div class="title"><a href="#layers">Layers</a></div><p class="toc-items"> <span class="toc-item"><a href="#NonHierarchicalLayers">#NonHierarchicalLayers</a>&#160;&#183;</span> <span class="toc-item"><a href="#DiscardableModules">#DiscardableModules</a>&#160;&#183;</span> <span class="toc-item"><a href="#LayerPrimitives">#LayerPrimitives</a></span></p></div><div class="toc-section"><div class="title"><a href="#tooling">Tooling</a></div><p class="toc-items"> <span class="toc-item"><a href="#BootstrapClassLoaderSearchInJVMTI">#BootstrapClassLoaderSearchInJVMTI</a>&#160;&#183;</span> <span class="toc-item"><a href="#ReflectiveAccessByInstrumentationAgents">#ReflectiveAccessByInstrumentationAgents</a></span></p></div></div>
+<h2 id="module-declarations">Module declarations</h2>
+<p class="issue" id="ModuleNameSyntax"><a class="anchor" href="#ModuleNameSyntax"><em>#ModuleNameSyntax</em></a> &#8212; Some people find the use of the same syntax for
+module names and package names to be confusing.  Should the recommended
+syntax for module names be changed to something else, <em>e.g.</em>, lower-case
+words separated by underscores?  Or should the syntax of module
+declarations be revised to expand <code>requires</code> into <code>requires module</code>, and
+<code>exports</code> into <code>exports package</code>, in order to disambiguate these two
+kinds of names?  Or is there some other solution?
+(<em>Cf.</em>&#160;<a href="#AutomaticModuleNames">#AutomaticModuleNames</a>.)  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-September/000127.html">R&#233;mi
+Forax</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-October/005023.html">Stephen
+Colebourne</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-November/000008.html">Paul
+Benedict</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> The resolution of
+<a href="#AutomaticModuleNames">#AutomaticModuleNames</a> strongly recommends that
+module names follow the reverse Internet domain-name convention, which
+has long been used for package names.</p>
+</blockquote>
+<p class="issue" id="ModuleNameCharacters"><a class="anchor" href="#ModuleNameCharacters"><em>#ModuleNameCharacters</em></a> &#8212; Module names are presently constrained to be
+Java identifiers.  Some existing module systems allow additional
+characters in module names, such as hyphens and slashes.  Should this
+restriction be lifted or, perhaps, should it somehow be made
+layer-specific?  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000234.html">David
+Lloyd</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Do not change the treatment of module names in source
+  code; they will remain qualified names.  Revise the encoding of module
+  names in compiled module-declaration class files to lift the current
+  constraints but adopt new, less onerous constraints that still provide
+  for the future evolution of the platform.  Revise the format of class
+  files to structure module and package names in a manner consistent with
+  that already used for other kinds of constrained names.
+  [<a href="mail:jpms-spec-experts/2016/12/09_13:45:46_-0800">Final proposal</a>; <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000468.html">first
+  proposal</a>]</p>
+</blockquote>
+<p class="issue" id="CompileTimeDependences"><a class="anchor" href="#CompileTimeDependences"><em>#CompileTimeDependences</em></a> &#8212; Provide a means to specify a module
+dependence that is mandatory at compile time but optional at run time,
+for use with libraries that are not strictly necessary but can be
+leveraged if present at run time.  (Detail: If a dependence is &#8220;optional
+at run time&#8221; then does the module system try to satisfy it during
+resolution but fail silently if it cannot, or does it ignore it during
+resolution but add the corresponding read edge to that module if it was
+resolved for some other reason?) [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-October/004915.html">Philippe
+Marschall</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005462.html">Stephen
+Colebourne</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005814.html">Juergen
+Hoeller</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-December/000015.html">Stephane
+Epardaud</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005847.html">Paul
+Benedict</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Extend the language of module declarations to allow the
+  <code>static</code> modifier to be used on a <code>requires</code> directive, to indicate
+  that a dependence is mandatory at compile time but optional in later
+  phases.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000306.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ModuleAnnotations"><a class="anchor" href="#ModuleAnnotations"><em>#ModuleAnnotations</em></a> &#8212; Should it be possible to annotate module
+declarations?  As <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-October/000153.html">previously
+discussed</a> this is
+technically feasible but it would add significant complexity.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-September/000131.html">Peter
+Kriens</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-December/000015.html">Stephane
+Epardaud</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2016-March/000029.html">Paul
+Benedict</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Allow arbitrary annotations to be placed on module
+  declarations. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000308.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ModuleDeprecation"><a class="anchor" href="#ModuleDeprecation"><em>#ModuleDeprecation</em></a> &#8212; If module declarations cannot be annotated,
+should there be some other way to deprecate modules?  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000263.html">R&#233;mi
+Forax</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Allow arbitrary annotations to be placed on module
+  declarations, and revise the <code>java.lang.Deprecated</code> annotation so that
+  it can be applied to
+  modules. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000308.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ExportAnnotation"><a class="anchor" href="#ExportAnnotation"><em>#ExportAnnotation</em></a> &#8212; Define a standard, source-retention <code>Export</code>
+annotation which can be used in a <code>package-info.java</code> file to indicate
+that the package is to be exported.  Tools that create <code>module-info.java</code>
+files could then interpret this annotation in order to generate
+corresponding <code>exports</code> clauses. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-December/000014.html">Paul
+Benedict</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Do not implement this feature, since it encourages a
+    practice that would reduce the readability of module declarations.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000613.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="CompilationWithConcealedPackages"><a class="anchor" href="#CompilationWithConcealedPackages"><em>#CompilationWithConcealedPackages</em></a> &#8212; An exported class can rely upon
+the name of a concealed class, <em>i.e.</em>, a class in a non-exported package,
+in various ways.  An exported class can, <em>e.g.</em>, declare that it
+<code>extends</code> a concealed class, or that one of its <code>public</code> methods has a
+formal parameter whose type is concealed.  When a compiler processes the
+source code of a module <code>M</code> that refers to an exported class of module
+<code>N</code>, to what degree must the compiler distinguish <code>N</code>&#8217;s concealed class
+(needed by <code>N</code>&#8217;s exported class) from a class in <code>M</code> with the same
+fully-qualified name?  In other words, given that a compiler knows that
+the &#8220;same&#8221; package exists in <code>M</code> as well as concealed in <code>N</code>, to what
+degree must the compiler differentiate the packages?  [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012524.html">Markus
+Keller</a>,
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-April/012404.html">Stephan
+Herrmann</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> <a href="//cr.openjdk.java.net/~mr/jigsaw/spec/#hist-CompilationWithConcealedPackages">Revise the
+ JLS</a>
+ to clarify how a Java language compiler is meant to differentiate
+ between packages with the same name in different modules. [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#CompilationWithConcealedPackages">EG
+ discussion</a>]</p>
+</blockquote>
+<p class="issue" id="ResolutionAtCompileTime"><a class="anchor" href="#ResolutionAtCompileTime"><em>#ResolutionAtCompileTime</em></a> &#8212; When a compiler processes the source code
+of a module <code>M</code>, the JLS mandates that the compiler use the Java Platform
+Module System to &#8220;resolve&#8221; <code>M</code>&#8217;s dependences and ultimately compute the
+modules that <code>M</code> &#8220;reads&#8221;.  However, the Java Platform Module System is
+not specified within the JLS, but rather in the <code>java.lang.module</code> API
+specification.  Which parts of the API specification have bearing on the
+resolution of dependences at compile time, and where is the definition of
+&#8220;reads&#8221; in the API specification?  [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012524.html">Markus
+Keller</a>,
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-April/012301.html">Jayaprakash
+Artanareeswaran</a>,
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-April/012425.html">Stephan
+Herrmann</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> <a href="//cr.openjdk.java.net/~mr/jigsaw/spec/#hist-ResolutionAtCompileTime">Rewrite the specification of the module system&#8217;s
+ resolution
+ algorithm</a>,
+ in the <a href="//cr.openjdk.java.net/~mr/jigsaw/spec/api/java/lang/module/package-summary.html"><code>java.lang.module</code></a> package, in order to clarify the
+ definition of readability and the means by which dependences are
+ resolved at compile time.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#ResolutionAtCompileTime">EG
+ discussion</a>]</p>
+</blockquote>
+<p class="issue" id="RestrictedKeywords"><a class="anchor" href="#RestrictedKeywords"><em>#RestrictedKeywords</em></a> &#8212; The grammar of module declarations includes
+several tokens, such as <code>module</code> and <code>transitive</code>, that were
+traditionally lexed as identifiers.  In support of backward
+compatibility, the JLS deems these tokens to be lexed as identifiers
+unless they appear as &#8220;restricted keywords&#8221; in a module declaration, in
+which case they are to be lexed as keywords.  This rule can, however, be
+difficult to implement because it is context-sensitive, and hence beyond
+the capabilities of some parser generators.  [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012524.html">Markus
+Keller</a>,
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012464.html">Jayaprakash
+Artanareeswaran</a>,
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012498.html">Stephan
+Herrmann</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> <a href="//cr.openjdk.java.net/~mr/jigsaw/spec/#hist-RestrictedKeywords">Revise the
+  JLS</a>
+  to clarify the tokenization issues that arise for the character
+  sequence <code>"requires transitive"</code>.  Do not adopt an alternative syntax,
+  which would simplify compiler implementations but sacrifice
+  readability.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-23#RestrictedKeywords">EG
+  discussion</a>]</p>
+</blockquote>
+<h2 id="module-artifacts">Module artifacts</h2>
+<p class="issue" id="MultiModuleExecutableJARs"><a class="anchor" href="#MultiModuleExecutableJARs"><em>#MultiModuleExecutableJARs</em></a> &#8212; Provide a means to create an executable
+modular &#8220;uber-JAR&#8221; that contains more than one module, preserving module
+identities and boundaries, so that an entire application can be shipped
+as a single artifact.  [This issue has not come up in e-mail but was
+raised multiple times in person at JavaOne 2015, Devoxx BE 2015, and
+FOSDEM 2016.]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer to future release.  This feature could indeed be
+    useful, but it is not required for the initial release and could be
+    added in a later revision.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000612.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="MultiModuleJARs"><a class="anchor" href="#MultiModuleJARs"><em>#MultiModuleJARs</em></a> &#8212; Provide a means to package more than one module
+in a single artifact, while preserving module identities and boundaries.
+(This is a generalization of
+<a href="#MultiModuleExecutableJARs">#MultiModuleExecutableJARs</a>.) [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-September/000002.html">Stefan
+Fuchs</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer to future release.  This feature could indeed be
+    useful, but it is not required for the initial release and could be
+    added in a later revision.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-23#MultiModuleJARs">EG
+    discussion</a>,
+    <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000612.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ReifiedModuleGraphs"><a class="anchor" href="#ReifiedModuleGraphs"><em>#ReifiedModuleGraphs</em></a> &#8212; Define a means to record, in some type of
+artifact, the module graph that results from resolving a given main
+module against a given application module path.  The artifact could
+contain full copies of the corresponding module artifacts, or references
+to such artifacts, or some combination of the two.  At run time such an
+artifact could be used to create a new layer. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-September/000133.html">Peter
+Kriens</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer to future release.  This feature could indeed be
+    useful, but it is not required for the initial release and could be
+    added in a later revision.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000612.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="AddExportsInManifest"><a class="anchor" href="#AddExportsInManifest"><em>#AddExportsInManifest</em></a> &#8212; Using a command-line option such as
+<code>--add-exports</code> to make JDK-internal APIs available to existing code is
+difficult, if not impossible, for applications that are delivered as
+executable JAR files.  To ease migration, consider allowing such a JAR
+file to include the equivalent of such options in its <code>MANIFEST.MF</code> file.
+(<em>Cf.</em>&#160;<a href="#ReflectiveAccessToNonExportedTypes">#ReflectiveAccessToNonExportedTypes</a>.)
+[<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005745.html">Simon Nash</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Define two new JAR-file manifest attributes to allow a
+  package in an explicit module to be exported, or exported privately, at
+  run time.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-September/000391.html">Proposal</a>]</p>
+</blockquote>
+<h2 id="module-descriptors">Module descriptors</h2>
+<p class="issue" id="ClassFileModuleName"><a class="anchor" href="#ClassFileModuleName"><em>#ClassFileModuleName</em></a> &#8212; The name of a module is not a simple UTF-8
+string but is, rather, derived from the value of the <code>this_class</code> field
+of the <code>ClassFile</code> structure, which is awkward.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-July/000341.html">R&#233;mi
+Forax</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Revise the binary form of module declarations to add an
+    explicit module-name field and to zero out the <code>this_class</code> field.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000466.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ClassFileAccPublic"><a class="anchor" href="#ClassFileAccPublic"><em>#ClassFileAccPublic</em></a> &#8212; The <code>ACC_PUBLIC</code> constant in a <code>requires_flags</code>
+should be encoded as <code>0x0001</code>, as it is elsewhere in the JVMS, rather
+than as <code>0x0020</code>, which has different meanings in other contexts.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-July/000341.html">R&#233;mi
+Forax</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Rename this constant to <code>ACC_TRANSITIVE</code>.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-July/000350.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ClassFileAccModule"><a class="anchor" href="#ClassFileAccModule"><em>#ClassFileAccModule</em></a> &#8212; The <code>ACC_MODULE</code> constant is currently
+specified to have the value <code>0x8000</code>.  This is the last available bit
+remaining across all of the various <code>access_flags</code> fields of a class
+file, and thus should be reserved for some unspecified future purpose
+where it may be useful to use the same value in all such fields.
+Alternative candidates for <code>ACC_MODULE</code> include <code>0x0040</code> (overlaps with
+<code>ACC_VOLATILE</code> and <code>ACC_BRIDGE</code>) and <code>0x0080</code> (<code>ACC_TRANSIENT</code> and
+<code>ACC_VARARGS</code>).  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-July/000346.html">R&#233;mi
+Forax</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Do not change the value of this constant; there are
+    other, better ways to cope with the future.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000467.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="StandardModuleAttributes"><a class="anchor" href="#StandardModuleAttributes"><em>#StandardModuleAttributes</em></a> &#8212; The current draft defines a set of
+optional module-info class-file attributes for extended information not
+required by the module system but useful to tools: A version string, the
+name of the module&#8217;s main class, the names of the module&#8217;s non-exported
+packages, and, for modules that contain native code, the operating-system
+name and version and the processor-architecture name.  Is this the right
+set of extended attributes?  Should others be considered?  Candidates
+include, but are not limited to: Maintainer contact information, project
+URL, originating source-code repository URL and changeset identification,
+and copyright and license notices (or references to same).
+(<em>Cf.</em>&#160;the <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/#os-specific-module-packaging">OS-specific module packaging requirement</a>.)
+[<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-September/000138.html">Peter Kriens</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Standardize the attributes presently in the
+specification.  A future specification may standardize additional
+attributes.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#StandardModuleAttributes">EG
+discussion</a>]</p>
+</blockquote>
+<h2 id="automatic-modules">Automatic modules</h2>
+<p class="issue" id="CustomizableAutomaticModuleNameMapping"><a class="anchor" href="#CustomizableAutomaticModuleNameMapping"><em>#CustomizableAutomaticModuleNameMapping</em></a> &#8212; Provide a means to
+customize the algorithm that computes the names and version strings of
+<a href="http://download.java.net/java/jigsaw/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">automatic modules</a>. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2016-March/000027.html">Paul
+Benedict</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Extend the <code>java.lang.module.ModuleDescriptor.Builder</code>
+  API so that it can be used to create automatic as well as explicit
+  modules.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000312.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ModuleNameInManifest"><a class="anchor" href="#ModuleNameInManifest"><em>#ModuleNameInManifest</em></a> &#8212; For ease of migration, consider allowing the
+name of a module to be specified in the <code>MANIFEST.MF</code> file of a JAR file.
+If a JAR file with such a manifest entry is not a modular JAR (<em>i.e.</em>, it
+has no <code>module-info.class</code> file), but is used as an automatic module,
+then the name of the automatic module is that specified in the manifest
+rather than that derived from the name of the JAR file itself.  This
+would allow the maintainer of an existing library to specify a preferred
+module name simply by updating the library&#8217;s manifest.  If a JAR file
+with such a manifest entry is a modular JAR then the module name in the
+<code>module-info.class</code> file determines the module name, and the name in the
+manifest is expected to match.  In both cases, the presence of the module
+name in the manifest is useful to tools that must run on older versions
+of the platform, since they can use the existing <code>java.util.jar</code> API to
+read the module name.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2016-March/000024.html">Paul
+Benedict</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> <a href="//cr.openjdk.java.net/~mr/jigsaw/spec/#hist-ModuleNameInManifest">Implement this
+suggestion</a>
+as part of the resolution of
+<a href="#AutomaticModuleNames">#AutomaticModuleNames</a>.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#AutomaticModuleNames--ModuleNameInManifest">EG
+discussion</a>;
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-May/000687.html">proposal</a>; earlier
+discussion: <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-February/000582.html">Mark
+Reinhold</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000642.html">Robert
+Scholte</a>]</p>
+</blockquote>
+<p class="issue" id="AutomaticModuleNames"><a class="anchor" href="#AutomaticModuleNames"><em>#AutomaticModuleNames</em></a> &#8212; Revise the algorithm that computes the names
+of automatic modules to include the Maven group identifier, when
+available in a JAR file&#8217;s <code>pom.properties</code> file, so that module names are
+less likely to collide, or else drop the automatic-modules feature
+entirely, since it may be more trouble than it&#8217;s worth.
+(<em>Cf.</em>&#160;<a href="#ModuleNameSyntax">#ModuleNameSyntax</a>.)  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-January/000537.html">Robert
+Scholte</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Keep automatic modules, implement
+<a href="#ModuleNameInManifest">#ModuleNameInManifest</a>, and strongly recommend
+that module names follow the reverse Internet domain-name convention.
+[<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#AutomaticModuleNames--ModuleNameInManifest">EG
+discussion</a>;
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-May/000687.html">final proposal</a>; <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-April/000667.html">first
+proposal</a>; discussion
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-April/thread.html#11955">here</a>
+and
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/thread.html#12515">here</a>;
+[<a href="mail:jigsaw-dev/2017/01/27_06:11:14_-0800">Stephen Colebourne</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-February/000582.html">Mark
+Reinhold</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-February/011434.html">Stephen
+Colebourne</a>]</p>
+</blockquote>
+<h2 id="module-graphs">Module graphs</h2>
+<p class="issue" id="CyclicDependences"><a class="anchor" href="#CyclicDependences"><em>#CyclicDependences</em></a> &#8212; The current draft disallows cycles when the
+module graph is initially resolved at compile time, link time, and run
+time.  Cycles can arise later on at run time if readability edges are
+added for automatic modules, or via reflection.  The rationale for
+disallowing cycles during resolution is that it makes the module graph
+easier to reason about, it simplifies the module system itself, and that,
+philosophically, any modules involved in a cycle are logically one module
+anyway, so they should be defined as such in the first place.  This
+constraint is not, however, a documented requirement, and some have
+argued that cycles should be permitted. [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005667.html">Jochen
+Theodorou</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-December/000015.html">Stephane
+Epardaud</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Cyclic dependences will not be supported at this time.
+They could be supported in a later revision, if necessary, after a
+thorough analysis of the impact of this change on both the specification
+and the implementation.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-22#CyclicDependences">EG
+discussion</a>;
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-February/000585.html">Mark Reinhold</a>;
+later discussion: <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000642.html">Robert
+Scholte</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000646.html">Mark
+Reinhold</a>;
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000458.html">earlier discussion</a>]</p>
+</blockquote>
+<p class="issue" id="MutableConfigurations"><a class="anchor" href="#MutableConfigurations"><em>#MutableConfigurations</em></a> &#8212; Configurations are immutable: Once created,
+they cannot be modified.  Some have argued that this will make it
+impossible for container applications to add and remove modules at run
+time.  Should configurations, and hence the aspects of layers that depend
+upon configurations, be made mutable instead?  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000239.html">David
+Lloyd</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Mutable configurations will not be supported.  They add
+complexity and risk, and are not necessary to the achievement of this
+JSR&#8217;s stated goal.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-February/000585.html">Mark
+Reinhold</a>; <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000458.html">earlier
+discussion</a>]</p>
+</blockquote>
+<p class="issue" id="LazyConfigurationAndInstantiation"><a class="anchor" href="#LazyConfigurationAndInstantiation"><em>#LazyConfigurationAndInstantiation</em></a> &#8212; The construction of a
+configuration loads all of the relevant module descriptors, and the
+instantiation of a configuration into a layer defines all of its modules
+to the virtual machine.  There is some concern that this could result in
+significant startup overhead for layers with thousands or tens of
+thousands of modules, which some consider to be realistic scenarios.  If
+the startup overhead is actually that bad in such settings, should
+configuration and layer creation be revised to use incremental
+algorithms? [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000261.html">David
+Lloyd</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Lazy configuration and instantiation will not be
+supported.  This adds complexity and risk, and is not necessary to the
+achievement of this JSR&#8217;s stated goal.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-February/000585.html">Mark
+Reinhold</a>; <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000458.html">earlier
+discussion</a>]</p>
+</blockquote>
+<h2 id="services">Services</h2>
+<p class="issue" id="ServiceLoaderEnhancements"><a class="anchor" href="#ServiceLoaderEnhancements"><em>#ServiceLoaderEnhancements</em></a> &#8212; The module system encourages the use of
+services for loose coupling, but the <code>ServiceLoader</code> class is not very
+flexible.  Consider enhancing it so that (1) neither a provider class nor
+its no-args constructor need be declared <code>public</code>, (2) a provider can be
+a singleton, or perhaps a collection of singletons, and (3) the classes
+of the available providers can be inspected and selected prior to
+instantiation.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-observers/2016-July/000452.html">Stephen
+Colebourne</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Enhance the <code>ServiceLoader</code> API to implement
+  suggestions&#160;(2) and&#160;(3), but not&#160;(1).
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-September/000395.html">Proposal</a>]</p>
+</blockquote>
+<h2 id="reflection">Reflection</h2>
+<p class="issue" id="ClassFilesAsResources"><a class="anchor" href="#ClassFilesAsResources"><em>#ClassFilesAsResources</em></a> &#8212; If a type is visible and was loaded from a
+class file then it should be possible to read that file by invoking the
+<code>getResourceAsStream</code> method of the type&#8217;s class loader, as it is in
+earlier releases. [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-September/004486.html">Uwe
+Schindler</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-November/005240.html">Rafael
+Winterhalter</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Special-case resource names ending in <code>".class"</code> so that
+  they can be located by code in any module.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-September/000392.html">Final proposal</a>;
+  <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000309.html">original proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ResourceEncapsulation"><a class="anchor" href="#ResourceEncapsulation"><em>#ResourceEncapsulation</em></a> &#8212; The <code>Module::getResourceAsStream</code> method
+can be used to read the resources of any named module, without
+restriction, which violates the <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/#resource-encapsulation">resource encapsulation requirement</a>.
+This method should be restricted somehow so that only
+&#8220;suitably-privileged&#8221; code (for some definition of that term) can access
+resources in a named module other than its own.  An alternative is to
+drop this requirement
+(<em>cf.</em>&#160;<a href="#ClassFilesAsResources">#ClassFilesAsResources</a>). [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-October/000163.html">Mark
+Reinhold</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Extend the notion of open modules and open packages,
+  introduced for
+  <a href="#ReflectiveAccessToNonExportedTypes">#ReflectiveAccessToNonExportedTypes</a>,
+  to govern whether a resource defined in a named module can be located
+  by code in some other
+  module. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-September/000392.html">Final proposal</a>;
+  <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000309.html">original proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ResourceExistenceAndSize"><a class="anchor" href="#ResourceExistenceAndSize"><em>#ResourceExistenceAndSize</em></a> &#8212; Given a <code>Module</code> object and a resource
+name, should there be a way to determine whether that resource exists in
+that module and, if it does exist, what its size is, without actually
+opening the resource as a stream?  One way to do this would be to
+introduce a new abstraction to represent resources.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000245.html">David
+Lloyd</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer to future release.  This feature could indeed be
+    useful, but it is not required for the initial release and could be
+    added in a later revision.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000614.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ReflectiveAccessToNonExportedTypes"><a class="anchor" href="#ReflectiveAccessToNonExportedTypes"><em>#ReflectiveAccessToNonExportedTypes</em></a> &#8212; Some kinds of framework
+libraries require reflective access to members of the non-exported types
+of other modules; examples include dependency injection (Guice),
+persistence (JPA), debugging tools, code-automation tools, and
+serialization (XStream).  In some cases the particular library to be used
+is not known until run time (<em>e.g.</em>, Hibernate and EclipseLink both
+implement JPA).  This capability is also sometimes used to work around
+bugs in unchangeable code.  Reflective access to non-exported packages
+can, at present, only be enabled via command-line flags, which is
+extremely awkward
+(<em>cf.</em>&#160;<a href="#AddExportsInManifest">#AddExportsInManifest</a>).  Provide an
+easier way for reflective code to access such non-exported types.
+[<a href="mail:jigsaw-dev/2015/11/15_03:03:20_-0800">Reinier Zwitserloot</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-November/005330.html">Paul
+Benedict</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-November/005380.html">Alan
+Snyder</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-December/000205.html">R&#233;mi
+Forax</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005745.html">Simon
+Nash</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Extend the language of module declarations with the
+  concept of <em>open</em> modules and introduce the new per-package directive
+  <code>open</code> to allow all of the non-public elements of a package, or else
+  such elements of specific packages, to be accessed via the
+  <code>AccessibleObject::setAccessible</code> method of the core reflection API.
+  Rename <code>requires public</code> to <code>requires transitive</code> to avoid confusion.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-October/000430.html">Final proposal</a>;
+  <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-September/000390.html">second proposal</a>;
+  <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000307.html">first proposal</a>]</p>
+</blockquote>
+<p class="issue" id="AwkwardStrongEncapsulation"><a class="anchor" href="#AwkwardStrongEncapsulation"><em>#AwkwardStrongEncapsulation</em></a> &#8212; A non-public element of an exported
+package can still be accessed via the <code>AccessibleObject::setAccessible</code>
+method of the core reflection API.  The only way to strongly encapsulate
+such an element is to move it to a non-exported package.  This makes it
+awkward, at best, to encapsulate the internals of a package that defines
+a public API.  [Martin Buchholz &amp; Aleksey Shipilev, private
+communication, August 2016]</p>
+<blockquote>
+<p><strong>Resolution</strong> (see that for
+  <a href="#ReflectiveAccessToNonExportedTypes">#ReflectiveAccessToNonExportedTypes</a>)</p>
+</blockquote>
+<p class="issue" id="ReflectionWithoutReadability"><a class="anchor" href="#ReflectionWithoutReadability"><em>#ReflectionWithoutReadability</em></a> &#8212; Having to add read edges dynamically
+just to enable reflection is painful, and could slow migration and
+adoption.  Consider relaxing the access model so that reflection does not
+require, or perhaps simply assumes, readability. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2015-December/000205.html">R&#233;mi
+Forax</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005748.html">Peter
+Levart</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Adopt the second suggested alternative.  Revise the core
+  reflection APIs in the <code>java.lang.reflect</code> package to assume that any
+  module that contains code that invokes a reflective operation can read
+  the module that defines the types that are the subject of that
+  operation.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000231.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ReadabilityAddedByLayerCreator"><a class="anchor" href="#ReadabilityAddedByLayerCreator"><em>#ReadabilityAddedByLayerCreator</em></a> &#8212; Provide a means by which the code
+that creates a layer can add readability edges from the modules in that
+layer to other modules, whether those modules are in that layer or in
+other layers. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2016-August/000062.html">Thomas
+Watson</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Revise <code>java.lang.reflect.Layer</code> so that the
+  multi-parent layer-creation methods added for
+  <a href="#NonHierarchicalLayers">#NonHierarchicalLayers</a> return a <code>Controller</code>
+  capability object that defines an <code>addReads</code> method.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000456.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="IndirectQualifiedReflectiveAccess"><a class="anchor" href="#IndirectQualifiedReflectiveAccess"><em>#IndirectQualifiedReflectiveAccess</em></a> &#8212; Provide a means by which a
+client module can grant qualified reflective access to a framework module
+that is not known at compile time, assuming that the name of some other
+module that represents the framework module is known.  A canonical
+example of this case is a client POJO module compiled against a module
+that defines the JPA API.  At run time the client module, or a container
+or some other code acting on its behalf, must grant qualified reflective
+access to its POJO packages to the JPA implementation in actual
+use. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-October/000420.html">David Lloyd</a>,
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-October/000434.html">Mark Reinhold</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Revise <code>java.lang.reflect.Module::addOpens</code> so that a
+    module can delegate access to packages that are open to it; extend
+    the layer <code>Controller</code> capability proposed for
+    <a href="#ReadabilityAddedByLayerCreator">#ReadabilityAddedByLayerCreator</a>
+    with an <code>addOpens</code> method; and extend the <code>java.lang.invoke</code> API so
+    that framework authors can adopt method handles in preference to the
+    core reflection API.
+    [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000457.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="MoveModuleAndLayerClasses"><a class="anchor" href="#MoveModuleAndLayerClasses"><em>#MoveModuleAndLayerClasses</em></a> &#8212; Move the <code>Module</code> and <code>Layer</code> classes,
+and a related exception class, from the <code>java.lang.reflect</code> package up
+into the <code>java.lang</code> package.  This will improve conceptual clarity, be
+consistent with the past, and leave room for the future.</p>
+<blockquote>
+<p><strong>Resolution</strong> [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#MoveModuleAndLayerClasses">EG
+discussion</a>;
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000663.html">proposal</a>]</p>
+</blockquote>
+<h2 id="class-loaders">Class loaders</h2>
+<p class="issue" id="AvoidConcealedPackageConflicts"><a class="anchor" href="#AvoidConcealedPackageConflicts"><em>#AvoidConcealedPackageConflicts</em></a> &#8212; Provide a simple means to load
+modules, without using reflection, when they contain non-exported
+packages of the same name.  This could be done by loading them via
+different class loaders or, alternatively, via
+<a href="#StaticLayerConfiguration">#StaticLayerConfiguration</a>. [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-October/005029.html">Karl
+Sanders</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer a specific solution of this problem to a future
+  release since effective, though crude, solutions already exist and the
+  lack of an immediate solution should not block developers who want to
+  modularize existing applications.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-22#AvoidConcealedPackageConflicts">EG
+  discussion</a>;
+  <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000611.html">proposal</a>]</p>
+</blockquote>
+<p class="issue" id="PlatformClassLoader"><a class="anchor" href="#PlatformClassLoader"><em>#PlatformClassLoader</em></a> &#8212; Add a static method to
+<code>java.lang.ClassLoader</code> to return a class loader via which all of the
+built-in Java SE and JDK types are visible.  (This is, at present, the
+loader formerly known as the &#8220;extension&#8221; class loader.) [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005678.html">Alan
+Snyder</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Add the <a href="http://download.java.net/java/jigsaw/docs/api/java/lang/ClassLoader.html#getPlatformClassLoader--">suggested method</a>.</p>
+</blockquote>
+<p class="issue" id="ClassLoaderNames"><a class="anchor" href="#ClassLoaderNames"><em>#ClassLoaderNames</em></a> &#8212; Enhance class loaders to have optional names, so
+that external module systems can provide better diagnostics.  When the
+run-time system generates a stack trace or an exception message that
+mentions a module name and version, if present, then it should also
+insert the name of that module&#8217;s class loader, if present.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-July/000347.html">David
+Lloyd</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-July/000361.html">Mark
+Reinhold</a>].</p>
+<blockquote>
+<p><strong>Resolution</strong> Add a string-returning <code>getName()</code> method to
+  <code>java.lang.ClassLoader</code> and corresponding constructors to that class,
+  <code>java.net.URLClassLoader</code>, and <code>java.security.SecureClassLoader</code>.
+  Arrange for stack traces to convey class-loader names when present.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-September/000394.html">Proposal</a>]</p>
+</blockquote>
+<h2 id="versioning">Versioning</h2>
+<p class="issue" id="StaticLayerConfiguration"><a class="anchor" href="#StaticLayerConfiguration"><em>#StaticLayerConfiguration</em></a> &#8212; Layers can, at present, only be created
+dynamically, via reflection.  If there were a way to specify them
+statically, <em>i.e.</em>, at startup time, then they could be used to solve the
+kinds of version conflicts that are presently addressed via shading or
+shadowing. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-October/000005.html">Ron
+Pressler</a>, <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-October/004954.html">Nicolai
+Parlog</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer a specific solution of this problem to a future
+  release since effective, though crude, solutions already exist and the
+  lack of an immediate solution should not block developers who want to
+  modularize existing
+  applications. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000611.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="MultipleModuleVersions"><a class="anchor" href="#MultipleModuleVersions"><em>#MultipleModuleVersions</em></a> &#8212; Allow multiple distinct modules of a given
+name to be loaded in a convenient fashion, without using reflection.
+This could be done by creating new layers automatically, or by relaxing
+the constraints on multiple versions within a layer, or by some other
+means (<em>cf.</em>&#160;<a href="#StaticLayerConfiguration">#StaticLayerConfiguration</a>,
+<a href="#AvoidConcealedPackageConflicts">#AvoidConcealedPackageConflicts</a>).
+Addressing this issue may entail reconsidering the <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/#multiple-versions">multiple versions
+non-requirement</a>. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-October/000006.html">Mike
+Hearn</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer a specific solution of this problem to a future
+  release since effective, though crude, solutions already exist and the
+  lack of an immediate solution should not block developers who want to
+  modularize existing
+  applications. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000611.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="VersionsInModuleNames"><a class="anchor" href="#VersionsInModuleNames"><em>#VersionsInModuleNames</em></a> &#8212; Some have argued that library maintainers
+will be tempted to encode major version numbers, or even full version
+numbers, in module names.  Is there some way we can guide people away
+from doing that? [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-observers/2015-September/000130.html">Mike
+Hearn</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-observers/2015-December/000279.html">Paul
+Benedict</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Abandon the <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-December/000516.html">previous
+proposal</a> to mandate
+that module names appearing in source-form module declarations must both
+start and end with <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-JavaLetter">&#8220;Java letters&#8221;</a>.  Revise the
+automatic-module naming algorithm to allow digits at the end of module
+names. [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#VersionsInModuleNames">EG
+discussion</a>;
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000659.html">proposal</a>;
+discussion: <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000642.html">Robert
+Scholte</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000646.html">Mark
+Reinhold</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-March/000643.html">Tim
+Ellison</a>; <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-September/000393.html">original
+proposal</a>]</p>
+</blockquote>
+<p class="issue" id="VersionedDependences"><a class="anchor" href="#VersionedDependences"><em>#VersionedDependences</em></a> &#8212; Consider allowing specific version strings,
+or perhaps version constraints, as an optional element of <code>requires</code>
+clauses in module declarations.  Failing that, consider allowing specific
+version strings, or perhaps version constraints, to be added to the
+dependences recorded in a compiled module descriptor; this would, <em>e.g.</em>,
+allow a compiler or build system to record the versions of the modules
+against which a particular module was compiled, for use by other tools.
+In either case, if such version information is merely informative then it
+will still honor the <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/#version-selection">version selection non-requirement</a>; if such
+version information is interpreted by the module system then that
+requirement may come into question. [<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2015-December/005795.html">Cristiano
+Mariano</a>, <a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2015-December/000015.html">Stephane
+Epardaud</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> When compiling a module that depends on some other
+  modules, record the version strings of those modules, if available, in
+  the resulting module
+  descriptor. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-December/000516.html">Proposal</a>,
+  as amended per a suggestion by <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-January/000566.html">R&#233;mi
+  Forax</a>]</p>
+</blockquote>
+<p class="issue" id="VersionSyntax"><a class="anchor" href="#VersionSyntax"><em>#VersionSyntax</em></a> &#8212; Revise the syntax of <a href="http://download.java.net/java/jigsaw/docs/api/java/lang/module/ModuleDescriptor.Version.html">module version strings</a>
+to accommodate a wider variety of existing version-string schemes [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000268.html">David
+Lloyd</a>].  Alternatively,
+abandon the requirement to <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/#non-prescriptive-version-strings">impose a total order on version
+strings</a> so that we don&#8217;t even have to bother to parse them
+[<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000295.html">R&#233;mi Forax</a>].</p>
+<blockquote>
+<p><strong>Resolution</strong> The present API is adequate; no further changes are
+  needed at this time.  [<a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-22#VersionSyntax">EG
+  discussion</a>]</p>
+</blockquote>
+<p class="issue" id="ModuleIdentifiers"><a class="anchor" href="#ModuleIdentifiers"><em>#ModuleIdentifiers</em></a> &#8212; To leave open the possibility in a future
+release of identifying modules not just by their names but also by some
+sort of versioning information, refactor the <code>java.lang.module</code> API to
+introduce a <code>ModuleId</code> class and to use instances of that class rather
+than bare <code>String</code> objects wherever modules are named.  This class will,
+for now, simply wrap a string.  In a future release it can be enhanced,
+if needed, also to carry versioning information. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-May/000730.html">Mark
+Reinhold</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Defer this to a future release.  Multiple versions of
+  modules of the same name can, if necessary, be handled in a future
+  revision of this specification almost entirely by overloading the
+  existing <code>String</code>-consuming API methods. [EG discussion
+  <a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-22#ModuleIdentifiers">here</a>
+  and
+  <a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-18#ModuleIdentifiers">here</a>]</p>
+</blockquote>
+<h2 id="layers">Layers</h2>
+<p class="issue" id="NonHierarchicalLayers"><a class="anchor" href="#NonHierarchicalLayers"><em>#NonHierarchicalLayers</em></a> &#8212; Layers are presently constrained to be
+hierarchical, <em>i.e.</em>, each layer has at most one parent.  Should this
+restriction be relaxed so that a layer can have more than one parent?
+Some have argued that this will be essential to the adoption of the
+module system by a future version of the Java EE Platform.  It would also
+enable bidirectional interoperation with existing module systems such as
+OSGi.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-March/000235.html">David Lloyd</a>,
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-October/000410.html">Mark Reinhold</a>,
+<a href="//mail.openjdk.java.net/pipermail/jpms-spec-observers/2016-October/000574.html">Thomas Watson</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Add static methods that take a list of parents, rather
+  than a single parent, to <code>java.lang.module.Configuration</code> and
+  <code>java.lang.reflect.Layer</code>.
+  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-October/000442.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="DiscardableModules"><a class="anchor" href="#DiscardableModules"><em>#DiscardableModules</em></a> &#8212; Provide a means by which a sub-graph of modules
+within a layer can be discarded, so that both those modules and their
+class loaders can be reclaimed. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2016-August/000062.html">Thomas
+Watson</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Discardable modules will not be supported.  They add
+complexity and risk, and are not necessary to the achievement of this
+JSR&#8217;s stated goal.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-February/000585.html">Mark
+Reinhold</a>; <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000458.html">earlier
+discussion</a>]</p>
+</blockquote>
+<p class="issue" id="LayerPrimitives"><a class="anchor" href="#LayerPrimitives"><em>#LayerPrimitives</em></a> &#8212; Extend the <code>Layer.Controller</code> capability added for
+<a href="#ReadabilityAddedByLayerCreator">#ReadabilityAddedByLayerCreator</a> to
+expose the underlying run-time and virtual-machine primitives used to
+implement the module system, for the benefit of other module systems.
+[<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-December/000507.html">David Lloyd</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Extend the <code>Layer.Controller</code> capability with an
+  <code>addExports</code> method, akin to the method of the same name already in the
+  <code>Module</code> class.  This method is strictly less powerful than the
+  existing <code>addOpens</code> method, and thus presents little additional risk,
+  and is potentially useful to frameworks and test harnesses.  Do not add
+  any other layer primitives at this time: They add complexity and risk,
+  they are not necessary to the achievement of this JSR&#8217;s stated goal,
+  and they could be added in a future release if needed.  [EG discussion
+  <a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-22#LayerPrimitives">here</a>
+  and
+  <a href="//openjdk.java.net/projects/jigsaw/spec/minutes/2017-05-23#LayerPrimitives">here</a>;
+  <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2017-February/000585.html">Mark Reinhold</a>;
+  <a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-November/000458.html">earlier discussion</a>]</p>
+</blockquote>
+<h2 id="tooling">Tooling</h2>
+<p class="issue" id="BootstrapClassLoaderSearchInJVMTI"><a class="anchor" href="#BootstrapClassLoaderSearchInJVMTI"><em>#BootstrapClassLoaderSearchInJVMTI</em></a> &#8212; The <a href="http://docs.oracle.com/javase/8/docs/platform/jvmti/jvmti.html">JVM TI API</a> defines
+a function, <a href="http://docs.oracle.com/javase/8/docs/platform/jvmti/jvmti.html#AddToBootstrapClassLoaderSearch"><code>AddToBootstrapClassLoaderSearch</code></a>, by which an
+instrumentation agent can append a file-system path element to the
+bootstrap class loader&#8217;s class path.  The bootstrap class path, as such,
+no longer exists, but this function remains supported for now.  Should
+this function be deprecated, with the intent to remove it in a future
+release, or should it remain supported?  It appears to be critical to the
+operation of at least one popular instrumentation agent.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2016-March/000020.html">Andrew
+Dinn</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Retain this method.  Do not deprecate
+    it. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000311.html">Proposal</a>]</p>
+</blockquote>
+<p class="issue" id="ReflectiveAccessByInstrumentationAgents"><a class="anchor" href="#ReflectiveAccessByInstrumentationAgents"><em>#ReflectiveAccessByInstrumentationAgents</em></a> &#8212; As noted in the related
+issue
+<a href="#ReflectiveAccessToNonExportedTypes">#ReflectiveAccessToNonExportedTypes</a>,
+the core reflection API cannot be used to gain access to members of
+packages that are not exported by their defining modules.  Even if that
+issue is addressed for the use cases cited, a distinct use case is that
+of instrumentation agents that need to enable injected code to invoke
+non-public methods and access non-public fields.  A possible solution for
+this use case is specifically to provide instrumentation agents with the
+ability to use core reflection, or some equivalent, even on elements of
+non-exported packages.  [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-comments/2016-March/000020.html">Andrew
+Dinn</a>]</p>
+<blockquote>
+<p><strong>Resolution</strong> Extend the <code>java.lang.instrument.Instrumentation</code>
+  interface, and the corresponding JVM TI native API, to support a
+  <code>redefineModule</code> method, roughly analogous to the existing
+  <code>redefineClasses</code>
+  method. [<a href="//mail.openjdk.java.net/pipermail/jpms-spec-experts/2016-June/000310.html">Proposal</a>;
+  evaluation by <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2016-July/008856.html">Andrew Dinn</a>]</p>
+</blockquote></body></html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>The OpenJDK Charter</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    BODY { padding-bottom: 100%; }
+    DIV.charter { margin-top: 4ex; padding-top: 6ex;
+      border: 0px; border-top: 1px; border-style: solid; border-color: black; }
+
+        .charter { line-height: 1.1; }
+        .charter table { border-collapse:collapse; border-spacing:0; empty-cells:show }
+        .charter td, .charter th { vertical-align:top; }
+        .charter h1, .charter h2, .charter h3, .charter h4, .charter h5, .charter h6 { clear:both }
+        .charter ol, .charter ul { padding:0; }
+        .charter * { margin:0; }
+        .charter *.Caption { font-family:Thorndale; font-size:12pt; margin-top:0.0835in; margin-bottom:0.0835in; text-align:justify ! important; font-style:italic; }
+        .charter *.Footer { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.Hangingindent { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0.25in; margin-right:0.25in; text-indent:0inch; }
+        .charter *.Header { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.Heading { font-family:'Times New Roman'; font-size:16pt; margin-top:0.2in; margin-bottom:0.2in; text-align:center ! important; }
+        .charter *.Heading1 { font-family:'Times New Roman'; font-size:115%; margin-top:0.2in; margin-bottom:0.2in; text-align:center ! important; font-weight:bold; }
+        .charter *.Heading10 { font-family:'Times New Roman'; font-size:75%; margin-top:0.2in; margin-bottom:0.2in; text-align:center ! important; font-weight:bold; }
+        .charter *.Index { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.List { font-family:Thorndale; font-size:12pt; margin-top:0in; margin-bottom:0.0835in; text-align:justify ! important; }
+        .charter *.P1 { font-family:'Times New Roman'; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.P10 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0in; margin-right:0in; text-indent:0inch; background-color:transparent; text-decoration:underline; }
+        .charter *.P11 { font-family:'Times New Roman'; font-size:20pt; margin-top:0in; margin-bottom:0.3201in; text-align:center ! important; }
+        .charter *.P2 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.P3 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.P4 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.P5 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0.25in; margin-right:0.25in; text-indent:0inch; }
+        .charter *.P6 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0in; margin-right:0in; text-indent:0inch; }
+        .charter *.P7 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0in; margin-right:0in; text-indent:0inch; }
+        .charter *.P8 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0in; margin-right:0in; text-indent:0inch; background-color:transparent; }
+        .charter *.P9 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:left ! important; margin-left:0in; margin-right:0in; text-indent:0inch; background-color:transparent; }
+        .charter *.Standard { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .charter *.Textbody { font-family:Thorndale; font-size:12pt; margin-top:0in; margin-bottom:0.0835in; text-align:justify ! important; }
+        .charter *.DropCaps { }
+        .charter *.Linenumbering { }
+        .charter *.NumberingSymbols { }
+        .charter *.T1 { font-size:14pt; }
+        .charter *.T2 { font-size:10pt; }
+        .charter *.T3 { background-color:transparent; }
+        .charter *.T4 { font-size:11.5pt; }
+        .charter *.T5 { font-size:11.5pt; }
+        .charter *.T6 { font-size:11.5pt; background-color:transparent; }
+        .charter *.T7 { }
+
+    DIV.a1 { margin-top: 4ex; padding-top: 6ex;
+      border: 0px; border-top: 1px; border-style: solid; border-color: black;
+      font-size: 11.5pt; font-family: "Times New Roman"; font-style: normal;
+      line-height: 1.1;
+    }
+
+        .a1 table { border-collapse:collapse; border-spacing:0; empty-cells:show }
+        .a1 td, th { vertical-align:top; }
+        .a1 h1, h2, h3, h4, h5, h6 { clear:both }
+        .a1 ol, ul { padding:0; }
+        .a1 * { margin:0; }
+        .a1 *.Caption { font-family:Thorndale; font-size:12pt; margin-top:0.0835in; margin-bottom:0.0835in; text-align:justify ! important; font-style:italic; }
+        .a1 *.Footer { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .a1 *.Hangingindent { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0.25in; margin-right:0.25in; text-indent:0inch; }
+        .a1 *.Header { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .a1 *.Heading { font-family:'Times New Roman'; font-size:16pt; margin-top:0.2in; margin-bottom:0.2in; text-align:center ! important; }
+        .a1 *.Heading1 { font-family:'Times New Roman'; font-size:115%; margin-top:0.2in; margin-bottom:0.2in; text-align:center ! important; font-weight:bold; }
+        .a1 *.Heading10 { font-family:'Times New Roman'; font-size:75%; margin-top:0.2in; margin-bottom:0.2in; text-align:center ! important; font-weight:bold; }
+        .a1 *.Index { font-family:Thorndale; font-size:12pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .a1 *.List { font-family:Thorndale; font-size:12pt; margin-top:0in; margin-bottom:0.0835in; text-align:justify ! important; }
+        .a1 *.P1 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .a1 *.P2 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .a1 *.P3 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; font-style:normal; }
+        .a1 *.P4 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0in; margin-right:0in; text-indent:0inch; background-color:transparent; }
+        .a1 *.P5 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:left ! important; margin-left:0in; margin-right:0in; text-indent:0inch; background-color:transparent; }
+        .a1 *.P6 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0in; margin-right:0in; text-indent:0inch; background-color:transparent; text-decoration:underline; }
+        .a1 *.P7 { font-family:'Times New Roman'; font-size:20pt; margin-top:0in; margin-bottom:0.3201in; text-align:center ! important; }
+        .a1 *.P8 { font-family:'Times New Roman'; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; margin-left:0in; margin-right:0in; text-indent:0inch; background-color:transparent; }
+        .a1 *.Standard { font-family:Thorndale; font-size:11.5pt; margin-top:0.05in; margin-bottom:0.05in; text-align:justify ! important; }
+        .a1 *.Textbody { font-family:Thorndale; font-size:11.5pt; margin-top:0in; margin-bottom:0.0835in; text-align:justify ! important; }
+        .a1 *.DropCaps { }
+        .a1 *.Linenumbering { }
+        .a1 *.NumberingSymbols { }
+        .a1 *.T1 { background-color:transparent; }
+        .a1 *.T2 { font-size:11.5pt; }
+        .a1 *.T3 { font-size:11.5pt; }
+        .a1 *.T4 { font-size:11.5pt; font-style:normal; }
+        .a1 *.T5 { }
+        .a1 *.T6 { font-family:'Times New Roman'; font-size:11.5pt; }
+        .a1 *.T7 { font-family:'Times New Roman'; font-size:11.5pt; font-style:normal; }
+        .a1 *.T8 { font-weight:bold; }
+        .a1 *.T9 { font-weight:normal; }
+
+/**/
+</style></head><body><div id="main">
+<p>The OpenJDK Charter (<a href="openjdk-charter.pdf">pdf</a>, or
+see <a href="#charter">below</a>) was signed at 6:20pm PDT on
+Tuesday, 8&#160;May&#160;2007, at JavaOne in San Francisco by
+Laurie Tolson, Vice President of the Client Software Group at Sun
+Microsystems.</p>
+<p>On Wednesday, 7&#160;May 2008 the first Amendment to the Charter
+(<a href="openjdk-charter-a1.pdf">pdf</a>, or see <a href="#a1">below</a>) was signed by Onno Kluyt, Director of Community
+Growth for the Client Software Group at Sun Microsystems.</p>
+<div class="charter"><a name="charter" id="charter"></a>
+<p class="P11">The OpenJDK Charter&#160;</p>
+<p class="P1"><span class="T1">W</span><span class="T2">HEREBY</span> <span class="T4">Sun Microsystems, Inc.
+(</span><span class="T5">&#8220;</span><span class="T4">Sun</span><span class="T5">&#8221;</span><span class="T4">)
+has granted license to a particular subset of its Java SE
+Development Kit</span><span class="T6">, known henceforth as
+OpenJDK</span><span class="T4">, to all under terms compatible with
+Open Source ideals, and whereby open and constructive development
+and dissemination of this code base is desired by all, Sun does by
+the execution of this Charter all of the following: First,
+establish an OpenJDK Governance Board (</span><span class="T5">&#8220;</span><span class="T4">GB</span><span class="T5">&#8221;</span><span class="T4">) to supervise the OpenJDK
+Community (</span><span class="T5">&#8220;</span><span class="T4">Community</span><span class="T5">&#8221;</span><span class="T4">) in its efforts to improve upon and advocate in favor of
+OpenJDK, so that the Community may long endure. Second, grant to
+the GB certain powers and rights as are necessary to discharge its
+duties. Third, appoint to the GB a suitable interim membership
+until such time as a Constitution may be constructed and ratified.
+Last, establish a time at which this Interim GB shall have
+discharged its responsibilities and ceded to its successor the
+powers and rights granted herein.</span></p>
+<p class="P2">1. The GB shall be comprised of five natural persons.
+The GB shall conduct its affairs in accordance with democratic
+principles and shall represent the interests of the
+Community.&#160;</p>
+<p class="P5">1.1. Two members of the GB shall be employees of Sun.
+These appointees shall be selected by Sun and may be replaced at
+any time by Sun, at its sole discretion. &#160;These appointees
+shall represent Sun's interests but shall not have the power to
+speak for Sun Microsystems, Inc.</p>
+<p class="P5">1.2. The three remaining members of the GB shall be
+members of the Community who shall be elected via a democratic
+process defined in a properly ratified Constitution. &#160;</p>
+<p class="P5">1.3. Should the GB number fewer than five persons at
+any time then Sun shall, at its sole discretion, appoint to the GB
+additional Community members sufficient in number to increase the
+GB's membership to five. Appointees who fill elected seats shall
+serve only until processes to elect members to those seats can be
+carried out.&#160;</p>
+<p class="P3">2. The GB shall construct and maintain a Constitution
+defining all of the following:&#160;</p>
+<p class="P5">2.1. A process by which the Constitution may be
+amended from time to time.&#160;</p>
+<p class="P5">2.2. Methods and processes by which the elected
+positions of the GB shall be filled. These must at all times ensure
+satisfaction of the constraints imposed by this Charter, including
+but not limited to those described in Section 1.&#160;</p>
+<p class="P5">2.3. The roles recognized within the
+Community.&#160;</p>
+<p class="P5">2.4. The rights and responsibilities associated with
+each role.&#160;</p>
+<p class="P5">2.5. The intended methods of communication between
+the GB and Sun.&#160;</p>
+<p class="P5">2.6. Methods and processes by which disputes and
+disagreements among Community members might be resolved in a fair
+and just manner. Community members are to receive equal treatment
+during the resolution of a dispute or disagreement, without
+reference to any personal attribute or affiliation.&#160;</p>
+<p class="P5">2.7. Regulations applicable to the Community as it
+finds beneficial to its development and growth.&#160;</p>
+<p class="P5">2.8. The establishment and operation of, and
+delegation of appropriate powers and rights to, any associate
+governing bodies which it shall deem appropriate to the execution
+of any part of the Constitution or this Charter. In all cases,
+disputes not resolvable within those delegated bodies may be
+appealed to the GB.&#160;</p>
+<p class="P3">3. The GB shall define and implement a process for
+the ratification of the Constitution, in a manner consistent with
+democratic principles. This process shall, at a minimum, involve
+members of the &#160;Community in addition to the full membership
+of the GB.</p>
+<p class="P4">4. The initial Constitution shall be operable when
+ratified, per provision 3, and also approved by Sun Microsystems,
+Inc.&#160;</p>
+<p class="P3">5. The GB shall be the supreme and final arbiter of
+all matters pertaining to the Constitution, within the bounds
+defined by this Charter.&#160;</p>
+<p class="P3">6. All powers and rights are granted to the GB which
+are required for the execution of this Charter or the properly
+ratified Constitution and which are not inconsistent with
+applicable law or regulation. &#160;However, nothing in this
+Charter shall be construed so as to confer to the GB: (a) Any title
+or right under copyright, patent, trademark, or other intellectual
+property law; (b) Any right to alter the licensing of any
+intellectual property of OpenJDK; (c) Control of or interest in any
+asset, tangible or intangible, of Sun Microsystems, Inc. or any of
+its subsidiaries; or (d) Control of or interest in Sun
+Microsystems, Inc. or any of its subsidiaries.</p>
+<p class="P4">7. In order to facilitate the construction and
+ratification of the initial Constitution, Sun shall appoint members
+of the Community on an interim basis to the three elected GB
+positions in any manner it shall deem appropriate, thereby forming
+the Interim GB.&#160;</p>
+<p class="P5">7.1. No GB member so appointed may retain his or her
+membership beyond 8 May 2008, or after such time as the first GB
+members elected in accordance with the terms of a properly ratified
+Constitution take office, whichever occurs first. However, if such
+a member shall be so elected, he or she may serve as he or she
+otherwise would.&#160;</p>
+<p class="P3">8. Notwithstanding any part of provisions 7 or 7.1,
+the Interim GB shall be dissolved on 8 May 2008.&#160;</p>
+<p class="P3">9. If the Interim GB shall be dissolved before an
+initial Constitution is properly ratified, Sun shall appoint a new
+set of interim members in any manner it shall deem appropriate, and
+the terms of this Charter shall be applied to this new Interim GB
+with the following exceptions: &#160;</p>
+<p class="P5">9.1. Provision 7.1 shall be altered such that the
+termination date shall be extended by 6 months.&#160;</p>
+<p class="P5">9.2. Provision 8 shall be altered such that the
+dissolution date shall be extended by 6 months.&#160;</p>
+<p class="P3">10. This Charter may be amended by mutual agreement
+between the GB and Sun Microsystems, Inc. If agreement on a
+proposed amendment cannot be reached, or if the GB fails to approve
+an amended Charter, the previous version of the Charter remains in
+force.&#160;</p>
+<p class="P5">10.1. To request that the Charter be amended, the GB
+must affirm a motion by an absolute two-thirds supermajority vote
+of the current GB members.&#160;</p>
+<p class="P5">10.2. To approve an amendment to the Charter, the GB
+must affirm a motion by an absolute two-thirds supermajority vote
+of the current GB members.&#160;</p>
+<p class="P5">10.3. Notwithstanding any part of provisions 10,
+10.1, or 10.2, the Interim GB shall not have the power to alter any
+provision of this Charter.&#160;</p>
+<p class="P6">&#160;</p>
+<p class="P7"><span class="T7">On 8 May 2007</span><span class="T3">, Sun Microsystems, Inc., agreed to use this Charter as the
+basis for creating the OpenJDK Governance Board. &#160;On behalf of
+Sun,</span></p>
+<p class="P8">&#160;</p>
+<p class="P8">&#160;</p>
+<p class="P10">&#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;</p>
+<p class="P9">LAURIE TOLSON<br />
+Vice President, Client Software Group, Sun Microsystems, Inc.</p>
+</div>
+<div class="a1"><a name="a1" id="a1"></a>
+<p class="P7">The OpenJDK Charter: First Amendment&#160;</p>
+<p class="P1"><span class="T2">Sun Microsystems, Inc.
+(</span><span class="T3">&#8220;</span><span class="T2">Sun</span><span class="T3">&#8221;</span><span class="T2">)
+hereby agrees to amend the OpenJDK Charter (</span><span class="T7">&#8220;</span><span class="T2">the Charter</span><span class="T7">&#8221;</span><span class="T2">) as follows.</span></p>
+<p class="P1"><span class="T2">A. (</span><span class="T4">to
+Provision 1) The Governance Board (</span><span class="T8">&#8220;</span><span class="T4">GB</span><span class="T8">&#8221;</span><span class="T4">) shall be comprised of seven
+natural persons. Three members shall be employees of Sun, and four
+shall be elected from the OpenJDK Community (</span><span class="T8">&#8220;</span><span class="T4">the
+Community</span><span class="T8">&#8221;</span><span class="T4">).
+Provision 1 is otherwise unchanged.</span></p>
+<p class="P2">B. (to Provision 7) Sun shall appoint members of the
+Community on an interim basis to the four elected GB positions. No
+GB member so appointed may retain his or her membership beyond
+7&#160;May 2009. Provision 7 is otherwise unchanged.</p>
+<p class="P8">C. (to Provision 8) The Interim GB shall be dissolved
+on 7&#160;May 2009.</p>
+<p class="P3"><span class="T6">On 7 May 2008</span><span class="T1">, Sun Microsystems, Inc., agreed to this Amendment. On behalf
+of Sun,</span></p>
+<p class="P4">&#160;</p>
+<p class="P4">&#160;</p>
+<p class="P6">&#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+&#160; &#160; &#160; &#160; &#160; &#160; &#160; &#160;</p>
+<p class="P5">ONNO KLUYT<br />
+Director, Community Growth<br />
+Client Software Group<br />
+Sun Microsystems, Inc.</p>
+<p class="P5">&#160;</p>
+</div>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

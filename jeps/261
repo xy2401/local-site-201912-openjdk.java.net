@@ -1,0 +1,1267 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 261: Module System</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 261: Module System</h1><table class="head"><tr><td>Authors</td><td>Alan Bateman, Alex Buckley, Jonathan Gibbons, Mark Reinhold</td></tr><tr><td>Owner</td><td>Mark Reinhold</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>JSR</td><td><a href="https://jcp.org/en/jsr/detail?id=376">376</a></td></tr><tr><td>Discussion</td><td>jigsaw dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>XL</td></tr><tr><td>Duration</td><td>L</td></tr><tr><td>Blocks</td><td><a href="200">JEP 200: The Modular JDK</a></td></tr><tr><td></td><td><a href="282">JEP 282: jlink: The Java Linker</a></td></tr><tr><td>Depends</td><td><a href="220">JEP 220: Modular Run-Time Images</a></td></tr><tr><td></td><td><a href="260">JEP 260: Encapsulate Most Internal APIs</a></td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Alex Buckley, Chris Hegarty, Jonathan Gibbons, Mandy Chung, Paul Sandoz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/10/23 15:05</td></tr><tr><td>Updated</td><td>2017/09/22 20:18</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8061972">8061972</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Implement the Java Platform Module System, as specified by
+<a href="//openjdk.java.net/projects/jigsaw/spec/">JSR 376</a>, together with related JDK-specific changes and
+enhancements.</p>
+<h2 id="Description">Description</h2>
+<p>The <a href="//openjdk.java.net/projects/jigsaw/spec/">Java Platform Module System (JSR 376)</a> specifies changes and
+extensions to the Java programming language, the Java virtual machine,
+and the standard Java APIs.  This JEP implements that specification.  As
+a consequence, the <code>javac</code> compiler, the HotSpot virtual machine, and the
+run-time libraries implement modules as a fundamental new kind of Java
+program component and provide for the reliable configuration and strong
+encapsulation of modules in all phases of development.</p>
+<p>This JEP also changes, extends, and adds JDK-specific tools and APIs,
+which are outside the scope of the JSR, that are related to compilation,
+linking, and execution.  Related changes to other tools and APIs, <em>e.g.</em>,
+the <code>javadoc</code> tool and the Doclet API, are the subject of separate JEPs.</p>
+<p>This JEP assumes that the reader is familiar with the latest
+<a href="//openjdk.java.net/projects/jigsaw/spec/sotms/"><em>State of the Module System</em></a> document and also the other
+<a href="//openjdk.java.net/projects/jigsaw/">Project Jigsaw</a> JEPs:</p>
+<ul>
+<li><a href="//openjdk.java.net/jeps/200">200: The Modular JDK</a></li>
+<li><a href="//openjdk.java.net/jeps/201">201: Modular Source Code</a></li>
+<li><a href="//openjdk.java.net/jeps/220">220: Modular Run-Time Images</a></li>
+<li><a href="//openjdk.java.net/jeps/260">260: Encapsulate Most Internal APIs</a></li>
+<li><a href="//openjdk.java.net/jeps/282">282: jlink: The Java Linker</a></li>
+</ul>
+<h3 id="Phases">Phases</h3>
+<p>To the familiar phases of compile time (the <code>javac</code> command) and run time
+(the <code>java</code> run-time launcher) we add the notion of <em>link time</em>, an
+optional phase between the two in which a set of modules can be assembled
+and optimized into a custom run-time image.  The linking tool, <code>jlink</code>,
+is the subject of <a href="//openjdk.java.net/jeps/282">JEP 282</a>; many of the new command-line options
+implemented by <code>javac</code> and <code>java</code> are also implemented by <code>jlink</code>.</p>
+<h3 id="Module-paths">Module paths</h3>
+<p>The <code>javac</code>, <code>jlink</code>, and <code>java</code> commands, as well as several others, now
+accept options to specify various <a href="//openjdk.java.net/projects/jigsaw/spec/sotms/#module-paths"><em>module paths</em></a>.  A module
+path is a sequence, each element of which is either a <em>module definition</em>
+or a directory containing module definitions.  Each module definition is
+either</p>
+<ul>
+<li>
+<p>A <em>module artifact</em>, <em>i.e.</em>, a modular JAR file or a JMOD file
+containing a compiled module definition, or else</p>
+</li>
+<li>
+<p>An <em>exploded-module directory</em> whose name is, by convention, the
+module's name and whose content is an "exploded" directory tree
+corresponding to a package hierarchy.</p>
+</li>
+</ul>
+<p>In the latter case the directory tree can be a compiled module
+definition, populated with individual class and resource files and a
+<code>module-info.class</code> file at the root or, at compile time, a source module
+definition, populated with individual source files and a
+<code>module-info.java</code> file at the root.</p>
+<p>A module path, like other kinds of paths, is specified by a string of
+path names separated by the host platform's path-separator character
+(<code>':'</code> on most platforms, <code>';'</code> on Windows).</p>
+<p>Module paths are very different from class paths: Class paths are a means
+to locate definitions of individual types and resources, whereas module
+paths are a means to locate definitions of whole modules.  Each element
+of a class path is a container of type and resource definitions, <em>i.e.</em>,
+either a JAR file or an exploded, package-hierarchical directory tree.
+Each element of a module path, by contrast, is a module definition or a
+directory which each element in the directory is a module definition,
+<em>i.e.</em>, a container of type and resource definitions, <em>i.e.</em>, either a
+modular JAR file, a JMOD file, or an exploded module directory.</p>
+<p>During the resolution process the module system locates a module by
+searching along several different paths, dependent upon the phase, and
+also by searching the compiled modules built-in to the environment, in
+the following order:</p>
+<ul>
+<li>
+<p>The <em>compilation module path</em> (specified by the command-line option
+<code>--module-source-path</code>) contains module definitions in source form
+(compile time only).</p>
+</li>
+<li>
+<p>The <em>upgrade module path</em> (<code>--upgrade-module-path</code>) contains compiled
+definitions of modules intended to be used in preference to the
+compiled definitions of any upgradeable modules present amongst the
+system modules or on the application module path (compile time and
+run time).</p>
+</li>
+<li>
+<p>The <em>system modules</em> are the compiled modules built-in to the
+environment (compile time and run time).  These typically include
+<a href="//openjdk.java.net/jeps/200">Java SE and JDK modules</a> but, in the case of a custom linked
+image, can also include library and application modules.  At compile
+time the system modules can be overridden via the <code>--system</code> option,
+which specifies a JDK image from which to load system modules.</p>
+</li>
+<li>
+<p>The <em>application module path</em> (<code>--module-path</code>, or <code>-p</code> for short)
+contains compiled definitions of library and application modules (all
+phases).  At link time this path can also contain Java SE and JDK
+modules.</p>
+</li>
+</ul>
+<p>The module definitions present on these paths, together with the system
+modules, define the universe of <em>observable modules</em>.</p>
+<p>When searching a module path for a module of a particular name, the
+module system takes the first definition of a module of that name.
+Version strings, if present, are ignored; if an element of a module path
+contains definitions of multiple modules with the same name then
+resolution fails and the compiler, linker, or virtual machine will report
+an error and exit.  It is the responsibility of build tools and container
+applications to configure module paths so as to avoid version conflicts;
+it is <a href="//openjdk.java.net/projects/jigsaw/spec/reqs/#version-selection">not a goal</a> of the module system to address the
+version-selection problem.</p>
+<h3 id="Root-modules">Root modules</h3>
+<p><a id="root-modules">The module system constructs a module graph by
+resolving the transitive closure of the dependences of a set of <em>root
+modules</em> with respect to the set of observable modules.</a></p>
+<p>When the compiler compiles code in the unnamed module, or the <code>java</code>
+launcher is invoked and the main class of the application is loaded from
+the class path into the unnamed module of the application class loader,
+then the <em>default set of root modules for the unnamed module</em> is computed
+as follows:</p>
+<ul>
+<li>
+<p>The <code>java.se</code> module is a root, if it exists.  If it does not exist
+then every <code>java.*</code> module on the upgrade module path or among the
+system modules that exports at least one package, without
+qualification, is a root.</p>
+</li>
+<li>
+<p>Every non-<code>java.*</code> module on the upgrade module path or among the
+system modules that exports at least one package, without
+qualification, is also a root.</p>
+</li>
+</ul>
+<p>Otherwise, the default set of root modules depends upon the phase:</p>
+<ul>
+<li>
+<p>At compile time it is usually the set of modules being compiled (more
+on this below);</p>
+</li>
+<li>
+<p>At link time it is empty; and</p>
+</li>
+<li>
+<p>At run time it is the application's main module, as specified via the
+<code>--module</code> (or <code>-m</code> for short) launcher option.</p>
+</li>
+</ul>
+<p>It is occasionally necessary to add modules to the default root set in
+order to ensure that specific platform, library, or service-provider
+modules will be present in the resulting module graph.  In any phase the
+option</p>
+<pre><code>--add-modules &lt;module&gt;(,&lt;module&gt;)*</code></pre>
+<p>where <code>&lt;module&gt;</code> is a module name, adds the indicated modules to the
+default set of root modules.  This option may be used more than once.</p>
+<p><a id="ALL-DEFAULT">As a special case at run time, if <code>&lt;module&gt;</code> is
+<code>ALL-DEFAULT</code> then the default set of root modules for the unnamed
+module, as defined above, is added to the root set.</a> This is useful
+when the application is a container that hosts other applications which
+can, in turn, depend upon modules not required by the container itself.</p>
+<p><a id="ALL-SYSTEM">As a further special case at run time, if <code>&lt;module&gt;</code>
+is <code>ALL-SYSTEM</code> then all system modules are added to the root set,
+whether or not they are in the default set.</a> This is sometimes needed
+by test harnesses.  This option will cause many modules to be resolved;
+in general, <code>ALL-DEFAULT</code> should be preferred.</p>
+<p><a id="ALL-MODULE-PATH">As a final special case, at both run time and
+link time, if <code>&lt;module&gt;</code> is <code>ALL-MODULE-PATH</code> then all observable modules
+found on the relevant module paths are added to the root set.</a>
+<code>ALL-MODULE-PATH</code> is valid at both compile time and run time.  This is
+provided for use by build tools such as Maven, which already ensure that
+all modules on the module path are needed.  It is also a convenient means
+to add automatic modules to the root set.</p>
+<h3 id="Limiting-the-observable-modules">Limiting the observable modules</h3>
+<p>It is sometimes useful to limit the observable modules for, <em>e.g.</em>,
+debugging, or to reduce the number of modules resolved when the main
+module is the unnamed module defined by the application class loader for
+the class path.  The <code>--limit-modules</code> option can be used, in any phase,
+to do this.  Its syntax is:</p>
+<pre><code>--limit-modules &lt;module&gt;(,&lt;module&gt;)*</code></pre>
+<p>where <code>&lt;module&gt;</code> is a module name.  The effect of this option is to limit
+the observable modules to those in the transitive closure of the named
+modules plus the main module, if any, plus any further modules specified
+via the <code>--add-modules</code> option.</p>
+<p>(The transitive closure computed for the interpretation of the
+<code>--limit-modules</code> option is a temporary result, used only to compute the
+limited set of observable modules.  The resolver will be invoked again
+in order to compute the actual module graph.)</p>
+<h3 id="Increasing-readability">Increasing readability</h3>
+<p>When testing and debugging it is sometimes necessary to arrange for one
+module to read some other module, even though the first module does not
+depend upon the second via a <code>requires</code> clause in its module declaration.
+This may be needed to, <em>e.g.</em>, enable a module under test to access the
+test harness itself, or to access libraries related to the harness.  The
+<code>--add-reads</code> option can be used, at both compile time and run time, to
+do this.  Its syntax is:</p>
+<pre><code>--add-reads &lt;source-module&gt;=&lt;target-module&gt;</code></pre>
+<p>where <code>&lt;source-module&gt;</code> and <code>&lt;target-module&gt;</code> are module names.</p>
+<p>The <code>--add-reads</code> option can be used more than once.  The effect of each
+instance is to add a <a href="//openjdk.java.net/projects/jigsaw/spec/sotms/#readability">readability edge</a> from the source module
+to the target module.  This is, essentially, a command-line form of a
+<code>requires</code> clause in a module declaration, or an invocation of an
+unrestricted form of the <code>Module::addReads</code> <a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/Module.html#addReads-java.lang.reflect.Module-">method</a>.  As a
+consequence, code in the source module will be able to access types in a
+package of the target module at both compile time and run time if that
+package is exported via an <code>exports</code> clause in the source module's
+declaration, an invocation of the <code>Module::addExports</code>
+<a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/Module.html#addExports-java.lang.String-java.lang.reflect.Module-">method</a>, or an instance of the <code>--add-exports</code> option
+(defined below).  Such code will, additionally, be able to access types
+in a package of the target module at run time if that module is declared
+to be open or if that package is opened via an <code>opens</code> clause in the
+source module's declaration, an invocation of the <code>Module::addOpens</code>
+<a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/Module.html#addOpens-java.lang.String-java.lang.reflect.Module-">method</a>, or an instance of the <code>--add-opens</code> option (also
+defined below).</p>
+<p>If, for example, a test harness injects a white-box test class into the
+<code>java.management</code> module, and that class extends an exported utility
+class in the (hypothetical) <code>testng</code> module, then the access it requires
+can be granted via the option</p>
+<pre><code>--add-reads java.management=testng</code></pre>
+<p>As a special case, if the <code>&lt;target-module&gt;</code> is <code>ALL-UNNAMED</code> then
+readability edges will be added from the source module to all present and
+future unnamed modules, including that corresponding to the class path.
+This allows code in modules to be tested by test frameworks that have
+not, themselves, yet been converted to modular form.</p>
+<h3 id="Breaking-encapsulation">Breaking encapsulation</h3>
+<p>It is sometimes necessary to violate the access-control boundaries
+defined by the module system, and enforced by the compiler and virtual
+machine, in order to allow one module to access some of the unexported
+types of another module.  This may be desirable in order to, <em>e.g.</em>,
+enable white-box testing of internal types, or to expose unsupported
+internal APIs to code that has come to depend upon them.  The
+<code>--add-exports</code> option can be used, at both compile time and run time, to
+do this.  Its syntax is:</p>
+<pre><code>--add-exports &lt;source-module&gt;/&lt;package&gt;=&lt;target-module&gt;(,&lt;target-module&gt;)*</code></pre>
+<p>where <code>&lt;source-module&gt;</code> and <code>&lt;target-module&gt;</code> are module names and
+<code>&lt;package&gt;</code> is the name of a package.</p>
+<p>The <code>--add-exports</code> option can be used more than once, but at most once
+for any particular combination of source module and package name.  The
+effect of each instance is to add a <a href="//openjdk.java.net/projects/jigsaw/spec/sotms/#qualified-exports">qualified export</a> of the
+named package from the source module to the target module.  This is,
+essentially, a command-line form of an <code>exports</code> clause in a module
+declaration, or an invocation of an unrestricted form of the
+<code>Module::addExports</code> <a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/Module.html#addExports-java.lang.String-java.lang.reflect.Module-">method</a>.  As a consequence, code
+in the target module will be able to access public types in the named
+package of the source module if the target module reads the source
+module, either via a <code>requires</code> clause in its module declaration, an
+invocation of the <code>Module::addReads</code> method, or an instance of the
+<code>--add-reads</code> option.</p>
+<p>If, for example, the module <code>jmx.wbtest</code> contains a white-box test for
+the unexported <code>com.sun.jmx.remote.internal</code> package of the
+<code>java.management</code> module, then the access it requires can be granted via
+the option</p>
+<pre><code>--add-exports java.management/com.sun.jmx.remote.internal=jmx.wbtest</code></pre>
+<p>As a special case, if the <code>&lt;target-module&gt;</code> is <code>ALL-UNNAMED</code> then the
+source package will be exported to all unnamed modules, whether they
+exist initially or are created later on.  Thus access to the
+<code>sun.management</code> package of the <code>java.management</code> module can be granted
+to all code on the class path via the option</p>
+<pre><code>--add-exports java.management/sun.management=ALL-UNNAMED</code></pre>
+<p>The <code>--add-exports</code> option enables access to the public types of a
+specified package.  It is sometimes necessary to go further and enable
+access to all non-public elements via the <code>setAccessible</code>
+<a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-">method</a> of the <a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/package-summary.html">core reflection API</a>.  The
+<code>--add-opens</code> option can be used, at run time, to do this.  It has the
+same syntax as the <code>--add-exports</code> option:</p>
+<pre><code>--add-opens &lt;source-module&gt;/&lt;package&gt;=&lt;target-module&gt;(,&lt;target-module&gt;)*</code></pre>
+<p>where <code>&lt;source-module&gt;</code> and <code>&lt;target-module&gt;</code> are module names and
+<code>&lt;package&gt;</code> is the name of a package.</p>
+<p>The <code>--add-opens</code> option can be used more than once, but at most once for
+any particular combination of source module and package name.  The effect
+of each instance is to add a qualified open of the named package from the
+source module to the target module.  This is, essentially, a command-line
+form of an <code>opens</code> clause in a module declaration, or an invocation of an
+unrestricted form of the <code>Module::addOpens</code> <a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/Module.html#addOpens-java.lang.String-java.lang.reflect.Module-">method</a>.  As a
+consequence, code in the target module will be able to use the core
+reflection API to access all types, public and otherwise, in the named
+package of the source module so long as the target module reads the
+source module.</p>
+<p>Open packages are indistinguishable from non-exported packages at compile
+time, so the <code>--add-opens</code> option may not be used in that phase.</p>
+<blockquote>
+<p><strong>The <code>--add-exports</code> and <code>--add-opens</code> options must be used with great
+care.  You can use them to gain access to an internal API of a
+library module, or even of the JDK itself, but you do so at your own
+risk: If that internal API is changed or removed then your library or
+application will fail.</strong></p>
+</blockquote>
+<h3 id="Patching-module-content">Patching module content</h3>
+<p>When testing and debugging it is sometimes useful to replace selected
+class files or resources of specific modules with alternate or
+experimental versions, or to provide entirely new class files, resources,
+and even packages.  This can be done via the <code>--patch-module</code> option, at
+both compile time and run time.  Its syntax is:</p>
+<pre><code>--patch-module &lt;module&gt;=&lt;file&gt;(&lt;pathsep&gt;&lt;file&gt;)*</code></pre>
+<p>where <code>&lt;module&gt;</code> is a module name, <code>&lt;file&gt;</code> is the filesystem path name
+of a module definition, and <code>&lt;pathsep&gt;</code> is the host platform's
+path-separator character.</p>
+<p>The <code>--patch-module</code> option can be used more than once, but at most once
+for any particular module name.  The effect of each instance is to change
+how the module system searches for a type in the specified module.
+Before it checks the actual module, whether part of the system or defined
+on a module path, it first checks, in order, each module definition
+specified to the option.  A patch path names a sequence of module
+definitions but it is not a module path, since it has leaky,
+class-path-like semantics.  This allows a test harness, <em>e.g.</em>, to inject
+multiple tests into the same package without having to copy all of the
+tests into a single directory.</p>
+<p>The <code>--patch-module</code> option cannot be used to replace <code>module-info.class</code>
+files.  If a <code>module-info.class</code> file is found in a module definition on
+a patch path then a warning will be issued and the file will be ignored.</p>
+<p>If a package found in a module definition on a patch path is not already
+exported or opened by that module then it will, still, not be exported or
+opened.  It can be exported or opened explicitly via either the
+reflection API or the <code>--add-exports</code> or <code>--add-opens</code> options.</p>
+<p>The <code>--patch-module</code> option replaces the <code>-Xbootclasspath:/p</code> option,
+which has been removed (see below).</p>
+<blockquote>
+<p><strong>The <code>--patch-module</code> option is intended only for testing and debugging.
+Its use in production settings is strongly discouraged.</strong></p>
+</blockquote>
+<h3 id="Compile-time">Compile time</h3>
+<p>The <code>javac</code> compiler implements the options described above, as
+applicable to compile time: <code>--module-source-path</code>,
+<code>--upgrade-module-path</code>, <code>--system</code>, <code>--module-path</code>, <code>--add-modules</code>,
+<code>--limit-modules</code>, <code>--add-reads</code>, <code>--add-exports</code>, and <code>--patch-module</code>.</p>
+<p>The compiler operates in one of three modes, each of which implements
+additional options.</p>
+<ul>
+<li><em>Legacy mode</em> is enabled when the compilation environment, as defined
+by the <code>-source</code>, <code>-target</code>, and <code>--release</code> options, is less than or
+equal to 8.  None of the modular options described above may be used.</li>
+</ul>
+<p>In legacy mode the compiler behaves in essentially the same way as it
+does in JDK 8.</p>
+<ul>
+<li><em>Single-module mode</em> is enabled when the compilation environment is 9
+or later and the <code>--module-source-path</code> option is not used.  The
+other modular options described above may be used; the existing
+options <code>-bootclasspath</code>, <code>-Xbootclasspath</code>, <code>-extdirs</code>,
+<code>-endorseddirs</code>, and <code>-XXuserPathsFirst</code> may not be used.</li>
+</ul>
+<p>Single-module mode is used to compile code organized in a traditional
+package-hierarchical directory tree.  It is the natural replacement for
+simple uses of legacy mode of the form</p>
+<pre><code>$ javac -d classes -classpath classes -sourcepath src Foo.java</code></pre>
+<p>If a module descriptor in the form of a <code>module-info.java</code> or
+<code>module-info.class</code> file is specified on the command line, or is found on
+the source path or the class path, then source files will be compiled as
+members of the module named by that descriptor and that module will be
+the sole root module.  Otherwise if the <code>--module &lt;module&gt;</code> option is
+present then source files will be compiled as members of <code>&lt;module&gt;</code>,
+which will be the root module.  Otherwise source files will be compiled
+as members of the unnamed module, and the root modules will be computed
+<a href="#root-modules">as described above</a>.</p>
+<p>It is possible to put arbitrary classes and JAR files on the class path
+in this mode, but that is not recommended since it amounts to treating
+those classes and JAR files as part of the module being compiled.</p>
+<ul>
+<li><em>Multi-module mode</em> is enabled when the compilation environment is 9
+or later and the <code>--module-source-path</code> option is used.  The existing
+<code>-d</code> option to name the output directory must also be used; the other
+modular options described above may be used; the existing options
+<code>-bootclasspath</code>, <code>-Xbootclasspath</code>, <code>-extdirs</code>, <code>-endorseddirs</code>, and
+<code>-XXuserPathsFirst</code> may not be used.</li>
+</ul>
+<p>Multi-module mode is used to compile one or more modules, whose source
+code is laid out in exploded-module directories on the module source
+path.  In this mode the module membership of a type is determined by the
+position of its source file in the module source path, so each source
+file specified on the command line must exist within an element of that
+path.  The set of root modules is the set of modules for which at least
+one source file is specified.</p>
+<p>In contrast to the other modes, in this mode an output directory must be
+specified via the <code>-d</code> option.  The output directory will be structured
+as an element of a module path, <em>i.e.</em>, it will contain exploded-module
+directories which themselves contain class and resource files.  If the
+compiler finds a module on the module source path but cannot find the
+source file for some type in that module then it will search the output
+directory for the corresponding class file.</p>
+<p>In large systems the source code for a particular module may be spread
+across several different directories.  <a href="//openjdk.java.net/jeps/201">In the JDK itself</a>,
+<em>e.g.</em>, the source files for a module may be found in any one of the
+directories <code>src/&lt;module&gt;/share/classes</code>, <code>src/&lt;module&gt;/&lt;os&gt;/classes</code>, or
+<code>build/gensrc/&lt;module&gt;</code>, where <code>&lt;os&gt;</code> is the name of the target operating
+system.  To express this in a module source path while preserving module
+identities we allow each element of such a path to use braces (<code>{</code> and
+<code>}</code>) to enclose commas-separated lists of alternatives and a single
+asterisk (<code>*</code>) to stand for the module name.  The module source path for
+the JDK can then be written as</p>
+<pre><code>{src/*/{share,&lt;os&gt;}/classes,build/gensrc/*}</code></pre>
+<p>In both of the modular modes the compiler will, by default, generate
+various warnings related to the module system; these may be disabled via
+the option <code>-Xlint:-module</code>.  More precise control of these warnings is
+available via the <code>exports</code>, <code>opens</code>, <code>requires-automatic</code>, and
+<code>requires-transitive-automatic</code> keys for the <code>-Xlint</code> option.</p>
+<p>The new option <code>--module-version &lt;version&gt;</code> may be used to specify the
+version strings of the modules being compiled.</p>
+<h3 id="Class-file-attributes">Class-file attributes</h3>
+<p>A JDK-specific class-file attribute, <code>ModuleTarget</code>, optionally records
+the target operating system and architecture of the module descriptor
+that contains it.  Its format is:</p>
+<pre><code>ModuleTarget_attribute {
+    u2 attribute_name_index;
+    u4 attribute_length;
+    u2 os_arch_index; // index to a CONSTANT_utf8_info structure
+}</code></pre>
+<p>The UTF-8 string in the constant pool at <code>os_arch_index</code> has the format
+<code>&lt;os&gt;-&lt;arch&gt;</code>, where <code>&lt;os&gt;</code> is typically one of <code>linux</code>, <code>macos</code>,
+<code>solaris</code>, or <code>windows</code>, and <code>&lt;arch&gt;</code> is typically one of <code>x86</code>, <code>amd64</code>,
+<code>sparcv9</code>, <code>arm</code>, or <code>aarch64</code>.</p>
+<h3 id="Packaging:-Modular-JAR-files">Packaging: Modular JAR files</h3>
+<p>The <code>jar</code> tool can be used without change to create
+<a href="//openjdk.java.net/projects/jigsaw/spec/sotms/#module-artifacts">modular JAR files</a>, since a modular JAR file is just a JAR
+file with a <code>module-info.class</code> file in its root directory.</p>
+<p>The <code>jar</code> tool implements the following new options to allow the
+insertion of additional information into module descriptors as modules
+are packaged:</p>
+<ul>
+<li>
+<p><code>--main-class=&lt;class-name&gt;</code>, or <code>-e &lt;class-name&gt;</code> for short, causes
+<code>&lt;class-name&gt;</code> to be recorded in the <code>module-info.class</code> file as the
+class containing the module's <code>public static void main</code> entry point.
+(This is not a new option; it already records the main class in the
+JAR file's manifest.)</p>
+</li>
+<li>
+<p><code>--module-version=&lt;version&gt;</code> causes <code>&lt;version&gt;</code> to be recorded in the
+<code>module-info.class</code> file as the module's version string.</p>
+</li>
+<li>
+<p><code>--hash-modules=&lt;pattern&gt;</code> causes hashes of the content of the
+specific modules that depend upon this module, in a particular set of
+observable modules, to be recorded in the <code>module-info.class</code> file
+for later use in the validation of dependencies.  Hashes are only
+recorded for modules whose names match the regular expression
+<code>&lt;pattern&gt;</code>.  If this option is used then the <code>---module-path</code>
+option, or <code>-p</code> for short, must also be used to specify the set of
+observable modules for the purpose of computing the modules that
+depend upon this module.</p>
+</li>
+<li>
+<p><code>--describe-module</code>, or <code>-d</code> for short, displays the module
+descriptor, if any, of the specified JAR file.</p>
+</li>
+</ul>
+<p>The <code>jar</code> tool's <code>--help</code> option can be used to show a complete summary
+of its command-line options.</p>
+<p>Two new JDK-specific JAR-file manifest attributes are defined to
+correspond to the <code>--add-exports</code> and <code>--add-opens</code> command-line options:</p>
+<ul>
+<li><code>Add-Exports: &lt;module&gt;/&lt;package&gt;( &lt;module&gt;/&lt;package&gt;)*</code></li>
+<li><code>Add-Opens: &lt;module&gt;/&lt;package&gt;( &lt;module&gt;/&lt;package&gt;)*</code></li>
+</ul>
+<p>The value of each attribute is a space-separated list of slash-separated
+module-name/package-name pairs.  A <code>&lt;module&gt;/&lt;package&gt;</code> pair in the value
+of an <code>Add-Exports</code> attribute has the same meaning as the command-line
+option <code>--add-exports &lt;module&gt;/&lt;package&gt;=ALL-UNNAMED</code>.  A
+<code>&lt;module&gt;/&lt;package&gt;</code> pair in the value of an <code>Add-Opens</code> attribute has
+the same meaning as the command-line option <code>--add-opens &lt;module&gt;/&lt;package&gt;=ALL-UNNAMED</code>.</p>
+<p>Each attribute can occur at most once, in the main section of a
+<code>MANIFEST.MF</code> file.  A particular pair can be listed more than once.  If
+a specified module was not resolved, or if a specified package does not
+exist, then the corresponding pair is ignored.  These attributes are
+interpreted only in the main executable JAR file of an application, i.e.,
+in the JAR file specified to the <code>-jar</code> option of the Java run-time
+launcher; they are ignored in all other JAR files.</p>
+<h3 id="Packaging:-JMOD-files">Packaging: JMOD files</h3>
+<p>The new JMOD format goes beyond JAR files to include native code,
+configuration files, and other kinds of data that do not fit naturally,
+if at all, into JAR files.  JMOD files are used to package the modules of
+the JDK itself; they can also be used by developers to package their own
+modules, if desired.</p>
+<p>JMOD files can be used at compile time and link time, but not at run
+time.  To support them at run time would require, in general, that we be
+prepared to extract and link native-code libraries on-the-fly.  This is
+feasible on most platforms, though it can be very tricky, and we have not
+seen many use cases that require this capability, so for simplicity we
+have chosen to limit the utility of JMOD files in this release.</p>
+<p>A new command-line tool, <code>jmod</code>, can be used to create, manipulate, and
+examine JMOD files.  Its general syntax is:</p>
+<pre><code>$ jmod (create|extract|list|describe|hash) &lt;options&gt; &lt;jmod-file&gt;</code></pre>
+<p>For the <code>create</code> subcommand, <code>&lt;options&gt;</code> can include the <code>--main-class</code>,
+<code>--module-version</code>, <code>--hash-modules</code>, and <code>---module-path</code> options
+described above for the <code>jar</code> tool, and also:</p>
+<ul>
+<li>
+<p><code>--class-path &lt;path&gt;</code> specifies a class path whose content will be
+copied into the resulting JMOD file.</p>
+</li>
+<li>
+<p><code>--cmds &lt;path&gt;</code> specifies one or more directories containing native
+commands to be copied.</p>
+</li>
+<li>
+<p><code>--config &lt;path&gt;</code> specifies one or more directories containing
+configuration files to be copied.</p>
+</li>
+<li>
+<p><code>--exclude &lt;pattern-list&gt;</code> specifies files to be excluded, where
+<code>&lt;pattern-list&gt;</code> is a comma-separated list of patterns of the form
+<code>&lt;glob-pattern&gt;</code>, <code>glob:&lt;glob-pattern&gt;</code>, or <code>regex:&lt;regex-pattern&gt;</code>.</p>
+</li>
+<li>
+<p><code>--header-files &lt;path&gt;</code> specifies one or more directories containing
+C and C++ header files to be copied.</p>
+</li>
+<li>
+<p><code>--legal-notices &lt;path&gt;</code> specifies one or more directories containing
+legal notices to be copied.</p>
+</li>
+<li>
+<p><code>--libs &lt;path&gt;</code> specifies one or more directories containing native
+libraries to be copied.</p>
+</li>
+<li>
+<p><code>--man-pages &lt;path&gt;</code> specifies one or more directories containing
+manual pages to be copied.</p>
+</li>
+<li>
+<p><code>--target-platform &lt;os&gt;-&lt;arch&gt;</code> specifies the target operating system
+and architecture, to be recorded in the <code>ModuleTarget</code> attribute of
+the <code>module-info.class</code> file.</p>
+</li>
+</ul>
+<p>The <code>extract</code> subcommand accepts a single option, <code>--dir</code>, to indicate
+the directory into which the content of the specified JMOD file should be
+written.  The directory will be created if it does not exist.  If this
+option is not present then the content will be extracted into the current
+directory.</p>
+<p>The <code>list</code> subcommand lists the content of the specified JMOD file; the
+<code>describe</code> subcommand displays the module descriptor of the specified
+JMOD file, in the same format as the <code>--describe-module</code> options of the
+<code>jar</code> and <code>java</code> commands.  These subcommands accept no options.</p>
+<p>The <code>hash</code> subcommand can be used to hash an existing set of JMOD files.
+It requires both the <code>--module-path</code> and <code>--hash-modules</code> options.</p>
+<p>The <code>jmod</code> tool's <code>--help</code> option can be used to show a complete summary
+of its command-line options.</p>
+<h3 id="Link-time">Link time</h3>
+<p>The details of the command-line linking tool, <code>jlink</code>, are described in
+<a href="//openjdk.java.net/jeps/282">JEP 282</a>.  At a high level its general syntax is:</p>
+<pre><code>$ jlink &lt;options&gt; ---module-path &lt;modulepath&gt; --output &lt;path&gt;</code></pre>
+<p>where the <code>---module-path</code> option specifies the set of observable modules
+to be considered by the linker and the <code>--output</code> option specifies the
+path of the directory that will contain the resulting run-time image.
+The other <code>&lt;options&gt;</code> can include the <code>---limit-modules</code> and
+<code>---add-modules</code> options, described above, as well as additional
+linker-specific options.</p>
+<p>The <code>jlink</code> tool's <code>--help</code> option can be used to show a complete summary
+of its command-line options.</p>
+<h3 id="Run-time">Run time</h3>
+<p>The HotSpot virtual machine implements the options described above, as
+applicable to run time: <code>--upgrade-module-path</code>, <code>--module-path</code>,
+<code>--add-modules</code>, <code>--limit-modules</code>, <code>--add-reads</code>, <code>--add-exports</code>,
+<code>--add-opens</code>, and <code>--patch-module</code>.  These options can be passed to the
+command-line launcher, <code>java</code>, and also to the
+<a href="http://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/invocation.html">JNI invocation API</a>.</p>
+<p>An additional option specific to this phase and supported by the launcher
+is:</p>
+<ul>
+<li><code>--module &lt;module&gt;</code>, or <code>-m &lt;module&gt;</code> for short, specifies the main
+module of a modular application.  This will be the default root
+module for the purpose of constructing the application's initial
+module graph.  If the main module's descriptor does not indicate a
+main class then the syntax <code>&lt;module&gt;/&lt;class&gt;</code> can be used, where
+<code>&lt;class&gt;</code> names the class that contains the application's <code>public static void main</code> entry point.</li>
+</ul>
+<p>Additional diagnostic options supported by the launcher include:</p>
+<ul>
+<li>
+<p><code>--list-modules</code> displays the names and version strings of the
+observable modules and then exits, in the same manner as <code>java --version</code>.</p>
+</li>
+<li>
+<p><code>--describe-module &lt;module&gt;</code>, or <code>-d &lt;module&gt;</code> for short, displays
+the module descriptor of the specified module, in the same format as
+the <code>jar -d</code> option and the <code>jmod describe</code> subcommand, and then
+exits.</p>
+</li>
+<li>
+<p><code>--validate-modules</code> validates all the observable modules, checking
+for conflicts and other potential errors, and then exits.</p>
+</li>
+<li>
+<p><code>--dry-run</code> initializes the virtual machine and loads the main class
+but does not invoke the main method; this is useful for validating
+the configuration of the module system.</p>
+</li>
+<li>
+<p><code>--show-module-resolution</code> causes the module system to describe its
+activities as it constructs the initial module graph.</p>
+</li>
+<li>
+<p><code>-Dsun.reflect.debugModuleAccessChecks</code> causes a thread dump to be
+shown whenever an access check in the <code>java.lang.reflect</code> API fails
+with an <code>IllegalAccessException</code> or an <code>InaccessibleObjectException</code>.
+This is useful for debugging when the underlying reason for a failure
+is hidden because the exception is caught and not re-thrown.</p>
+</li>
+<li>
+<p><code>-Xlog:module+[load|unload][=[debug|trace]]</code> causes the VM to log
+debug or trace messages as modules are defined and changed in the
+run-time module graph.  These options generate voluminous output
+during startup.</p>
+</li>
+<li>
+<p><code>-verbose:module</code> is a shorthand for <code>-Xlog:module+load -Xlog:module+unload</code>.</p>
+</li>
+<li>
+<p><code>-Xlog:init=debug</code> causes a stack trace to be displayed if the
+initialization of the module system fails.</p>
+</li>
+<li>
+<p><code>--version</code>, <code>--show-version</code>, <code>--help</code>, and <code>--help-extra</code> display
+the same information and work in the same way as the existing
+<code>-version</code>, <code>-show-version</code>, <code>-help</code>, and <code>-Xhelp</code> options,
+respectively, except that they write the help text to the standard
+output stream rather than the standard error stream.</p>
+</li>
+</ul>
+<p>The stack traces generated for exceptions at run time have been extended
+to include, when present, the names and version strings of relevant
+modules.  The detail strings of exceptions such as <code>ClassCastException</code>,
+<code>IllegalAccessException</code>, and <code>IllegalAccessError</code> have also been updated
+to include module information.</p>
+<p>The existing <code>-jar</code> option has been enhanced so that if the manifest file
+of the JAR file being launched contains a <code>Launcher-Agent-Class</code>
+attribute then the JAR file is launched as both an application and as an
+agent for that application. This allows <code>java -jar foo.jar</code> to be used in
+place of the more verbose <code>java -javaagent:foo.jar -jar foo.jar</code>.</p>
+<h3 id="Relaxed-strong-encapsulation">Relaxed strong encapsulation</h3>
+<p>In this release the strong encapsulation of some of the JDK's packages is
+relaxed by default,
+<a href="//cr.openjdk.java.net/~iris/se/9/java-se-9-fr-spec-01/#Relaxing-strong-encapsulation">as permitted by the Java SE&#160;9 Platform Specification</a>.
+This relaxation is controlled at run time by a new launcher option,
+<code>--illegal-access</code>, which works as follows:</p>
+<ul>
+<li>
+<p><code>--illegal-access=permit</code> opens each package in each module in the
+run-time image to code in all unnamed modules, <em>i.e.</em>, to code on the
+class path, if that package existed in JDK 8.  This enables both
+static access, <em>i.e.</em>, by compiled bytecode, and deep reflective
+access, via the platform's various reflection APIs.</p>
+<p>The first reflective-access operation to any such package causes a
+warning to be issued, but no warnings are issued after that point.
+This single warning describes how to enable further warnings.  This
+warning cannot be suppressed.</p>
+<p>This mode is the default in JDK 9.  It will be phased out in a future
+release and, eventually, removed.</p>
+</li>
+<li>
+<p><code>--illegal-access=warn</code> is identical to <code>permit</code> except that a
+warning message is issued for each illegal reflective-access
+operation.</p>
+</li>
+<li>
+<p><code>--illegal-access=debug</code> is identical to <code>warn</code> except both a warning
+message and a stack trace are issued for each illegal
+reflective-access operation.</p>
+</li>
+<li>
+<p><code>--illegal-access=deny</code> disables all illegal-access operations except
+for those enabled by other command-line options, e.g., <code>--add-opens</code>.</p>
+<p>This mode will become the default in a future release.</p>
+</li>
+</ul>
+<p>When <code>deny</code> becomes the default illegal-access mode then <code>permit</code> will
+likely remain supported for at least one release, so that developers can
+continue to migrate their code.  The <code>permit</code>, <code>warn</code>, and <code>debug</code> modes
+will, over time, be removed, as will the <code>--illegal-access</code> option
+itself.  (For launch-script compatibility the unsupported modes will most
+likely just be ignored, after issuing a warning to that effect.)</p>
+<p>The default mode, <code>--illegal-access=permit</code>, is intended to make you
+aware when you have code on the class path that reflectively accesses
+some JDK-internal API at least once.  To prepare for the future you can
+use the <code>warn</code> or <code>debug</code> modes to learn about all such accesses.  For
+each library or framework on the class path that requires illegal access
+you have two options:</p>
+<ul>
+<li>
+<p>If the component's maintainers have already released a new, fixed
+version that no longer uses JDK-internal APIs then you can consider
+upgrading to that version.</p>
+</li>
+<li>
+<p>If the component still needs to be fixed then we encourage you to
+contact its maintainers and ask them to replace their use of
+JDK-internal APIs with proper exported APIs, if available.</p>
+</li>
+</ul>
+<p>If you must continue to use a component that requires illegal access then
+you can eliminate the warning messages by using one or more <code>--add-opens</code>
+options to open just those internal packages to which access is required.</p>
+<p>To verify that your application is ready for the future, run it with
+<code>--illegal-access=deny</code> along with any necessary <code>--add-opens</code> options.
+Any remaining illegal-access errors will most likely be due to static
+references from compiled code to JDK-internal APIs.  You can identify
+those by running the <code>jdeps</code> tool with the <code>--jdk-internals</code> option.
+(The run-time system does not issue warnings for illegal static-access
+operations because that would require deep VM changes and degrade
+performance.)</p>
+<p>The warning message issued when an illegal reflective-access operation is
+detected has the following form:</p>
+<pre><code>WARNING: Illegal reflective access by $PERPETRATOR to $VICTIM</code></pre>
+<p>where:</p>
+<ul>
+<li>
+<p>$PERPETRATOR is the fully-qualified name of the type containing
+the code that invoked the reflective operation in question plus
+the code source (i.e., JAR-file path), if available, and</p>
+</li>
+<li>
+<p>$VICTIM is a string that describes the member being accessed,
+including the fully-qualified name of the enclosing type</p>
+</li>
+</ul>
+<p>In the default mode, <code>--illegal-access=permit</code>, at most one of these
+warning messages will be issued, accompanied by additional instructive
+text.  Here is an example, from running Jython:</p>
+<pre><code>$ java -jar jython-standalone-2.7.0.jar
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by jnr.posix.JavaLibCHelper (file:/tmp/jython-standalone-2.7.0.jar) to method sun.nio.ch.SelChImpl.getFD()
+WARNING: Please consider reporting this to the maintainers of jnr.posix.JavaLibCHelper
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+Jython 2.7.0 (default:9987c746f838, Apr 29 2015, 02:25:11) 
+[OpenJDK 64-Bit Server VM (Oracle Corporation)] on java9
+Type "help", "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; ^D</code></pre>
+<p>The run-time system makes a best-effort attempt to suppress duplicate
+warnings for the same $PERPETRATOR and $VICTIM.</p>
+<h3 id="An-extended-example">An extended example</h3>
+<p>Suppose we have an application module, <code>com.foo.bar</code>, which depends upon
+a library module, <code>com.foo.baz</code>.  If we have the source code for both
+modules in the module-path directory <code>src</code>:</p>
+<pre><code>src/com.foo.bar/module-info.java
+src/com.foo.bar/com/foo/bar/Main.java
+src/com.foo.baz/module-info.java
+src/com.foo.baz/com/foo/baz/BazGenerator.java</code></pre>
+<p>then we can compile them, together:</p>
+<pre><code>$ javac --module-source-path src -d mods $(find src -name '*.java')</code></pre>
+<p>The output directory, <code>mods</code>, is a module-path directory containing
+exploded, compiled definitions of the two modules:</p>
+<pre><code>mods/com.foo.bar/module-info.class
+mods/com.foo.bar/com/foo/bar/Main.class
+mods/com.foo.baz/module-info.class
+mods/com.foo.baz/com/foo/baz/BazGenerator.class</code></pre>
+<p>Assuming that the <code>com.foo.bar.Main</code> class contains the application's
+entry point, we can run these modules as-is:</p>
+<pre><code>$ java -p mods -m com.foo.bar/com.foo.bar.Main</code></pre>
+<p>Alternatively, we can package them up into modular JAR files:</p>
+<pre><code>$ jar --create -f mlib/com.foo.bar-1.0.jar \
+      --main-class com.foo.bar.Main --module-version 1.0 \
+      -C mods/com.foo.bar .
+$ jar --create -f mlib/com.foo.baz-1.0.jar \
+      --module-version 1.0 -C mods/com.foo.baz .</code></pre>
+<p>The <code>mlib</code> directory is a module-path directory containing the packaged,
+compiled definitions of the two modules:</p>
+<pre><code>$ ls -l mlib
+-rw-r--r-- 1501 Sep  6 12:23 com.foo.bar-1.0.jar
+-rw-r--r-- 1376 Sep  6 12:23 com.foo.baz-1.0.jar</code></pre>
+<p>We can now run the packaged modules directly:</p>
+<pre><code>$ java -p mlib -m com.foo.bar</code></pre>
+<h3 id="jtreg-enhancements"><code>jtreg</code> enhancements</h3>
+<p>The <a href="//openjdk.java.net/jtreg/">jtreg test harness</a> supports a new declarative tag,
+<code>@modules</code>, to express a test's dependences upon the modules in the
+system being tested.  It takes a series of space-separated arguments,
+each of which can be of the form</p>
+<ul>
+<li>
+<p><code>&lt;module&gt;</code>, where <code>&lt;module&gt;</code> is a module name, to indicate that the
+specified module must be present;</p>
+</li>
+<li>
+<p><code>&lt;module&gt;/&lt;package&gt;</code>, to indicate that the specified module must be
+present and the specified package must be exported to the test's
+module; or</p>
+</li>
+<li>
+<p><code>&lt;module&gt;/&lt;package&gt;:&lt;flag&gt;</code>, to indicate that the specified module
+must be present and, if the flag is <code>open</code> then the specified package
+must be opened to the test's module, or else if the flag is <code>+open</code>
+then the specified package must be both exported and opened to the
+test's module.</p>
+</li>
+</ul>
+<p>A default set of <code>@modules</code> arguments, which will be used for all tests
+in a directory hierarchy that do not include such a tag, can be specified
+as the value of the <code>modules</code> property in a <code>TEST.ROOT</code> file or in any
+<code>TEST.properties</code> file.</p>
+<p>The existing <code>@compile</code> tag accepts a new option, <code>/module=&lt;module&gt;</code>.
+This has the effect of invoking <code>javac</code> with the <code>--module &lt;module&gt;</code>
+option, defined above, to compile the specified classes as members of the
+indicated module.</p>
+<h3 id="Class-loaders">Class loaders</h3>
+<p>The Java SE Platform API historically specified two class loaders: The
+<em>bootstrap class loader</em>, which loads classes from the bootstrap class
+path, and the <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ClassLoader.html#getSystemClassLoader--"><em>system class loader</em></a>, which is the default
+delegation parent for new class loaders and, typically, the class loader
+used to load and start the application.  The specification does not
+mandate the concrete types of either of these class loaders, nor their
+precise delegation relationship.</p>
+<p>The JDK has, since the 1.2 release, implemented a three-level hierarchy
+of class loaders, where each loader delegates to the next:</p>
+<ul>
+<li>
+<p>The application class loader, an instance of
+<code>java.net.URLClassLoader</code>, loads classes from the class path and is
+installed as the system class loader unless an alternate system
+loader is specified via the system property
+<code>java.system.class.loader</code>.</p>
+</li>
+<li>
+<p>The extension class loader, also an instance of <code>URLClassLoader</code>,
+loads classes available via the <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/extensions/index.html">extension mechanism</a> and, also,
+some resources and service providers built-in to the JDK.  (This
+loader is not mentioned explicitly in the Java SE Platform API
+Specification.)</p>
+</li>
+<li>
+<p>The bootstrap class loader, which is implemented solely within the
+virtual machine and is represented by <code>null</code> in the <code>ClassLoader</code>
+API, loads classes from the bootstrap class path.</p>
+</li>
+</ul>
+<p>JDK 9 retains this three-level hierarchy, in order to preserve
+compatibility, while making the following changes to implement the module
+system:</p>
+<ul>
+<li>
+<p>The application class loader is no longer an instance of
+<code>URLClassLoader</code> but, rather, of an internal class.  It is the
+default loader for named modules that are neither Java SE nor JDK
+modules.</p>
+</li>
+<li>
+<p>The extension class loader is no longer an instance of
+<code>URLClassLoader</code> but, rather, of an internal class.  It no longer
+loads classes via the extension mechanism, which was removed by
+<a href="//openjdk.java.net/jeps/220">JEP 220</a>.  It does, however, define selected Java SE and JDK
+modules, about which more below.  In its new role this loader is
+known as the <em>platform class loader</em>, it is available via the new
+<code>ClassLoader::getPlatformClassLoader</code>
+<a href="http://download.java.net/java/jdk9/docs/api/java/lang/ClassLoader.html#getPlatformClassLoader--">method</a>, and it will be required by the
+Java&#160;SE Platform API Specification.</p>
+</li>
+<li>
+<p>The bootstrap class loader is implemented in both library code and
+within the virtual machine, but for compatibility it is still
+represented by <code>null</code> in the <code>ClassLoader</code> API.  It defines the core
+Java&#160;SE and JDK modules.</p>
+</li>
+</ul>
+<p>The platform class loader is retained not only for compatibility but,
+also, to improve security.  Types loaded by the bootstrap class loader
+are implicitly granted all security permissions (<code>AllPermission</code>), but
+many of these types do not actually require all permissions.  We have
+<em>de-privileged</em> modules that do not require all permissions by defining
+them to the platform loader rather than the bootstrap class loader, and
+by granting them the permissions they actually need in the default
+security policy file.  The Java SE and JDK modules defined to the
+platform class loader are:</p>
+<pre><code>java.activation*            jdk.accessibility
+java.compiler*              jdk.charsets
+java.corba*                 jdk.crypto.cryptoki
+java.scripting              jdk.crypto.ec
+java.se                     jdk.dynalink
+java.se.ee                  jdk.incubator.httpclient
+java.security.jgss          jdk.internal.vm.compiler*
+java.smartcardio            jdk.jsobject
+java.sql                    jdk.localedata
+java.sql.rowset             jdk.naming.dns
+java.transaction*           jdk.scripting.nashorn
+java.xml.bind*              jdk.security.auth
+java.xml.crypto             jdk.security.jgss
+java.xml.ws*                jdk.xml.dom
+java.xml.ws.annotation*     jdk.zipfs</code></pre>
+<p>(An asterisk, <code>'*'</code>, in these lists indicates an upgradeable module.)</p>
+<p>JDK modules that provide tools or export tool APIs are defined to the
+application class loader:</p>
+<pre><code>jdk.aot                     jdk.jdeps
+jdk.attach                  jdk.jdi
+jdk.compiler                jdk.jdwp.agent
+jdk.editpad                 jdk.jlink
+jdk.hotspot.agent           jdk.jshell
+jdk.internal.ed             jdk.jstatd
+jdk.internal.jvmstat        jdk.pack
+jdk.internal.le             jdk.policytool
+jdk.internal.opt            jdk.rmic
+jdk.jartool                 jdk.scripting.nashorn.shell
+jdk.javadoc                 jdk.xml.bind*
+jdk.jcmd                    jdk.xml.ws*
+jdk.jconsole</code></pre>
+<p>All other Java SE and JDK modules are defined to the bootstrap class
+loader:</p>
+<pre><code>java.base                   java.security.sasl
+java.datatransfer           java.xml
+java.desktop                jdk.httpserver
+java.instrument             jdk.internal.vm.ci
+java.logging                jdk.management
+java.management             jdk.management.agent
+java.management.rmi         jdk.naming.rmi
+java.naming                 jdk.net
+java.prefs                  jdk.sctp
+java.rmi                    jdk.unsupported</code></pre>
+<p>The three built-in class loaders work together to load classes as
+follows:</p>
+<ul>
+<li>
+<p>The application class loader first searches the named modules defined
+to all of the built-in loaders.  If a suitable module is defined to
+one of these loaders then that loader will load the class.  If a
+class is not found in a named module defined to one of these loaders
+then the application class loader delegates to its parent.  If a
+class is not found by its parent then the application class loader
+searches the class path.  Classes found on the class path are loaded
+as members of this loader's unnamed module.</p>
+</li>
+<li>
+<p>The platform class loader searches the named modules defined to all
+of the built-in loaders.  If a suitable module is defined to one of
+these loaders then that loader will load the class.  (The platform
+class loader can, consequently, now delegate to the application class
+loader, which can be useful when a module on the upgrade module path
+depends upon a module on the application module path.)  If a class is
+not found in a named module defined to one of these loaders then the
+platform class loader delegates to its parent.</p>
+</li>
+<li>
+<p>The bootstrap class loader searches the named modules defined to
+itself.  If a class is not found in a named module defined to the
+bootstrap loader then the bootstrap class loader searches the files
+and directories added to the bootstrap class path via the
+<code>-Xbootclasspath/a</code> option.  Classes found on the bootstrap class
+path are loaded as members of this loader's unnamed module.</p>
+</li>
+</ul>
+<p>The application and platform class loaders delegate to their respective
+parent loaders in order to ensure that the bootstrap class path is still
+searched when a class is not found in a module defined to one of the
+built-in loaders.</p>
+<h3 id="Removed:-Bootstrap-class-path-options">Removed: Bootstrap class-path options</h3>
+<p>In earlier releases the <code>-Xbootclasspath</code> option allows the default
+bootstrap class path to be overridden, and the <code>-Xbootclasspath/p</code> option
+allows a sequence of files and directories to be prepended to the default
+path.  The computed value of this path is reported via the JDK-specific
+system property <code>sun.boot.class.path</code>.</p>
+<p>With the module system in place the bootstrap class path is empty by
+default, since bootstrap classes are loaded from their respective
+modules.  The <code>javac</code> compiler only supports the <code>-Xbootclasspath</code> option
+in legacy mode, the <code>java</code> launcher no longer supports either of these
+options, and the system property <code>sun.boot.class.path</code> has been removed.</p>
+<p>The compiler's <code>--system</code> option can be used to specify an alternate
+source of system modules, as described above, and its <code>-release</code> option
+can be used to specify an alternate platform version, as described in
+<a href="//openjdk.java.net/jeps/247">JEP 247 (Compile for Older Platform Versions)</a>.  At run time the
+<code>--patch-module</code> option, mentioned above, can be used to inject content
+into modules in the initial module graph.</p>
+<p>A related option, <code>-Xbootclasspath/a</code>, allows files and directories to be
+appended to the default bootstrap class path.  This option, and the
+related API in the <code>java.lang.instrument</code> package, is sometimes used by
+instrumentation agents, so for compatibility it is still supported at run
+time.  Its value, if specified, is reported via the JDK-specific system
+property <code>jdk.boot.class.path.append</code>.  This option can be passed to the
+command-line launcher, <code>java</code>, and also to the JNI invocation API.</p>
+<h2 id="Testing">Testing</h2>
+<p>Many existing tests were affected by the introduction of the module
+system.  In JDK&#160;9 the <code>@modules</code> tag, described above, was added to
+the unit and regression tests as needed, and tests that used the
+<code>-Xbootclasspath/p</code> option or assumed that the system class loader is a
+<code>URLClassLoader</code> were updated.</p>
+<p>There is, of course, an extensive set of unit tests for the module system
+itself.  In the JDK&#160;9 source forest the run-time tests are in the
+<a href="//hg.openjdk.java.net/jdk9/jdk9/jdk/file/tip/test/jdk/modules">test/jdk/modules</a> directory of the <code>jdk</code> repository and the
+<a href="//hg.openjdk.java.net/jdk9/jdk9/hotspot/file/tip/test/runtime/modules">runtime/modules</a> directory of the <code>hotspot</code> repository;
+the compile-time tests are in the <a href="//hg.openjdk.java.net/jdk9/jdk9/langtools/file/tip/test/tools/javac/modules">tools/javac/modules</a>
+directory of the <code>langtools</code> repository.</p>
+<p>Early-access builds containing the changes described here were available
+throughout the development of the module system.  Members of the Java
+community were strongly encouraged to test their tools, libraries, and
+applications against these builds to help identify compatibility issues.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The primary risks of this proposal are ones of compatibility due to
+changes to existing language constructs, APIs, and tools.</p>
+<p>Changes due primarily to the introduction of the
+<a href="//openjdk.java.net/projects/jigsaw/spec/">Java Platform Module System (JSR 376)</a> include:</p>
+<ul>
+<li>
+<p>Applying the <code>public</code> modifier to an API element no longer guarantees
+that the element will be everywhere accessible.  Accessibility now
+depends also upon whether the package containing that element is
+exported or opened by its defining module, and whether that module is
+readable by the module containing the code that is attempting to
+access it.  For example, code of the following form might not work
+correctly:</p>
+<pre><code>Class&lt;?&gt; c = Class.forName(...);
+if (Modifier.isPublic(c.getModifiers()) {
+    // Assume that c is accessible
+}</code></pre>
+</li>
+<li>
+<p>If a package is defined in both a named module and on the class path
+then the package on the class path will be ignored.  The class path
+can, therefore, no longer be used to augment packages that are built
+into the environment.  The <code>javax.transaction</code> package, <em>e.g.</em>, is
+defined by the <code>java.transaction</code> module, so the class path will not
+be searched for types in that package.  This restriction is important
+to avoid splitting packages across class loaders and across modules.
+At compile time and run time the upgrade module path can be used to
+upgrade modules that are built-in into the environment.  The
+<code>--patch-module</code> option can be used for other ad-hoc patching.</p>
+</li>
+<li>
+<p>The <code>ClassLoader::getResource*</code> methods can no longer be used to
+locate JDK-internal resources other than class files.  Module-private
+non-class resources can be read via the <code>Class::getResource*</code>
+methods, the <code>Module::getResourceAsStream</code> method or via the <code>jrt:</code>
+URL scheme and filesystem defined in <a href="//openjdk.java.net/jeps/220">JEP 220</a>.</p>
+</li>
+<li>
+<p>The <code>java.lang.reflect.AccessibleObject::setAccessible</code>
+<a href="http://download.java.net/java/jdk9/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-">method</a> cannot be used to gain access to public
+members of packages that are not exported or opened by their defining
+modules, or to non-public members of packages that are not opened by
+their defining modules; in either case, an
+<code>InaccessibleObjectException</code> will be thrown.  If a framework
+library, such as a serializer, needs access to such members at run
+time then the relevant packages must be opened to the framework
+module by declaring the containing module to be open, by declaring
+that package to be open, or by opening that package via the
+<code>--add-opens</code> command-line option.</p>
+</li>
+<li>
+<p>JVM TI agents can no longer instrument Java code that runs early in
+the startup of the run-time environment.  The <code>ClassFileLoadHook</code>
+event, in particular, is no longer sent during the primordial phase.
+The <code>VMStart</code> event, which signals the beginning of the start phase,
+is only posted after the the VM is initialized to the point where it
+can load classes in modules other than <code>java.base</code>.  Two new
+capabilities, <code>can_generate_early_class_hook_events</code> and
+<code>can_generate_early_vmstart</code>, can be added by agents that are
+carefully written to handle events early in VM initialization.  More
+details can be found in the updated description of the <a href="http://download.java.net/java/jdk9/docs/platform/jvmti/jvmti.html#ClassFileLoadHook">class file load hook event</a>
+and the <a href="http://download.java.net/java/jigsaw/docs/platform/jvmti/jvmti.html#VMStart">start event</a>.</p>
+</li>
+<li>
+<p>The <code>==</code> syntax in security policy files has been revised to augment
+the permissions granted to standard and JDK modules rather than
+override them.  Applications that override other aspects of the JDK's
+default policy file therefore do not need to copy the default
+permissions granted to the standard and JDK modules.</p>
+</li>
+</ul>
+<p><a id="EE-modules">Modules that define Java EE APIs,</a> or APIs
+primarily of interest to Java EE applications, have been deprecated and
+will be removed in a future release.  They are not resolved by default
+for code on the class path:</p>
+<ul>
+<li>
+<p>The default set of root modules for the unnamed module is based upon
+the <code>java.se</code> module rather than the <code>java.se.ee</code> module.  Thus, by
+default, code in the unnamed module will not have access to APIs in
+the following modules:</p>
+<pre><code>java.activation
+java.corba
+java.transaction
+java.xml.bind
+java.xml.ws
+java.xml.ws.annotation</code></pre>
+<p>This is an intentional, if painful, choice, driven by two goals:</p>
+<ul>
+<li>
+<p>To avoid unnecessary conflicts with popular libraries that define
+types in some of the same packages.  The widely-used
+<code>jsr305.jar</code>, <em>e.g.</em>, defines annotation types in the
+<code>javax.annotation</code> package, which is also defined by the
+<code>java.xml.ws.annotation</code> module.</p>
+</li>
+<li>
+<p>To make it easier for existing application servers to migrate to
+JDK&#160;9.  Application servers often override the content of
+one or more of these modules, and in the near term they are most
+likely to do so by continuing to place the necessary non-modular
+JAR files on the class path.  If these modules were resolved by
+default then the maintainers of application servers would have to
+take awkward actions to exclude them in order to override them.</p>
+</li>
+</ul>
+<p>These modules are still part of JDK&#160;9.  Code on the class path
+can be granted access to one or more of these modules, as needed, via
+the <code>--add-modules</code> option.</p>
+</li>
+</ul>
+<p>The run-time behavior of some Java SE APIs has changed, though in ways
+that continue to honor their existing specifications:</p>
+<ul>
+<li>
+<p>The application and platform class loaders are no longer instances of
+the <code>java.net.URLClassLoader</code> class, as noted above.  Existing code
+that invokes <code>ClassLoader::getSystemClassLoader</code> and blindly casts
+the result to <code>URLClassLoader</code>, or does the same thing with the
+parent of that class loader, might not work correctly.</p>
+</li>
+<li>
+<p>Some Java SE types have been de-privileged and are now loaded by the
+platform class loader rather than the bootstrap class loader, as
+noted above.  Existing custom class loaders that delegate directly to
+the bootstrap class loader might not work correctly; they should be
+updated to delegate to the platform class loader, which is easily
+available via the new <code>ClassLoader::getPlatformClassLoader</code>
+<a href="http://download.java.net/java/jdk9/docs/api/java/lang/ClassLoader.html#getPlatformClassLoader--">method</a>.</p>
+</li>
+<li>
+<p>Instances of <code>java.lang.Package</code> created by the built-in class
+loaders for packages in named modules do not have specification or
+implementation versions.  In previous releases this information was
+read from the manifest of <code>rt.jar</code>.  Existing code that expects the
+<code>Package::getSpecification*</code> or <code>Package::getImplementation*</code> methods
+always to return non-null values might not work correctly.</p>
+</li>
+</ul>
+<p>There are several source-incompatible Java SE API changes:</p>
+<ul>
+<li>
+<p>The <code>java.lang</code> package includes two new top-level classes, <code>Module</code>
+and <code>ModuleLayer</code>.  The <code>java.lang</code> package is implicitly imported on
+demand (<em>i.e.</em>, <code>import java.lang.*</code>).  If code in an existing source
+file imports some other package on demand, and that package declares
+a <code>Module</code> or <code>ModuleLayer</code> type, and the existing code refers to
+that type, then the file will not compile without change.</p>
+</li>
+<li>
+<p>The <code>java.lang.instrument.Instrumentation</code> interface declares two new
+abstract methods, <code>redefineModule</code> and <code>isModifiableModule</code>.  This
+interface is not intended to be implemented outside of the
+<code>java.instrument</code> module.  If there are external implementations then
+they will not compile on JDK&#160;9 without change.</p>
+</li>
+<li>
+<p>The five-parameter <code>transform</code> method declared in the
+<code>java.lang.instrument.ClassFileTransformer</code> interface is now a
+default method.  The interface now also declares a new <code>transform</code>
+method that makes the relevant <code>java.lang.reflect.Module</code> object
+available to the transformer when instrumenting classes at load time.
+Existing compiled code will continue to run, but existing source code
+that uses the existing five-parameter transform method as a
+functional interface will no longer compile.</p>
+</li>
+</ul>
+<p>Finally, changes due to revisions to JDK-specific APIs and tools include:</p>
+<ul>
+<li>
+<p>Most of the JDK's internal APIs are inaccessible by default at
+compile time, as described in <a href="//openjdk.java.net/jeps/260">JEP 260</a>.  Existing code that
+compiled against these APIs with warnings in previous releases will
+no longer compile.  A workaround is to break encapsulation via the
+<code>--add-exports</code> option, defined above.</p>
+</li>
+<li>
+<p>Selected critical internal APIs in the <code>sun.misc</code> and <code>sun.reflect</code>
+packages have been moved to the <code>jdk.unsupported</code> module, as
+described in JEP&#160;260.  Non-critical internal APIs in these
+packages, such as <code>sun.misc.BASE64{De,En}coder</code>, have been either
+moved or removed.</p>
+</li>
+<li>
+<p>If a security manager is present then the run-time permission
+<code>accessSystemModules</code> is required in order to access JDK-internal
+resources via the <code>ClassLoader::getResource*</code> or
+<code>Class::getResource*</code> methods; in previous releases, permission to
+read the file <code>${java.home}/lib/rt.jar</code> was required.</p>
+</li>
+<li>
+<p>The <code>-Xbootclasspath</code> and <code>-Xbootclasspath/p</code> options have been
+removed, as noted above.  At compile time, the new <code>--release</code> option
+can be used to specify an alternate platform version (see
+<a href="//openjdk.java.net/jeps/247">JEP 247</a>).  At run time, the new <code>--patch-module</code> option,
+described above, can be used to inject content into system modules.</p>
+</li>
+<li>
+<p>The JDK-specific system property <code>sun.boot.class.path</code> has been
+removed, since the bootstrap class path is empty by default.
+Existing code that uses this property might not work correctly.</p>
+</li>
+<li>
+<p>The JDK-specific annotation <code>@jdk.Exported</code>, introduced by
+<a href="//openjdk.java.net/jeps/179">JEP 179</a>, has been removed since the information it conveys
+is now recorded in the <code>exports</code> declarations of module descriptors.
+We have seen no evidence of this annotation being used by tools
+outside of the JDK.</p>
+</li>
+<li>
+<p>The <code>META-INF/services</code> resource files previously found in <code>rt.jar</code>
+and other internal artifacts are not present in the corresponding
+system modules, since service providers and dependences are now
+declared in module descriptors.  Existing code that scans for such
+files might not work correctly.</p>
+</li>
+<li>
+<p>The JDK-specific system property <code>file.encoding</code> can be set on the
+command line via the <code>-D</code> option, as before, but it must specify a
+charset defined in the base module.  If any other charset is
+specified then the run-time system will fail to start.  Existing
+launch scripts that specify such charsets might not work correctly.</p>
+</li>
+<li>
+<p>The <code>com.sun.tools.attach</code> API can no longer be used, by default, to
+attach an agent to the current process or an ancestor of the current
+process.  Such attachment operations can be enabled by setting the
+system property <code>jdk.attach.allowAttachSelf</code> on the command line.</p>
+</li>
+<li>
+<p>The dynamic loading of JVM TI agents will be disabled by default in a
+future release.  To prepare for that change we recommend that
+applications that allow dynamic agents start using the option
+<code>-XX:+EnableDynamicAgentLoading</code> to enable that loading explicitly.
+The option <code>-XX:-EnableDynamicAgentLoading</code> disables dynamic agent
+loading.</p>
+</li>
+</ul>
+<h2 id="Dependences">Dependences</h2>
+<p><a href="//openjdk.java.net/jeps/200">JEP 200 (The Modular JDK)</a> originally defined the modules
+present in the JDK in an XML document, as an interim measure.  This JEP
+moved those definitions to proper module descriptors, <em>i.e.</em>,
+<code>module-info.java</code> and <code>module-info.class</code> files, and the <code>modules.xml</code>
+file in the root source-code repository was removed.</p>
+<p>The initial implementation of <a href="//openjdk.java.net/jeps/220">JEP 220 (Modular Run-Time Images)</a>
+in JDK&#160;9 used a custom build-time tool to construct JRE and JDK
+images.  This JEP replaced that tool with the <code>jlink</code> tool.</p>
+<p>Modular JAR files can also be Multi-Release JAR files, per
+<a href="//openjdk.java.net/jeps/238">JEP 238</a>.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

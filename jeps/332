@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 332: Transport Layer Security (TLS) 1.3</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 332: Transport Layer Security (TLS) 1.3</h1><table class="head"><tr><td>Owner</td><td>Xue-Lei Fan</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>11</td></tr><tr><td>Component</td><td>security-libs&#8201;/&#8201;javax.net.ssl</td></tr><tr><td>Discussion</td><td>security dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>XL</td></tr><tr><td>Duration</td><td>XL</td></tr><tr><td>Reviewed by</td><td>Andrew Gross, Brian Goetz, Sean Mullan</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2015/12/12 05:26</td></tr><tr><td>Updated</td><td>2018/09/17 19:03</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8145252">8145252</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Implement version 1.3 of the Transport Layer Security (TLS) Protocol <a href="https://tools.ietf.org/html/rfc8446">RFC 8446</a>.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>It is not a goal to support version 1.3 of the Datagram Transport Layer Security (DTLS) Protocol.  It is also not a goal to support every feature of TLS 1.3; see the Description section for more details on what will be implemented.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>TLS 1.3 is a major overhaul of the TLS protocol and provides significant security and performance improvements over previous versions.  Several early implementations from other vendors are available already.  We need to support TLS 1.3 to remain competitive and keep pace with the latest standard.</p>
+<h2 id="Description">Description</h2>
+<p>TLS 1.3 is a new TLS version which supersedes and obsoletes previous versions of TLS including version 1.2 (<a href="https://tools.ietf.org/html/rfc5246">RFC 5246</a>).  It also obsoletes or changes other TLS features such as the OCSP stapling extensions (<a href="https://tools.ietf.org/html/rfc6066">RFC 6066</a>, <a href="https://tools.ietf.org/html/rfc6961">RFC 6961</a>), and the session hash and extended master secret extension (<a href="https://tools.ietf.org/html/rfc7627">RFC 7627</a>).</p>
+<p>The Java Secure Socket Extension (JSSE) in the JDK provides a framework and a Java implementation of the SSL, TLS, and DTLS protocols.  Currently, the JSSE API and JDK implementation supports SSL 3.0, TLS 1.0, TLS 1.1, TLS 1.2, DTLS 1.0 and DTLS 1.2.</p>
+<p>The primary goal of this JEP is a minimal interoperable and compatible TLS 1.3 implementation.  A minimal implementation should support:</p>
+<ul>
+<li>Protocol version negotiation</li>
+<li>TLS 1.3 full handshake</li>
+<li>TLS 1.3 session resumption</li>
+<li>TLS 1.3 key and iv update</li>
+<li>TLS 1.3 updated OCSP stapling</li>
+<li>TLS 1.3 backward compatibility mode</li>
+<li>TLS 1.3 required extensions and algorithms</li>
+<li>RSASSA-PSS signature algorithms (<a href="https://bugs.openjdk.java.net/browse/JDK-8146293">8146293</a>)</li>
+</ul>
+<p>No new public APIs are required for the minimal implementation.  The following new <a href="https://docs.oracle.com/javase/9/docs/specs/security/standard-names.html">standard algorithm names</a> are required:</p>
+<ul>
+<li>TLS protocol version name: <code>TLSv1.3</code></li>
+<li><code>javax.net.ssl.SSLContext</code> algorithm name: <code>TLSv1.3</code></li>
+<li>TLS cipher suite names for TLS 1.3: <code>TLS_AES_128_GCM_SHA256</code>, <code>TLS_AES_256_GCM_SHA384</code>.</li>
+</ul>
+<p>Additionally, the KRB5 cipher suites will be removed from the JDK because they are no longer considered safe to use.</p>
+<p>In parallel with this JEP, we will develop cryptographic algorithm support for the following optional TLS 1.3 features:</p>
+<ul>
+<li>ChaCha20/Poly1305 cipher suites (<a href="https://bugs.openjdk.java.net/browse/JDK-8140466">8140466</a>)</li>
+<li>X25519/X448 elliptic curve algorithms (<a href="https://bugs.openjdk.java.net/browse/JDK-8171279">8171279</a>)</li>
+<li>edDSA signature algorithms (<a href="https://bugs.openjdk.java.net/browse/JDK-8166596">8166596</a>)</li>
+</ul>
+<p>These features may be included in this JEP if time permits; otherwise they will be targeted and integrated as separate features.</p>
+<p>The following significant features will not be implemented as part of this JEP:</p>
+<ul>
+<li>0-RTT data</li>
+<li>Post-handshake authentication</li>
+<li>Signed certificate timestamps (SCT): <a href="https://tools.ietf.org/html/rfc6962">RFC 6962</a></li>
+</ul>
+<p>TLS 1.3 is not directly compatible with previous versions.  Although TLS 1.3 can be implemented with a backward-compatibility mode, there are several compatibility risks when using this mode:</p>
+<ul>
+<li>
+<p>TLS 1.3 uses a half-close policy, while TLS 1.2 and prior versions use a duplex-close policy.  For applications that depend on the duplex-close policy, there may be compatibility issues when upgrading to TLS 1.3.</p>
+</li>
+<li>
+<p>The <code>signature_algorithms_cert</code> extension requires that pre-defined signature algorithms are used for certificate authentication.  In practice, however, an application may use non-supported signature algorithms.</p>
+</li>
+<li>
+<p>The DSA signature algorithm is not supported in TLS 1.3.  If a server is configured to only use DSA certificates, it cannot upgrade to TLS 1.3.</p>
+</li>
+<li>
+<p>The supported cipher suites for TLS 1.3 are not the same as TLS 1.2 and prior versions.  If an application hard-codes cipher suites which are no longer supported, it may not be able to use TLS 1.3 without modifying the application code.</p>
+</li>
+</ul>
+<p>To minimize compatibility risk, this TLS 1.3 implementation will implement and enable the backward-compatibility mode by default.  An application can turn off the backward-compatibility mode, and turn TLS 1.3 on or off if desired.</p>
+<h2 id="Testing">Testing</h2>
+<p>Tests will be developed or enhanced to validate the following general requirements:</p>
+<ul>
+<li>Verify that there is no compatibility impact for (D)TLS 1.2 and prior versions.</li>
+<li>Verify that the implementation does not break backward compatibility in unexpected ways.</li>
+<li>Verify that the implementation does not introduce any unexpected interoperability issues.</li>
+<li>Verify that there is no significant performance impact.</li>
+<li>Verify that the implementation, in both client and server modes, interoperate with other TLS 1.3 implementation.</li>
+</ul>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>A third party TLS 1.3 implementation that supports the RFC is required for interoperability testing.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>TLS 1.3 requires support for the RSASSA-PSS signature algorithms (<a href="https://bugs.openjdk.java.net/browse/JDK-8146293">8146293</a>).</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

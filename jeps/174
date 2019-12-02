@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 174: Nashorn JavaScript Engine</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 174: Nashorn JavaScript Engine</h1><table class="head"><tr><td>Owner</td><td>Jim Laskey</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>8</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;jdk.nashorn</td></tr><tr><td>Discussion</td><td>nashorn dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>XL</td></tr><tr><td>Duration</td><td>XL</td></tr><tr><td>Reviewed by</td><td>Sundararajan Athijegannathan</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2012/11/21 20:00</td></tr><tr><td>Updated</td><td>2015/02/13 19:38</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046164">8046164</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Design and implement a new lightweight, high-performance implementation
+of JavaScript, and integrate it into the JDK.  The new engine will be
+made available to Java applications via the existing <code>javax.script</code> API,
+and also more generally via a new command-line tool.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Nashorn will be based on the ECMAScript-262 Edition 5.1 language
+specification, and must pass the ECMAScript-262 compliance tests.</p>
+</li>
+<li>
+<p>Nashorn will support the <code>javax.script</code> (JSR 223) API.</p>
+</li>
+<li>
+<p>Support will be provided for invoking Java code from JavaScript and
+for Java to invoke JavaScript code.  This includes direct mapping to
+JavaBeans.</p>
+</li>
+<li>
+<p>Nashorn will define a new command-line tool, <code>jjs</code>, for evaluating
+JavaScript code in "shebang" scripts, here documents, and edit
+strings.</p>
+</li>
+<li>
+<p>Performance and memory usage of Nashorn applications should be
+significantly better than Rhino.</p>
+</li>
+<li>
+<p>Nashorn will not expose any additional security risks.</p>
+</li>
+<li>
+<p>Supplied libraries should function correctly under localization.</p>
+</li>
+<li>
+<p>Error messages and documentation will be internationalized.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>Nashorn will only support ECMAScript-262 Edition 5.1.  It will not
+support any features of Edition 6, or any non-standard features
+provided by other JavaScript implementations.</p>
+</li>
+<li>
+<p>Nashorn will not include a browser plugin API.</p>
+</li>
+<li>
+<p>Nashorn will not include support for DOM/CSS or any related libraries
+(<em>e.g.</em>, jQuery, Prototype, or Dojo).</p>
+</li>
+<li>
+<p>Nashorn will not include direct debugging support.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>The performance of Rhino has fallen far behind that of other JavaScript
+engines. In order to improve performance, at this point Rhino would have
+to be rewritten to replace its interpreter with a code generator designed
+to fully utilize the JVM.  Rather than undertake a major rewrite of the
+very old Rhino code, we have chosen instead to start from scratch.</p>
+<p>It is also in the interest of the Java community to promote the JVM as a
+viable platform for languages other than Java.  This advances the
+technology and attracts new developers.</p>
+<h2 id="Description">Description</h2>
+<p>The Nashorn engine evaluates JavaScript source code in five stages: Lexer
+-&gt; parser -&gt; code generation -&gt; loading -&gt; runtime.</p>
+<p>The lexer takes an array of Unicode characters (source) and translates it
+into a stream of lexical units or tokens; <em>e.g.</em>, numbers, strings,
+identifiers, or special characters.</p>
+<p>Nashorn uses a recursive descent parser based on the ECMAScript 262
+language specification.  The parser takes the token stream produced by
+the lexer and collects tokens that match the language syntax.  As
+syntactic units are recognized, the parser constructs an intermediate
+representation (AST/IR) of the JavaScript code.</p>
+<p>The code generator takes the AST/IR and generates JVM byte code.  When
+executed, this byte code implements the semantics of the original
+JavaScript source code.</p>
+<p>Code generation is done in two steps.  The first step lowers the AST/IR
+to something closer to the JVM instruction set.  This conversion includes
+transforming controls, reducing expressions to primitive operations, and
+simplifying call expressions.  This step is also responsible for defining
+symbols used to manage data usage, space, and types.</p>
+<p>Step two translates the AST/IR into byte code via the ASM library. ASM
+emits the actual byte codes to form a script class.  This class is cached
+in memory for later use by the script loader.</p>
+<p>Once the script class has been generated, it needs to be installed into
+the JVM.  This is done using defineClass via a secure custom class
+loader.  This loader is also used to synthesize special Nashorn object
+classes when encountered in generated code.  Once the script class is
+loaded, its runMethod is invoked.</p>
+<p>Several libraries are needed to support the executing code.</p>
+<p>The main runtime library includes methods that directly support executing
+code, <em>e.g.</em>, type-conversion routines needed for <code>toString</code> and
+<code>toNumber</code>, and allocation routines like <code>allocateArray</code>.</p>
+<p>The linker library includes methods to assist the binding of
+<code>invokedynamic</code> calls using the <code>java.lang.invoke</code> API (JSR 292).  The
+binding process is quite complex, searching for the correct method,
+defining guards to ensure that call sites continues to be the correct,
+and relinking if something changes to require a different correct
+method. The linker also manages a history of calls, so that lookup is
+faster on successive relinks.</p>
+<p>The JavaScript objects library includes support for all the standard
+JavaScript objects, <em>e.g.</em>, <code>Object</code>, <code>Function</code>, <code>Number</code>, <code>String</code>,
+<code>Date</code>, <code>Array</code>, <code>RegExp</code>, and so forth.  It also includes functions for
+string manipulation, complex math, applying functions, et cetera.</p>
+<p>Nashorn uses <code>invokedynamic</code> to implement all of its invocations. If an
+invocation has a Java object receiver, Nashorn attempts to bind the call
+to an appropriate Java method instead of a JavaScript function.  Nashorn
+has full discretion about how it resolves methods.  As an example, if it
+can't find a field in the receiver, it looks for an equivalent Java Bean
+method. The result is completely transparent for calls from JavaScript to
+Java.</p>
+<p>Java developers can use the <code>javax.script</code> (JSR 223) API to evaluate and
+call back into JavaScript code.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Rhino has a long history, and source code to match.  Most of the Rhino
+code supports an interpreted execution model.  To gain significant
+performance, the execution model needs to take advantage of the Hotspot
+interpreter/compiler.</p>
+<p>Other JavaScript engines, such as V8 and Nitro, provide good performance
+but would require a second VM (additional code and memory) and a bridging
+API to communicate with Java.</p>
+<h2 id="Testing">Testing</h2>
+<h3 id="JCK">JCK</h3>
+<p>Existing javax.script JCK test should be sufficient.  Nashorn is just
+another scripting engine accessible via the <code>javax.script</code> API.  Nashorn
+itself does not expose its own new Java standard API, so no additional
+JCK tests are needed.</p>
+<h3 id="Functional/Unit-tests">Functional/Unit tests</h3>
+<p>Existing tests include:</p>
+<ul>
+<li><a href="http://test262.ecmascript.org">test262</a> (ecmascript.org)</li>
+<li><a href="http://es5conform.codeplex.com/">ES5conform</a></li>
+</ul>
+<p>These cover most of the functional areas, but these tests have to be
+adapted into Nashorn's TestNG-based test suite. Not all of these tests
+may be applicable since Nashorn is ECMAScript-262 Edition 5.1 compliant
+with few extensions. In particular, the mozilla_js_tests cover many
+Mozilla-specific features which Nashorn will not support. So, some
+sub-setting and adaptation work is required to use these tests within
+Nashorn's test framework.</p>
+<p>Existing unit tests for the <code>javax.script</code> API and the <code>jrunscript</code>
+command-line tool can be used against Nashorn as well.</p>
+<h3 id="Additional-unit/regression-tests-in-the-Nashorn-repo">Additional unit/regression tests in the Nashorn repo</h3>
+<p>These are tests developed by Nashorn developers in the course of
+implementing features and fixing bugs.</p>
+<h3 id="Performance-tests">Performance tests</h3>
+<ul>
+<li>
+<p><a href="http://www.webkit.org/perf/sunspider/sunspider.html">Sunspider</a>
+JavaScript core engine performance tests (webkit.org)</p>
+</li>
+<li>
+<p><a href="http://v8.googlecode.com/svn/data/benchmarks/v6/run.html">v8 (Octane) performance tests</a></p>
+</li>
+</ul>
+<p>There has been some adaptation work to run these tests under the Nashorn
+test framework.</p>
+<p>Note: These performance tests do not include browser API access (DOM/CSS,
+<em>et al</em>.) Performance test suites such as
+<a href="http://v2.dromaeo.com">Dromaeo</a> do provide such tests, but they are
+beyond the current scope of Nashorn.</p>
+<h3 id="Security-tests">Security tests</h3>
+<p>Nashorn compiles JavaScript source code and generates Java classes. These
+classes are loaded by a special class loader.  Nashorn allows Java calls
+to be made from JavaScript. Care must be taken to ensure that such
+generated classes follow the Java security model. Tests are needed to
+ensure that, under a security manager, Nashorn is secure as well. No
+additional permissions that are not available to compiled Java class
+files should be available to script classes generated by Nashorn.</p>
+<h2 id="Impact">Impact</h2>
+<ul>
+<li>Compatibility: Nashorn will not implement any feature of the Rhino
+engine currently in the JDK that is outside of ECMAScript-262.</li>
+<li>Security: Testing required</li>
+<li>Performance/scalability: Testing required</li>
+<li>I18n/L10n: Yes</li>
+<li>Portability: No; Nashorn does not include any native code.</li>
+<li>Documentation: Yes</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

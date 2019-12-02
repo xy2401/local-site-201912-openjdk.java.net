@@ -1,0 +1,696 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Processing Code</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script><style>
+
+body { font-family: sans-serif; }
+header {
+    padding-bottom: 1em;
+    border-bottom: 1px solid black;
+    margin-bottom: 1em;
+}
+dt { font-weight: bold;  }
+figure {
+    margin: 20px 0;
+}
+figure caption {
+    margin-left:20 px;
+}
+div.code, iframe.code, div.out, iframe.out {
+    display:block;
+    overflow:auto;
+    width: 100%;
+    height: 500px;
+    border: 1px solid gray;
+    margin: 10px;
+}
+div.cmd {
+    border: 1px solid gray;
+    margin: 10px;
+}
+div pre {
+    counter-reset: line;
+}
+div pre code::before {
+    counter-increment: line;
+    content: counter(line);
+    display: inline-block;
+    border-right: 1px solid #ddd;
+    padding: 0 .5em;
+    margin-right: .5em;
+    color: #888;
+}
+main {
+    counter-reset: figure;
+}
+figcaption::before {
+    counter-increment: figure;
+    content: "Figure " counter(figure) ":";
+    margin-right: 5pt;
+    display: inline-block;
+}
+
+</style></head><body><div id="main">
+<header>
+<h1>Processing Code</h1>
+Or: <em>Doclets, Annotation Processors and Plugins: Oh
+My!</em></header>
+<main>
+<p>In addition to runtime reflection, JDK provides some different
+ways to analyze Java classes without having to load the classes,
+whether they are found in source files or in compiled class files.
+This note discusses the different ways, and the reasons to choose
+one way over another.</p>
+<h2 id="history&gt;">History</h2>
+<dl>
+<dt>Before JDK 5.0</dt>
+<dd>
+<p>Prior to JDK 5.0, the only supported way to examine the
+structure and comments of Java classes was by using
+<em>javadoc</em> and the original <a href="https://docs.oracle.com/javase/6/docs/jdk/api/javadoc/doclet/index.html">
+Doclet API</a>.</p>
+</dd>
+<dt>JDK 5.0</dt>
+<dd>
+<p>In JDK 5.0, annotations were added to the Java language, along
+with other features, like enums and generics. Annotations were
+supported by an experimental "annotation processing tool" (<a href="https://docs.oracle.com/javase/6/docs/technotes/guides/apt/index.html"><em>apt</em></a>)
+and a corresponding experimental <a href="https://docs.oracle.com/javase/6/docs/jdk/api/apt/mirror/overview-summary.html">
+Mirror API</a>.</p>
+</dd>
+<dt>JDK 6.0</dt>
+<dd>
+<p>In JDK 6.0, the <em>apt</em> tool was superseded by direct
+support for annotation processing in <em>javac</em>, and the
+<em>Mirror API</em> was replaced by two new Java SE APIs:</p>
+<ul>
+<li>The <a href="https://docs.oracle.com/javase/6/docs/api/javax/lang/model/package-summary.html">
+Language Model API</a>, providing a way to model the elements of
+Java classes, based on information in either source files or
+compiled class files.</li>
+<li>The <a href="https://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html">
+Annotation Processing API</a>, providing a way to execute code
+within <em>javac</em> that could analyze the classes participating
+in the compilation, using the <em>Language Model API</em>.</li>
+</ul>
+JDK 6.0 also provided two new related APIs, one in Java SE, and one
+in JDK:
+<ul>
+<li>The <a href="https://docs.oracle.com/javase/6/docs/api/javax/tools/package-summary.html">
+Compiler API</a>, providing a way to invoke compilers, such as
+<em>javac</em>, programmatically, including the ability to run
+annotation processors during the compilation.</li>
+<li>The <a href="https://docs.oracle.com/javase/6/docs/jdk/api/javac/tree/overview-summary.html">
+Compiler Tree API</a>, providing a way to examine the syntax tree
+of Java source code. Support for accessing documentation comments
+was limited to the ability to access the raw string content of the
+comment using <a href="https://docs.oracle.com/javase/6/docs/api/javax/lang/model/util/Elements.html#getDocComment(javax.lang.model.element.Element)">
+<code>Elements.getDocComment(Element)</code></a></li>
+</ul>
+</dd>
+<dt>JDK 8.0</dt>
+<dd>
+<p>In JDK 8.0, type annotations were added to the Java language,
+and the original <em>Doclet API</em> began to show its limitations.
+Array types in particular were imperfectly modeled as a reference
+to an underlying type, with the <a href="https://docs.oracle.com/javase/8/docs/jdk/api/javadoc/doclet/com/sun/javadoc/Type.html#dimension--">
+dimensionality</a> indicated by a string containing an appropriate
+number of repetitions of "<code>[]</code>", which is obviously
+inadequate for modeling the type annotations that may appear within
+the type. This was in contrast to the <em>Language Model API</em>
+which was better designed, with future extensibility in mind.</p>
+<p>Another shortcoming of the <em>Doclet API</em> was the <a href="https://docs.oracle.com/javase/8/docs/jdk/api/javadoc/doclet/com/sun/javadoc/Doclet.html">
+<code>Doclet</code></a> type itself. Although documented as an
+interface, it was not an interface to be implemented by any
+instance of a doclet; it was merely a placeholder to specify the
+methods that should be provided by a doclet, and which would be
+called reflectively by the <em>javadoc</em> tool. This precluded
+use of features like the <a href="https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">
+service loader</a> to discover and load code found on an execution
+path, such as the class path or doclet path.</p>
+<p>Also in JDK 8.0, the <em>Compiler Tree API</em> was <a href="https://docs.oracle.com/javase/8/docs/jdk/api/javac/tree/com/sun/source/doctree/package-summary.html">
+extended</a> to provide support for detailed analysis of
+documentation comments, by parsing them into a simple "syntax
+tree". The most notable benefit of the extension was the ability to
+determine the exact position in the underlying source file of any
+part of the documentation comment, thus providing the ability to
+provide informative error messages pointing at the exact character
+position in the source file. (This was previously impractical to do
+with the basic support for accessing the raw comment text.)</p>
+</dd>
+<dt>JDK 9</dt>
+<dd>
+<p>In JDK 9, the <a href="https://openjdk.java.net/projects/jigsaw/spec/">Java Platform
+Module System</a> was introduced. Instead of trying to extend the
+original <em>Doclet API</em>, the decision was made to replace it
+with a <a href="https://docs.oracle.com/javase/9/docs/api/jdk/javadoc/doclet/package-summary.html">
+new Doclet API</a> that leveraged both the <em>Language Model
+API</em> and <em>Compiler Tree API</em>, both of which were being
+extended to support modules, and which already had a better
+foundation than the original Doclet API.</p>
+</dd>
+</dl>
+<h2>Doclets, Annotation Processors, and Plugins</h2>
+<p>The Language Model API provides a way to analyze the elements of
+a Java program, based on information in source files and compiled
+class files. The Compiler Tree API provides a way to syntax trees
+for program elements and for documentation comments. But, in
+isolation, neither one directly provides the means necessary to
+invoke these APIs on specific source and class files. That task is
+achieved by using a <a href="#doclet">doclet</a>, <a href="#processor">annotation processor</a> or <a href="#plugin">javac
+plugin</a>.</p>
+<h3 id="doclet">Doclets</h3>
+<p>Doclets provide code that can be executed by the JDK
+<em>javadoc</em> tool. Although the tool is primarily designed to
+support the ability to generate API documentation from element
+declarations and documentation comments, it is not limited to that
+purpose, and can run any user-supplied doclet, which can use the
+Language Model API and Compiler Tree API to analyze the packages,
+classes and files specified on the command line.</p>
+<p>The <em>javadoc</em> tool provides a rich set of command line
+options to specify the elements to be processed, and individual
+doclets can declare additional doclet-specific command-line options
+as well.</p>
+<p>As well as using the command line to invoke the <em>javadoc</em>
+tool, you can also invoke <em>javadoc</em> programmatically in two
+different ways:</p>
+<ul>
+<li>
+<p>Use an instance of <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/tools/DocumentationTool.html">
+<code>DocumentationTool</code></a>, typically obtained from the
+<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/tools/ToolProvider.html">
+<code>javax.tools.ToolProvider</code></a> class. This API uses
+<code>JavaFileManager</code> to access files, and provides direct
+API support for adding modules into the compilation
+environment.</p>
+</li>
+<li>
+<p>Use an instance of <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/spi/ToolProvider.html">
+<code>java.util.spi.ToolProvider</code></a> obtained by calling
+<code>ToolProvider.findFirst("javadoc")</code>. This API provides
+functionality that is equivalent to command-line invocation of the
+<em>javadoc</em> tool without the overhead of creating a new
+separate process to run it.</p>
+</li>
+</ul>
+<p>Note that the two classes named "<code>ToolProvider</code>" are
+in different packages and are distinct and unrelated.</p>
+<h3 id="processor">Annotation Processors</h3>
+<p>Annotation processing is a standard feature of the Java SE
+platform, using standard APIs. Annotation processors are executed
+by <em>javac</em> while compiling code, and may even create
+additional files to be compiled. Despite the name, annotation
+processors are not restricted to just processing annotations, and
+may be used to analyze any classes involved in a compilation,
+whether found in source form or compiled class form, and whether or
+not they contain any annotations. An annotation processor may also
+access the documentation comments for declarations found in source
+files: it may access the comment as either raw text or as a parsed
+<code>DocCommentTree</code>.</p>
+<p>Annotation processing occurs at a specific point in the timeline
+of a compilation, after all source files and classes specified on
+the command line have been read, and analyzed for the types and
+members they contain, but before the contents of any method bodies
+have been analyzed.</p>
+<p>The <em>javac</em> <code>-proc</code> option can be used to
+disable annotation processing, or to instruct <em>javac</em> to
+discontinue the compilation when annotation processing has been
+completed. In the latter case, <em>javac</em> will not analyze
+method bodies or generate class files for any source files involved
+in the compilation.</p>
+<p>Annotation processing imposes a certain overhead on the
+compilation, and the ability to pass options into an instance of an
+annotation processor is somewhat limited: you have to use the
+<em>javac</em> option
+<code>-A<em>&lt;name&gt;</em>=<em>&lt;value&gt;</em></code> to pass
+name-value pairs to an annotation processor.</p>
+<h3 id="plugin"><em>javac</em> Plugins</h3>
+<p>Compared to using an annotation processor, a <em>javac</em>
+plugin imposes almost no overhead on the compilation; it provides a
+more flexible mechanism to specify when plugin code should be
+executed; and provides a more flexible, albeit more basic, way of
+specifying options via a standard "argv"-style array of strings.
+However, it is also a JDK-specific feature and not a Java SE
+feature.</p>
+<p>Plugins are loaded by the service loader. They are initially
+invoked early in the compilation lifecycle, after command line
+options have been analyzed. At that time, a typical plugin will
+call <a href="https://docs.oracle.com/javase/9/docs/api/com/sun/source/util/JavacTask.html#addTaskListener-com.sun.source.util.TaskListener-">
+JavacTask.addTaskListener</a> to register a listener to be called
+at subsequent times during the compilation.</p>
+<p>While powerful, plugins are a lower-level feature than either
+doclets or annotation processors, and require a more detailed
+understanding of the overall compilation pipeline.</p>
+<h2>Examples</h2>
+<p>The following examples show how to use different APIs to analyze
+program elements and documentation comments.</p>
+<h3>Using visitors and scanners</h3>
+<p>One of the simplest ways to understand the structure of elements
+and tree nodes is to print them out. The <em>Language Model
+API</em> and <em>Compiler Tree API</em> use the <a href="https://en.wikipedia.org/wiki/Visitor_pattern">visitor pattern</a>
+to make it easy to navigate around the different data structures.
+"Visitor" classes are used to dispatch to different methods
+depending on the kind of <code>Element</code> or
+<code>DocTree</code> that is given, so that different actions can
+be taken for different kinds of item. "Scanner" classes are a
+special kind of visitor whose default behavior is to recursively
+navigate the children of each node. In both cases, you can either
+implement or override a single method to affect the behavior for
+all kinds of nodes, or you can implement or override individual
+methods to affect the behavior for different kinds of nodes.</p>
+<p>The following class shows how to display the structure of each
+of a list of elements, and for any element that is encountered, if
+it has an associated documentation comment, the structure of the
+comment is displayed as well.</p>
+<figure>
+<figcaption>ShowCode.java</figcaption>
+<div class="code">
+<pre>
+<code>package showcode;</code>
+<code> </code>
+<code>import java.io.PrintWriter;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.element.Element;</code>
+<code>import javax.lang.model.util.ElementScanner9;</code>
+<code> </code>
+<code>import com.sun.source.doctree.DocCommentTree;</code>
+<code>import com.sun.source.doctree.DocTree;</code>
+<code>import com.sun.source.util.DocTreeScanner;</code>
+<code>import com.sun.source.util.DocTrees;</code>
+<code> </code>
+<code>/**</code>
+<code> * A class to display the structure of a series of elements and</code>
+<code> * their documentation comments.</code>
+<code> */</code>
+<code>public class ShowCode {</code>
+<code>    final DocTrees treeUtils;</code>
+<code> </code>
+<code>    public ShowCode(DocTrees treeUtils) {</code>
+<code>        this.treeUtils = treeUtils;</code>
+<code>    }</code>
+<code> </code>
+<code>    public void show(Set&lt;? extends Element&gt; elements, PrintWriter out) {</code>
+<code>        new ShowElements(out).show(elements);</code>
+<code>    }</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A scanner to display the structure of a series of elements</code>
+<code>     * and their documentation comments.</code>
+<code>     */</code>
+<code>    class ShowElements extends ElementScanner9&lt;Void, Integer&gt; {</code>
+<code>        final PrintWriter out;</code>
+<code> </code>
+<code>        ShowElements(PrintWriter out) {</code>
+<code>            this.out = out;</code>
+<code>        }</code>
+<code> </code>
+<code>        void show(Set&lt;? extends Element&gt; elements) {</code>
+<code>            scan(elements, 0);</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void scan(Element e, Integer depth) {</code>
+<code>            String indent = "  ".repeat(depth);</code>
+<code>            out.println(indent + "| " + e.getKind() + " " + e);</code>
+<code>            DocCommentTree dcTree = treeUtils.getDocCommentTree(e);</code>
+<code>            if (dcTree != null) {</code>
+<code>                new ShowDocTrees(out).scan(dcTree, depth + 1);</code>
+<code>            }</code>
+<code>            return super.scan(e, depth + 1);</code>
+<code>        }</code>
+<code>    }</code>
+<code> </code>
+<code>    /**</code>
+<code>     * A scanner to display the structure of a documentation comment.</code>
+<code>     */</code>
+<code>    class ShowDocTrees extends DocTreeScanner&lt;Void, Integer&gt; {</code>
+<code>        final PrintWriter out;</code>
+<code> </code>
+<code>        ShowDocTrees(PrintWriter out) {</code>
+<code>            this.out = out;</code>
+<code>        }</code>
+<code> </code>
+<code>        @Override</code>
+<code>        public Void scan(DocTree t, Integer depth) {</code>
+<code>            String indent = "  ".repeat(depth);</code>
+<code>            out.println(indent + "# "</code>
+<code>                    + t.getKind() + " "</code>
+<code>                    + t.toString().replace("\n", "\n" + indent + "#    "));</code>
+<code>            return super.scan(t, depth + 1);</code>
+<code>        }</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<p>The class is simple enough, but it does not show how it can be
+invoked.</p>
+<p>The following examples show how code like this can be invoked in
+different ways, using either <em>javadoc</em> or
+<em>javac</em>.</p>
+<h3>Using a simple doclet</h3>
+The following example shows how to write a doclet that can analyze
+program elements and documentation comments, such as the
+<code>ShowCode</code> example.
+<p>For any doclet, the <a href="https://docs.oracle.com/javase/9/docs/api/jdk/javadoc/doclet/Doclet.html#run-jdk.javadoc.doclet.DocletEnvironment-">
+<code>run</code></a> method is the one called by the
+<em>javadoc</em> to process the items specified on the command
+line. It is passed a <a href="https://docs.oracle.com/javase/9/docs/api/jdk/javadoc/doclet/DocletEnvironment.html">
+<code>DocletEnvironment</code></a> object, which contains the
+information needed for the doclet to proceed.</p>
+<figure>
+<figcaption>ShowDoclet.java</figcaption>
+<div class="code">
+<pre>
+<code>package showcode;</code>
+<code> </code>
+<code>import java.io.PrintWriter;</code>
+<code>import java.util.Collections;</code>
+<code>import java.util.Locale;</code>
+<code>import java.util.Set;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code>import javax.lang.model.element.Element;</code>
+<code> </code>
+<code>import com.sun.source.util.DocTrees;</code>
+<code>import jdk.javadoc.doclet.Doclet;</code>
+<code>import jdk.javadoc.doclet.DocletEnvironment;</code>
+<code>import jdk.javadoc.doclet.Reporter;</code>
+<code> </code>
+<code>/**</code>
+<code> * A simple doclet to demonstrate the use of various APIs.</code>
+<code> *</code>
+<code> * @see jdk.javadoc.doclet.Doclet</code>
+<code> * @version 1.0</code>
+<code> */</code>
+<code>public class ShowDoclet implements Doclet {</code>
+<code>    @Override</code>
+<code>    public void init(Locale locale, Reporter reporter) {</code>
+<code> </code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return "showDoclet";</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public Set&lt;? extends Option&gt; getSupportedOptions() {</code>
+<code>        return Collections.emptySet();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public SourceVersion getSupportedSourceVersion() {</code>
+<code>        return SourceVersion.latest();</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean run(DocletEnvironment environment) {</code>
+<code>        DocTrees treeUtils = environment.getDocTrees();</code>
+<code>        Set&lt;? extends Element&gt; elements =</code>
+<code>                environment.getSpecifiedElements();</code>
+<code>        PrintWriter out = new PrintWriter(System.out);</code>
+<code> </code>
+<code>        new ShowCode(treeUtils).show(elements, out);</code>
+<code> </code>
+<code>        out.flush();</code>
+<code>        return true;</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<p>In this example, the code obtains the collection of elements
+specified on the command line with any of the available
+command-line options, and passes that collection to an instance of
+<code>ShowCode</code> to display the details of the elements
+specified on the command line.</p>
+<p>The doclet can be run by using a command based on the following
+template, which puts the compiled classes for the doclet on the
+doclet path, specifies the name of the doclet, places the files to
+be analyzed on the sourcepath, and specifies a package to be
+analyzed.</p>
+<figure>
+<figcaption>Running <code>ShowDoclet</code></figcaption>
+<div class="cmd">
+<pre>
+<code><em>jdk</em>/bin/javadoc \</code>
+<code>    -docletpath <em>doclet-classes</em> \</code>
+<code>    -doclet showcode.ShowDoclet \</code>
+<code>    -sourcepath <em>src</em> \</code>
+<code>    showcode</code>
+</pre></div>
+</figure>
+<p>When the code is run on itself, as shown in the preceding
+template, it generates the following output:</p>
+<figure>
+<figcaption>Sample output from <code>ShowDoclet</code></figcaption>
+<div class="out">
+<pre>
+<code>Loading source files for package showcode...</code>
+<code>Constructing Javadoc information...</code>
+<code>| PACKAGE showcode</code>
+<code>  | CLASS showcode.ShowDoclet</code>
+<code>    # DOC_COMMENT A simple doclet to demonstrate the use of various APIs.</code>
+<code>    #    @see jdk.javadoc.doclet.Doclet</code>
+<code>    #    @version 1.0</code>
+<code>      # TEXT A simple doclet to demonstrate the use of various APIs.</code>
+<code>      # SEE @see jdk.javadoc.doclet.Doclet</code>
+<code>        # REFERENCE jdk.javadoc.doclet.Doclet</code>
+<code>      # VERSION @version 1.0</code>
+<code>        # TEXT 1.0</code>
+<code>    | CONSTRUCTOR ShowDoclet()</code>
+<code>    | METHOD init(java.util.Locale,jdk.javadoc.doclet.Reporter)</code>
+<code>      | PARAMETER locale</code>
+<code>      | PARAMETER reporter</code>
+<code>    | METHOD getName()</code>
+<code>    | METHOD getSupportedOptions()</code>
+<code>    | METHOD getSupportedSourceVersion()</code>
+<code>    | METHOD run(jdk.javadoc.doclet.DocletEnvironment)</code>
+<code>      | PARAMETER environment</code>
+<code>  | CLASS showcode.ShowPlugin</code>
+<code>    | CONSTRUCTOR ShowPlugin()</code>
+<code>    | FIELD treeUtils</code>
+<code>    | FIELD out</code>
+<code>    | METHOD getName()</code>
+<code>    | METHOD init(com.sun.source.util.JavacTask,java.lang.String...)</code>
+<code>      | PARAMETER task</code>
+<code>      | PARAMETER args</code>
+<code>    | METHOD finished(com.sun.source.util.TaskEvent)</code>
+<code>      | PARAMETER e</code>
+<code>  | CLASS showcode.ShowCode</code>
+<code>    # DOC_COMMENT A class to display the structure of a series of elements and</code>
+<code>    #     their documentation comments.</code>
+<code>      # TEXT A class to display the structure of a series of elements and</code>
+<code>      #     their documentation comments.</code>
+<code>    | CLASS showcode.ShowCode.ShowElements</code>
+<code>      # DOC_COMMENT A scanner to display the structure of a series of elements</code>
+<code>      #     and their documentation comments.</code>
+<code>        # TEXT A scanner to display the structure of a series of elements</code>
+<code>        #     and their documentation comments.</code>
+<code>      | FIELD out</code>
+<code>      | CONSTRUCTOR ShowElements(java.io.PrintWriter)</code>
+<code>        | PARAMETER out</code>
+<code>      | METHOD show(java.util.Set&lt;? extends javax.lang.model.element.Element&gt;)</code>
+<code>        | PARAMETER elements</code>
+<code>      | METHOD scan(javax.lang.model.element.Element,java.lang.Integer)</code>
+<code>        | PARAMETER e</code>
+<code>        | PARAMETER depth</code>
+<code>    | CLASS showcode.ShowCode.ShowDocTrees</code>
+<code>      # DOC_COMMENT A scanner to display the structure of a documentation comment.</code>
+<code>        # TEXT A scanner to display the structure of a documentation comment.</code>
+<code>      | FIELD out</code>
+<code>      | CONSTRUCTOR ShowDocTrees(java.io.PrintWriter)</code>
+<code>        | PARAMETER out</code>
+<code>      | METHOD scan(com.sun.source.doctree.DocTree,java.lang.Integer)</code>
+<code>        | PARAMETER t</code>
+<code>        | PARAMETER depth</code>
+<code>    | FIELD treeUtils</code>
+<code>    | CONSTRUCTOR ShowCode(com.sun.source.util.DocTrees)</code>
+<code>      | PARAMETER treeUtils</code>
+<code>    | METHOD show(java.util.Set&lt;? extends javax.lang.model.element.Element&gt;,java.io.PrintWriter)</code>
+<code>      | PARAMETER elements</code>
+<code>      | PARAMETER out</code>
+<code>  | CLASS showcode.ShowProcessor</code>
+<code>    | CONSTRUCTOR ShowProcessor()</code>
+<code>    | FIELD out</code>
+<code>    | FIELD treeUtils</code>
+<code>    | METHOD init(javax.annotation.processing.ProcessingEnvironment)</code>
+<code>      | PARAMETER pEnv</code>
+<code>    | METHOD process(java.util.Set&lt;? extends javax.lang.model.element.TypeElement&gt;,javax.annotation.processing.RoundEnvironment)</code>
+<code>      | PARAMETER annotations</code>
+<code>      | PARAMETER roundEnv</code>
+</pre></div>
+</figure>
+<h3>Using an annotation processor</h3>
+<p>An annotation processor will typically extend <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/annotation/processing/AbstractProcessor.html">
+AbstractProcessor</a>, in which case it must provide a <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/annotation/processing/Processor.html#process(java.util.Set,javax.annotation.processing.RoundEnvironment)">
+process</a> method to perform the work for each round of annotation
+processing, and may optionally provide an <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/annotation/processing/Processor.html#init(javax.annotation.processing.ProcessingEnvironment)">
+init</a> method to access additional state provided by the
+execution environment (typically, <em>javac</em>).</p>
+<p>The following example shows how to write an annotation processor
+that can analyze program elements and documentation comments, such
+as the <code>ShowCode</code> example.</p>
+<figure>
+<figcaption>ShowProcessor.java</figcaption>
+<div class="code">
+<pre>
+<code>package showcode;</code>
+<code> </code>
+<code>import java.io.PrintWriter;</code>
+<code>import java.util.Set;</code>
+<code>import javax.annotation.processing.AbstractProcessor;</code>
+<code>import javax.annotation.processing.ProcessingEnvironment;</code>
+<code>import javax.annotation.processing.RoundEnvironment;</code>
+<code>import javax.annotation.processing.SupportedAnnotationTypes;</code>
+<code>import javax.annotation.processing.SupportedSourceVersion;</code>
+<code>import javax.lang.model.SourceVersion;</code>
+<code>import javax.lang.model.element.TypeElement;</code>
+<code> </code>
+<code>import com.sun.source.util.DocTrees;</code>
+<code> </code>
+<code>@SupportedAnnotationTypes("*")</code>
+<code>@SupportedSourceVersion(SourceVersion.RELEASE_11)</code>
+<code>public class ShowProcessor extends AbstractProcessor {</code>
+<code>    PrintWriter out;</code>
+<code>    DocTrees treeUtils;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(ProcessingEnvironment pEnv) {</code>
+<code>        out = new PrintWriter(System.out);</code>
+<code>        treeUtils = DocTrees.instance(pEnv);</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public boolean process(Set&lt;? extends TypeElement&gt; annotations,</code>
+<code>                           RoundEnvironment roundEnv) {</code>
+<code>        new ShowCode(treeUtils).show(roundEnv.getRootElements(), out);</code>
+<code>        out.flush();</code>
+<code>        return false;</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<p>In this example, <code>ShowCode</code> is run on the set of
+<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.compiler/javax/annotation/processing/RoundEnvironment.html#getRootElements()">
+root elements</a> for each round of annotation processing.</p>
+<p>The annotation processor can be run by using a command based on
+the following template, which puts the compiled classes for the
+processor on the processor path, specifies the name of the
+processor, specifies that the compiler should stop after annotation
+processing, and specifies some source files to be analyzed.</p>
+<figure>
+<figcaption>Running <code>ShowProcessor</code></figcaption>
+<div class="cmd">
+<pre>
+<code><em>jdk</em>/bin/javac \</code>
+<code>    -processorpath <em>processor-classes</em> \</code>
+<code>    -processor showcode.ShowProcessor \</code>
+<code>    -proc:only \</code>
+<code>    <em>src</em>/showcode/*.java</code>
+</pre></div>
+</figure>
+<p>When the code is run on itself, as shown in the preceding
+template, it generates the same output as when run with
+<code>ShowDoclet</code>, except for the first couple of lines,
+which were generated by the <em>javadoc</em> tool, and not the
+doclet.</p>
+<h3>Using a <em>javac</em> plugin</h3>
+<p>The following example shows how to write a <em>javac</em> plugin
+that can analyze program elements and documentation comments, such
+as the <code>ShowCode</code> example.</p>
+<figure>
+<figcaption>ShowPlugin.java</figcaption>
+<div class="code">
+<pre>
+<code>package showcode;</code>
+<code> </code>
+<code>import java.io.PrintWriter;</code>
+<code>import java.util.Set;</code>
+<code> </code>
+<code>import com.sun.source.util.DocTrees;</code>
+<code>import com.sun.source.util.JavacTask;</code>
+<code>import com.sun.source.util.Plugin;</code>
+<code>import com.sun.source.util.TaskEvent;</code>
+<code>import com.sun.source.util.TaskListener;</code>
+<code> </code>
+<code>public class ShowPlugin implements Plugin, TaskListener {</code>
+<code>    private DocTrees treeUtils;</code>
+<code>    private PrintWriter out;</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public String getName() {</code>
+<code>        return "showPlugin";</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void init(JavacTask task, String... args) {</code>
+<code>        out = new PrintWriter(System.out);</code>
+<code>        treeUtils = DocTrees.instance(task);</code>
+<code>        task.addTaskListener(this);</code>
+<code>    }</code>
+<code> </code>
+<code>    @Override</code>
+<code>    public void finished(TaskEvent e) {</code>
+<code>        switch (e.getKind()) {</code>
+<code>            case ANALYZE:</code>
+<code>                new ShowCode(treeUtils)</code>
+<code>                        .show(Set.of(e.getTypeElement()), out);</code>
+<code>                out.flush();</code>
+<code>        }</code>
+<code>    }</code>
+<code>}</code>
+</pre></div>
+</figure>
+<p>In this example, <code>ShowCode</code> is run on each type
+element after it has been analysed by <em>javac</em>, prior to code
+being generated for the element.</p>
+<p>Plugins must normally be compiled and packaged into a JAR file,
+because they require the use of a service configuration file, such
+as the following:</p>
+<figure>
+<figcaption>A service configuration file for a <em>javac</em>
+plugin</figcaption>
+<p style="margin: 5px 0 -10px 10px">
+<code><em>META-INF/services/com.sun.source.util.Plugin</em></code></p>
+<div class="cmd">
+<pre>
+<code>showcode.showPlugin</code>
+</pre></div>
+</figure>
+<p>The plugin can be run by using a command based on the following
+template, which puts a jar file containing the plugin on the
+processor path, specifies the name of the plugin, and specifies
+some source files to be analyzed during the compilation.</p>
+<figure>
+<figcaption>Running <code>ShowPlugin</code></figcaption>
+<div class="cmd">
+<pre>
+<code><em>jdk</em>/bin/javac \</code>
+<code>    -d <em>classes</em> \</code>
+<code>    -processorpath <em>plugin.jar</em> \</code>
+<code>    -Xplugin:showPlugin \</code>
+<code>    <em>src</em>/showcode/*.java</code>
+</pre></div>
+</figure>
+<p>When the code is run on itself, as shown in the preceding
+template, it generates the same output as when run with
+<code>ShowDoclet</code>, except for the first couple of lines,
+which were generated by the <em>javadoc</em> tool, and not the
+doclet.</p>
+</main>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

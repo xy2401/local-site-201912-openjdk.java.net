@@ -1,0 +1,356 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 238: Multi-Release JAR Files</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 238: Multi-Release JAR Files</h1><table class="head"><tr><td>Owner</td><td>Paul Sandoz</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;jar</td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Brian Goetz, Paul Sandoz, Steve Drach</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/06/18 22:29</td></tr><tr><td>Updated</td><td>2017/06/22 16:10</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8047305">8047305</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Extend the JAR file format to allow multiple, Java-release-specific
+versions of class files to coexist in a single archive.</p>
+<h2 id="Goals">Goals</h2>
+<ol>
+<li>
+<p>Enhance the Java Archive Tool (<code>jar</code>) so that it can create
+multi-release JAR files.</p>
+</li>
+<li>
+<p>Implement multi-release JAR files in the JRE, including support
+in the standard class loaders and <code>JarFile</code> API.</p>
+</li>
+<li>
+<p>Enhance other critical tools (e.g., <code>javac</code>, <code>javap</code>, <code>jdeps</code>,
+etc.) to interpret multi-release JAR files.</p>
+</li>
+<li>
+<p>Support multi-release <strong>modular</strong> JAR files for goals 1 to 3.</p>
+</li>
+<li>
+<p>Preserve performance: The performance of tools and components that
+use multi-release JAR files must not be significantly impacted.  In
+particular, performance when accessing ordinary (i.e., not
+multi-release) JAR files must not be degraded.</p>
+</li>
+</ol>
+<h2 id="Motivation">Motivation</h2>
+<p>Third party libraries and frameworks typically support a range of Java
+platform versions, generally going several versions back.  As a
+consequence they often do not take advantage of language or API features
+available in newer releases since it is difficult to express conditional
+platform dependencies, which generally involves reflection, or to
+distribute different library artifacts for different platform versions.</p>
+<p>This creates a disincentive for libraries and frameworks to use new
+features, that in turn creates a disincentive for users to upgrade to
+new JDK versions---a vicious circle that impedes adoption, to everyone's
+detriment.</p>
+<p>Some libraries and frameworks, furthermore, use internal APIs of the JDK
+that will be made inaccessible in Java 9 when module boundaries are
+strictly enforced.  This also creates a disincentive to support new
+platform versions when there are public, supported API replacements for
+such internal APIs.</p>
+<h2 id="Description">Description</h2>
+<p>A JAR file has a content root, which contains classes and resources, as
+well as a <code>META-INF</code> directory which contains metadata about the JAR.
+By adding some versioning metadata to specific groups of files the JAR
+format can encode, in a compatible way, multiple versions of a library
+for different target Java
+platform releases.</p>
+<p>A multi-release JAR ("MRJAR") will contain the main attribute:</p>
+<pre><code>Multi-Release: true</code></pre>
+<p>declared in the main section of the JAR <code>MANIFEST.MF</code>. The attribute
+name is also declared as a constant <code>java.util.jar.Attributes.MULTI_RELEASE</code>.
+Like other main attributes the name declared in the <code>MANIFEST.MF</code> is
+case insensitive.  The value is also case-insensitive, but there must be
+no preceding or trailing white space (such a restriction helps ensure
+the performance goal is met).</p>
+<p>A multi-release JAR ("MRJAR") will contain additional directories for
+classes and resources specific to particular Java platform releases.  A
+JAR for a typical library might look like this:</p>
+<pre><code>jar root
+  - A.class
+  - B.class
+  - C.class
+  - D.class</code></pre>
+<p>Suppose there are alternate versions of A and B that can take advantage
+of Java 9 features.  We can bundle them into a single JAR as follows:</p>
+<pre><code>jar root
+  - A.class
+  - B.class
+  - C.class
+  - D.class
+  - META-INF
+     - versions
+        - 9
+           - A.class
+           - B.class</code></pre>
+<p>In a JDK that does not support MRJARs, only the classes and resources in
+the root directory will be visible, and the two packagings will be
+indistinguishable.  In a JDK that does support MRJARs, the directories
+corresponding to any later Java platform release would be ignored;
+it would search for classes and resources first in the Java
+platform-specific directory corresponding to the currently-running major
+Java platform release version, then search those for lower versions, and
+finally the JAR root.  On a Java 9 JDK, it would be as if there were a
+JAR-specific class path containing first the version 9 files, and then
+the JAR root; on a Java 8 JDK, this class path would contain only the
+JAR root.</p>
+<p>Suppose later on in the future Java 10 is released and A is updated to
+take advantage of Java 10 features. The MRJAR may then look like this:</p>
+<pre><code>jar root
+  - A.class
+  - B.class
+  - C.class
+  - D.class
+  - META-INF
+     - versions
+        - 9
+           - A.class
+           - B.class
+        - 10
+           - A.class</code></pre>
+<p>By this scheme, it is possible for versions of a class designed for a
+later Java platform release to override the version of that same class
+designed for an earlier Java platform release.  In the example above,
+when running on an MRJAR-aware Java 9 JDK, it would see the 9-specific
+versions of A and B and the general versions of C and D; on a future
+MRJAR-aware Java 10 JDK, it would see the 10-specific version of A and
+the 9-specific version of B; on older or non-MRJAR-aware JDKs it would
+only see the root versions of all.</p>
+<p>JAR metadata, such as that found in the <code>MANIFEST.MF</code> file and the
+<code>META-INF/services</code> directory, need not be versioned.  An MRJAR is
+essentially one unit of release, so it has just one release version
+(which is no different from a normal JAR, distributed say via Maven
+Central), even though internally it contains multiple versions of a
+library implementation for use on different Java platform releases.
+Every version of the library should offer the same API; investigation is
+required to determine whether this should be strict backwards
+compatibility where the API is exactly the same (byte code signature
+equality), or whether this can be relaxed to some degree without
+necessarily enabling the introduction of new enhancements that would
+blur the notion of one unit of release.  This may imply, at a minimum,
+that a public class present in a release-specific directory should also
+be present in the root, though it need not be present in an earlier
+release directory.  The run-time system will not verify this property,
+but tooling can and should detect such API compatibility issues, and a
+library method may also be provided to perform such varification (for
+example on <code>java.util.jar.JarFile</code>).</p>
+<p>Ultimately, this mechanism enables library and framework developers to
+decouple the use of APIs in a specific Java platform release version
+from the requirement that all their users migrate to that version.
+Library and framework maintainers can gradually migrate to and support
+new features while still carrying around support for the old features,
+breaking the chicken-and-egg cycle so that a library can be
+"Java 9-ready" without actually requiring Java 9.</p>
+<h3 id="Details">Details</h3>
+<p>The following components of the JDK will be modified in order to support
+multi-release JAR files.</p>
+<ul>
+<li>
+<p>The JAR-based <code>URLClassLoader</code> must read selected versions of class
+files as indicated by the running Java platform version.  The
+module-based class loader introduced with Project Jigsaw will
+require similar modifications.</p>
+</li>
+<li>
+<p>The protocol handler for the <code>jar</code> URL scheme and
+<code>java.util.jar.JarFile</code> class must select the appropriate version of
+a class from a multi-release JAR.</p>
+</li>
+<li>
+<p>The Java compiler (<code>javac</code>), via the underlying <code>JavacFileManager</code>
+and <code>ZipFileSystem</code> APIs, must read selected versions of class
+files as specified by the <code>-target</code> and <code>-release</code> command-line
+options.  The tools <code>javah</code>, <code>schemagen</code>, and <code>wsgen</code> will leverage
+the underlying changes to <code>JavacFileManager</code> and <code>ZipFileSystem</code>.</p>
+</li>
+<li>
+<p>The Java Archive tool (<code>jar</code>) will be enhanced so that it can
+create multi-release JAR files.</p>
+</li>
+<li>
+<p>The JAR packing tool (<code>pack200</code>/<code>unpack200</code>) must be updated (see
+<a href="https://bugs.openjdk.java.net/browse/JDK-8066272">JDK-8066272</a>).</p>
+</li>
+<li>
+<p>The <code>javap</code> tool must be updated to enable selection of versioned
+class files.</p>
+</li>
+<li>
+<p>The <code>jdeps</code> tool will require modifications to display version
+information and follow version specific class file dependencies.</p>
+</li>
+<li>
+<p>The JAR specification must be revised to describe the multi-release
+JAR file format and any related changes (e.g., possible additions to
+the manifest).</p>
+</li>
+</ul>
+<h3 id="Compatibility">Compatibility</h3>
+<p>By default the behaviour of <code>java.util.jar.JarFile</code> and the <code>jar</code> scheme
+protocol handlers will remain the same.  It is necessary to opt-in to
+construct a <code>JarFile</code> pointing to a MRJAR for version selection of
+entries.  Likewise it is necessary to opt-in for <code>jar</code> URLs (see next
+section for details).</p>
+<p><code>JarFile</code> instances created by the runtime for class loading will opt-in
+and create instances that are configured to select entries according to
+the version of the running Java platform.  Such as <code>JarFile</code> instance
+is referred to as being runtime versioned.</p>
+<h3 id="Class-loader-resources">Class loader resources</h3>
+<p>A resource URL, produced by a class loader, identifying a resource in a
+MRJAR will refer directly to a versioned entry (if present).  For
+example for a versioned resource, <code>foo/baz/resource.txt</code>:</p>
+<pre><code>URL r = loader.getResource("foo/baz/resource.txt");</code></pre>
+<p>the URL &#8216;r&#8217; may be:</p>
+<pre><code>jar:file:/mrjar.jar!/META-INF/versions/9/foo/baz/resource.txt</code></pre>
+<p>rather than:</p>
+<pre><code>jar:file:/mrjar.jar!/foo/baz/resource.txt</code></pre>
+<p>This approach is considered the least disruptive option. Changing the
+structure of resources URLs is not without risk (e.g. a new scheme or an
+appended fragment).  Legacy code may process URL characters directly,
+rather than parsing the URL and correctly extracting the components.
+While such URL process is incorrect it was considered preferable to not
+breaking such code.</p>
+<h3 id="Modular-multi-release-JAR-files">Modular multi-release JAR files</h3>
+<p>A modular multi-release JAR file is a multi-release JAR file that has
+a module descriptor, <code>module-info.class</code>, in the root at the top, just
+like a modular JAR file (see the <a href="//openjdk.java.net/jeps/261#Packaging:-Modular-JAR-files">Packaging: Modular JAR</a>
+section of JEP 261).  In addition modular descriptors may be present
+in versioned areas.  Such versioned descriptors must be identical to the
+root module descriptor, with two exceptions:</p>
+<ul>
+<li>
+<p>A versioned descriptor can have different non-<code>transitive</code> <code>requires</code>
+clauses of <code>java.*</code> and <code>jdk.*</code> modules; and</p>
+</li>
+<li>
+<p>A versioned descriptor can have different <code>uses</code> clauses, even of
+service types defined outside of <code>java.*</code> and <code>jdk.*</code> modules.</p>
+</li>
+</ul>
+<p>The reasoning here is that these are implementation details rather than
+parts of a module's API surface, and that one may well want to change
+them as the JDK itself evolves.  Changes to non-public <code>requires</code> of
+non-JDK modules are not allowed.  If that is necessary then new version
+of the module is required (at least increasing it's version number) and
+this is a different kind of compatibility problem, and one that's beyond
+the scope of MRJARs.</p>
+<p>A multi-release modular need not have a module descriptor at the located
+root.  In this respect a module descriptor would be treated no differently to
+any other class or resource file.  This can ensure that, for example, only
+Java 8 versioned classes are present in the root area while Java 9 versioned
+classes (including the module descriptor) are present in the 9 versioned area.</p>
+<h3 id="Classpath-and-modulepath">Classpath and modulepath</h3>
+<p>A modular JAR can be constructed such that it works correctly on the
+classpath of a Java 8 runtime, the classpath of a Java 9 runtime, or
+the modulepath of a Java 9 runtime.  The situation is the same for a
+modular multi-release JAR file (which in addition to the
+<code>module-info.class</code> other classes may be compiled for the Java 9
+platform).</p>
+<p>If a module descriptor does not declare some packages as exported, and
+therefore public classes in those packages are private to the module,
+then when the corresponding JAR file is placed on the module path the
+classes will not be accessible.  However, if the JAR file is placed on
+the classpath then those classes will be accessible.  This is an
+unfortunate consequence of supporting the classpath and modulepath.</p>
+<p>As a consequence the public API for multi-release JAR file may be
+different when placed on the classpath compared to when placed on the
+module path.  Ordinarily the jar tool when constructing a multi-release
+JAR file will, on a best effort basis, fail if any observed differences
+in the public API are detected.  However, when constructing a modular
+multi-release JAR file it is proposed the jar tool output a warning if
+public API differences are a result of module private classes being
+accessible when the JAR file is placed on the classpath.</p>
+<h3 id="Multi-release-jars-and-the-boot-loader">Multi-release jars and the boot loader</h3>
+<p>Multi-release JARs are not supported by the boot loader (for example, when a
+multi-release JAR file is declared with the -Xbootclasspath/a option).  Such
+support would complicate the boot loader implementation for what is
+considered a rare use-case.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>A common approach is to use a static reflective check to determine if an
+API feature is present or not and accordingly select an appropriate
+class that respectively depends on that feature or not.  The reflective
+cost is incurred at class initialization and not every time the
+dependent feature is used.  A Java platform release is selected for
+compilation with the source and target flags set to a lower release to
+generate class files compatible with that lower release.  This approach
+is often augmented with tools such as <a href="https://github.com/mojohaus/animal-sniffer">Animal Sniffer</a>
+to check for API incompatibilities, where in addition to enforcing API
+compatibility code can be annotated to state whether it depends on a
+later Java platform release.  There are a number of limitations with
+this approach:</p>
+<ol>
+<li>
+<p>The reflective checks need to be carefully maintained.</p>
+</li>
+<li>
+<p>It is not possible to utilize newer language features.</p>
+</li>
+<li>
+<p>If a platform release API feature is removed (perhaps an internal
+API) then dependent code will fail to compile.</p>
+</li>
+</ol>
+<p>"Fat" class files were considered, where a class may have one or more
+methods targeted to different Java platform versions.  This was deemed
+too complicated in terms of the language and runtime features required
+to support such method declarations and dynamic selection.</p>
+<p>Method handles (<code>invokedynamic</code>) cannot be used because of the need to
+maintain binary compatibility.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>It is anticipated that the production of MRJARs is primarily compatible
+with existing popular build tools and therefore IDEs that support such
+tools, but the developer experience could be improved with enhancements.</p>
+<p>The source layout and building of an MRJAR file can be supported by
+Maven using a multi-module project.  For example, see <a href="https://github.com/hboutemy/maven-jep238">this</a>
+example Maven project that can produce a, currently rudimentary, MRJAR
+file.  There would be a sub-project for the root and specific Java
+platform releases, and a sub-project to assemble the aforementioned
+sub-projects into an MVJAR.  The assembly process could be enhanced,
+perhaps using a specific Maven plugin, leveraging the same features as
+the <code>jar</code> tool to enforce backwards compatibility.</p>
+<p>The design and implementation of the runtime processing of MRJARs
+currently assumes that a runtime uses the URL class loader or a custom
+class loader leverages <code>JarFile</code> to obtain platform-specific class
+files.  Runtimes whose class loaders use <code>ZipFile</code> to load classes will
+not be MRJAR aware.  Popular application frameworks and tools, such as
+Jetty, Tomcat, and Maven, etc., need to be checked for compatibility.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>The <a href="//openjdk.java.net/projects/jigsaw/spec/sotms/#module-artifacts">enhanced JAR-file format</a> under consideration for the
+<a href="//openjdk.java.net/projects/jigsaw/spec/">Java Platform Module System</a> will need to take multi-release
+JAR metadata into account.</p>
+<p><a href="//openjdk.java.net/jeps/247">JEP 247 (Compile for Older Platform Versions)</a>, which supports
+compiling against older versions of the platform libraries, may aid
+build tools in the production of multi-release JAR files.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

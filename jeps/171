@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 171: Fence Intrinsics</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 171: Fence Intrinsics</h1><table class="head"><tr><td>Owner</td><td>Doug Lea</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>8</td></tr><tr><td>Component</td><td>hotspot&#8201;/&#8201;runtime</td></tr><tr><td>Discussion</td><td>hostspot dash dev at openjdk dot java dot net</td></tr><tr><td>Endorsed by</td><td>Mark Reinhold</td></tr><tr><td>Created</td><td>2012/11/27 20:00</td></tr><tr><td>Updated</td><td>2017/06/14 19:19</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046161">8046161</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Add three memory-ordering intrinsics to the <code>sun.misc.Unsafe</code> class.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>JVMs don't have advertised mechanisms providing memory orderings that
+were not envisioned originally or in the JSR 133 memory model specs.
+(But are present for example in the recent C11/C++11 specs.)  These
+include several constructions used in <code>java.util.concurrent</code> and other
+low-level libraries that currently rely on undocumented (and possibly
+transient) properties of existing intrinsics.</p>
+<p>Adding these methods at the VM level permits use by JDK libraries in
+support of JDK 8 features, while also opening up the possibility of
+later exporting the base functionality via new <code>java.util.concurrent</code>
+APIs. This may become essential to allow people developing non-JDK
+low-level libraries if upcoming modularity support makes these methods
+impossible for others to access.</p>
+<h2 id="Description">Description</h2>
+<p>The three methods provide the three different kinds of memory fences
+that some compilers and processors need to ensure that particular
+accesses (loads and stores) do not become reordered. In practice, they
+are identical in effect to existing <code>getXXXVolatile</code>, <code>putXXXVolatile</code>, and
+<code>putOrderedXXX</code> methods, except that they do not actually perform an
+access; they just ensure the ordering.  However, they conceptually
+differ in one way: According to the current JMM, some language-level
+uses of <code>volatile</code> may be reordered with some uses of non-volatile
+variables. But this would not be allowed here. (It is not allowed in
+the current intrinsics either, but this is an undocumented difference
+between intrinsics-based vs language-based volatile access.)</p>
+<p>The three methods are:</p>
+<pre><code>/**
+ * Ensures lack of reordering of loads before the fence
+ * with loads or stores after the fence.
+ */
+void loadFence();
+
+/**
+ * Ensures lack of reordering of stores before the fence
+ * with loads or stores after the fence.
+ */
+void storeFence();
+
+/**
+ * Ensures lack of reordering of loads or stores before the fence
+ * with loads or stores after the fence.
+ */
+void fullFence();</code></pre>
+<p>While there is nothing at all "unsafe" about the three methods, by
+convention, <code>Unsafe</code> currently houses related methods for per-use
+volatile and atomic operations, so seems to be the best home for these
+methods.</p>
+<p>The javadoc could be made more rigorous, although cannot be specified
+in terms of the JMM because it doesn't cover "per-use volatileness".
+So, leaving them in this simple form probably best conveys intent to
+target users.  Also, it is probably impossible (because of likely
+existing usage dependencies) to at the same time make explicit and
+slightly weaken the minimally required reordering properties of
+existing volatile access intrinsics.  However, the presence of fence
+intrinsics allows users to unambiguously obtain these effects when
+needed.</p>
+<h3 id="Hotspot-Implementation">Hotspot Implementation</h3>
+<p>The three methods can be implemented in terms of the existing <code>acquire</code>,
+<code>release</code>, and <code>volatile</code> fence methods available across c1, c2, and the
+interpreter/runtime, plus, when applicable, suppressing internal compiler
+reorderings and value reuse.  This requires no new underlying
+capabailities, but still requires adding to and adapting the code strewn
+across Hotspot necessary for new intrinsics. Omitting these, here is an
+implementation sketch:</p>
+<p>For c2, implementation amounts to methods that omit all the access code
+in methods like <code>inline_unsafe_access</code>, leaving only generation of the
+memory-based fences, plus an internal <code>CPUOrder</code> fence that disables
+reorderings during optimization.  (In the case of <code>fullFence</code>, also
+cautiously including an acquire fence along with the full <code>volatile</code>
+fence, to cover the possibility that existing c2 code relies on the
+presence of <code>MemBarAcquire</code> to detect volatile-ness with respect to
+loads.)</p>
+<pre><code>loadFence: {
+  insert_mem_bar(Op_MemBarCPUOrder);
+  insert_mem_bar(Op_MemBarAcquire);
+}
+
+storeFence: {
+  insert_mem_bar(Op_MemBarCPUOrder);
+  insert_mem_bar(Op_MemBarRelease);
+}
+
+fullFence: {
+  insert_mem_bar(Op_MemBarCPUOrder);
+  insert_mem_bar(Op_MemBarAcquire);
+  insert_mem_bar(Op_MemBarVolatile);
+}</code></pre>
+<p>For c1, new nodes can be defined with <code>LIRGenerator</code> actions of</p>
+<pre><code>loadFence:  { if (os::is_MP()) __ membar_acquire(); }
+storeFence: { if (os::is_MP()) __ membar_release(); }
+fullFence:  { if (os::is_MP()) __ membar(); }</code></pre>
+<p>Plus, for all three, disabling GVN in <code>ValueMap</code>:</p>
+<pre><code>xxxxxFence: { kill_memory(); }</code></pre>
+<p>And for the C++ runtime versions (in <code>prims/unsafe.cpp</code>), implementing
+via the existing <code>OrderAccess</code> methods:</p>
+<pre><code>loadFence:  { OrderAccess::acquire(); }
+storeFence: { OrderAccess::release(); }
+fullFence:  { OrderAccess::fence(); }</code></pre>
+<h2 id="Testing">Testing</h2>
+<p>The test infrastructure recently set up by Aleksey Shipilev for
+torture-testing volatiles and atomics is simple to adapt to obtain the
+same coverage for fence-separated access versus volatiles.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>We assume that Oracle engineers will continue to assist integrating into
+JDK 8.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

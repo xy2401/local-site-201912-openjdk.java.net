@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 354: Switch Expressions (Preview)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 354: Switch Expressions (Preview)</h1><table class="head"><tr><td>Author</td><td>Gavin Bierman</td></tr><tr><td>Owner</td><td>Jan Lahoda</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>13</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;javac</td></tr><tr><td>Discussion</td><td>amber dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>S</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="325">JEP 325: Switch Expressions (Preview)</a></td></tr><tr><td></td><td><a href="361">JEP 361: Switch Expressions (Standard)</a></td></tr><tr><td>Reviewed by</td><td>Alex Buckley, Brian Goetz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2019/04/09 12:38</td></tr><tr><td>Updated</td><td>2019/09/04 06:35</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8222184">8222184</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Extend <code>switch</code> so it can be used as either a statement or an expression, and so that both forms can use either traditional <code>case ... :</code> labels (with fall through) or new <code>case ... -&gt;</code> labels (with no fall through), with a further new statement for yielding a value from a <code>switch</code> expression. These changes will simplify everyday coding, and prepare the way for the use of <a href="https://openjdk.java.net/jeps/305">pattern matching (JEP 305)</a> in <code>switch</code>.  This is a <a href="//openjdk.java.net/jeps/12">preview language feature</a> in JDK 13.</p>
+<h2 id="History">History</h2>
+<p>Switch expressions were <a href="https://mail.openjdk.java.net/pipermail/amber-dev/2017-December/002412.html">proposed in December 2017</a> by <a href="https://openjdk.java.net/jeps/325">JEP 325</a>. They were <a href="https://mail.openjdk.java.net/pipermail/jdk-dev/2018-August/001827.html">targeted to JDK 12 in August 2018</a> as a <a href="https://openjdk.java.net/jeps/12">preview feature</a>. Feedback was sought initially on the design of the feature, and later on the experience of using <code>switch</code> expressions and the enhanced <code>switch</code> statement. Based on that feedback, this JEP makes one change to the feature:</p>
+<blockquote>
+<p>To yield a value from a <code>switch</code> expression, the <code>break</code> with value statement is dropped in favor of a <code>yield</code> statement.</p>
+</blockquote>
+<h2 id="Motivation">Motivation</h2>
+<p>As we prepare to enhance the Java programming language to support <a href="https://openjdk.java.net/jeps/305">pattern matching (JEP 305)</a>, several irregularities of the existing <code>switch</code> statement -- which have long been an irritation to users -- become impediments. These include the default control flow behavior between switch labels (fall through), the default scoping in switch blocks (the whole block is treated as one scope), and the fact that <code>switch</code> works only as a statement, even though it is often more natural to express multi-way conditionals as expressions.</p>
+<p>The current design of Java's <code>switch</code> statement follows closely languages such as C and C++, and supports fall through semantics by default. Whilst this traditional control flow is often useful for writing low-level code (such as parsers for binary encodings), as <code>switch</code> is used in higher-level contexts, its error-prone nature starts to outweigh its flexibility. For example, in the following code, the many <code>break</code> statements make it unnecessarily verbose, and this visual noise often masks hard to debug errors, where missing <code>break</code> statements would mean accidental fall through.</p>
+<pre><code>switch (day) {
+    case MONDAY:
+    case FRIDAY:
+    case SUNDAY:
+        System.out.println(6);
+        break;
+    case TUESDAY:
+        System.out.println(7);
+        break;
+    case THURSDAY:
+    case SATURDAY:
+        System.out.println(8);
+        break;
+    case WEDNESDAY:
+        System.out.println(9);
+        break;
+}</code></pre>
+<p>We propose to introduce a new form of switch label, "<code>case L -&gt;</code>", to signify that only the code to the right of the label is to be executed if the label is matched. We also propose to allow multiple constants per case, separated by commas. The previous code can now be written:</p>
+<pre><code>switch (day) {
+    case MONDAY, FRIDAY, SUNDAY -&gt; System.out.println(6);
+    case TUESDAY                -&gt; System.out.println(7);
+    case THURSDAY, SATURDAY     -&gt; System.out.println(8);
+    case WEDNESDAY              -&gt; System.out.println(9);
+}</code></pre>
+<p>The code to the right of a "<code>case L -&gt;</code>" switch label is restricted to be an expression, a block, or (for convenience) a <code>throw</code> statement. This has the pleasing consequence that should an arm introduce a local variable, it must be contained in a block and is thus not in scope for any of the other arms in the switch block. This eliminates another annoyance with traditional switch blocks where the scope of a local variable is the entire block:</p>
+<pre><code>switch (day) {
+    case MONDAY:
+    case TUESDAY:
+        int temp = ...     // The scope of 'temp' continues to the }
+        break;
+    case WEDNESDAY:
+    case THURSDAY:
+        int temp2 = ...    // Can't call this variable 'temp'
+        break;
+    default:
+        int temp3 = ...    // Can't call this variable 'temp'
+}</code></pre>
+<p>Many existing <code>switch</code> statements are essentially simulations of <code>switch</code> expressions, where each arm either assigns to a common target variable or returns a value:</p>
+<pre><code>int numLetters;
+switch (day) {
+    case MONDAY:
+    case FRIDAY:
+    case SUNDAY:
+        numLetters = 6;
+        break;
+    case TUESDAY:
+        numLetters = 7;
+        break;
+    case THURSDAY:
+    case SATURDAY:
+        numLetters = 8;
+        break;
+    case WEDNESDAY:
+        numLetters = 9;
+        break;
+    default:
+        throw new IllegalStateException("Wat: " + day);
+}</code></pre>
+<p>Expressing this as a statement is roundabout, repetitive, and error-prone. The author meant to express that we should compute a value of <code>numLetters</code> for each day. It should be possible to say that directly, using a <code>switch</code> <em>expression</em>, which is both clearer and safer:</p>
+<pre><code>int numLetters = switch (day) {
+    case MONDAY, FRIDAY, SUNDAY -&gt; 6;
+    case TUESDAY                -&gt; 7;
+    case THURSDAY, SATURDAY     -&gt; 8;
+    case WEDNESDAY              -&gt; 9;
+};</code></pre>
+<p>In turn, extending <code>switch</code> to support expressions raises some additional needs, such as extending flow analysis (an expression must always compute a value or complete abruptly), and allowing some case arms of a <code>switch</code> expression to throw an exception rather than yield a value.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Arrow-labels">Arrow labels</h3>
+<p>In addition to traditional "<code>case L :</code>" labels in a switch block, we propose a new simplified form, with "<code>case L -&gt;</code>" labels. If a label is matched, then only the expression or statement to the right of the arrow is executed; there is no fall through. For example, given the following <code>switch</code> statement that uses the new form of labels:</p>
+<pre><code>static void howMany(int k) {
+    switch (k) {
+        case 1  -&gt; System.out.println("one");
+        case 2  -&gt; System.out.println("two");
+        default -&gt; System.out.println("many");
+    }
+}</code></pre>
+<p>The following code:</p>
+<pre><code>howMany(1);
+howMany(2);
+howMany(3);</code></pre>
+<p>results in the following output:</p>
+<pre><code>one
+two
+many</code></pre>
+<h3 id="Switch-expressions">Switch expressions</h3>
+<p>We will extend the <code>switch</code> statement so it can be used as an expression. For example, the previous <code>howMany</code> method can be rewritten to use a <code>switch</code> expression, so it uses only a single <code>println</code>.</p>
+<pre><code>static void howMany(int k) {
+    System.out.println(
+        switch (k) {
+            case  1 -&gt; "one"
+            case  2 -&gt; "two"
+            default -&gt; "many"
+        }
+    );
+}</code></pre>
+<p>In the common case, a <code>switch</code> expression will look like:</p>
+<pre><code>T result = switch (arg) {
+    case L1 -&gt; e1;
+    case L2 -&gt; e2;
+    default -&gt; e3;
+};</code></pre>
+<p>A <code>switch</code> expression is a poly expression; if the target type is known, this type is pushed down into each arm. The type of a <code>switch</code> expression is its target type, if known; if not, a standalone type is computed by combining the types of each case arm.</p>
+<h3 id="Yielding-a-value">Yielding a value</h3>
+<p>Most <code>switch</code> expressions will have a single expression to the right of the "<code>case L -&gt;</code>" switch label. In the event that a full block is needed, we introduce a new <code>yield</code> statement to yield a value, which becomes the value of the enclosing <code>switch</code> expression.</p>
+<pre><code>int j = switch (day) {
+    case MONDAY  -&gt; 0;
+    case TUESDAY -&gt; 1;
+    default      -&gt; {
+        int k = day.toString().length();
+        int result = f(k);
+        yield result;
+    }
+};</code></pre>
+<p>A <code>switch</code> expression can, like a <code>switch</code> statement, also use a traditional switch block with "<code>case L:</code>" switch labels (implying fall through semantics). In this case, values are yielded using the new <code>yield</code> statement:</p>
+<pre><code>int result = switch (s) {
+    case "Foo": 
+        yield 1;
+    case "Bar":
+        yield 2;
+    default:
+        System.out.println("Neither Foo nor Bar, hmmm...");
+        yield 0;
+};</code></pre>
+
+<p>The two statements, <code>break</code> (with or without a label) and <code>yield</code>, facilitate easy disambiguation between <code>switch</code> statements and <code>switch</code> expressions: a <code>switch</code> statement but not a <code>switch</code> expression can be the target of a <code>break</code> statement; and a <code>switch</code> expression but not a <code>switch</code> statement can be the target of a <code>yield</code> statement.</p>
+<blockquote>
+<p>In the previous preview version of <code>switch</code> expressions, <a href="https://openjdk.java.net/jeps/325">JEP 325</a>, we proposed to add a new form of <code>break</code> statement with a value, which would be used to yield a value from a <code>switch</code> expression. In this version of <code>switch</code> expressions, this will be replaced with the new <code>yield</code> statement.</p>
+</blockquote>
+<h3 id="Exhaustiveness">Exhaustiveness</h3>
+<p>The cases of a <code>switch</code> expression must be <em>exhaustive</em>; for all possible values there must be a matching switch label. (Obviously <code>switch</code> statements are not required to be exhaustive.)</p>
+<p>In practice this normally means that a <code>default</code> clause is required; however, in the case of an <code>enum</code> <code>switch</code> expression that covers all known constants, a <code>default</code> clause is inserted by the compiler to indicate that the <code>enum</code> definition has changed between compile-time and runtime. Relying on this implicit <code>default</code> clause insertion makes for more robust code; now when code is recompiled, the compiler checks that all cases are explicitly handled. Had the developer inserted an explicit <code>default</code> clause (as is the case today) a possible error will have been hidden.</p>
+<p>Furthermore, a <code>switch</code> expression must either complete normally with a value, or complete abruptly by throwing an exception. This has a number of consequences. First, the compiler checks that for every switch label, if it is matched then a value can be yielded.</p>
+<pre><code>int i = switch (day) {
+    case MONDAY -&gt; {
+        System.out.println("Monday"); 
+        // ERROR! Block doesn't contain a yield statement
+    }
+    default -&gt; 1;
+};
+i = switch (day) {
+    case MONDAY, TUESDAY, WEDNESDAY: 
+        yield 0;
+    default: 
+        System.out.println("Second half of the week");
+        // ERROR! Group doesn't contain a yield statement
+};</code></pre>
+<p>A further consequence is that the control statements, <code>break</code>, <code>yield</code>, <code>return</code> and <code>continue</code>, cannot jump through a <code>switch</code> expression, such as in the following:</p>
+<pre><code>z: 
+    for (int i = 0; i &lt; MAX_VALUE; ++i) {
+        int k = switch (e) { 
+            case 0:  
+                yield 1;
+            case 1:
+                yield 2;
+            default: 
+                continue z; 
+                // ERROR! Illegal jump through a switch expression 
+        };
+    ...
+    }</code></pre>
+
+<h2 id="Dependencies">Dependencies</h2>
+<p>This feature was previewed in <a href="https://openjdk.java.net/jeps/325">JEP 325</a>.</p>
+<p><a href="https://openjdk.java.net/jeps/305">Pattern Matching (JEP 305)</a> depends on this JEP.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The need for a <code>switch</code> statement with <code>case L -&gt;</code> labels is sometimes unclear. The following rationale presents the assumptions behind its inclusion:</p>
+<ul>
+<li>
+<p>There are <code>switch</code> statements that operate by side-effects, but which are generally still &#8220;one action per label&#8221;. Bringing these into the fold with new-style labels makes the statements more straightforward and less error-prone.</p>
+</li>
+<li>
+<p>The fact that the default control flow in a <code>switch</code> statement's block is to fall through, rather than to break out, was an unfortunate choice early in Java's history. It is a matter of huge angst for developers. This seemed to be something that should be solved for the <code>switch</code> construct in general, not just for <code>switch</code> expressions.</p>
+</li>
+<li>
+<p>It seemed more desirable to tease the desired benefits (expression-ness, better control flow, saner scoping) into orthogonal features, so that <code>switch</code> expressions and <code>switch</code> statements could have more in common. The greater the divergence between <code>switch</code> expressions and <code>switch</code> statements, the more complex the language is to learn, and the more sharp edges there are for developers to cut themselves on.</p>
+</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,466 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Ownership of 2D/AWT files in J2SE 1.4 (as of
+1/14/02)</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h2>Distinguishing 2D vs AWT source files</h2>
+<p>Its understandably unclear to most people which parts of the JDK
+implementation are considered parts of the Java 2D component, and
+which are parts of the AWT component. The overlap of the package
+hierarchy has a lot to do with this, and that goes back to JDK 1.0,
+before there was a Java 2D. Once you understand that AWT is more
+about windowing system and desktop interaction, and 2D is all about
+rendering, including imaging - including to printers!, it may
+become a little easier. The following breakdown may help people
+going forward. Changes to AWT should go to the awt-dev list and for
+2D, to the 2d-dev mailing list. There's also some minimal overlap
+with I18N (Internationalization).<br /></p>
+<h2>Ownership of files in src/share/classes/java/awt</h2>
+<pre>AWT          AWTError.java
+AWT          AWTEvent.java
+AWT          AWTEventMulticaster.java
+AWT          AWTException.java
+AWT          AWTKeyStroke.java
+AWT          AWTPermission.java
+AWT          ActiveEvent.java
+AWT          Adjustable.java
+2d           AlphaComposite.java
+AWT          AttributeValue.java
+2d           BasicStroke.java
+AWT          BorderLayout.java
+AWT          BufferCapabilities.java
+AWT          Button.java
+AWT          Canvas.java
+AWT          CardLayout.java
+AWT          Checkbox.java
+AWT          CheckboxGroup.java
+AWT          CheckboxMenuItem.java
+AWT          Choice.java
+2d           Color.java
+2d           ColorPaintContext.java
+AWT/I18n     Component.java
+I18n/AWT     ComponentOrientation.java
+2d           Composite.java
+2d           CompositeContext.java
+AWT          Conditional.java
+AWT          Container.java
+AWT          ContainerOrderFocusTraversalPolicy.java
+AWT          Cursor.java
+AWT          DefaultFocusTraversalPolicy.java
+AWT          DefaultKeyboardFocusManager.java
+AWT          Dialog.java
+AWT          Dimension.java
+2d           DisplayMode.java
+AWT          Event.java
+AWT          EventDispatchThread.java
+AWT          EventQueue.java
+AWT          FileDialog.java
+AWT          FlowLayout.java
+AWT          FocusTraversalPolicy.java
+2d           Font.java
+2d           FontFormatException.java
+2d           FontMetrics.java
+AWT          Frame.java
+2d           GradientPaint.java
+2d           GradientPaintContext.java
+2d           Graphics.java
+2d           Graphics2D.java
+AWT          GraphicsCallback.java
+AWT          GraphicsConfigTemplate.java
+2d/AWT       GraphicsConfiguration.java
+2d/AWT       GraphicsDevice.java
+2d/AWT       GraphicsEnvironment.java
+AWT          GridBagConstraints.java
+AWT          GridBagLayout.java
+AWT          GridLayout.java
+AWT          HeadlessException.java
+AWT          IllegalComponentStateException.java
+2d           Image.java
+2d           ImageCapabilities.java
+AWT          Insets.java
+AWT          ItemSelectable.java
+AWT          JobAttributes.java
+AWT          KeyEventDispatcher.java
+AWT          KeyEventPostProcessor.java
+AWT          KeyboardFocusManager.java
+AWT          Label.java
+AWT          LayoutManager.java
+AWT          LayoutManager2.java
+AWT          List.java
+2d/AWT       MediaTracker.java
+AWT          Menu.java
+AWT          MenuBar.java
+AWT          MenuComponent.java
+AWT          MenuContainer.java
+AWT          MenuItem.java
+AWT          MenuShortcut.java
+AWT          PageAttributes.java
+2d           Paint.java
+2d           PaintContext.java
+AWT          Panel.java
+2d           Point.java
+2d           Polygon.java
+AWT          PopupMenu.java
+AWT/2d       PrintGraphics.java
+AWT/2d       PrintJob.java
+2d           Rectangle.java
+2d           RenderingHints.java
+AWT          Robot.java
+AWT          ScrollPane.java
+AWT          ScrollPaneAdjustable.java
+AWT          Scrollbar.java
+AWT          SentEvent.java
+AWT          SequencedEvent.java
+2d           Shape.java
+2d           Stroke.java
+AWT          SystemColor.java
+AWT          TextArea.java
+AWT          TextComponent.java
+AWT          TextField.java
+2d           TexturePaint.java
+2d           TexturePaintContext.java
+AWT/I18n     Toolkit.java
+AWT          Transparency.java
+AWT/I18n     Window.java
+accessibility accessibility/
+2d            color/
+dnd           datatransfer/
+dnd           dnd/
+AWT           event/
+2d            font/
+2d            geom/
+I18n          im/
+2d            image/
+AWT           peer/
+2d            print/
+</pre>
+<h2>Ownership of directories in src/share/classes/sun</h2>
+<pre>I18n          awt/FontProperties.java
+2d            awt/SunHints.java
+AWT,I18n      awt/*.java
+2d            awt/color
+drag&amp;drop     awt/datatransfer
+drag&amp;drop     awt/dnd
+2d            awt/font
+2d            awt/geom
+I18n          awt/im
+2d            awt/image
+2d            awt/print
+AWT           awt/resources
+AWT           awt/robot
+AWT           awt/shell
+2d            dc/
+2d            java2d/
+2d            print/
+I18n          text/  
+
+</pre>
+<h2>Ownership of other directories in src/share</h2>
+<pre>2d            native/sun/awt/cmm
+AWT           native/sun/awt/debug
+2d            native/sun/awt/font
+2d            native/sun/font
+2d            native/sun/awt/image
+2d            native/sun/awt/medialib
+2d            native/sun/dc/
+2d            native/sun/java2d/
+imageio       classes/javax/imageio
+2d            classes/javax/print
+2d            classes/com/sun/image
+imageio       classes/com/sun/imageio
+
+</pre>
+<h2>Ownership of directories in src/solaris/classes/sun</h2>
+<pre> 2d           print/
+</pre>
+<h2>Ownership of files/directories in
+src/solaris/classes/sun/awt</h2>
+<pre> AWT          X11/
+ I18n         X11/XInputMethod.java
+ I18n         X11/XInputMethodDescriptor.java
+ 2d, AWT      X11GraphicsConfig.java
+ 2d, AWT      X11GraphicsDevice.java
+ 2d, AWT      X11GraphicsEnvironment.java
+ 2d           X11PMBlitLoops.java
+ 2d           X11Renderer.java
+ 2d           X11SurfaceData.java
+ 2d           font/
+ 2d,AWT       print/           (AWT printing: 2d owns this for 1.4+, AWT o/w)
+</pre>
+<h2>Ownership of files/directories in
+src/solaris/classes/sun/awt/motif</h2>
+<pre> 2d           LUTxparToIndexed.java
+ 2d           LUTxparToIntBgr.java
+ 2d           X11GIFAcceleratorLoops.java
+ 2d           X11Image.java
+ I18n         X11InputMethod.java
+ I18n         X11InputMethodDescriptor.java
+ 2d           X11ImageRepresentation.java
+ 2d           X11OffScreenImage.java
+ 2d           X11RemoteOffScreenImage.java
+ 2d           X11VolatileImage.java
+ AWT, I18n    (rest of the files)
+</pre>
+<h2>Ownership of files/directories in
+src/solaris/native/sun/awt</h2>
+<pre> AWT          VDrawingArea.c
+ AWT          VDrawingArea.h
+ AWT          VDrawingAreaP.h
+ 2d           X11Color.c
+ 2d           X11GIFAcceleratorLoops.c
+ 2d           X11OffScreenImage.c
+ 2d           X11PMBlitLoops.c
+ 2d           X11RemoteOffScreenImage.c
+ 2d           X11Renderer.c
+ 2d           X11SurfaceData.c
+ 2d           X11SurfaceData.h
+ AWT          Xinerama.c
+ AWT          Xinerama.h
+ AWT, 2d      awt.h
+ AWT          awt_AWTEvent.c
+ AWT          awt_AWTEvent.h
+ AWT          awt_AWTKeyStroke.c
+ AWT          awt_Button.c
+ AWT          awt_Canvas.c
+ AWT          awt_Checkbox.c
+ AWT          awt_Choice12.c
+ AWT          awt_Choice21.c
+ AWT          awt_Component.c
+ AWT          awt_Component.h
+ AWT          awt_Cursor.c
+ AWT          awt_Cursor.h
+ dnd          awt_DataTransferer.c
+ dnd          awt_DataTransferer.h
+ AWT          awt_DrawingSurface.c
+ AWT          awt_DrawingSurface.h
+ AWT          awt_Event.c
+ AWT          awt_Event.h
+ AWT          awt_FileDialog.c
+ AWT, I18n    awt_Font.c
+ AWT          awt_Font.h
+ AWT          awt_GlobalCursorManager.c
+ 2d, AWT      awt_GraphicsEnv.c
+ 2d, AWT      awt_GraphicsEnv.h
+ I18n, AWT    awt_InputMethod.c
+ AWT          awt_Insets.c
+ AWT          awt_Insets.h
+ AWT          awt_KeyboardFocusManager.c
+ AWT          awt_KeyboardFocusManager.h
+ AWT          awt_Label.c
+ AWT          awt_List.c
+ AWT          awt_LoadLibrary.c
+ AWT          awt_MToolkit.c
+ AWT          awt_MToolkit.h
+ AWT          awt_Menu.c
+ AWT          awt_Menu.h
+ AWT          awt_MenuBar.c
+ AWT          awt_MenuBar.h
+ AWT          awt_MenuComponent.c
+ AWT          awt_MenuComponent.h
+ AWT          awt_MenuItem.c
+ AWT          awt_MenuItem.h
+ 2d           awt_Mlib.c
+ 2d           awt_Mlib.h
+ AWT          awt_Plugin.c
+ AWT          awt_Plugin.h
+ AWT          awt_PopupMenu.c
+ AWT          awt_PopupMenu.h
+ AWT          awt_Robot.c
+ AWT          awt_ScrollPane.c
+ AWT          awt_Scrollbar.c
+ dnd          awt_Selection.c
+ AWT          awt_TextArea.c
+ AWT          awt_TextField.c
+ AWT,I18n     awt_TopLevel.c
+ AWT          awt_TopLevel.h
+ AWT          awt_Window.h
+ dnd          awt_XmDnD.c
+ dnd          awt_XmDnD.h
+ AWT,I18n     awt_motif.c
+ AWT,I18n     awt_motif.h
+ AWT,I18n     awt_motif12.c
+ AWT,I18n     awt_motif21.c
+ AWT, 2d,I18n awt_p.h
+ AWT          awt_util.c
+ AWT          awt_util.h
+ AWT          awt_wm.c
+ AWT          awt_wm.h
+ AWT,I18n     canvas.c
+ AWT          canvas.h
+ 2d           color.h
+ 2d           colordata.h
+ AWT          cursor.c
+ AWT          extutil.h
+ 2d           font/
+ 2d           fontpath.c
+ 2d           img_util_md.h
+ AWT,2d       initIDs.c
+ AWT          jawt.c
+ 2d           medialib/
+ AWT, I18n    multi_font.c
+ AWT, I18n    multi_font.h
+ AWT          panoramiXext.h
+ AWT          panoramiXproto.h
+ AWT          robot_child/
+ AWT          robot_common.c  
+ AWT          robot_common.h
+
+</pre>
+<h2>Ownership of other directories in src/solaris/native/sun</h2>
+<pre> 2d           java2d/
+ AWT          xawt/
+</pre>
+<h2>Ownership of directories in src/win32/classes/sun</h2>
+<pre> 2d           print/
+</pre>
+<h2>Ownership of files/directories in
+src/win32/classes/sun/awt</h2>
+<pre> 2d           Win32ColorModel24.java
+ 2d, AWT      Win32GraphicsConfig.java
+ 2d, AWT      Win32GraphicsDevice.java
+ 2d, AWT      Win32GraphicsEnvironment.java
+ 2d , AWT     print/    (AWT printing: 2d owns this for 1.4+, AWT o/w)
+ AWT          shell/
+</pre>
+<h2>Ownership of files/directories in
+src/win32/classes/sun/awt/windows</h2>
+<pre> 2d          WFontMetrics.java
+ 2d           WFontConfiguration.java
+ 2d           WFontPeer.java
+ 2d           WImage.java
+ 2d           WImageRepresentation.java
+ I18n         WInputMethod.java
+ I18n         WInputMethodDescriptor.java
+ 2d           WPathGraphics.java
+ 2d, AWT      WPrintDialog.java  (AWT printing: 2d owns this for 1.4+, AWT o/w)
+ 2d, AWT      WPrintDialogPeer.java (AWT printing:2d owns this in 1.4+,AWT o/w)
+ 2d           WPrinterJob.java
+ 2d           WVolatileImage.java
+ 2d           Win32BlitLoops.java
+ 2d           Win32DDRenderer.java
+ 2d           Win32OffScreenImage.java
+ 2d           Win32OffScreenSurfaceData.java
+ 2d           Win32PeerlessImage.java
+ 2d           Win32Renderer.java
+ 2d           Win32ScaleLoops.java
+ 2d           Win32SurfaceData.java
+ AWT/I18n     (rest of the files)
+</pre>
+<h2>Ownership of directories in src/windows/native/sun</h2>
+<pre> 2d           awt/font
+ 2d           java2d
+</pre>
+<h2>Ownership of files in src/windows/native/sun/windows</h2>
+<pre> AWT          CmdIDList.cpp
+ AWT          CmdIDList.h
+ 2d           GDIHashtable.cpp
+ 2d           GDIHashtable.h
+ AWT          Hashtable.cpp
+ AWT          Hashtable.h
+ 2d           MTSafeArray.cpp
+ 2d           MTSafeArray.h
+ AWT          ObjectList.cpp
+ AWT          ObjectList.h
+ AWT          ShellFolder.cpp
+ 2d           WBufferStrategy.cpp
+ 2d           WPrinterJob.cpp
+ 2d           Win32BackBufferSurfactData.cpp
+ 2d           Win32BlitLoops.cpp
+ 2d           Win32D3DRenderer.cpp
+ 2d           Win32DDRenderer.cpp
+ 2d           Win32GdiBlitLoops.cpp
+ 2d           Win32OffScreenImage.cpp
+ 2d           Win32OffScreenSurfaceData.cpp
+ 2d           Win32Renderer.cpp
+ 2d           Win32SurfaceData.cpp
+ 2d           Win32SurfaceData.h
+ AWT          alloc.h
+ AWT,2d       awt.h
+ AWT          awt.ico
+ AWT          awt.rc
+ AWT          awt_AWTEvent.cpp
+ AWT          awt_AWTEvent.h
+ AWT          awt_AWTKeyStroke.cpp
+ AWT          awt_Brush.cpp
+ AWT          awt_Brush.h
+ AWT          awt_Button.cpp
+ AWT          awt_Button.h
+ AWT          awt_Canvas.cpp
+ AWT          awt_Canvas.h
+ AWT          awt_Checkbox.cpp
+ AWT          awt_Checkbox.h
+ AWT          awt_Choice.cpp
+ AWT          awt_Choice.h
+ AWT          awt_Clipboard.cpp
+ AWT          awt_Clipboard.h
+ AWT          awt_Color.cpp
+ AWT          awt_Color.h
+ AWT          awt_Component.cpp
+ AWT          awt_Component.h
+ AWT          awt_Cursor.cpp
+ AWT          awt_Cursor.h
+ 2d           awt_CustomPaletteDef.h
+ AWT          awt_DataTransferer.cpp
+ AWT          awt_DataTransferer.h
+ AWT          awt_Debug.cpp
+ AWT          awt_Debug.h
+ AWT          awt_DesktopProperties.cpp
+ AWT          awt_DesktopProperties.h
+ AWT          awt_Dialog.cpp
+ AWT          awt_Dialog.h
+ AWT          awt_Dimension.cpp
+ AWT          awt_Dimension.h
+ AWT          awt_DnDDS.cpp
+ AWT          awt_DnDDS.h
+ AWT          awt_DnDDT.cpp
+ AWT          awt_DnDDT.h
+ 2d           awt_DrawingSurface.cpp
+ 2d           awt_DrawingSurface.h
+ AWT          awt_Event.cpp
+ AWT          awt_Event.h
+ AWT          awt_FileDialog.cpp
+ AWT          awt_FileDialog.h
+ AWT          awt_Font.cpp
+ AWT          awt_Font.h
+ I18n         awt_InputMethod.cpp
+ 2d           awt_Mlib.cpp
+ 2d           awt_Mlib.h
+ 2d           awt_Multimon.h
+ 2d           awt_Palette.cpp
+ 2d           awt_Palette.h
+ 2d,AWT       awt_PrintControl.cpp
+ 2d,AWT       awt_PrintControl.h
+ 2d,AWT       awt_PrintDialog.cpp
+ 2d,AWT       awt_PrintDialog.h
+ 2d,AWT       awt_PrintJob.cpp
+ 2d,AWT       awt_PrintJob.h
+
+ 2d           awt_Rectangle.cpp
+ 2d           awt_Rectangle.h
+ 2d           awt_Win32GraphicsConfig.cpp
+ 2d           awt_Win32GraphicsConfig.h
+ 2d           awt_Win32GraphicsDevice.cpp
+ 2d           awt_Win32GraphicsDevice.h
+ 2d           awt_Win32GraphicsEnv.cpp
+ 2d           colordata.h
+ 2d           img_util_md.h
+ 2d           mlib_types_md.h
+ AWT/I18n     (Rest of the files)
+</pre>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

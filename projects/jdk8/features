@@ -1,0 +1,1267 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title xmlns:xi="http://www.w3.org/2001/XInclude">JDK 8 Features</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+/**/
+    BODY { margin-bottom: 150%; }
+
+    DIV.group { margin-top: 1.5ex; margin-left: 2em; }
+    DIV.group DIV.title { font-weight: bold; margin-left: -2em; }
+
+    DIV.jep-list { margin: 3ex 0; }
+    DIV.jep { margin-top: 1.5ex; margin-left: 4em; }
+    DIV.jep DIV.title { font-weight: bold; margin-left: -2em; }
+    DIV.jep DIV.summary { margin-top: 1.5ex; margin-bottom: 1.5ex; }
+    DIV.jep DIV.refs DIV { margin-top: .5ex; }
+
+    TABLE.jeps { border-collapse: collapse; }
+    TABLE.jeps TD { padding-top: 0pt; padding-bottom: 0pt; }
+    TABLE.jeps TR.group TD { padding-top: 1ex; }
+    TABLE.jeps TD:first-child { text-align: right; padding-left: 0; }
+    TABLE.jeps TD { padding-left: 1em; }
+    TABLE.jeps TR:first-child TD { padding-top: 0ex; }
+
+    SPAN.new { color: #e76f00; font-size: smaller; }
+    SPAN.update { font-size: smaller; }
+
+    HR { border: 0; color: #666; background-color: #666; height: 1px; }
+         
+/**/
+</style><style type="text/css">
+/**/
+        DIV.jdknav { font-size: 8pt; float: right; margin-right: 2em; padding-top: .75ex; }
+        DIV.jdktop { font-size: 12.5pt; font-weight: bold; }
+        DIV.jdktop + H1 { margin-top: .0ex; }
+/**/
+</style></head><body><div id="main">
+<div class="jdknav">&#171; <a href=".">home</a> &#183; features
+&#183; <a href="./milestones">milestones</a> &#183; <a href="./builds">builds</a> &#187;</div>
+<div class="jdktop">JDK 8</div>
+<h1>Features</h1>
+<p>JEPS are grouped according to the area and component taxonomy
+used in the <a href="/jeps/">JEP Process</a>. On this page a JEP
+number links directly to the cited JEP document, while a JEP title
+links to the corresponding short summary below.</p>
+<blockquote>
+<div class="jep-summary">
+<table class="jeps" summary="jeps">
+<tr class="group">
+<td><a href="#--/--">--/--</a></td>
+<td><a href="//openjdk.java.net/jeps/126">126</a></td>
+<td><a href="#126">Lambda Expressions &amp; Virtual Extension
+Methods</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/138">138</a></td>
+<td><a href="#138">Autoconf-Based Build System</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/160">160</a></td>
+<td><a href="#160">Lambda-Form Representation for Method
+Handles</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/161">161</a></td>
+<td><a href="#161">Compact Profiles</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/162">162</a></td>
+<td><a href="#162">Prepare for Modularization</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/164">164</a></td>
+<td><a href="#164">Leverage CPU Instructions for AES
+Cryptography</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/174">174</a></td>
+<td><a href="#174">Nashorn JavaScript Engine</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/176">176</a></td>
+<td><a href="#176">Mechanical Checking of Caller-Sensitive
+Methods</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/179">179</a></td>
+<td><a href="#179">Document JDK API Support and Stability</a></td>
+</tr>
+<tr class="group">
+<td><a href="#vm/--">vm/--</a></td>
+<td><a href="//openjdk.java.net/jeps/142">142</a></td>
+<td><a href="#142">Reduce Cache Contention on Specified
+Fields</a></td>
+</tr>
+<tr class="group">
+<td><a href="#vm/gc">vm/gc</a></td>
+<td><a href="//openjdk.java.net/jeps/122">122</a></td>
+<td><a href="#122">Remove the Permanent Generation</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/173">173</a></td>
+<td><a href="#173">Retire Some Rarely-Used GC Combinations</a></td>
+</tr>
+<tr class="group">
+<td><a href="#vm/rt">vm/rt</a></td>
+<td><a href="//openjdk.java.net/jeps/136">136</a></td>
+<td><a href="#136">Enhanced Verification Errors</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/147">147</a></td>
+<td><a href="#147">Reduce Class Metadata Footprint</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/148">148</a></td>
+<td><a href="#148">Small VM</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/171">171</a></td>
+<td><a href="#171">Fence Intrinsics</a></td>
+</tr>
+<tr class="group">
+<td><a href="#core/--">core/--</a></td>
+<td><a href="//openjdk.java.net/jeps/153">153</a></td>
+<td><a href="#153">Launch JavaFX Applications</a></td>
+</tr>
+<tr class="group">
+<td><a href="#core/lang">core/lang</a></td>
+<td><a href="//openjdk.java.net/jeps/101">101</a></td>
+<td><a href="#101">Generalized Target-Type Inference</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/104">104</a></td>
+<td><a href="#104">Annotations on Java Types</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/105">105</a></td>
+<td><a href="#105">DocTree API</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/106">106</a></td>
+<td><a href="#106">Add Javadoc to javax.tools</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/117">117</a></td>
+<td><a href="#117">Remove the Annotation-Processing Tool
+(apt)</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/118">118</a></td>
+<td><a href="#118">Access to Parameter Names at Runtime</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/120">120</a></td>
+<td><a href="#120">Repeating Annotations</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/139">139</a></td>
+<td><a href="#139">Enhance javac to Improve Build Speed</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/172">172</a></td>
+<td><a href="#172">DocLint</a></td>
+</tr>
+<tr class="group">
+<td><a href="#core/libs">core/libs</a></td>
+<td><a href="//openjdk.java.net/jeps/103">103</a></td>
+<td><a href="#103">Parallel Array Sorting</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/107">107</a></td>
+<td><a href="#107">Bulk Data Operations for Collections</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/109">109</a></td>
+<td><a href="#109">Enhance Core Libraries with Lambda</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/112">112</a></td>
+<td><a href="#112">Charset Implementation Improvements</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/119">119</a></td>
+<td><a href="#119">javax.lang.model Implementation Backed by Core
+Reflection</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/135">135</a></td>
+<td><a href="#135">Base64 Encoding &amp; Decoding</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/149">149</a></td>
+<td><a href="#149">Reduce Core-Library Memory Usage</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/150">150</a></td>
+<td><a href="#150">Date &amp; Time API</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/155">155</a></td>
+<td><a href="#155">Concurrency Updates</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/170">170</a></td>
+<td><a href="#170">JDBC 4.2</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/177">177</a></td>
+<td><a href="#177">Optimize java.text.DecimalFormat.format</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/178">178</a></td>
+<td><a href="#178">Statically-Linked JNI Libraries</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/180">180</a></td>
+<td><a href="#180">Handle Frequent HashMap Collisions with Balanced
+Trees</a></td>
+</tr>
+<tr class="group">
+<td><a href="#core/i18n">core/i18n</a></td>
+<td><a href="//openjdk.java.net/jeps/127">127</a></td>
+<td><a href="#127">Improve Locale Data Packaging and Adopt Unicode
+CLDR Data</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/128">128</a></td>
+<td><a href="#128">BCP 47 Locale Matching</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/133">133</a></td>
+<td><a href="#133">Unicode 6.2</a></td>
+</tr>
+<tr class="group">
+<td><a href="#core/net">core/net</a></td>
+<td><a href="//openjdk.java.net/jeps/184">184</a></td>
+<td><a href="#184">HTTP URL Permissions</a></td>
+</tr>
+<tr class="group">
+<td><a href="#core/sec">core/sec</a></td>
+<td><a href="//openjdk.java.net/jeps/113">113</a></td>
+<td><a href="#113">MS-SFU Kerberos 5 Extensions</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/114">114</a></td>
+<td><a href="#114">TLS Server Name Indication (SNI)
+Extension</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/115">115</a></td>
+<td><a href="#115">AEAD CipherSuites</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/121">121</a></td>
+<td><a href="#121">Stronger Algorithms for Password-Based
+Encryption</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/123">123</a></td>
+<td><a href="#123">Configurable Secure Random-Number
+Generation</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/124">124</a></td>
+<td><a href="#124">Enhance the Certificate Revocation-Checking
+API</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/129">129</a></td>
+<td><a href="#129">NSA Suite B Cryptographic Algorithms</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/130">130</a></td>
+<td><a href="#130">SHA-224 Message Digests</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/131">131</a></td>
+<td><a href="#131">PKCS#11 Crypto Provider for 64-bit
+Windows</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/140">140</a></td>
+<td><a href="#140">Limited doPrivileged</a></td>
+</tr>
+<tr>
+<td></td>
+<td><a href="//openjdk.java.net/jeps/166">166</a></td>
+<td><a href="#166">Overhaul JKS-JCEKS-PKCS12 Keystores</a></td>
+</tr>
+<tr class="group">
+<td><a href="#web/jaxp">web/jaxp</a></td>
+<td><a href="//openjdk.java.net/jeps/185">185</a></td>
+<td><a href="#185">Restrict Fetching of External XML
+Resources</a></td>
+</tr>
+</table>
+</div>
+</blockquote>
+<p>A summary of the changes to this list over time is available at
+the <a href="#changes">bottom of this page</a>.</p>
+<div class="jep-list">
+<div class="group" id="--/--">
+<div class="title">--/--</div>
+</div>
+<div class="jep" id="126">
+<div class="title"><a href="//openjdk.java.net/jeps/126">126</a> Lambda Expressions &amp;
+Virtual Extension Methods</div>
+<div class="summary">Add lambda expressions (closures) and
+supporting features, including method references, enhanced type
+inference, and virtual extension methods, to the Java programming
+language and platform.</div>
+<div class="refs">
+<div>Owner: Brian Goetz</div>
+<div>Author: Joseph D. Darcy</div>
+<div>Discussion: lambda dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="138">
+<div class="title"><a href="//openjdk.java.net/jeps/138">138</a> Autoconf-Based Build
+System</div>
+<div class="summary">Introduce autoconf
+(<code>./configure</code>-style) build setup, refactor the
+Makefiles to remove recursion, and leverage <a href="139">JEP 139:
+Enhance javac to Improve Build Speed</a>.</div>
+<div class="refs">
+<div>Author: Magnus Ihse Bursie</div>
+<div>Discussion: jdk8 dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="160">
+<div class="title"><a href="//openjdk.java.net/jeps/160">160</a> Lambda-Form
+Representation for Method Handles</div>
+<div class="summary">Improve the implementation of method handles
+by replacing assembly language paths with an optimizable
+intermediate representation and then refactoring the implementation
+so that more work is done in portable Java code than is hardwired
+into the JVM.</div>
+<div class="refs">
+<div>Author: John Rose</div>
+<div>Discussion: mlvm dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="161">
+<div class="title"><a href="//openjdk.java.net/jeps/161">161</a> Compact Profiles</div>
+<div class="summary">Define a few subset Profiles of the Java SE
+Platform Specification so that applications that do not require the
+entire Platform can be deployed and run on small devices.</div>
+<div class="refs">
+<div>Owner: Bob Vandette</div>
+<div>Author: Bob Vandette, Mark Reinhold</div>
+<div>Discussion: jdk8 dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="162">
+<div class="title"><a href="//openjdk.java.net/jeps/162">162</a> Prepare for
+Modularization</div>
+<div class="summary">Undertake changes to smooth the eventual
+transition to modules in a future release, provide new tools to
+help developers prepare for the modular platform, and deprecate
+certain APIs that are a significant impediment to
+modularization.</div>
+<div class="refs">
+<div>Author: Alan Bateman</div>
+<div>Discussion: jigsaw dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="164">
+<div class="title"><a href="//openjdk.java.net/jeps/164">164</a> Leverage CPU
+Instructions for AES Cryptography</div>
+<div class="summary">Improve the out-of-box AES Crypto performance
+by using x86 AES instructions when available, and by avoiding
+unnecessary re-expansion of the AES key.</div>
+<div class="refs">
+<div>Author: Vladimir Kozlov</div>
+<div>Discussion: hotspot dash compiler dash dev at openjdk dot java
+dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="174">
+<div class="title"><a href="//openjdk.java.net/jeps/174">174</a> Nashorn JavaScript
+Engine</div>
+<div class="summary">Design and implement a new lightweight,
+high-performance implementation of JavaScript, and integrate it
+into the JDK. The new engine will be made available to Java
+applications via the existing <code>javax.script</code> API, and
+also more generally via a new command-line tool.</div>
+<div class="refs">
+<div>Author: Jim Laskey</div>
+<div>Discussion: nashorn dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="176">
+<div class="title"><a href="//openjdk.java.net/jeps/176">176</a> Mechanical Checking of
+Caller-Sensitive Methods</div>
+<div class="summary">Improve the security of the JDK&#8217;s
+method-handle implementation by replacing the existing
+hand-maintained list of caller-sensitive methods with a mechanism
+that accurately identifies such methods and allows their callers to
+be discovered reliably.</div>
+<div class="refs">
+<div>Owner: John Rose</div>
+<div>Author: John Rose, Christian Thalinger, Mandy Chung</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="179">
+<div class="title"><a href="//openjdk.java.net/jeps/179">179</a> Document JDK API Support
+and Stability</div>
+<div class="summary">There is a long-standing shortcoming in the
+JDK in terms of clearly specifying the support and stability usage
+contract for <code>com.sun.*</code> types and other types shipped
+with the JDK that are outside of the Java SE specification. These
+contracts and potential evolution policies should be clearly
+captured both in the source code of the types and in the resulting
+class files. This information can be modeled with JDK-specific
+annotation types.</div>
+<div class="refs">
+<div>Author: Joseph D. Darcy</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="group" id="vm/--">
+<div class="title">vm/--</div>
+</div>
+<div class="jep" id="142">
+<div class="title"><a href="//openjdk.java.net/jeps/142">142</a> Reduce Cache Contention
+on Specified Fields</div>
+<div class="summary">Define a way to specify that one or more
+fields in an object are likely to be highly contended across
+processor cores so that the VM can arrange for them not to share
+cache lines with other fields, or other objects, that are likely to
+be independently accessed.</div>
+<div class="refs">
+<div>Owner: Tony Printezis</div>
+<div>Author: Jesper Wilhelmsson, Tony Printezis</div>
+<div>Discussion: hotspot dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="group" id="vm/gc">
+<div class="title">vm/gc</div>
+</div>
+<div class="jep" id="122">
+<div class="title"><a href="//openjdk.java.net/jeps/122">122</a> Remove the Permanent
+Generation</div>
+<div class="summary">Remove the permanent generation from the
+Hotspot JVM and thus the need to tune the size of the permanent
+generation.</div>
+<div class="refs">
+<div>Author: Jon Masamitsu</div>
+<div>Discussion: hotspot dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="173">
+<div class="title"><a href="//openjdk.java.net/jeps/173">173</a> Retire Some Rarely-Used
+GC Combinations</div>
+<div class="summary">Remove three rarely-used combinations of
+garbage collectors in order to reduce ongoing development,
+maintenance, and testing costs.</div>
+<div class="refs">
+<div>Author: Bengt Rutisson</div>
+<div>Discussion: hotspot dash gc dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="group" id="vm/rt">
+<div class="title">vm/rt</div>
+</div>
+<div class="jep" id="136">
+<div class="title"><a href="//openjdk.java.net/jeps/136">136</a> Enhanced Verification
+Errors</div>
+<div class="summary">Provide additional contextual information
+about bytecode-verification errors to ease diagnosis of bytecode or
+stackmap deficiencies in the field.</div>
+<div class="refs">
+<div>Author: Keith McGuigan</div>
+<div>Discussion: hotspot dash runtime dash dev at openjdk dot java
+dot net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="147">
+<div class="title"><a href="//openjdk.java.net/jeps/147">147</a> Reduce Class Metadata
+Footprint</div>
+<div class="summary">Reduce HotSpot&#8217;s class metadata memory
+footprint in order to improve performance on small devices.</div>
+<div class="refs">
+<div>Author: Jiangli Zhou</div>
+<div>Discussion: hotspot dash runtime dash dev at openjdk dot java
+dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="148">
+<div class="title"><a href="//openjdk.java.net/jeps/148">148</a> Small VM</div>
+<div class="summary">Support the creation of a small VM that is no
+larger than 3MB.</div>
+<div class="refs">
+<div>Author: Joe Provino</div>
+<div>Discussion: hotspot dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="171">
+<div class="title"><a href="//openjdk.java.net/jeps/171">171</a> Fence Intrinsics</div>
+<div class="summary">Add three memory-ordering intrinsics to the
+<code>sun.misc.Unsafe</code> class.</div>
+<div class="refs">
+<div>Author: Doug Lea</div>
+<div>Discussion: hotspot dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="group" id="core/--">
+<div class="title">core/--</div>
+</div>
+<div class="jep" id="153">
+<div class="title"><a href="//openjdk.java.net/jeps/153">153</a> Launch JavaFX
+Applications</div>
+<div class="summary">Enhance the <code>java</code> command-line
+launcher to launch JavaFX applications.</div>
+<div class="refs">
+<div>Author: Kumar Srinivasan</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="group" id="core/lang">
+<div class="title">core/lang</div>
+</div>
+<div class="jep" id="101">
+<div class="title"><a href="//openjdk.java.net/jeps/101">101</a> Generalized Target-Type
+Inference</div>
+<div class="summary">Smoothly expand the scope of method
+type-inference to support (i) inference in method context and (ii)
+inference in chained calls.</div>
+<div class="refs">
+<div>Author: Maurizio Cimadamore</div>
+<div>Discussion: lambda dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="104">
+<div class="title"><a href="//openjdk.java.net/jeps/104">104</a> Annotations on Java
+Types</div>
+<div class="summary">Extend the set of annotatable locations in the
+syntax of the Java programming language to include names which
+indicate the use of a type as well as (per Java SE 5.0) the
+declaration of a type.</div>
+<div class="refs">
+<div>Author: Michael Ernst, Alex Buckley</div>
+<div>Discussion: type dash annotations dash dev at openjdk dot java
+dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="105">
+<div class="title"><a href="//openjdk.java.net/jeps/105">105</a> DocTree API</div>
+<div class="summary">Extend the Compiler Tree API to provide
+structured access to the content of javadoc comments.</div>
+<div class="refs">
+<div>Author: Jonathan Gibbons</div>
+<div>Discussion: compiler dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="106">
+<div class="title"><a href="//openjdk.java.net/jeps/106">106</a> Add Javadoc to
+javax.tools</div>
+<div class="summary">Extend the <code>javax.tools</code> API to
+provide access to javadoc.</div>
+<div class="refs">
+<div>Author: Jonathan Gibbons</div>
+<div>Discussion: compiler dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="117">
+<div class="title"><a href="//openjdk.java.net/jeps/117">117</a> Remove the
+Annotation-Processing Tool (apt)</div>
+<div class="summary">Remove the <code>apt</code> tool, associated
+API, and documentation from the JDK.</div>
+<div class="refs">
+<div>Author: Joseph D. Darcy</div>
+<div>Discussion: compiler dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M1">M1</a></div>
+</div>
+</div>
+<div class="jep" id="118">
+<div class="title"><a href="//openjdk.java.net/jeps/118">118</a> Access to Parameter
+Names at Runtime</div>
+<div class="summary">Provide a mechanism to easily and reliably
+retrieve the parameter names of methods and constructors at runtime
+via core reflection.</div>
+<div class="refs">
+<div>Owner: Alex Buckley</div>
+<div>Author: Joseph D. Darcy</div>
+<div>Discussion: enhanced dash metadata dash spec dash discuss at
+openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="120">
+<div class="title"><a href="//openjdk.java.net/jeps/120">120</a> Repeating
+Annotations</div>
+<div class="summary">Change the Java programming language to allow
+multiple application of annotations with the same type to a single
+program element.</div>
+<div class="refs">
+<div>Owner: Alex Buckley</div>
+<div>Author: Joseph D. Darcy</div>
+<div>Discussion: enhanced dash metadata dash spec dash discuss at
+openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="139">
+<div class="title"><a href="//openjdk.java.net/jeps/139">139</a> Enhance javac to Improve
+Build Speed</div>
+<div class="summary">Reduce the time required to build the JDK and
+enable incremental builds by modifying the Java compiler to run on
+all available cores in a single persistent process, track package
+and class dependences between builds, automatically generate header
+files for native methods, and clean up class and header files that
+are no longer needed.</div>
+<div class="refs">
+<div>Author: Magnus Ihse Bursie</div>
+<div>Discussion: compiler dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="172">
+<div class="title"><a href="//openjdk.java.net/jeps/172">172</a> DocLint</div>
+<div class="summary">Provide a means to detect errors in Javadoc
+comments early in the development cycle and in a way that is easily
+linked back to the source code.</div>
+<div class="refs">
+<div>Author: Jonathan Gibbons</div>
+<div>Discussion: javadoc dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="group" id="core/libs">
+<div class="title">core/libs</div>
+</div>
+<div class="jep" id="103">
+<div class="title"><a href="//openjdk.java.net/jeps/103">103</a> Parallel Array
+Sorting</div>
+<div class="summary">Add additional utility methods to
+<code>java.util.Arrays</code> that use the JSR 166 Fork/Join
+parallelism common pool to provide sorting of arrays in
+parallel.</div>
+<div class="refs">
+<div>Owner: Chris Hegarty</div>
+<div>Author: David Holmes, Chris Hegarty</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="107">
+<div class="title"><a href="//openjdk.java.net/jeps/107">107</a> Bulk Data Operations for
+Collections</div>
+<div class="summary">Add functionality to the Java Collections
+Framework for bulk operations upon data. This is commonly
+referenced as &#8220;filter/map/reduce for Java.&#8221; The bulk
+data operations include both serial (on the calling thread) and
+parallel (using many threads) versions of the operations.
+Operations upon data are generally expressed as lambda
+functions.</div>
+<div class="refs">
+<div>Author: Mike Duigou</div>
+<div>Discussion: lambda dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="109">
+<div class="title"><a href="//openjdk.java.net/jeps/109">109</a> Enhance Core Libraries
+with Lambda</div>
+<div class="summary">Enhance the Java core library APIs using the
+new lambda language feature to improve the usability and
+convenience of the library.</div>
+<div class="refs">
+<div>Owner: Stuart W. Marks</div>
+<div>Author: Stuart W. Marks, Mike Duigou</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="112">
+<div class="title"><a href="//openjdk.java.net/jeps/112">112</a> Charset Implementation
+Improvements</div>
+<div class="summary">Improve the maintainability and performance of
+the standard and extended charset implementations.</div>
+<div class="refs">
+<div>Author: Xueming Shen</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M4">M4</a></div>
+</div>
+</div>
+<div class="jep" id="119">
+<div class="title"><a href="//openjdk.java.net/jeps/119">119</a> javax.lang.model
+Implementation Backed by Core Reflection</div>
+<div class="summary">Provide an implementation of the
+<code>javax.lang.model.*</code> API backed by core reflection
+rather than by <code>javac</code>. In other words, provide an
+alternate API to access and process the reflective information
+about loaded classes provided by core reflection.</div>
+<div class="refs">
+<div>Author: Joseph D. Darcy</div>
+<div>Discussion: compiler dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="135">
+<div class="title"><a href="//openjdk.java.net/jeps/135">135</a> Base64 Encoding &amp;
+Decoding</div>
+<div class="summary">Define a standard API for Base64 encoding and
+decoding.</div>
+<div class="refs">
+<div>Author: Alan Bateman</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="149">
+<div class="title"><a href="//openjdk.java.net/jeps/149">149</a> Reduce Core-Library
+Memory Usage</div>
+<div class="summary">Reduce the dynamic memory used by core-library
+classes without adversely impacting performance.</div>
+<div class="refs">
+<div>Owner: Roger Riggs</div>
+<div>Author: Roger Riggs, Hinkmond Wong, David Holmes</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="150">
+<div class="title"><a href="//openjdk.java.net/jeps/150">150</a> Date &amp; Time
+API</div>
+<div class="summary">Define a new date, time, and calendar API for
+the Java SE platform.</div>
+<div class="refs">
+<div>Owner: Xueming Shen</div>
+<div>Author: Stephen Colebourne</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="155">
+<div class="title"><a href="//openjdk.java.net/jeps/155">155</a> Concurrency
+Updates</div>
+<div class="summary">Scalable updatable variables, cache-oriented
+enhancements to the <code>ConcurrentHashMap</code> API,
+<code>ForkJoinPool</code> improvements, and additional
+<code>Lock</code> and <code>Future</code> classes.</div>
+<div class="refs">
+<div>Owner: Chris Hegarty</div>
+<div>Author: Doug Lea</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="170">
+<div class="title"><a href="//openjdk.java.net/jeps/170">170</a> JDBC 4.2</div>
+<div class="summary">Minor enhancements to JDBC to improve
+usability and portability</div>
+<div class="refs">
+<div>Author: Lance Andersen</div>
+<div>Discussion: jdbc dash spec dash discuss at openjdk dot java
+dot net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="jep" id="177">
+<div class="title"><a href="//openjdk.java.net/jeps/177">177</a> Optimize
+java.text.DecimalFormat.format</div>
+<div class="summary">Optimize
+<code>java.text.DecimalFormat.format</code> by taking advantage of
+numerical properties of integer and floating-point arithmetic to
+accelerate cases with two or three digits after the decimal
+point.</div>
+<div class="refs">
+<div>Author: Joseph D. Darcy</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="178">
+<div class="title"><a href="//openjdk.java.net/jeps/178">178</a> Statically-Linked JNI
+Libraries</div>
+<div class="summary">Enhance the JNI specification to support
+statically linked native libraries.</div>
+<div class="refs">
+<div>Author: Bob Vandette</div>
+<div>Discussion: jdk8 dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="180">
+<div class="title"><a href="//openjdk.java.net/jeps/180">180</a> Handle Frequent HashMap
+Collisions with Balanced Trees</div>
+<div class="summary">Improve the performance of
+<code>java.util.HashMap</code> under high hash-collision conditions
+by using balanced trees rather than linked lists to store map
+entries. Implement the same improvement in the
+<code>LinkedHashMap</code> class.</div>
+<div class="refs">
+<div>Owner: Brent Christian</div>
+<div>Author: Mike Duigou</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="group" id="core/i18n">
+<div class="title">core/i18n</div>
+</div>
+<div class="jep" id="127">
+<div class="title"><a href="//openjdk.java.net/jeps/127">127</a> Improve Locale Data
+Packaging and Adopt Unicode CLDR Data</div>
+<div class="summary">Create a tool to convert LDML (Locale Data
+Markup Language) files into a format usable directly by the runtime
+library, define a way to package the results into modules, and then
+use these to incorporate the de-facto standard locale data
+published by the Unicode Consortium&#8217;s CLDR project into the
+JDK.</div>
+<div class="refs">
+<div>Author: Naoto Sato</div>
+<div>Discussion: i18n dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="128">
+<div class="title"><a href="//openjdk.java.net/jeps/128">128</a> BCP 47 Locale
+Matching</div>
+<div class="summary">Define APIs so that applications that use BCP
+47 language tags (see <a href="http://www.rfc-editor.org/rfc/rfc5646.txt">RFC 5646</a>) can match
+them to a user&#8217;s language preferences in a way that conforms
+to <a href="http://www.rfc-editor.org/rfc/rfc4647.txt">RFC
+4647</a>.</div>
+<div class="refs">
+<div>Owner: Yuka Kamiya</div>
+<div>Author: Naoto Sato</div>
+<div>Discussion: i18n dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="133">
+<div class="title"><a href="//openjdk.java.net/jeps/133">133</a> Unicode 6.2</div>
+<div class="summary">Extend existing platform APIs to support
+version 6.2 of the <a href="http://www.unicode.org/standard/standard.html">Unicode
+Standard</a>.</div>
+<div class="refs">
+<div>Author: Yuka Kamiya</div>
+<div>Discussion: i18n dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="group" id="core/net">
+<div class="title">core/net</div>
+</div>
+<div class="jep" id="184">
+<div class="title"><a href="//openjdk.java.net/jeps/184">184</a> HTTP URL
+Permissions</div>
+<div class="summary">Define a new type of network permission which
+grants access in terms of URLs rather than low-level IP
+addresses.</div>
+<div class="refs">
+<div>Author: Michael McMahon</div>
+<div>Discussion: net dash dev at openjdk dot java dot net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="group" id="core/sec">
+<div class="title">core/sec</div>
+</div>
+<div class="jep" id="113">
+<div class="title"><a href="//openjdk.java.net/jeps/113">113</a> MS-SFU Kerberos 5
+Extensions</div>
+<div class="summary">Add the <a href="http://msdn.microsoft.com/en-us/library/cc246071(PROT.13).aspx">MS-SFU
+extensions</a> to the JDK&#8217;s Kerberos 5 implementation.</div>
+<div class="refs">
+<div>Author: Weijun Wang</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="114">
+<div class="title"><a href="//openjdk.java.net/jeps/114">114</a> TLS Server Name
+Indication (SNI) Extension</div>
+<div class="summary">Add support for the TLS Server Name Indication
+(SNI) Extension to allow more flexible secure virtual hosting and
+virtual-machine infrastructure based on SSL/TLS protocols.</div>
+<div class="refs">
+<div>Author: Xuelei Fan</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="115">
+<div class="title"><a href="//openjdk.java.net/jeps/115">115</a> AEAD CipherSuites</div>
+<div class="summary">Support the AEAD/GCM cipher suites defined by
+SP-800-380D, RFC 5116, RFC 5246, RFC 5288, RFC 5289 and RFC
+5430.</div>
+<div class="refs">
+<div>Owner: Bradford Wetmore</div>
+<div>Author: Xuelei Fan</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="121">
+<div class="title"><a href="//openjdk.java.net/jeps/121">121</a> Stronger Algorithms for
+Password-Based Encryption</div>
+<div class="summary">Provide stronger Password-Based-Encryption
+(PBE) algorithm implementations in the SunJCE provider.</div>
+<div class="refs">
+<div>Owner: Vincent Ryan</div>
+<div>Author: Valerie Peng</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M5">M5</a></div>
+</div>
+</div>
+<div class="jep" id="123">
+<div class="title"><a href="//openjdk.java.net/jeps/123">123</a> Configurable Secure
+Random-Number Generation</div>
+<div class="summary">Enhance the API for secure random-number
+generation so that it can be configured to operate within specified
+quality and responsiveness constraints.</div>
+<div class="refs">
+<div>Author: Bradford Wetmore</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="124">
+<div class="title"><a href="//openjdk.java.net/jeps/124">124</a> Enhance the Certificate
+Revocation-Checking API</div>
+<div class="summary">Improve the certificate revocation-checking
+API to support best-effort checking, end-entity certificate
+checking, and mechanism-specific options and parameters.</div>
+<div class="refs">
+<div>Author: Sean Mullan</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M3">M3</a></div>
+</div>
+</div>
+<div class="jep" id="129">
+<div class="title"><a href="//openjdk.java.net/jeps/129">129</a> NSA Suite B
+Cryptographic Algorithms</div>
+<div class="summary">Provide implementations of the cryptographic
+algorithms required by <a href="http://en.wikipedia.org/wiki/NSA_Suite_B_Cryptography">NSA Suite
+B</a>.</div>
+<div class="refs">
+<div>Author: Valerie Peng</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M4">M4</a></div>
+</div>
+</div>
+<div class="jep" id="130">
+<div class="title"><a href="//openjdk.java.net/jeps/130">130</a> SHA-224 Message
+Digests</div>
+<div class="summary">Implement the SHA-224 message-digest algorithm
+and related algorithms.</div>
+<div class="refs">
+<div>Author: Valerie Peng</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M3">M3</a></div>
+</div>
+</div>
+<div class="jep" id="131">
+<div class="title"><a href="//openjdk.java.net/jeps/131">131</a> PKCS#11 Crypto Provider
+for 64-bit Windows</div>
+<div class="summary">Include the SunPKCS11 provider in the JDK for
+64-bit Windows.</div>
+<div class="refs">
+<div>Author: Valerie Peng</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M3">M3</a></div>
+</div>
+</div>
+<div class="jep" id="140">
+<div class="title"><a href="//openjdk.java.net/jeps/140">140</a> Limited
+doPrivileged</div>
+<div class="summary">Enable code to assert a subset of its
+privileges without otherwise preventing the full access-control
+stack walk to check for other permissions.</div>
+<div class="refs">
+<div>Author: Sean Mullan</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+<div class="jep" id="166">
+<div class="title"><a href="//openjdk.java.net/jeps/166">166</a> Overhaul
+JKS-JCEKS-PKCS12 Keystores</div>
+<div class="summary">Facilitate migrating data from JKS and JCEKS
+keystores by adding equivalent support to the PKCS#12 keystore.
+Enhance the KeyStore API to support new features such as entry
+metadata and logical views spanning several keystores. Enable the
+strong crypto algorithms introduced in JEP-121 to be used to
+protect keystore entries.</div>
+<div class="refs">
+<div>Author: Vincent Ryan</div>
+<div>Discussion: security dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M6">M6</a></div>
+</div>
+</div>
+<div class="group" id="web/jaxp">
+<div class="title">web/jaxp</div>
+</div>
+<div class="jep" id="185">
+<div class="title"><a href="//openjdk.java.net/jeps/185">185</a> Restrict Fetching of
+External XML Resources</div>
+<div class="summary">Enhance the JAXP APIs to add the ability to
+restrict the set of network protocols that may be used to fetch
+external resources.</div>
+<div class="refs">
+<div>Author: Joe Wang</div>
+<div>Discussion: core dash libs dash dev at openjdk dot java dot
+net</div>
+<div>Milestone target: <a href="milestones#M7">M7</a></div>
+</div>
+</div>
+</div>
+<h2 id="changes">Change history</h2>
+<p>2012/9/11</p>
+<ul>
+<li><a href="#103">103</a> Parallel Array Sorting &#8212; Targeted
+to <a href="milestones#M5">M5</a></li>
+<li><a href="#127">127</a> Improve Locale Data Packaging &#8212;
+Targeted to <a href="milestones#M5">M5</a></li>
+<li><a href="#150">150</a> JSR 310: Date and Time API &#8212;
+Targeted to <a href="milestones#M6">M6</a></li>
+</ul>
+<p id="changes-m4">2012/11/6</p>
+<ul>
+<li><a href="#121">121</a> Stronger Algorithms for Password-Based
+Encryption &#8212; Retargeted to <a href="milestones#M5">M5</a></li>
+<li><a href="#129">129</a> NSA Suite B Cryptographic Algorithms
+&#8212; Retargeted to <a href="milestones#M5">M5</a></li>
+<li><a href="#133">133</a> Unicode 6.2 &#8212; Retargeted to
+<a href="milestones#M5">M5</a></li>
+</ul>
+<p id="changes-m5">2012/12/4</p>
+<ul>
+<li><a href="#103">103</a> Parallel Array Sorting &#8212;
+Retargeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#110">110</a> New HTTP Client &#8212; Retargeted to
+<a href="milestones#M6">M6</a></li>
+<li><a href="#111">111</a> Additional Unicode Constructs for
+Regular Expressions &#8212; Dropped</li>
+<li><a href="#112">112</a> Charset Implementation Improvements
+&#8212; Retargeted to <a href="milestones#M4">M4</a></li>
+<li><a href="#119">119</a> javax.lang.model Implementation Backed
+by Core Reflection &#8212; Retargeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#136">136</a> Enhanced Verification Errors &#8212;
+Targeted to <a href="milestones#M5">M5</a></li>
+<li><a href="#140">140</a> Limited doPrivileged &#8212; Retargeted
+to <a href="milestones#M6">M6</a></li>
+</ul>
+<p id="adds-m6">2012/12/6</p>
+<ul>
+<li><a href="#138">138</a> Autoconf-Based Build System &#8212;
+Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#142">142</a> Reduce Cache Contention on Specified
+Fields &#8212; Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#143">143</a> Improve Contended Locking &#8212;
+Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#147">147</a> Reduce Class Metadata Footprint &#8212;
+Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#148">148</a> Small VM &#8212; Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#149">149</a> Reduce Core-Library Memory Usage &#8212;
+Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#155">155</a> Concurrency Updates (jsr166e) &#8212;
+Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#161">161</a> Compact Profiles &#8212; Targeted to
+<a href="milestones#M6">M6</a></li>
+<li><a href="#162">162</a> Prepare for Modularization &#8212;
+Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#165">165</a> Compiler Control &#8212; Targeted to
+<a href="milestones#M6">M6</a></li>
+<li><a href="#166">166</a> Overhaul JKS-JCEKS-PKCS12 Keystores
+&#8212; Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#170">170</a> JDBC 4.2 &#8212; Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#171">171</a> Fence Intrinsics &#8212; Targeted to
+<a href="milestones#M6">M6</a></li>
+<li><a href="#172">172</a> DocLint &#8212; Targeted to <a href="milestones#M6">M6</a></li>
+</ul>
+<p id="adds-m6-2">2012/12/20</p>
+<ul>
+<li><a href="#139">139</a> Enhance javac to Improve Build Speed
+&#8212; Targeted to <a href="milestones#M6">M6</a></li>
+</ul>
+<p id="changes-m6-3">2013/1/14</p>
+<ul>
+<li><a href="#108">108</a> Collections Enhancements from
+Third-Party Libraries &#8212; Dropped</li>
+<li><a href="#110">110</a> New HTTP Client &#8212; Dropped</li>
+<li><a href="#156">156</a> G1 GC: Reduce need for full GCs &#8212;
+Dropped</li>
+<li><a href="#107">107</a> Bulk Data Operations for Collections
+&#8212; Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#123">123</a> Configurable Secure Random-Number
+Generation &#8212; Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#155">155</a> Concurrency Updates &#8212; Retargeted
+to <a href="milestones#M7">M7</a></li>
+<li><a href="#171">171</a> Fence Intrinsics &#8212; Retargeted to
+<a href="milestones#M7">M7</a></li>
+<li><a href="#164">164</a> Leverage CPU Instructions for AES
+Cryptography &#8212; Targeted to <a href="milestones#M6">M6</a></li>
+<li><a href="#173">173</a> Retire Some Rarely-Used GC Combinations
+&#8212; Targeted to <a href="milestones#M6">M6</a></li>
+</ul>
+<p id="changes-m6-4">2013/1/30</p>
+<ul>
+<li><a href="#101">101</a> Generalized Target-Type Inference
+&#8212; Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#109">109</a> Enhance Core Libraries with Lambda
+&#8212; Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#118">118</a> Access to Parameter Names at Runtime
+&#8212; Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#119">119</a> javax.lang.model Implementation Backed
+by Core Reflection &#8212; Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#120">120</a> Repeating Annotations &#8212; Retargeted
+to <a href="milestones#M7">M7</a></li>
+<li><a href="#126">126</a> Lambda Expressions &amp; Virtual
+Extension Methods &#8212; Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#140">140</a> Limited doPrivileged &#8212; Retargeted
+to <a href="milestones#M7">M7</a></li>
+<li><a href="#161">161</a> Compact Profiles &#8212; Retargeted to
+<a href="milestones#M7">M7</a></li>
+<li><a href="#174">174</a> Nashorn JavaScript Engine &#8212;
+Targeted to <a href="milestones#M7">M7</a></li>
+</ul>
+<p id="changes-m6-5">2013/2/20</p>
+<ul>
+<li><a href="#104">104</a> Annotations on Java Types &#8212;
+Retargeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#115">115</a> AEAD CipherSuites &#8212; Retargeted to
+<a href="milestones#M7">M7</a></li>
+<li><a href="#162">162</a> Prepare for Modularization &#8212;
+Retargeted to <a href="milestones#M7">M7</a></li>
+</ul>
+<p id="changes-m7">2013/4/30</p>
+<ul>
+<li><a href="#143">143</a> Improve Contended Locking &#8212;
+Dropped</li>
+<li><a href="#165">165</a> Compiler Control &#8212; Dropped</li>
+<li><a href="#176">176</a> Mechanical Checking of Caller-Sensitive
+Methods &#8212; Targeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#177">177</a> Optimize java.text.DecimalFormat.format
+&#8212; Targeted to <a href="milestones#M5">M5</a></li>
+<li><a href="#178">178</a> Statically-Linked JNI Libraries &#8212;
+Targeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#179">179</a> Document JDK API Support and Stability
+&#8212; Targeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#180">180</a> Handle Frequent HashMap Collisions with
+Balanced Trees &#8212; Targeted to <a href="milestones#M7">M7</a></li>
+<li><a href="#184">184</a> HTTP URL Permissions &#8212; Targeted to
+<a href="milestones#M7">M7</a></li>
+</ul>
+<p id="changes-m7-2">2013/6/13</p>
+<ul>
+<li><a href="#185">185</a> JAXP 1.5: Restrict Fetching of External
+Resources &#8212; Targeted to <a href="milestones#M7">M7</a></li>
+</ul>
+<div class="last-update">Last update: 2014/3/18 16:40 -0700</div>
+<div class="jdknav">&#171; <a href=".">home</a> &#183; features
+&#183; <a href="./milestones">milestones</a> &#183; <a href="./builds">builds</a> &#187;</div>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

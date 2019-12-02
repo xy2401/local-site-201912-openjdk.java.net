@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 290: Filter Incoming Serialization Data</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 290: Filter Incoming Serialization Data</h1><table class="head"><tr><td>Owner</td><td>Roger Riggs</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.io:serialization</td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>S</td></tr><tr><td>Duration</td><td>S</td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Andrew Gross, Brian Goetz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2016/04/22 16:06</td></tr><tr><td>Updated</td><td>2017/06/06 17:38</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8154961">8154961</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Allow incoming streams of object-serialization data to be filtered in order to improve both security and robustness.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>Provide a flexible mechanism to narrow the classes that can be deserialized from any class available to an application down to a context-appropriate set of classes.</li>
+<li>Provide metrics to the filter for graph size and complexity during deserialization to validate normal graph behaviors.</li>
+<li>Provide a mechanism for RMI-exported objects to validate the classes expected in invocations.</li>
+<li>The filter mechanism must not require subclassing or modification to existing subclasses of ObjectInputStream.</li>
+<li>Define a global filter that can be configured by properties or a configuration file.</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>Define or maintain any specific policy of what classes should be allowed or disallowed.</li>
+<li>Fix complexity or integrity issues with specific classes or implementations.</li>
+<li>Provide look-ahead capabilities in the stream.</li>
+<li>Provide fine-grained visibility into the contents of objects.</li>
+</ul>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<ul>
+<li>Minimal measurable performance impact for simple black-listing of classes</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Security guidelines consistently require that input from external sources be validated
+before use. The filter mechanism will allow object-serialization clients to more easily
+validate their inputs, and exported RMI objects to validate invocation arguments.</p>
+<h2 id="Description">Description</h2>
+<p>The core mechanism is a filter interface implemented by serialization clients and set on an <code>ObjectInputStream</code>.
+The filter interface methods are called during the deserialization process to validate the classes
+being deserialized, the sizes of arrays being created, and metrics describing stream length,
+stream depth, and number of references as the stream is being decoded.
+The filter returns a status to accept, reject, or leave the status undecided.</p>
+<p>For each new object in the stream the filter is called, with the class of the object,
+before the object is instantiated and deserialized.
+The filter is not called for primitives and java.lang.Strings that are encoded concretely in the stream.
+For each array, regardless of whether it is an array of primitives, array of Strings, or array of objects
+the filter is called with the array class and the array length.
+For each reference to an object already read from the stream, the filter is called
+so it can check the depth, number of references, and stream length.
+Filter actions are logged to the 'java.io.serialization' logger, if logging is enabled.</p>
+<p>For RMI, the object is exported via a <code>RemoteServerRef</code> that sets the filter on the <code>MarshalInputStream</code> to validate the invocation arguments as they are unmarshalled.
+Exporting objects via UnicastRemoteObject should support setting a filter to be used for unmarshalling.</p>
+<h3 id="Process-wide-Filter">Process-wide Filter</h3>
+<p>A process-wide filter is configured via a system property or a configuration file.
+The system property, if supplied, supersedes the security property value.</p>
+<ul>
+<li>System property <code>jdk.serialFilter</code></li>
+<li>Security property <code>jdk.serialFilter</code> in <code>conf/security/java.properties</code></li>
+</ul>
+<p>A filter is configured as a sequence of patterns, each pattern is either
+matched against the name of a class in the stream or a limit.
+Patterns are separated by ";" (semi-colon).
+Whitespace is significant and is considered part of the pattern.</p>
+<p>A limit pattern contains a "=" and sets a limit.
+If a limit appears more than once the last value is used.
+If any of the values in the call to <code>ObjectInputFilter.checkInput(...)</code>
+exceeds the respective limit, the filter returns Status.REJECTED.
+Limits are checked before classes regardless of the order in the sequence of patterns.</p>
+<ul>
+<li><code>maxdepth=value</code> - the maximum depth of a graph</li>
+<li><code>maxrefs=value</code> - the maximum number of internal references</li>
+<li><code>maxbytes=value</code> - the maximum number of bytes in the input stream</li>
+<li><code>maxarray=value</code> -  the maximum array size allowed</li>
+</ul>
+<p>Other patterns, from left to right, match the class or package name as returned from Class.getName.
+If the class is an array type, the class or package to be matched is the element type.
+Arrays for any number of dimensions are treated the same as the element type.
+For example, a pattern of "!example.Foo", rejects creation of any instance or
+array of example.Foo.</p>
+<ul>
+<li>If the pattern starts with "<code>!</code>", the class is rejected if the rest of the pattern matches, otherwise it is accepted</li>
+<li>If the pattern contains "/", the non-empty prefix up to the "/" is the module name.
+If the module name matches the module name of the class then the remaining pattern is matched
+with the class name.  If there is no "/", the module name is not compared.</li>
+<li>If the pattern ends with "<code>.**</code>" it matches any class in the package and all subpackages</li>
+<li>If the pattern ends with "<code>.*</code>" it matches any class in the package</li>
+<li>If the pattern ends with "<code>*</code>", it matches any class with the pattern as a prefix.</li>
+<li>If the pattern is equal to the class name, it matches.</li>
+<li>Otherwise, the status is undecided.</li>
+</ul>
+<h3 id="ObjectInputFilter-Interface-and-API">ObjectInputFilter Interface and API</h3>
+<p>The object-input filter interface is implemented by clients of RMI and serialization,
+and provides the behaviors of the process-wide configurable filter.</p>
+<pre><code>interface ObjectInputFilter {
+    Status checkInput(FilterInput filterInfo);
+
+    enum Status { 
+        UNDECIDED, 
+        ALLOWED, 
+        REJECTED; 
+    }
+
+   interface FilterInfo {
+         Class&lt;?&gt; serialClass();
+         long arrayLength();
+         long depth();
+         long references();
+         long streamBytes();
+   }
+
+    public static class Config {
+        public static void setSerialFilter(ObjectInputFilter filter);
+        public static ObjectInputFilter getSerialFilter(ObjectInputFilter filter) ;
+        public static ObjectInputFilter createFilter(String patterns);
+    }   
+}</code></pre>
+<h3 id="ObjectInputStream-Filter">ObjectInputStream Filter</h3>
+<p>ObjectInputStream has additional methods to set and get the current filter.
+If no filter is set for an <code>ObjectInputStream</code> then the global filter is used, if any.</p>
+<pre><code>public class ObjectInputStream ... {
+    public final void setObjectInputFilter(ObjectInputFilter filter);
+    public final ObjectInputFilter getObjectInputFilter(ObjectInputFilter filter);
+}</code></pre>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Modify existing subclasses and methods, but that would require changes that would inhibit use in third party implementations.</p>
+<h2 id="Testing">Testing</h2>
+<p>No existing tests need to be updated.
+New unit tests will test the filter mechanisms with serialized streams,
+RMI exported objects, and the global filtering mechanism.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The metrics presented to the filter supporting black lists, white lists, and
+stream metrics should be sufficient. When applied to the known use cases, some additional
+filter mechanisms may be discovered.</p>
+<p>New APIs and interfaces will be introduced for JDK 9.
+Backporting this feature to previous versions will require the introduction of implementation-specific APIs to avoid changes to older versions of the Java SE specification.</p>
+<h2 id="Support-in-Previous-Oracle-Java-Releases">Support in Previous Oracle Java Releases</h2>
+<p>The configurable process wide filters are supported in previous releases:</p>
+<ul>
+<li>Java&#8482; SE Development Kit 8, Update 121 (JDK 8u121)</li>
+<li>Java&#8482; SE Development Kit 7, Update 131 (JDK 7u131)</li>
+<li>Java&#8482; SE Development Kit 6, Update 141 (JDK 6u141)</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

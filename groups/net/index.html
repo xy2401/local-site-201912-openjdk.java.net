@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Networking Group</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>The Networking Group</h1>
+<p>The networking <a href="/groups/index.html">group</a> is a set
+of developers interested in the design, implementation, and
+maintenance of the Java networking libraries.</p>
+<h2>Introduction</h2>
+<p>The source code for the networking part of the core libraries is
+spread over a few hundreds files making for a total of,
+approximately, 70,000 lines of code. 50,000 of these are java code,
+while the rest is native (i.e. C) code. While this is not massive,
+due to the tricky nature of cross-platform support, some guidance
+is needed before you take upon the task of tinkering with that
+beast.</p>
+<h2>Projects</h2>
+<ul>
+<li><strong><a href="httpclient/index.html">Java HTTP
+Client</a></strong></li>
+</ul>
+<h2>Source structure</h2>
+<p>The networking source code resides mostly in these
+directories:</p>
+<ul>
+<li>
+<p><code>src/share/classes/java/net</code>:<br />
+This is where the public API resides. You should get familiar with
+the 67 classes and interfaces. If you're not there yet, a good
+start would be in the <a href="http://java.sun.com/javase/6/docs/api/java/net/package-summary.html">
+javadoc of the java.net package</a>.</p>
+</li>
+<li>
+<p><code>src/share/classes/sun/net</code>:<br />
+This is where many of the protocol handlers are implemented, as
+well as some other service providers like the default proxy
+selector, the DNS name resolver and some other utility classes. In
+particular the protocol handlers used by java.net.URLConnection are
+located in the <code>www/protocol</code> subdirectory.</p>
+</li>
+<li>
+<p><code>src/solaris/native/java/net</code>:<br />
+This is one is a bit of a misnomer but this is for historical
+reasons. This where you'll find most of the native code responsible
+for linking with the native networking stack (sockets, ioctl,
+etc...). It actually covers both Solaris and Linux, thanks to quite
+a few #ifdefs. This is where you'd have to do most of the work to
+add support for another flavor of the Unix system.</p>
+</li>
+<li>
+<p><code>src/windows/native/java/net</code>:<br />
+This is where the windows native code resides. During its 12+ years
+of existence it had to support Windows 95, 98, 98SE, ME, NT4, 2000,
+XP, 2003 and, more recently, Vista. This explains the complexity of
+the code in there, since the networking library of these various
+versions of Windows changed very significantly from one version to
+another. If you see a very strange piece of code in there that you
+can't quite understand and seems pointless, don't be fooled, it's
+there for a reason.</p>
+</li>
+<li>
+<p><code>src/shared/native/java/net</code>:<br />
+Here, you'll find a few utility functions used by all platform
+specific native code implementation.</p>
+</li>
+</ul>
+<h2>Building the networking libraries</h2>
+<p>First, be aware that the networking components have
+interdependencies with quite a few other parts of the JDK. Even
+more so, it's one the components at the foundations of the JDK, so
+always make sure you can rebuild everything from scratch after
+you've made changes.</p>
+<p>Now, there are 2 areas where makefiles, and related files, are
+located:</p>
+<ul>
+<li>
+<p><code>make/java/net</code></p>
+</li>
+<li>
+<p><code>make/sun/net</code></p>
+</li>
+</ul>
+<p>If you go to any of these 2 subdirectories you can issue a
+<code>make</code> command and quickly compile your changes in
+either package.</p>
+<h2>Testing your changes</h2>
+<p>As a rule, unit tests, for new functionality, and regression
+tests for fixes are mandatory. Which means you should provide a
+unit test for pretty much any change you make. The test directories
+follow the same structure as the others:</p>
+<ul>
+<li>
+<p><code>test/java/net</code>:<br />
+Contains the unit and regression tests for the java.net
+package.</p>
+</li>
+<li>
+<p><code>test/sun/net</code>:<br />
+Contains the unit and regression tests for the sun.net package.</p>
+</li>
+</ul>
+<p>Not only should you write tests for your changes but you should
+always run all the existing tests in these directories before
+submitting them. Moreover, because of the dependencies, it is
+highly recommend to also run the regression tests for the security
+components since the networking code is highly sensitive to
+security. These are located in <code>test/java/security</code> and
+<code>test/sun/security</code>. Needless to say, if any of these
+tests fails, then you should investigate and fix the issue, or back
+out your changes.</p>
+<p>Remember, there is no such thing as too much testing.</p>
+<h2>Documentation</h2>
+<ul>
+<li><a href="http://java.sun.com/javase/6/docs/technotes/guides/net/index.html">
+Java Networking guides</a></li>
+</ul>
+<h2>Community</h2>
+<ul>
+<li><strong>Mailing lists</strong>
+<ul>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/net-dev">net-dev</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong>Networking bloggers</strong>
+<ul>
+<li><a href="http://blogs.oracle.com/jcc/">Jean-Christophe
+Collet</a></li>
+<li><a href="http://blogs.oracle.com/edward/">Edward Wang</a></li>
+</ul>
+</li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

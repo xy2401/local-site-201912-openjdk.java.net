@@ -1,0 +1,208 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK ToU: FAQ</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      BODY { margin-bottom: 150%; }
+      DIV.n { font-weight: bold; float: left; width: 2em; text-align: right; }
+      DIV.q, DIV.a { margin-left: 3em; }
+      DIV.q { font-style: italic; }
+      DIV.n, DIV.q, H2 { margin-top: 1.5ex; }
+      DIV.a { margin-top: 1ex; }
+      H2, UL { margin-bottom: 0; }
+/**/
+</style></head><body><div id="main">
+<h1>OpenJDK Web Site Terms of Use: FAQ</h1>
+<h2>Introduction</h2>
+<div class="n" id="q1">1</div>
+<div class="q">Why are you changing the <a href="../tou/">OpenJDK
+Web Site Terms of Use</a>?</div>
+<div class="a">To allow work on specifications for Java SE JSRs to
+take place in the OpenJDK Community, right alongside the work on
+their reference implementations, in a way that satisfies the
+transparency requirements of <a href="https://blogs.oracle.com/pcurran/entry/no_more_smoke_filled_rooms">
+version 2.8 of the Java Community Process (JSR 348)</a>.</div>
+<div class="n" id="q2">2</div>
+<div class="q">Why isn't the existing Terms-of-Use document
+adequate?</div>
+<div class="a">The existing document was designed to cover
+contributions of code rather than specification material, and the
+latter must be governed by a different kind of license.</div>
+<div class="n" id="q3">3</div>
+<div class="q">Does this change make the JCP subservient to
+OpenJDK?</div>
+<div class="a">No, not at all! The JCP remains the governing body
+for the Java programming language, the Java virtual machine, and
+all Java SE APIs. This change merely allows work on Java SE JSRs to
+be done directly in the OpenJDK Community, in the most convenient
+and transparent way possible.</div>
+<div class="n" id="q4">4</div>
+<div class="q">How does JSR 348 change the way that JSRs are
+managed?</div>
+<div class="a">The <a href="https://blogs.oracle.com/pcurran/entry/no_more_smoke_filled_rooms">
+principal changes</a> are that JSR Expert Groups must hold their
+discussions on a public mailing list, they must use a public
+issue-tracking mechanism to record and track their progress, and
+they must publish their working documents for all to see.</div>
+<h2>Moving JSR EG work to OpenJDK</h2>
+<div class="n" id="q5">5</div>
+<div class="q">Must all JSRs related to Java SE now be hosted in
+the OpenJDK Community?</div>
+<div class="a">No, but going forward all active Oracle-led Java SE
+JSRs with open-source reference implementations will be hosted
+here.</div>
+<div class="n" id="q6">6</div>
+<div class="q">Which Java SE JSRs does Oracle currently lead?</div>
+<div class="a">The active JSRs related to Java SE currently led by
+Oracle are:
+<ul>
+<li><a href="http://jcp.org/en/jsr/detail?id=335">JSR 335: Lambda
+Expressions</a></li>
+<li><a href="http://jcp.org/en/jsr/detail?id=337">JSR 337: Java SE
+8</a></li>
+</ul>
+</div>
+<div class="n" id="q7">7</div>
+<div class="q">So the mailing lists, web content, and issue
+trackers for the Expert Groups of those JSRs will be moved to
+OpenJDK?</div>
+<div class="a">Yes, as soon as practical.</div>
+<div class="n" id="q8">8</div>
+<div class="q">The Lambda JSR has been active for quite a while.
+Will the past e-mail traffic of its Expert Group be published
+here?</div>
+<div class="a">The JSR 335 Spec Lead, Brian Goetz, will do that if
+the EG members agree to it.</div>
+<div class="n" id="q9">9</div>
+<div class="q">I'm a spec lead for a JSR related to Java SE but I
+don't work for Oracle. May I host my JSR in the OpenJDK
+Community?</div>
+<div class="a">Absolutely! The best way to initiate that is to
+<a href="//openjdk.java.net/projects/#new-project">propose an
+OpenJDK Project</a> for your JSR's prototype and eventual reference
+implementation. Detailed guidance on how to host JSR work related
+to an OpenJDK Project will be available soon.</div>
+<h2>The Oracle Contributor Agreement</h2>
+<div class="n" id="q10">10</div>
+<div class="q">Will members of Expert Groups of JSRs hosted in the
+OpenJDK Community be required to sign the <a href="http://www.oracle.com/technetwork/oca-405177.pdf">Oracle
+Contributor Agreement (OCA)</a>?</div>
+<div class="a">No, but if they want to make material contributions
+to a JSR then they will need to do so.</div>
+<div class="n" id="q11">11</div>
+<div class="q">How can I tell if I, or someone else, has signed the
+OCA?</div>
+<div class="a">A list of OCA signatories is available <a href="http://www.oracle.com/technetwork/community/oca-486395.html">here</a>.</div>
+<div class="n" id="q12">12</div>
+<div class="q">I previously signed the old Sun Contributor
+Agreement (SCA). Do I need to sign the OCA too?</div>
+<div class="a">No, all SCA signatories are now considered OCA
+signatories.</div>
+<div class="n" id="q13">13</div>
+<div class="q">I'm not an EG member but I want to make material
+contributions to a JSR specification. Do I also need to sign the
+OCA?</div>
+<div class="a">Yes.</div>
+<div class="n" id="q14">14</div>
+<div class="q">I'm not an EG member, I want to make material
+contributions to a JSR specification, and I've signed the OCA. Do I
+also need to sign the JCP's <a href="http://jcp.org/aboutJava/communityprocess/JSPA2.pdf">Java
+Specification Participation Agreement (JSPA)</a>?</div>
+<div class="a">No, but if you want to become a <a href="http://jcp.org/en/participation/membership">member of the JCP</a>
+then you'll have to sign the JSPA.</div>
+<h2>Licensing</h2>
+<div class="n" id="q15">15</div>
+<div class="q">Will specifications for Java SE JSRs now be licensed
+under the GPL?</div>
+<div class="a">No, they will continue to be licensed under terms
+similar to <a href="http://jcp.org/aboutJava/communityprocess/licenses/SE7_Specv2.doc">
+those used for Java SE 7</a>.</div>
+<div class="n" id="q16">16</div>
+<div class="q">Will I still have to agree to that annoying
+click-through license every time I want to view a draft JSR
+specification?</div>
+<div class="a">No! There will be no click-through agreements for
+JSR materials hosted in the OpenJDK Community.</div>
+<div class="n" id="q17">17</div>
+<div class="q">What terms will govern the e-mail discussions of JSR
+Expert Groups?</div>
+<div class="a">The content on JSR EG mailing lists, which will now
+be public, will be licensed for comment and evaluation purposes
+only.</div>
+<div class="n" id="q18">18</div>
+<div class="q">What does it mean to license materials for "comment
+and evaluation purposes only"?</div>
+<div class="a">You may download and evaluate such materials, you
+may post comments on the materials back to locations that have the
+same terms (<i>e.g.</i>, JSR EG mailing lists, web pages, issue
+trackers, and Mercurial repositories), and you may post modified
+versions of the materials to those locations. You may not use the
+materials in any other way.</div>
+<div class="n" id="q19">19</div>
+<div class="q">So this means that content on the EG mailing list
+for a JSR will be licensed for comment-and-evaluation, while code
+on the development list for that JSR's reference implementation
+will be licensed under the GPL?</div>
+<div class="a">Yes, that's correct.</div>
+<div class="n" id="q20">20</div>
+<div class="q">How can I tell which terms, <i>i.e.</i>,
+comment-and-evaluation or GPL, apply to a particular mailing list,
+web page, issue, or Mercurial repository?</div>
+<div class="a">The terms applicable to a mailing list will be
+displayed on the list's main page and also sent to all new
+subscribers. The terms applicable to an OpenJDK web page or issue
+will be displayed at the bottom of the page. The terms applicable
+to a Mercurial repository will be available in the LICENSE file at
+the root of the repository or, if appropriate, in the root of its
+containing forest.</div>
+<div class="n" id="q21">21</div>
+<div class="q">Can I forward an e-mail message from one list to
+another when the terms of the lists are incompatible?</div>
+<div class="a">No, please don't do that.</div>
+<h2>Miscellaneous</h2>
+<div class="n" id="q22">22</div>
+<div class="q">Aren't the <a href="http://jcp.org/aboutJava/communityprocess/licenses/SE7_Specv2.doc">
+specification license</a> and the comment-and-evaluation terms on
+JSR EG mailing lists inconsistent with the goal of having an open
+development community?</div>
+<div class="a">Some people will consider these terms to be less
+than ideal. Existing contractual obligations, however, require the
+use of these terms.</div>
+<div class="n" id="q23">23</div>
+<div class="q">Aren't these terms inconsistent with <a href="//openjdk.java.net/bylaws#_A">Appendix A of the OpenJDK
+Bylaws</a>?</div>
+<div class="a">No, that section is about licenses for code rather
+than for specification material.</div>
+<div class="n" id="q24">24</div>
+<div class="q">Does this change mean that the Java SE conformance
+tests (the JCK) will be released under the GPL or some other
+open-source license?</div>
+<div class="a">No, but the JCK remains available at no charge for
+OpenJDK-derived implementations under the terms of the <a href="/legal/OpenJDK-TCK_SE7_27Dec2011.pdf">OpenJDK Community TCK
+License Agreement (OCTLA)</a>.</div>
+<div class="n" id="q25">25</div>
+<div class="q">What should I do if I have a question that isn't
+answered here?</div>
+<div class="a">Send your question to the <a href="//mail.openjdk.java.net/mailman/listinfo/discuss">general
+discussion list</a>. (You'll need to subscribe first, otherwise
+your message will be discarded as spam.) We'll do our best to
+respond to all questions, but please understand that questions of a
+legal nature may require extra time to answer.</div>
+<div class="last-update">Last update: 2012/6/20</div>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta charset="utf-8" /><meta name="generator" content="pandoc" /><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" /><title>OpenJDK Committers&#8217; Workshop</title><link rel="shortcut icon" href="./images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="./page.css" /><script type="text/javascript" src="./page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+/**/
+</style></head><body><div id="main">
+<h1 id="openjdk-committers-workshop">OpenJDK Committers&#8217;
+Workshop</h1>
+<div style="float: right; padding: 2ex 0 0 2em;">
+<p><img src="images/duke-pipes-big.jpg" alt="Duke hacking pipes" /></p>
+</div>
+<p><strong>3 February 2020<br />
+Oracle Belgium<br />
+Medialaan 50/A<br />
+1800 Vilvoorde, Belgium</strong></p>
+<p>Oracle will host the fourth OpenJDK Committers&#8217; Workshop
+on Monday, 3&#160;February 2020, the day after FOSDEM. We&#8217;ll
+run the entire day as an unconference, with plenty of time to
+discuss both technical and community issues. To propose a session
+that you&#8217;d like to lead, or to express your interest in a
+topic that you&#8217;d like someone else to address, please
+<a href="#unconference">see below</a>.</p>
+<p>The workshop will be held at Oracle&#8217;s office in Vilvoorde,
+Belgium. Vilvoorde is about 6&#160;miles (10&#160;km) from central
+Brussels, and reachable from there by both car and mass transit.
+For those traveling by car, there is ample on-street parking
+surrounding the venue on Koning Boudewijnlaan and Medialaan, and on
+other adjacent streets.</p>
+<p>There will be no fee to attend but space is limited, so we ask
+that you register in advance. As at previous Workshops, preference
+will be given to Committers with a strong record of past
+contributions, though some space will be made for new Committers
+who have a strong potential for ongoing future contributions.</p>
+<p>The venue will open at 9am. We&#8217;ll start at 10am, and
+finish by 5pm. Food will not be provided, but there are restaurants
+nearby for lunch.</p>
+<h2 id="registration">Registration</h2>
+<p>To register, send a short e-mail message to <em><a href="mailto:workshop-reg@openjdk.java.net">workshop-reg@openjdk.java.net</a></em>
+with a brief summary of your past contributions in the OpenJDK
+Community and also your full name, employer (if any), and mobile
+phone number. This information will be used for registration
+purposes only and will not be shared outside of Oracle. You should
+receive a reply within 48 hours.</p>
+<p>Due to the security policy of the venue, if you do not register
+in advance then you will not be admitted to the building.</p>
+<h2 id="unconference">Unconference</h2>
+<p>The Workshop will be organized entirely as an unconference.</p>
+<p>Sessions will be of two possible lengths, short (20&#8211;30
+minutes) and long (45&#8211;60m); we&#8217;ll determine the exact
+length once we see how many proposals are made.</p>
+<p>The very first unconference session will be devoted to deciding
+the agenda for the rest of the unconference. Additional session
+proposals may be made at that time.</p>
+<p>The unconference sessions will not be recorded.</p>
+<p>To help organize things at least a little bit in advance,
+we&#8217;re collecting both proposals for specific sessions and
+suggestions of specific topics.</p>
+<p>If you&#8217;d like to lead a session on a specific topic,
+please send a message to the <em><a href="https://mail.openjdk.java.net/mailman/listinfo/workshop-discuss">workshop-discuss</a></em>
+list with a subject line that starts with &#8220;Workshop
+proposal:&#8221;. Include a clearly-marked title, abstract, length
+(short or long), brief biography (or link to same), and blog and
+microblog links if relevant.</p>
+<p>A session may include a prepared presentation, or it may just be
+free-form discussion, or anything in between&#8212;it&#8217;s all
+up to you and those who show up. If you start with a prepared
+presentation, though, please make sure to leave ample time for
+questions and discussion.</p>
+<p>If there&#8217;s a topic that you&#8217;d like to discuss, or
+just hear more about, but you&#8217;re not willing lead a session
+on it, then please send a note describing the topic to the
+<em><a href="https://mail.openjdk.java.net/mailman/listinfo/workshop-discuss">workshop-discuss</a></em>
+list with a subject line that starts with &#8220;Workshop
+topic:&#8221;. Give your topic a name, describe it, and be sure to
+include one or more questions that you&#8217;d expect session
+participants to address. Such expressions of interest could
+motivate other people to propose relevant sessions.</p>
+<h2 id="organizers">Organizers</h2>
+<p>The Workshop is organized by:</p>
+<blockquote>
+<p>Andrew Haley (Red Hat)<br />
+Doug Lea (SUNY Oswego)<br />
+Stuart Marks (Oracle)<br />
+Liam Miller-Cushon (Google)<br />
+Mark Reinhold (Oracle)<br />
+Dalibor Topic (Oracle)<br />
+Johan Vos (Gluon)</p>
+</blockquote>
+<h2 id="questions-comments-suggestions">Questions? Comments?
+Suggestions?</h2>
+<p>Send a note to <em><a href="https://mail.openjdk.java.net/mailman/listinfo/workshop-discuss">workshop-discuss@openjdk.java.net</a></em>,
+the general mailing list for anyone interested in the Workshop.
+(Make sure to subscribe to the list before you post to it,
+otherwise your message will be rejected as spam.)</p>
+<p>For questions about registration, send a note to <em><a href="workshop-help@openjdk.java.net">workshop-help@openjdk.java.net</a></em>.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="./images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="./images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 343: Packaging Tool (Incubator)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 343: Packaging Tool (Incubator)</h1><table class="head"><tr><td>Owner</td><td>Kevin Rushforth</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Targeted</td></tr><tr><td>Release</td><td>14</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;jpackage</td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="311">JEP 311: Java Packager API &amp; CLI</a></td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Alexander Matveev, Alexey Semenyuk, Andy Herrick, Mandy Chung, William Harnois</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2018/04/04 19:22</td></tr><tr><td>Updated</td><td>2019/11/27 00:14</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8200758">8200758</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Create a tool for packaging self-contained Java applications.</p>
+<h2 id="Goals">Goals</h2>
+<p>Create a simple packaging tool, based on the JavaFX <code>javapackager</code> tool, that:</p>
+<ul>
+<li>
+<p>Supports native packaging formats to give end users a natural installation experience. These formats include <code>msi</code> and <code>exe</code> on Windows, <code>pkg</code> and <code>dmg</code> on macOS, and <code>deb</code> and <code>rpm</code> on Linux.</p>
+</li>
+<li>
+<p>Allows launch-time parameters to be specified at packaging time.</p>
+</li>
+<li>
+<p>Can be invoked directly, from the command line, or programmatically, via the <code>ToolProvider</code> API.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>The following features of the <code>javapackager</code> tool will not be supported:
+<ul>
+<li>Java Web Start application support,</li>
+<li>JavaFX-specific features,</li>
+<li><code>jdeps</code> usage for determining required modules, and</li>
+<li>the Ant plugin.</li>
+</ul>
+</li>
+<li>There will be no GUI for the tool; a command-line interface (CLI) is sufficient.</li>
+<li>There will be no support for cross compilation. For example, in order to create Windows packages one must run the tool on Windows. The packaging tool will depend upon platform-specific tools.</li>
+<li>There will be no special support for legal files beyond what is already provided in JMOD files. There will be no aggregation of individual license files.</li>
+<li>There will be no native splash screen support.</li>
+<li>There will be no auto-update mechanism.</li>
+<li>The tool will not be available on Solaris.</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Many Java applications need to be installed on a native platform in a first-class way, rather than simply being placed on the class path or the module path. It is not sufficient for the application developer to deliver a simple JAR file; they must deliver an installable package suitable for the native platform. This allows Java applications to be distributed, installed, and uninstalled in a manner that is familiar to users. For example, on Windows users expect to be able to double-click on a package to install their software, and then use the control panel to remove the software; on macOS, users expect to be able to double-click on a DMG file and drag their application to the Application folder.</p>
+<p>A packaging tool can also help fill gaps left by other technologies such as Java Web Start, which was removed from Oracle&#8217;s JDK 11, and <code>pack200</code>, which was deprecated in JDK 11 for removal in a future release. Developers can use <code>jlink</code> to strip the JDK down to the minimal set of modules that are needed, and then use the packaging tool to produce a compressed, installable image that can be deployed to target machines.</p>
+<p>To address these requirements previously, a packaging tool called <code>javapackager</code> was distributed with Oracle&#8217;s JDK 8. However, it was removed from Oracle&#8217;s JDK 11 as part of the removal of JavaFX.</p>
+<h2 id="Description">Description</h2>
+<p>The <code>jpackage</code> tool packages a Java application into a platform-specific package that includes all of the necessary dependencies.  The application may be provided as a collection of ordinary JAR files or as a collection of modules.  The supported platform-specific package formats are:</p>
+<ul>
+<li>Linux: <code>deb</code> and <code>rpm</code></li>
+<li>macOS: <code>pkg</code> and <code>dmg</code></li>
+<li>Windows: <code>msi</code> and <code>exe</code></li>
+</ul>
+<p>By default, <code>jpackage</code> produces a package in the format most appropriate for the system on which it is run.</p>
+<h3 id="Basic-usage:-Non-modular-applications">Basic usage: Non-modular applications</h3>
+<p>Suppose you have an application composed of JAR files, all in a directory named <code>lib</code>, and that <code>lib/main.jar</code> contains the main class.  Then the command</p>
+<pre><code>$ jpackage --name myapp --input lib --main-jar main.jar</code></pre>
+<p>will package the application in the local system's default format, leaving the resulting package file in the current directory.  If the <code>MANIFEST.MF</code> file in <code>main.jar</code> does not have a <code>Main-Class</code> attribute then you must specify the main class explicitly:</p>
+<pre><code>$ jpackage --name myapp --input lib --main-jar main.jar \
+  --main-class myapp.Main</code></pre>
+<p>The name of the package will be <code>myapp</code>, though the name of the package file itself will be longer, and end with the package type (e.g., <code>myapp.exe</code>).  The package will include a launcher for the application, also called <code>myapp</code>.  To start the application, the launcher will place every JAR file that was copied from the input directory on the class path of the JVM.</p>
+<p>If you wish to produce a package in a format other than the default, then use the <code>--type</code> option.  For example, to produce a <code>pkg</code> file rather than <code>dmg</code> file on macOS:</p>
+<pre><code>$ jpackage --name myapp --input lib --main-jar main.jar --type pkg</code></pre>
+<h3 id="Basic-usage:-Modular-applications">Basic usage: Modular applications</h3>
+<p>If you have a modular application, composed of modular JAR files and/or JMOD files in a <code>lib</code> directory, with the main class in the module <code>myapp</code>, then the command</p>
+<pre><code>$ jpackage --name myapp --module-path lib -m myapp</code></pre>
+<p>will package it.  If the <code>myapp</code> module does not identify its main class then, again, you must specify that explicitly:</p>
+<pre><code>$ jpackage --name myapp --module-path lib -m myapp/myapp.Main</code></pre>
+<p>(When packaging a modular JAR or a JMOD file you can specify the main class with the <code>--main-class</code> option to the <code>jar</code> and <code>jmod</code> tools.)</p>
+<h3 id="Package-metadata">Package metadata</h3>
+<p>The <code>jpackage</code> tool allows you to specify various kinds of metadata for your package.  The options common to all platforms are:</p>
+<ul>
+<li><code>--app-version &lt;version&gt;</code></li>
+<li><code>--copyright &lt;string&gt;</code></li>
+<li><code>--description &lt;string&gt;</code></li>
+<li><code>--license-file &lt;file&gt;</code></li>
+<li><code>--name &lt;string&gt;</code></li>
+<li><code>--vendor &lt;string&gt;</code></li>
+</ul>
+<p>The tool uses the arguments provided to these options in the manner appropriate to the package's type.  Platform-specific package metadata options are described <a href="#Platform-specific-details">below</a>.</p>
+<h3 id="File-associations">File associations</h3>
+<p>You can define one or more file-type associations for your application via the <code>--file-associations</code> option, which can be used more than once.  The argument to this option is a properties file with values for one or more of the following keys:</p>
+<ul>
+<li><code>extension</code> specifies the extension of files to be associated with the application,</li>
+<li><code>mime-type</code> specifies the MIME type of files to be associated with the application,</li>
+<li><code>icon</code> specifies an icon, within the application image, for use with this association, and</li>
+<li><code>description</code> specifies a short description of the association.</li>
+</ul>
+<h3 id="Launchers">Launchers</h3>
+<p>By default, the <code>jpackage</code> tool creates a simple native launcher for your application.  You can customize the default launcher via the following options:</p>
+<ul>
+<li><code>--arguments &lt;string&gt;</code>
+&#8212; Command-line arguments to pass to the main class if no command
+line arguments are given to the launcher
+(this option can be used multiple times)</li>
+<li><code>--java-options &lt;string&gt;</code>
+&#8212; Options to pass to the JVM
+(this option can be used multiple times)</li>
+</ul>
+<p>If your application requires additional launchers then you can add them via the <code>--add-launcher</code> option:</p>
+<ul>
+<li><code>--add-launcher &lt;launcher-name&gt;=&lt;file&gt;</code></li>
+</ul>
+<p>The named <code>&lt;file&gt;</code> should be a properties file with values for one or more of the keys <code>app-version</code> <code>icon</code> <code>arguments</code> <code>java-options</code> <code>main-class</code> <code>main-jar</code> <code>module</code>, or <code>win-console</code>.  The values of these keys will be interpreted as arguments to the options of the same name, but with respect to the launcher being created rather than the default launcher.  The <code>--add-launcher</code> option can be used multiple times.</p>
+<h3 id="Application-images">Application images</h3>
+<p>The <code>jpackage</code> tool constructs an <em>application image</em> as input to the platform-specific packaging tool that it invokes in its final step.  Normally this image is a temporary artifact, but
+sometimes you need to customize it before it's packaged.  You can, therefore, run the <code>jpackage</code> tool in two steps.  First, create the initial application image with the special package type <code>app-image</code>:</p>
+<pre><code>$ jpackage --name myapp --module-path lib -m myapp --type app-image</code></pre>
+<p>This will produce an application image in the <code>myapp</code> directory.  Customize that image as needed, and then create the final package via the <code>--app-image</code> option:</p>
+<pre><code>$ jpackage --name myapp --app-image myapp</code></pre>
+<h3 id="Runtime-images">Runtime images</h3>
+<p>An application image contains both the files comprising your application as well as the JDK <em>runtime image</em> that will run your application.  By default, the <code>jpackage</code> tool invokes the
+the <a href="https://openjdk.java.net/jeps/282"><code>jlink</code> tool</a> to create the runtime image.  The content of the image depends upon the type of the application:</p>
+<ul>
+<li>
+<p>For a non-modular application composed of JAR files, the runtime image contains the same set of JDK modules that is <a href="https://openjdk.java.net/jeps/261#Root-modules">provided to class-path applications in the unnamed module</a> by the regular <code>java</code> launcher.</p>
+</li>
+<li>
+<p>For a modular application composed of modular JAR files and/or JMOD files, the runtime image contains the application's main module and the transitive closure of all of its dependencies.  It will not include all the available service providers; if you want those to be bound then specify the <code>--bind-services</code> option to the <code>jpackage</code> tool.</p>
+</li>
+</ul>
+<p>In either case, if you want additional modules to be added to the runtime image you can use the <code>--add-modules</code> option with the <code>jpackage</code> tool.  The list of modules in a runtime image is available in the image's <code>release</code> file.</p>
+<p>Runtime images created by the <code>jpackage</code> tool do not contain debug symbols, the usual JDK commands, man pages, or the <code>src.zip</code> file.</p>
+<p>If you wish to customize the runtime image further then you can invoke <code>jlink</code> yourself and pass the resulting image to the <code>jpackage</code> tool via the <code>--runtime-image</code> option.  For example, if you've used the <a href="https://docs.oracle.com/en/java/javase/13/docs/specs/man/jdeps.html"><code>jdeps</code> tool</a> to determine that your non-modular application only needs the <code>java.base</code> and <code>java.sql</code> modules, you could reduce the size of your package significantly:</p>
+<pre><code>$ jlink --add-modules java.base,java.sql --output myjre
+$ jpackage --name myapp --input lib --main-jar main.jar --runtime-image myjre</code></pre>
+<h4 id="Platform-specific-details">Platform-specific details</h4>
+<p>This section describes the platform-specific aspects of the <code>jpackage</code> tool, including application image layouts and platform-specific options.  The command <code>jpackage --help</code> will print a summary of all options.</p>
+<p>The application images created by the <code>jpackage</code> tool contain some files not shown in the layouts below; such files should be considered implementation details that are subject to change.</p>
+<h5 id="Linux">Linux</h5>
+<pre><code>myapp/
+  bin/              // Application launcher(s)
+    myapp
+  lib/
+    app/
+      myapp.cfg     // Configuration info, created by jpackage
+      myapp.jar     // JAR files, copied from the --input directory
+      mylib.jar
+      ...
+    runtime/        // JDK runtime image</code></pre>
+<p>The default installation directory on Linux is <code>/opt</code>.  This can be overridden via the <code>--install-dir</code> option.</p>
+<p>Linux-specific options:</p>
+<ul>
+<li><code>--linux-package-name &lt;package name&gt;</code>
+&#8212; Name for the Linux package, defaults to the application name</li>
+<li><code>--linux-deb-maintainer &lt;email address&gt;</code>
+&#8212; Maintainer for a DEB package</li>
+<li><code>--linux-menu-group &lt;menu-group-name&gt;</code>
+&#8212; Menu group this application is placed in</li>
+<li><code>--linux-package-deps &lt;deps&gt;</code>
+&#8212; Required packages or capabilities for the application</li>
+<li><code>--linux-rpm-license-type &lt;type string&gt;</code>
+&#8212; Type of the license (<code>License: &lt;value&gt;</code> of the RPM <code>.spec</code> file)</li>
+<li><code>--linux-app-release &lt;release value&gt;</code>
+&#8212; Release value of the RPM <code>&lt;name&gt;.spec</code> file, or the
+Debian revision value of the DEB control file</li>
+<li><code>--linux-app-category &lt;category value&gt;</code>
+&#8212; Group value of the RPM <code>&lt;name&gt;.spec</code> file, or
+the Section value of the DEB control file</li>
+<li><code>--linux-shortcut</code>
+Creates a shortcut for the application</li>
+</ul>
+<h5 id="macOS">macOS</h5>
+<pre><code>MyApp.app/
+  Contents/
+    Info.plist
+    MacOS/          // Application launcher(s)
+      MyApp
+    Resources/      // Icons, etc.
+    app/
+      MyApp.cfg     // Configuration info, created by jpackage
+      myapp.jar     // JAR files, copied from the --input directory
+      mylib.jar
+      ...
+    runtime/        // JDK runtime image</code></pre>
+<p>The default installation directory on macOS is <code>/Applications</code>.  This can be overridden via the <code>--install-dir</code> option.</p>
+<p>macOS-specific options:</p>
+<ul>
+<li><code>--mac-package-identifier &lt;string&gt;</code> &#8212;
+An identifier that uniquely identifies the application for macOS
+(defaults to the main class name; limited to alphanumeric, hyphen, and period characters)</li>
+<li><code>--mac-package-name &lt;string&gt;</code> &#8212;
+Name of the application as it appears in the menu bar
+(defaults to the application name;
+must be less than 16 characters long and be suitable for
+displaying in the menu bar and the application Info window)</li>
+<li><code>--mac-package-signing-prefix &lt;string&gt;</code> &#8212;
+When signing the application bundle, the value prepended to all
+components that need to be signed but don't have
+an existing bundle identifier</li>
+<li><code>--mac-sign</code> &#8212;
+Request that the bundle be signed</li>
+<li><code>--mac-signing-keychain &lt;file&gt;</code> &#8212;
+Path of the keychain to search for the signing identity
+(defaults to the standard keychains)</li>
+<li><code>--mac-signing-key-user-name &lt;team name&gt;</code> &#8212;
+Team name portion of the Apple signing identity
+(for example, "Developer ID Application: ")</li>
+</ul>
+<h5 id="Windows">Windows</h5>
+<pre><code>MyApp/
+  MyApp.exe         // Application launcher(s)
+  app/
+    MyApp.cfg     // Configuration info, created by jpackage
+    myapp.jar     // JAR files, copied from the --input directory
+    mylib.jar
+    ...
+  runtime/        // JDK runtime image</code></pre>
+<p>The default installation directory on Windows is <code>C:/Program Files/</code>.
+This can be overridden via the <code>--install-dir</code> option.</p>
+<p>Windows-specific options:</p>
+<ul>
+<li><code>--win-console</code> &#8212;
+Creates a console launcher for the application (should be
+specified for applications which require console interactions)</li>
+<li><code>--win-dir-chooser</code> &#8212;
+Adds a dialog to enable the user to choose a directory in which
+to install the application</li>
+<li><code>--win-menu</code> &#8212;
+Adds the application to the system menu</li>
+<li><code>--win-menu-group &lt;menu-group-name&gt;</code> &#8212;
+Start Menu group in which to place this application</li>
+<li><code>--win-per-user-install</code> &#8212;
+Install the application on a per-user basis</li>
+<li><code>--win-shortcut</code> &#8212;
+Create a desktop shortcut for the application</li>
+<li><code>--win-upgrade-uuid &lt;string&gt;</code> &#8212;
+UUID associated with upgrades for this package</li>
+</ul>
+<h3 id="Delivering-jpackage">Delivering <code>jpackage</code></h3>
+<p>The <code>jpackage</code> tool will be delivered in the JDK as an <a href="https://openjdk.java.net/jeps/11">incubator module</a> named <code>jdk.incubator.jpackage</code>.  As a feature delivered in an incubator module, the <code>jpackage</code> tool's command line options, application layout, and other exported interfaces are not guaranteed to be stable and may be revised in a future release.  The tool will display a warning when run from the command line.  The <code>jdk.incubator.jpackage</code> module will not be resolved by default, and will cause a warning to be displayed when it is resolved.</p>
+<p>The <code>jpackage</code> tool is based on the <code>javapackager</code> tool, with all features related to Java Web Start and JavaFX removed.  The command-line interface (CLI) conforms to <a href="//openjdk.java.net/jeps/293">JEP 293 (Guidelines for JDK Command-Line Tool Options)</a>.  In addition to the command-line interface, <code>jpackage</code> is accessible via the <a href="https://docs.oracle.com/javase/10/docs/api/java/util/spi/ToolProvider.html">ToolProvider API</a> (<code>java.util.spi.ToolProvider</code>) under the name <code>"jpackage"</code>.</p>
+<h2 id="Testing">Testing</h2>
+<p>Most tests can be done with automated scripts, but there are a few considerations to be aware of:</p>
+<ul>
+<li>
+<p>Testing the native packages may require optional tools to be installed; those tests will need to be written such that they are skipped on systems without the necessary tools.</p>
+</li>
+<li>
+<p>Verifying some types of native packages (e.g., <code>exe</code> on Windows or <code>dmg</code> on macOS) may require some manual testing.</p>
+</li>
+<li>
+<p>We need to ensure that native packages can be installed and uninstalled cleanly, so that developers can test in their local environment without fear of polluting their systems.</p>
+</li>
+</ul>
+<h2 id="Dependencies">Dependencies</h2>
+<p>Native packages will be generated using tools on the target platform.  For Windows, there is an additional tool that developers will need to install if they want to generate native packages:</p>
+<ul>
+<li>Wix, a third-party tool, is required to generate <code>msi</code> or <code>exe</code> packages</li>
+</ul>
+<p>There are efforts underway to enhance <code>jlink</code> to generate native launchers in a future version of the JDK.  Some level of coordination may be needed between <code>jlink</code> and <code>jpackage</code>.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

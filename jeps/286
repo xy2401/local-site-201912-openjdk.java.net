@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 286: Local-Variable Type Inference</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 286: Local-Variable Type Inference</h1><table class="head"><tr><td>Author</td><td>Brian Goetz</td></tr><tr><td>Owner</td><td>Dan Smith</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>10</td></tr><tr><td>Component</td><td>tools</td></tr><tr><td>Discussion</td><td>amber dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>S</td></tr><tr><td>Relates to</td><td><a href="323">JEP 323: Local-Variable Syntax for Lambda Parameters</a></td></tr><tr><td></td><td><a href="301">JEP 301: Enhanced Enums</a></td></tr><tr><td>Reviewed by</td><td>Alex Buckley, Mark Reinhold</td></tr><tr><td>Endorsed by</td><td>Mark Reinhold</td></tr><tr><td>Created</td><td>2016/03/08 15:37</td></tr><tr><td>Updated</td><td>2018/10/12 01:28</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8151454">8151454</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enhance the Java Language to extend type inference to declarations of local variables with initializers.</p>
+<h2 id="Goals">Goals</h2>
+<p>We seek to improve the developer experience by reducing the ceremony associated with writing Java code, while maintaining Java's commitment to static type safety, by allowing developers to elide the often-unnecessary manifest declaration of local variable types.  This feature would allow, for example, declarations such as:</p>
+<pre><code>var list = new ArrayList&lt;String&gt;();  // infers ArrayList&lt;String&gt;
+var stream = list.stream();          // infers Stream&lt;String&gt;</code></pre>
+<p>This treatment would be restricted to local variables with initializers, indexes in the enhanced <code>for</code>-loop, and locals declared in a traditional <code>for</code>-loop; it would not be available for method formals, constructor formals, method return types, fields, catch formals, or any other kind of variable declaration.</p>
+<h2 id="Success-Criteria">Success Criteria</h2>
+<p>Quantitatively, we want that a substantial percentage of local variable declarations in real codebases can be converted using this feature, inferring an appropriate type.</p>
+<p>Qualitatively, we want that the limitations of local variable type inference, and the motivations for these limitations, be accessible to a typical user.  (This is, of course, impossible to achieve in general; not only will we not be able to infer reasonable types for all local variables, but some users imagine type inference to be a form of mind reading, rather than an algorithm for constraint solving, in which case no explanation will seem sensible.)  But we seek to draw the lines in such a way that it can be made clear why a particular
+construct is over the line -- and in such a way that compiler diagnostics can effectively connect it to complexity in the user's code, rather than an arbitrary restriction in the language.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Developers frequently complain about the degree of boilerplate coding required in Java.  Manifest type declarations for locals are often perceived to be unnecessary or even in the way; given good variable naming, it is often perfectly clear what is going on.</p>
+<p>The need to provide a manifest type for every variable also accidentally encourages developers to use overly complex expressions; with a lower-ceremony declaration syntax, there is less disincentive to break complex chained or nested expressions into simpler ones.</p>
+<p>Nearly all other popular statically typed "curly-brace" languages, both on the JVM and off, already support some form of local-variable type inference: C++ (auto), C# (var), Scala (var/val), Go (declaration with <code>:=</code>).  Java is nearly the only popular statically typed language that has not embraced local-variable type inference; at this point, this should no longer be a controversial feature.</p>
+<p>The scope of type inference was significantly broadened in Java SE 8, including expanded inference for nested and chained generic method calls, and inference for lambda formals.  This made it far easier to build APIs designed for call chaining, and such APIs (such as Streams) have been quite popular, showing that developers are already comfortable having intermediate types inferred.  In a call chain like:</p>
+<pre><code>int maxWeight = blocks.stream()
+                      .filter(b -&gt; b.getColor() == BLUE)
+                      .mapToInt(Block::getWeight)
+                      .max();</code></pre>
+<p>no one is bothered (or even notices) that the intermediate types <code>Stream&lt;Block&gt;</code> and <code>IntStream</code>, as well as the type of the lambda formal <code>b</code>, do not appear explicitly in the source code.</p>
+<p>Local variable type inference allows a similar effect in less tightly structured APIs; many uses of local variables are essentially chains, and benefit equally from inference, such as:</p>
+<pre><code>var path = Paths.get(fileName);
+var bytes = Files.readAllBytes(path);</code></pre>
+<h2 id="Description">Description</h2>
+<p>For local variable declarations with initializers, enhanced <code>for</code>-loop indexes, and index variables declared in traditional for loops, allow the reserved type name <code>var</code> to be accepted in place of manifest types:</p>
+<pre><code>var list = new ArrayList&lt;String&gt;(); // infers ArrayList&lt;String&gt;
+var stream = list.stream();         // infers Stream&lt;String&gt;</code></pre>
+<p>The identifier <code>var</code> is not a keyword; instead it is a <em>reserved type name</em>.  This means that code that uses <code>var</code> as a variable, method, or package name will not be affected; code that uses <code>var</code> as a class or interface name will be affected (but these names are rare in practice, since they violate usual naming conventions).</p>
+<p>Forms of local variable declarations that lack initializers, declare multiple variables, have extra array dimension brackets, or reference the variable being initialized are not allowed. Rejecting locals without initializers narrows the scope of the feature, avoiding "action at a distance" inference errors, and only excludes a small portion of locals in typical programs.</p>
+<p>The inference process, substantially, just gives the variable the type of its initializer expression. Some subtleties:</p>
+<ul>
+<li>The initializer has no target type (because we haven't inferred it yet). Poly expressions that require such a type, like lambdas, method references, and array initializers, will trigger an error.</li>
+<li>If the initializer has the null type, an error occurs&#8212;like a variable without an initializer, this variable is probably intended to be initialized later, and we don't know what type will be wanted.</li>
+<li>Capture variables, and types with nested capture variables, are <em>projected</em> to supertypes that do not mention capture variables. This mapping replaces capture variables with their upper bounds and replaces type arguments mentioning capture variables with bounded wildcards (and then recurs). This preserves the traditionally limited scope of capture variables, which are only considered within a single statement.</li>
+<li>Other than the above exceptions, non-denotable types, including anonymous class types and intersection types, may be inferred. Compilers and tools need to account for this possibility.</li>
+</ul>
+<h3 id="Applicability-and-impact">Applicability and impact</h3>
+<p>Scanning the OpenJDK code base for local variable declarations, we found that 13% cannot be written using <code>var</code>, since there is no initializer, the initializer has the null type, or (rarely) the initializer requires a target type. Among the remaining local variable declarations:</p>
+<ul>
+<li>94% have an initializer with the exact type present in the source code (63% of cases with parameterized types)</li>
+<li>5% have an initializer with some sharper denotable type (29% of cases with parameterized types)</li>
+<li>1% have an initializer with a type that mentions a capture variable (7% of cases with parameterized types)</li>
+<li>&lt;1% have an initializer with an anonymous class type or intersection type (same for cases with parameterized types)</li>
+</ul>
+<h2 id="Alternatives">Alternatives</h2>
+<p>We could continue to require manifest declaration of local variable types.</p>
+<p>Rather than supporting <code>var</code>, we could limit support to uses of diamond in variable declarations; this would address a subset of the cases addressed by <code>var</code>.</p>
+<p>The design described above incorporates several decisions about scope, syntax, and non-denoteable types; alternatives for those choices which were also considered are documented here.</p>
+<h3 id="Scope-Choices">Scope Choices</h3>
+<p>There are several other ways we could have scoped this feature.  We considered restricting the feature to effectively final locals (<code>val</code>).  However, we backed off from this position
+because:</p>
+<ul>
+<li>
+<p>The majority (more than 75% in both JDK and broader corpus) of
+local variables with initializers were already effectively
+immutable anyway, meaning that any "nudge" away from mutability
+that this feature could have provided would have been limited;</p>
+</li>
+<li>
+<p>Capturability by lambdas/inner classes already provides a
+significant push towards effectively final locals;</p>
+</li>
+<li>
+<p>In a code block with (say) 7 effectively final locals and 2 mutable
+ones, the types required for the mutable ones would be visually
+jarring, undermining much of the benefit of the feature.</p>
+</li>
+</ul>
+<p>On the other hand, we could have expanded this feature to include the local equivalent of "blank" finals (i.e., not requiring an initializer, instead relying on definite assignment analysis.) We chose the restriction to "variables with initializers only" because it covers a significant fraction of the candidates while maintaining the simplicity of the feature and reducing "action at a distance" errors.</p>
+<p>Similarly, we also could have taken all assignments into account when inferring the type, rather than just the initializer; while this would have further increased the percentage of locals that could exploit
+this feature, it would also increase the risk of "action at a distance" errors.</p>
+<h3 id="Syntax-Choices">Syntax Choices</h3>
+<p>There was a diversity of opinions on syntax.  The two main degrees of freedom here are what keywords to use (<code>var</code>, <code>auto</code>, etc), and whether to have a separate new form for immutable locals (<code>val</code>, <code>let</code>).  We considered the following syntactic options:</p>
+<ul>
+<li><code>var x = expr</code> only (like C#)</li>
+<li><code>var</code>, plus <code>val</code> for immutable locals (like Scala, Kotlin)</li>
+<li><code>var</code>, plus <code>let</code> for immutable locals (like Swift)</li>
+<li><code>auto x = expr</code> (like C++)</li>
+<li><code>const x = expr</code> (already a reserved word)</li>
+<li><code>final x = expr</code> (already a reserved word)</li>
+<li><code>let x = expr</code></li>
+<li><code>def x = expr</code> (like Groovy)</li>
+<li><code>x := expr</code> (like Go)</li>
+</ul>
+<p>After gathering substantial input, <code>var</code> was clearly preferred over the Groovy, C++, or Go approaches.  There was a substantial diversity of opinion over a second syntactic form for immutable locals (<code>val</code>, <code>let</code>); this would be a tradeoff of additional ceremony for additional capture of design intent.  In the end, we chose to support only <code>var</code>.  Some details on the rationale can be found <a href="//mail.openjdk.java.net/pipermail/platform-jep-discuss/2016-December/000066.html">here</a>.</p>
+<h3 id="Non-denotable-types">Non-denotable types</h3>
+<p>Sometimes the type of the initializer is a non-denotable type, such as a capture variable type, intersection type, or anonymous class type. In such cases, we have a choice of whether to i) infer the type, ii) reject the expression, or iii) infer a denotable supertype.</p>
+<p>Compilers (and attentive programmers!) must already be comfortable reasoning about non-denoteable types. However, their use as the types of local variables will significantly increase their exposure, revealing compiler/specification bugs and forcing programmers to confront them more frequently. Pedagogically, it's nice to have a simple syntactic transformation between explicitly-typed and implicitly-typed declarations.</p>
+<p>That said, it's unhelpfully pedantic to simply reject initializers with non-denotable types (often to the surprise of the programmer, such as in the declaration <code>var c = getClass()</code>). And a mapping to a supertype can be unexpected and lossy.</p>
+<p>These considerations led us to different answers:</p>
+<ul>
+<li>A <code>null</code>-typed variable is practically useless, and there is no good alternative for an inferred type, so we reject these.</li>
+<li>Allowing capture variables to flow into subsequent statements adds new expressiveness to the language, but that's not a goal of this feature. Instead, the proposed <em>projection</em> operation is one we need to use anyway to address various bugs in the type system (see, e.g., <a href="https://bugs.openjdk.java.net/browse/JDK-8016196">JDK-8016196</a>), and it's reasonable to apply it here.</li>
+<li>Intersection types are especially difficult to map to a supertype&#8212;they're not ordered, so one element of the intersection is not inherently "better" than the others. The stable choice for a supertype is the <em>lub</em> of all the elements, but that will often be <code>Object</code> or something equally unhelpful. So we allow them.</li>
+<li>Anonymous class types cannot be named, but they're easily understood&#8212;they're just classes. Allowing variables to have anonymous class types introduces a useful shorthand for declaring a singleton instance of a local class. We allow them.</li>
+</ul>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>Risk: Because Java already does significant type inference on the RHS (lambda formals, generic method type arguments, diamond), there is a risk that attempting to use <code>var</code> on the LHS of such an expression will fail, and possibly with difficult-to-read error messages.</p>
+<p>We've mitigated this by using simplified error messages when the LHS is inferred.</p>
+<p>Examples:</p>
+<pre><code>Main.java:81: error: cannot infer type for local
+variable x
+        var x;
+            ^
+  (cannot use 'val' on variable without initializer)
+
+Main.java:82: error: cannot infer type for local
+variable f
+        var f = () -&gt; { };
+            ^
+  (lambda expression needs an explicit target-type) 
+
+Main.java:83: error: cannot infer type for local
+variable g
+        var g = null;
+            ^
+  (variable initializer is 'null')
+
+Main.java:84: error: cannot infer type for local
+variable c
+        var c = l();
+            ^
+  (inferred type is non denotable)
+
+Main.java:195: error: cannot infer type for local variable m
+        var m = this::l;
+            ^
+  (method reference needs an explicit target-type)
+
+Main.java:199: error: cannot infer type for local variable k
+        var k = { 1 , 2 };
+            ^
+  (array initializer needs an explicit target-type)</code></pre>
+<p>Risk: source incompatibilities (someone may have used <code>var</code> as a type name.)</p>
+<p>Mitigated with reserved type names; names like <code>var</code> do not conform to the naming conventions for types, and therefore are unlikely to be used as types.  The name <code>var</code> <em>is</em> commonly used as an identifier; we continue to allow this.</p>
+<p>Risk: reduced readability, surprises when refactoring.</p>
+<p>Like any other language feature, local variable type inference can be used to write both clear and unclear code; ultimately the responsibility for writing clear code lies with the user. See the <a href="//openjdk.java.net/projects/amber/LVTIstyle.html">style guidelines</a> for using <code>var</code>, and the <a href="//openjdk.java.net/projects/amber/LVTIFAQ.html">Frequently Asked Questions</a>.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

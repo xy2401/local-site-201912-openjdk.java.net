@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Lazy Static Final Fields</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Lazy Static Final Fields</h1><table class="head"><tr><td>Owner</td><td>John Rose</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>tools</td></tr><tr><td>Created</td><td>2018/08/25 06:49</td></tr><tr><td>Updated</td><td>2018/08/25 15:17</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8209964">8209964</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Expand the behavior of final variables to include optional lazy
+evaluation patterns, in language and JVM.  In doing so, extend Java's
+pre-existing lazy evaluation mechanisms to per-variable granularity,
+from its current per-class granularity.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Java uses lazy evaluation pervasively.  Almost every linkage operation
+potentially triggers a lazy evaluation, such as the execution of a
+<code>&lt;clinit&gt;</code> method (class initializer bytecode) or invocation of a
+bootstrap method (for an <code>invokedynamic</code> call site or
+<code>CONSTANT_Dynamic</code> constant).</p>
+<p>Class initializers are coarse-grained compared to mechanisms using
+bootstrap methods, because their contract is to run <em>all</em>
+initialization code for a <em>whole</em> class, rather than some
+initialization that may pertain to a particular field of that class.
+Such coarse-grained initialization effects make it especially
+difficult to predict and isolate the side effects of using <em>one</em>
+static field from the class, since computing the value of one field
+entails computation of <em>all</em> static fields in the same class.</p>
+<p>So touching one field touches them all.  In AOT compilers, this makes
+it difficult to optimize a static field reference, even if the field
+has a clearly analyzable constant value.  It only takes <em>one</em>
+extra-complicated static field in a class to make <em>all</em> fields
+non-optimizable.  A similar problem appears with proposed mechanisms
+for constant-folding (at <code>javac</code> time) constant fields with complex
+initializers.</p>
+<p>As an example of an extra-complicated static field initialiazation, which in some codebases appears in almost every file, consider logger initialization:</p>
+<pre><code>private final static Logger LOGGER = Logger.getLogger("com.foo.Bar");</code></pre>
+<p>This harmless-looking initialization triggers a tremendous amount of behind-the-scenes activity at class initialization time -- though it is unlikely that the logger is needed at class initialization time, or even at all.  Deferring the creation to first use would streamline initialization, and might result in optimizing away the initialization entirely.</p>
+<p>Final variables are very useful; they are the main mechanism for Java
+APIs to denote constant values.  Lazy variables are also well-proven.
+Since Java 7 they have been an increasingly important part of JDK
+internals, expressed via the internal <code>@Stable</code> annotation.  The JIT
+can optimize both final and "stable" variables more fully than other
+variables.  Adding lazy finals will these useful design patterns
+usable in more places.  Finally, their adoption will allow libraries
+such as the JDK to downsize their reliance on <code>&lt;clinit&gt;</code> code, with
+likely improvement to startup and AOT optimizations.</p>
+<h2 id="Description">Description</h2>
+<p>A field may be declared with a new modifier <code>lazy</code>, a contextual
+keyword recognized only as a modifier.  Such a field is called a <em>lazy
+field</em>, and must also be static and final.</p>
+<p>A lazy field must be supplied with an initializer.  The compiler and
+runtime arrange to execute the initializer on the first use of the
+variable, not when the containing scope (the class) is initialized.</p>
+<p>Each lazy static final field is associated at compile time with a
+constant pool entry which supplies its value.  Since constant pool
+entries are themselves lazily computed, this is sufficient to assign a
+well-defined value to any static lazy final variable associated with
+the constant pool entry.  (More than one lazy variable can be
+associated with a single entry, although this is not envisioned as a
+useful feature.)  The name of the attribute is <code>LazyValue</code>, and it
+must refer to a constant pool entry that can be <code>ldc</code>-ed to a value
+that can be converted to the type of the lazy field.  The allowed
+conversions are the same as those used by <code>MethodHandle.invoke</code>.</p>
+<p>Thus, a lazy static field may be viewed as a named alias of a constant
+pool entry within the class that defined the field.  Tools such as
+compilers may exploit this property.</p>
+<p>A lazy field is never a constant variable (in the sense of JLS 4.12.4)
+and is explicitly excluded from contributing to a constant expression
+(in the sense of JLS 15.28).  Thus, it never possesses a
+<code>ConstantValue</code> attribute, even if its initializer is a constant
+expression.  Instead, a lazy field possesses a new kind of classfile attribute
+called <code>LazyValue</code>, which the JVM consults when linking a reference to
+that particular field.  The format of this new attribute is similar to
+the old one, because it also points to a constant pool entry, in this
+case the one which resolves the field value.</p>
+<p>When linking a lazy static field, the normal process of executing
+class initializers is <em>not</em> bypassed.  Instead, any <code>&lt;clinit&gt;</code> method
+on the declaring class is initialized according to the rules of JVMS
+5.5.  In other words, a <code>getstatic</code> bytecode of a lazy static field
+performs any linkage actions associated with <em>any</em> static field.
+After initialization (or during an already-started initialization in
+the current thread), the JVM then resolves the constant pool entry
+associated with the field, and stores the value of that constant
+pool entry into that field.</p>
+<p>Since lazy static final fields cannot be blank finals, they cannot
+be assigned to, even in those limited contexts where blank finals
+may be assigned to.</p>
+<p>At compile time, all lazy static fields are taken to be initialized
+independently of all non-lazy static fields, regardless of their
+placement in the source file.  This means that the ordering
+constraints among static fields are not observed on lazy static
+fields.  A lazy static field's initializer can refer to any static
+field of the same class, regardless of location in their common source
+file.  Any non-lazy static field initializer or class initializer
+block may also refer to a lazy static field value, regardless of
+relative source order.  This is usually not desirable, as it would
+tend to cancel the benefit of the lazy field, but may be useful in
+conditional expressions or control flow.  Thus, lazy static fields are
+treated much like fields of another class, insofar as they may be
+referenced in any order by any part of their declaring class.</p>
+<p>Lazy fields may be recognized by the core reflection API by use of two
+new API points on <code>java.lang.reflect.Field</code>.  The new query method
+<code>isLazy</code> returns <code>true</code> if and only if the field was declared lazy.
+The new query method <code>isAssigned</code> returns <code>false</code> if and only if the
+field is lazy and has not been initialized, at the moment the method
+is called.  (It may return <code>true</code> on the very next call in the same
+thread, depending on race conditions.)  Other than <code>isAssigned</code>, there
+is no way to observe whether a lazy field has been initialized yet.</p>
+<p>(The <code>isAssigned</code> reflective call is provided only to assist with
+occasional problems with circular initialization dependencies.
+Perhaps we can get away without implementing it, although people who
+code with lazy variables occasionally want to ask gently whether a
+lazy variable is set yet, in the same way that users of mutexes
+occasionally want to ask whether a mutex is locked, but without
+actually seizing the lock.)</p>
+<p>There is one irregular restriction on lazy finals: They must never be
+initialized to their default value.  Thus, a lazy field of reference
+type must not be assigned a null value by its initializer, and an
+integral type must not be assigned zero.  A lazy boolean can only be
+assigned a single value, <code>true</code>, since <code>false</code> is its default value.
+If a lazy static field's initializer returns the default value, the
+linkage of the field will fail with an appropriate linkage error.</p>
+<p>This restriction against default values is made in order to allow JVM
+implementations to reserve the default value as an internal sentinel
+to denote the state of not having been initialized.  The default value
+is already specified as the initial value of any field, set at
+preparation time (as described in JLS 5.4.2).  Thus, this value is
+naturally present already in at the beginning of any field's lifetime,
+so it is a natural choice if the JVM needs a sentinel to help it track
+the field's state.  Under these rules, the initial default value of a
+field is never accessible in the case of a lazy static.  For this
+reason, a JVM may alternatively implement a lazy field as an immutable
+reference to the relevant constant pool entry.</p>
+<p>The restriction against default values can be worked around by
+wrapping possibly-default values in boxes or containers of some
+desired form.  A zero integer could be wrapped in a non-null <code>Integer</code>
+reference.  A non-primitive could be wrapped in an <code>Optional</code> which is
+empty in the case of <code>null</code>.</p>
+<p>To preserve implementation freedom, the contract of <code>isAssigned</code> is
+minimized.  If a JVM can prove that a lazy static variable can be
+initialized without observable side effects, it may do so at any time;
+in such a case the <code>isAssigned</code> query will report <code>true</code> even before
+any <code>getfield</code> is executed.  The minimized contract for <code>isAssigned</code>
+is that if it returns <code>false</code>, none of the side effects from
+initializing that variable have yet been observed by the current
+thread, whereas if it returns <code>true</code>, then the current thread can, in
+the future, observe all side effects of initialization.  This contract
+allows compilers to substitute <code>ldc</code> for <code>getstatic</code> of their own
+fields, and allows JVMs to avoid tracking detailed initialization
+states of finals with shared or degenerate constant pool entries.</p>
+<p>Multiple threads may race to initialize a lazy final.  As is already
+the case with <code>CONSTANT_Dynamic</code> constant pool entries, the JVM picks
+an arbitrary winner of such a race and provides the value from that
+winner to all racing threads, as well as recording it for all future
+accesses.  Thus, JVM implementations may elect to use CAS operations,
+if the platform supports those, to resolve races; the winner of a race
+will see a prior default value and the losers will see the non-default
+winning value.</p>
+<p>In this way, the pre-existing rules for single assignment of final
+variables is preserved and extended across the complexities of lazy
+evaluation.</p>
+<p>The same point applies to safe publication through finals; it is the
+same for both lazy and non-lazy finals.  This may require some JVM
+implementations to place memory fences around the lazy initialization
+operation, just as they do for <code>putstatic</code> on non-lazy final fields.</p>
+<p>Note that a class can convert a static to a lazy static without
+breaking binary compatibility.  A client's <code>getstatic</code> instruction
+is identical in both cases.  When the variable's declaration changes
+to lazy, then the <code>getstatic</code> instruction links differently.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Use nested classes as holders for single lazy variables.</p>
+<p>Define some sort of library API for managing lazy values or (more
+generally) monotonic data.</p>
+<p>Refactor would-be lazy static variables as nullary static methods and
+populate their bodies with <code>ldc</code> of <code>CONSTANT_Dynamic</code> constants, by
+some means.</p>
+<p>Use non-final variables for publication of lazily evaluated data,
+being careful not to modify them, and to fence their initialization
+for safe publication.</p>
+<p>(N.B. The above workarounds do not provide a binary-compatible way
+to evolve existing static constants away from their current reliance
+on <code>&lt;clinit&gt;</code>.)</p>
+<p>In the direction of adding <em>more</em> functionality, we could allow lazy
+fields to be non-static and/or non-final, preserving current
+correspondences and analogies between static and non-static field
+behaviors.  The constant pool cannot be a backing store for non-static
+fields, but it can still contribute bootstrap methods (that depend on
+the current instance).  Frozen arrays (if implemented) could be given
+lazy variations, perhaps.  Such investigations seem plausible as a
+follow-on projects for the current proposal.  Leaving open such
+options contributes to our decision to forbid lazy variables to take
+on default values.</p>
+<p>Lazy variables must be initialized by their initializer expressions.
+This is sometimes an onerous restriction, which led in the past to the
+invention of blank final variables.  Recall that blank finals can be
+initialized by arbitrary blocks of code, such as try/finally logic,
+and can be initialized as groups rather than one at a time.  Future
+work may attempt to extend these coding patterns to lazy final
+variables. Perhaps one or more lazy variables could be associated with
+a private block of initialization code whose contract is to assign
+each variable exactly once, as if it were a class initializer or
+object constructor.  The design of such a feature may become clearer
+after deconstructors are introduced, since the design problems seem to
+overlap.</p>
+<p>An earlier variation of this proposal may be found at
+<a href="//cr.openjdk.java.net/~jrose/draft/lazy-final.html">http://cr.openjdk.java.net/~jrose/draft/lazy-final.html</a>.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

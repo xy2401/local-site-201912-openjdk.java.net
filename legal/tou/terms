@@ -1,0 +1,522 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK ToU: Full Legalese</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+      P { margin-left: 2.5em; }
+      P.top { margin-left: 0em; }
+      DIV.tag { float: left; padding-left: 1em; }
+/**/
+</style></head><body><div id="main">
+<h1>OpenJDK Web Site Terms of Use</h1>
+<h2>1. INTRODUCTION.</h2>
+<p class="top">This Site and its Materials are made available by
+Oracle America, Inc. These Terms of Use apply to everyone who Uses
+this Site (as defined below), or who participates in any Projects
+hosted on this Site. THIS DOCUMENT IS A LEGAL CONTRACT. PLEASE READ
+IT CAREFULLY. BY USING THE SITE OR MATERIALS OR PARTICIPATING IN
+ANY PROJECTS, YOU ACKNOWLEDGE THAT YOU HAVE READ THE TERMS AND
+AGREE TO THEM. IF YOU ARE AGREEING TO THESE TERMS ON BEHALF OF A
+COMPANY OR OTHER LEGAL ENTITY, YOU REPRESENT THAT YOU HAVE THE
+LEGAL AUTHORITY TO BIND THE LEGAL ENTITY TO THESE TERMS. IF YOU DO
+NOT HAVE SUCH AUTHORITY, OR IF YOU DO NOT WISH TO BE BOUND BY THE
+TERMS, THEN YOU MUST NOT USE THE SITE OR MATERIALS OR PARTICIPATE
+IN ANY PROJECTS HOSTED ON THIS SITE.</p>
+<h2>2. DEFINITIONS.</h2>
+<div class="tag">a.</div>
+<p>"Oracle" means Oracle America, Inc.</p>
+<div class="tag">b.</div>
+<p>"Materials" means source code, code samples, object code,
+technology specifications, technical materials, documentation,
+discussion thread postings, blogs, wikis, data, and any other
+content, information, technology or services available on the
+Site.</p>
+<div class="tag">c.</div>
+<p>"Project" means a project hosted on the Site.</p>
+<div class="tag">d.</div>
+<p>"Site" means the collection of Oracle web pages from which these
+Terms of Use are linked, or that prompt or require Users to view or
+accept these Terms before accessing such pages, as well as any
+successor web pages, mailing lists, or other technology as may be
+designated by Oracle.</p>
+<div class="tag">e.</div>
+<p>"Submissions" means any Materials submitted to the Site whether
+or not associated with a particular Project.</p>
+<div class="tag">f.</div>
+<p>"Terms" means these Terms of Use.</p>
+<div class="tag">g.</div>
+<p>"Use" and its variants are to be interpreted in their broadest
+sense and include, without limitation, the acts of using,
+accessing, receiving, browsing, downloading from, and uploading to.
+A "User" is a person or entity who Uses the Site.</p>
+<div class="tag">h.</div>
+<p>"You" means you personally, as well as any person or entity on
+whose behalf you are Using the Site. "You" does not include Oracle
+or its employees using the Site on Oracle's behalf.</p>
+<div class="tag">i.</div>
+<p>"GPL" means the GNU General Public License, version 2.</p>
+<div class="tag">j.</div>
+<p>"JSR" means a Java Specification Request.</p>
+<div class="tag">k.</div>
+<p>"Specification Lead" means a party designated as the
+Specification or Maintenance Lead for a particular JSR under the
+Java Community Process.</p>
+<h2>3. ACCESS TO THE SITE AND THE MATERIALS.</h2>
+<p class="top">The following terms apply to the Materials provided
+to you on the Site by Oracle.</p>
+<p class="top">You may have rights granted by Oracle or another
+party to certain Materials, such as (a) implementation code or
+proposed implementation code of a Java platform, under licenses
+such as the GPL, the GPL with the Classpath Exception and/or the
+OpenJDK Assembly Exception, or the Apache 2.0 license, or (b)
+technology specifications under other licenses. However, in
+addition to any other rights you may have in any posted Materials
+from those separate licenses, Oracle grants you the right to
+evaluate and comment on the posted Materials on the Site, including
+the right and license to modify Materials in the course of such
+evaluation and to repost modified Materials to appropriate
+locations on the Site as Submissions, subject to the licenses set
+forth in Section 4 below.</p>
+<h2>4. THINGS YOU SUBMIT TO THE SITE.</h2>
+<p class="top">The following terms apply to any Submissions made by
+You ("Your Submissions").</p>
+<div class="tag">a.</div>
+<p>Rights Granted Under the GPL. In addition to any other rights
+and licenses you grant in your code Submissions, You also grant all
+other Users of this Site the right to use Your code Submissions
+under the terms of the GPL, and with the OpenJDK Assembly Exception
+and/or the Classpath Exception if such exceptions apply to the
+original code. As a special exception, if you have received OpenJDK
+Material from Oracle under a license that is not compatible with
+the GPL, such as Apache 2.0, or under a license that is in addition
+to the GPL, then to the extent your Submissions are a modification
+of that Material, you grant all other Users of this Site the right
+to use Your code Submissions under the terms of that license. This
+does not excuse your obligation to ensure that you comply with all
+other obligations to grant licenses for your Submissions as set
+forth herein.</p>
+<div class="tag">b.</div>
+<p>Rights Granted Under Other Open Source Licenses. Certain mailing
+lists and portions of the Site may identify additional open source
+licenses that will apply to Your code Submissions. Such
+identification will be prominent on the relevant portion of the
+Site and/or mailing list. With respect to Your code Submissions
+made on such mailing lists and portions of the Site, in addition to
+any other rights and licenses that you may grant under these Terms
+of Use or otherwise (including subsection 4a above), you grant all
+other Users of those mailing lists and portions of the Site the
+right to use Your code Submissions under the terms of the
+identified license. This does not excuse your obligation to ensure
+that you comply with all other obligations to grant licenses for
+your Submissions as set forth herein. Code received only under the
+GPL, for example, must not be posted to a mailing list that
+designates BSD as an alternative license.</p>
+<div class="tag">c.</div>
+<p>Additional Rights Relating to Your Submissions. Whether or not
+other agreements relating to Java development ("Other Agreements")
+exist between you and Oracle or between you and another
+Specification Lead, including, without limitation, the Oracle
+Contributor Agreement, you agree that any Submissions you make
+available or authorize to be made available on the Site may be
+disclosed by Oracle to others for use in evaluating and commenting
+on Java technology, including, without limitation, modifying the
+Submissions and posting the modifications on the Site for further
+evaluation, comment and/or modification.</p>
+<div class="tag">d.</div>
+<p>Code and Technology Specification Submissions. You hereby grant
+to Oracle a royalty-free, perpetual, irrevocable, worldwide,
+non-exclusive and fully sub-licensable right and license under Your
+intellectual property rights to reproduce, modify, adapt, publish,
+translate, create derivative works from, distribute, publicly
+perform, publicly display and use your code and technology
+specification Submissions and to incorporate or implement them in
+other works in any form, media, or technology now known or later
+developed. This includes, without limitation, the right to
+incorporate or implement the Submission into any product or
+service, and to display, market, sublicense and distribute the
+Submission as incorporated or embedded in any product or service
+distributed or offered by Oracle without compensation to you.</p>
+<div class="tag">e.</div>
+<p>Submissions Other than Code and technology specifications. This
+Section 4.e applies to all of Your Submissions other than code
+Submissions. You hereby grant to Oracle and all Users a
+royalty-free, perpetual, irrevocable, worldwide, non-exclusive and
+fully sub-licensable right and license under Your intellectual
+property rights to reproduce, modify, adapt, publish, translate,
+create derivative works from, distribute, perform, display and use
+Your Submissions (in whole or part) and to incorporate or implement
+them in other works in any form, media, or technology now known or
+later developed. This includes, without limitation, the right to
+incorporate or implement the Submission into any product or
+service, and to display, market, sublicense and distribute the
+Submissions as incorporated or embedded in any product or service
+distributed or offered by Oracle without compensation to you. All
+Users, Oracle, and their sublicensees are responsible for any
+modifications they make to the Submissions of others.</p>
+<div class="tag">f.</div>
+<p>You agree that you will only upload, share, post, publish,
+transmit, or otherwise make available ("Share") on or through the
+Site, Submissions that you have the right and authority to Share
+and for which you have the right and authority to grant to Oracle,
+and all Users, all of the licenses and rights set forth herein. By
+Sharing your Submissions, You warrant that: (a) you have the right
+and authority to grant such licenses; and (b) Oracle's exercise of
+the rights granted pursuant to such licenses will not infringe or
+otherwise violate any third party rights. YOU AGREE THAT YOU, AND
+NOT ORACLE, ARE FULLY RESPONSIBLE FOR YOUR SUBMISSIONS AND THAT
+YOU, AND NOT ORACLE, ARE LIABLE FOR ANY AND ALL CLAIMS ARISING OUT
+OF THEM.</p>
+<div class="tag">g.</div>
+<p>You agree that you will not Share any Submission that: (a) is
+binary executable code; (b) is false or misleading; (c) is
+defamatory, derogatory, degrading or harassing of another or
+constitutes a personal attack; (d) invades another's privacy or
+includes another's confidential, sensitive or personal information;
+(e) promotes bigotry, racism, hatred or harm against any group or
+individual; (f) is obscene or not in good taste; (g) violates or
+infringes or promotes the violation or infringement of another's
+rights, including intellectual property rights; (h) you do not have
+the right and authority to Share and grant the necessary rights and
+licenses for; (i) violates or promotes the violation of any
+applicable laws or regulations; (j) contains a solicitation of
+funds, goods or services, or promotes or advertises goods or
+services; or (k) contains any viruses, Trojan horses, or other
+components designed to limit or harm the functionality of a
+computer.</p>
+<div class="tag">h.</div>
+<p>Submissions May Be Covered By Other Agreements. Your Submissions
+may be covered under Other Agreements. With respect to Your
+obligations regarding such Submissions, to the extent there is a
+conflict, the Other Agreements take precedence over these Terms,
+and you agree to be bound accordingly, which may require that you
+do not post certain Submissions at certain locations on the
+Site.</p>
+<div class="tag">i.</div>
+<p>Relation to Other Java Development Organizations. If a JSR
+designates this Site to be used by participants in that JSR then,
+in addition to any rights and licenses granted as a result of
+participation in that JSR, all Submissions by the participants will
+be deemed to be "contributions" to the applicable JSR under the
+Java Specification Participation Agreement, the Oracle Contributor
+Agreement, or other similar terms.</p>
+<div class="tag">j.</div>
+<p>Oracle does not want to receive confidential information from
+you through or in connection with the Site. Notwithstanding
+anything that you may note or state in connection with your
+Submissions it shall not be considered confidential information and
+shall be received and treated by Oracle on a non-confidential and
+unrestricted basis. You agree that, provided Oracle is otherwise in
+compliance with the terms of this section, Oracle shall have no
+liability for any third party use or misuse of your
+Submissions.</p>
+<div class="tag">k.</div>
+<p>Moral Rights. You agree that with respect to any "moral" or
+equivalent rights (including, without limitation, rights of
+attribution, integrity, disclosure, and withdrawal) You hereby: (i)
+assign such rights to Oracle, (ii) waive such rights and (iii)
+agree never to assert such rights or to institute or maintain any
+action against Oracle or Users relative to any such rights in Your
+Submissions. To the extent that such rights cannot be assigned or
+waived by operation of law, You grant to Oracle, a royalty-free,
+perpetual, irrevocable and worldwide license to fully exercise all
+such rights akin to ownership, with rights to sublicense through
+multiple levels of sublicensees and You further consent to Oracle's
+use sufficient to allow Oracle to exercise the rights granted
+herein.</p>
+<h2>5. MISCELLANEOUS.</h2>
+<div class="tag">a.</div>
+<p>Security, Passwords and Means of Accessing the Site and
+Materials. You agree not to access or use the Site in any manner
+that could damage, disable, overburden, or impair any Oracle
+accounts, computer systems or networks. You agree not to attempt to
+gain unauthorized access to any parts of the Site or any Oracle
+accounts, computer systems or networks. You agree not to interfere
+or attempt to interfere with the proper working of the Site or any
+Oracle accounts, computer systems or networks. You agree not to use
+any robot, spider, scraper or other automated means to access the
+Site or any Oracle accounts, computer systems or networks without
+Oracle's express written permission. However, you are expressly
+permitted to crawl the Site via a standalone automatic process,
+such as a spider, solely for the purpose of constructing a search
+index of the Site. You are also expressly permitted to access the
+Site via standalone automatic processes for the purposes of
+downloading source code, querying the bug database, and other such
+read-only operations solely as may be necessary in the normal
+course of development in connection with authorized use of the
+code. These two exceptions are granted only so long as such
+activities are not so frequent or time-consuming as to impact other
+users of the Site, as determined by Oracle.</p>
+<div class="tag">b.</div>
+<p>Access to and use of password protected or secure areas of the
+Site is restricted to authorized users only. You agree not to share
+your password(s), account information, or access to the Site. You
+are responsible for maintaining the confidentiality of password(s)
+and account information, and you are responsible for all activities
+that occur under your password(s) or account(s) or as a result of
+your access to the Site. You agree to notify Oracle immediately of
+any unauthorized use of your password(s) or account(s).</p>
+<div class="tag">c.</div>
+<p>Use at Your Own Risk. You understand that Oracle may or may not
+pre-screen Materials, and You agree to assume all risks in Using
+them. These risks include, but are not limited to, errors, viruses,
+worms, time-limited software that expires without notice,
+defamatory or offensive content, and the possibility that the
+Materials infringe or misappropriate the intellectual property
+rights of others. You agree to assume all such risks. ANY MATERIALS
+ACCESSED, DOWNLOADED OR OTHERWISE OBTAINED ON OR THROUGH THE USE OF
+THE SITE IS USED AT YOUR OWN DISCRETION AND RISK. ORACLE SHALL HAVE
+NO RESPONSIBILITY FOR ANY DAMAGE TO YOUR COMPUTER SYSTEM OR LOSS OF
+DATA THAT RESULTS FROM THE DOWNLOAD OR USE OF MATERIALS. If Oracle
+becomes aware of Submissions that violate these Terms or that
+Oracle believes to be obscene, lewd, lascivious, excessively
+violent, harassing, or otherwise objectionable, Oracle may act in
+good faith to restrict access to or availability of the applicable
+Material. If You notice that any other User's Submissions appear to
+violate these Terms, or if any other User makes You feel harassed
+or unsafe, You agree to contact us immediately.</p>
+<div class="tag">d.</div>
+<p>Don't Blame the Messenger. You understand that Materials may
+contain the opinions of others and You agree not to hold Oracle
+responsible for such opinions.</p>
+<div class="tag">e.</div>
+<p>Copyright Infringement. We are committed to respecting others'
+intellectual property rights, and we ask our Users to do the same.
+If You believe that Your work has been copied in a way that
+constitutes copyright infringement on our Site, please contact
+Oracle's copyright agent as described in our copyright agent
+website located at <a href="http://www.oracle.com/us/legal/copyright/index.html">http://www.oracle.com/us/legal/copyright/index.html</a></p>
+<div class="tag">f.</div>
+<p>Management of Materials and Access. You agree that Oracle has
+sole discretion in deciding whether to accept and post Materials,
+and that Oracle may delete Materials for any reason (including no
+reason) whatsoever. You understand that access to the Site may be
+limited for technical reasons, that outages may occur, and that
+Oracle has no obligation to store or back up any Materials. You
+agree that Oracle has the right to restrict or terminate, in its
+sole discretion, access to the Site for any reason, including its
+belief that a User has violated these Terms.</p>
+<div class="tag">g.</div>
+<p>Privacy. You consent to the collection, processing and storage
+by Oracle of any personal information provided by You in accordance
+with the terms of Oracle's Privacy Policy, which is available at
+<a href="http://www.oracle.com/privacy">http://www.oracle.com/privacy</a>
+and incorporated into these Terms by reference. You agree to comply
+with all applicable laws and regulations, and the terms of Oracle's
+Privacy Policy, with respect to any Use by You of any personal
+information in connection with this Site. Notwithstanding anything
+to the contrary, if You choose to participate in an open source or
+community source process on this Site - whether by contributing
+code, participating in mailing lists, signing a contributor
+agreement or sending an e-mail - Your participation is public and
+Your privacy cannot be protected to the extent that You provide
+personal information such as Your e-mail address, username or full
+name. To the extent that You contribute code, information, articles
+or other material to this Site containing personal information,
+Oracle cannot protect the privacy of such personal information and
+such material may be provided to others under the Terms,
+contributor agreement and/or applicable licenses.</p>
+<div class="tag">h.</div>
+<p>Reservation of Rights. The Site and Materials provided on or
+through the Site are the intellectual property and copyrighted
+works of Oracle or a third party provider. All rights, title and
+interest not expressly granted with respect to the Site and
+Materials provided on or through the Site are reserved. All
+Materials are provided on an "As Is" and "As Available" basis, and
+Oracle reserves the right to terminate the access to Materials
+granted to you in these Terms at any time.</p>
+<div class="tag">i.</div>
+<p>No Unlawful or Prohibited Use. You agree not to use the Site or
+Materials provided on or through the Site for any purpose that is
+unlawful or prohibited by these Terms of Use, or the rules,
+guidelines or terms of use posted for a specific area of the Site
+or Materials provided on or through the Site.</p>
+<div class="tag">j.</div>
+<p>Indemnity. You agree to indemnify and hold harmless Oracle,
+their officers, directors, employees and agents from and against
+any and all claims, liabilities, damages, losses or expenses,
+including reasonable attorneys' fees and costs, due to or arising
+out of Submissions that you share on the Site, your violation of
+the Terms of Use or any additional rules, guidelines or terms of
+use posted for a specific area of the Site or Materials provided on
+or through the Site, or your violation or infringement of any third
+party rights.</p>
+<div class="tag">k.</div>
+<p>Monitoring. Oracle has no obligation to monitor the Site or
+screen Submissions that are Shared on or through the Site. However,
+Oracle reserves the right to review the Site and Submissions and to
+monitor all use of and activity on the Site, and to remove or
+choose not to make available on or through the Site any Materials
+at its sole discretion.</p>
+<div class="tag">l.</div>
+<p>Termination of Use. Oracle may, in its sole discretion, at any
+time discontinue providing or limit access to the Site, any areas
+of the Site or Materials provided on or through the Site. You agree
+that Oracle may, in its sole discretion, at any time, terminate or
+limit your access to or use of the Site. Oracle will terminate or
+limit your access to or use of the Site if, under appropriate
+circumstances, you are determined to be a repeat infringer of third
+party copyright rights. You agree that Oracle shall not be liable
+to you or any third-party for any termination or limitation of your
+access to or use of the Site.</p>
+<div class="tag">m.</div>
+<p>Third Party Web Sites, Content, Products and Services. The Site
+provides links to Web sites and access to content, products and
+services of third parties, including users, advertisers, affiliates
+and sponsors of the Site. Oracle is not responsible for third party
+content provided on or through the Site and you bear all risks
+associated with the access and use of such Web sites and third
+party content, products and services.</p>
+<div class="tag">n.</div>
+<p>Disclaimer. EXCEPT WHERE EXPRESSLY PROVIDED OTHERWISE, THE SITE,
+AND ALL MATERIALS PROVIDED ON OR THROUGH THE SITE, ARE PROVIDED ON
+AN "AS IS" AND "AS AVAILABLE" BASIS. ORACLE EXPRESSLY DISCLAIMS ALL
+WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING, BUT
+NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT WITH RESPECT TO THE
+SITE AND ALL MATERIALS PROVIDED ON OR THROUGH THE SITE. ORACLE
+MAKES NO WARRANTY THAT: (A) THE SITE OR MATERIALS WILL MEET YOUR
+REQUIREMENTS; (B) THE SITE WILL BE AVAILABLE ON AN UNINTERRUPTED,
+TIMELY, SECURE, OR ERROR-FREE BASIS; (C) THE RESULTS THAT MAY BE
+OBTAINED FROM THE USE OF THE SITE OR ANY MATERIALS PROVIDED ON OR
+THROUGH THE SITE WILL BE ACCURATE OR RELIABLE; OR (D) THE QUALITY
+OF ANY MATERIALS PURCHASED OR OBTAINED BY YOU ON OR THROUGH THE
+SITE WILL MEET YOUR EXPECTATIONS.</p>
+<div class="tag">o.</div>
+<p>Limitation of Liability. TO THE FULLEST EXTENT PERMITTED BY LAW,
+ORACLE IS NOT LIABLE FOR ANY DIRECT, INDIRECT, PUNITIVE, SPECIAL,
+INCIDENTAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES (INCLUDING, WITHOUT
+LIMITATION, LOSS OF BUSINESS, REVENUE, PROFITS, GOODWILL, USE,
+DATA, ELECTRONICALLY TRANSMITTED ORDERS, OR OTHER ECONOMIC
+ADVANTAGE) ARISING OUT OF OR IN CONNECTION WITH THE SITE OR
+MATERIALS, EVEN IF ORACLE HAS PREVIOUSLY BEEN ADVISED OF, OR
+REASONABLY COULD HAVE FORESEEN, THE POSSIBILITY OF SUCH DAMAGES,
+HOWEVER THEY ARISE, WHETHER IN BREACH OF CONTRACT OR IN TORT
+(INCLUDING NEGLIGENCE OR GROSS NEGLIGENCE). TO THE EXTENT THAT ANY
+JURISDICTION DOES NOT ALLOW THE EXCLUSION OR LIMITATION OF DIRECT,
+INCIDENTAL OR CONSEQUENTIAL DAMAGES, PORTIONS OF THE ABOVE
+LIMITATION OR EXCLUSION MAY NOT APPLY. YOU HAVE SOLE RESPONSIBILITY
+FOR ADEQUATE PROTECTION AND BACKUP OF DATA AND/OR EQUIPMENT USED IN
+CONNECTION WITH THE SITE AND WILL NOT MAKE A CLAIM AGAINST ORACLE
+FOR LOST DATA, SERVICE INTERRUPTIONS, SYSTEM FAILURES, INACCURATE
+OUTPUT, WORK DELAYS OR LOST PROFITS IN CONNECTION WITH THE SITE OR
+MATERIALS. YOU AGREE TO HOLD ORACLE HARMLESS FROM, AND YOU COVENANT
+NOT TO SUE ORACLE, FOR ANY CLAIMS IN CONNECTION WITH THE SITE OR
+ANY MATERIALS, INCLUDING THIRD PARTY MATERIALS AND SUBMISSIONS.</p>
+<div class="tag">p.</div>
+<p>SOME JURISDICTIONS DO NOT ALLOW THE DISCLAIMER OR EXCLUSION OF
+CERTAIN WARRANTIES OR THE DISCLAIMER, EXCLUSION OR LIMITATION OF
+CERTAIN LIABILITIES. TO THE EXTENT THAT THEY ARE HELD TO BE LEGALLY
+INVALID, DISCLAIMERS, EXCLUSIONS AND LIMITATIONS SET FORTH IN THESE
+TERMS OF USE DO NOT APPLY AND ALL OTHER TERMS SHALL REMAIN IN FULL
+FORCE AND EFFECT.</p>
+<div class="tag">q.</div>
+<p>Changes. ORACLE RESERVES THE RIGHT TO MAKE CHANGES OR UPDATES
+TO, AND MONITOR THE USE OF, THE SITE AND MATERIALS PROVIDED ON OR
+THROUGH THE SITE AT ANY TIME WITHOUT NOTICE. Oracle encourages You
+to review the Terms periodically before using the Site or
+Materials. The most current version of the Terms can be viewed by
+clicking on the "Terms of Use" link at the bottom of any page on
+the Site. By continuing to Use the Site or Materials after the
+posting of any changes to the Terms, You agree to be bound by such
+changes. You are also required to comply with all applicable laws
+in connection with Your access to and Use of the Site and
+Materials, and such further limitations as may be set forth in any
+subsequent notice from Oracle. As a condition of Your access and
+Use of the Site and Materials, you warrant that You will not use
+the Site or Materials for any purpose that is unlawful or
+prohibited by the Terms.</p>
+<div class="tag">r.</div>
+<p>Note About Minors. Minors are not eligible to use the Site, and
+we ask that they do not submit any information to us.</p>
+<div class="tag">s.</div>
+<p>Export Restrictions/Legal Compliance. You may not access,
+download, use or export the Site, or the Materials provided on or
+through the Site, in violation of U.S. export laws or regulations,
+or in violation of any other applicable laws or regulations. You
+agree to comply with all export laws and restrictions and
+regulations of any United States or foreign agency or authority,
+and not to directly or indirectly provide or otherwise make
+available the services and products of Oracle in violation of any
+such restrictions, laws or regulations, or without all necessary
+approvals, including, without limitation, for the development,
+design, manufacture or production of nuclear, chemical or
+biological weapons of mass destruction and of missile technology.
+As applicable, you shall obtain and bear all expenses relating to
+any necessary licenses and/or exemptions with respect to your own
+use of the services of Oracle outside the U.S. Neither the services
+of Oracle nor the underlying information or technology may be
+downloaded or otherwise provided or made available, either directly
+or indirectly, (a) into Cuba, Iran, North Korea, Sudan, Syria or
+any other country subject to U.S. trade sanctions, to individuals
+or entities controlled by such countries, or to nationals or
+residents of such countries other than nationals who are lawfully
+admitted permanent residents of countries not subject to such
+sanctions; or (b) to anyone on the U.S. Treasury Department's list
+of Specially Designated Nationals and Blocked Persons or the U.S.
+Commerce Department's Table of Denial Orders. By agreeing to these
+Terms of Use, you agree to the foregoing and represent and warrant
+that you are not located in, under the control of, or a national or
+resident of any such country or on any such list.</p>
+<div class="tag">t.</div>
+<p>Copyright/Trademark</p>
+<p>Copyright &#169; 1995, 2012, Oracle and/or its affiliates. All
+rights reserved.</p>
+<p>Oracle and Java are registered trademarks of Oracle and/or its
+affiliates. Other names appearing on the Site may be trademarks of
+their respective owners.</p>
+<p>For information on use of Oracle trademarks, go here: <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">
+http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html</a>.</p>
+<div class="tag">u.</div>
+<p>Applicable Laws. All matters relating to your access to, and use
+of, the Site and Materials provided on or through or uploaded to
+the Site shall be governed by U.S. federal law or the laws of the
+State of California. Any legal action or proceeding relating to
+your access to, or use of, the Site or Materials shall be
+instituted in a state or federal court in San Francisco or Santa
+Clara County, California. You and Oracle agree to submit to the
+jurisdiction of, and agree that venue is proper in, these courts in
+any such legal action or proceeding.</p>
+<div class="tag">v.</div>
+<p>General. These Terms constitute the entire agreement between You
+and Oracle regarding their subject matter, and supersede any prior
+versions. No modification to the Terms will be binding, unless
+authorized by Oracle in writing or as provided in Section 5.q
+above. Any express waiver or failure to exercise any right under
+the Terms will not create a continuing waiver or any expectation of
+non-enforcement. If any provision of the Terms is held invalid by
+any competent court, governmental entity or arbitrator, such
+provision will be replaced with an enforceable provision that
+accomplishes the original business purpose, and the other
+provisions of the Terms will remain in full force and effect.
+Paragraph headings and captions are for convenience only and are
+not be to be considered in determining the meaning or effect of
+these Terms. Rights and obligations under these Terms other than
+provisions that authorize You to Use or access the Site or
+Materials will remain in effect after termination or expiration of
+this agreement between us. You agree that no joint venture,
+partnership, employment, or agency relationship exists between You
+and Oracle as a result of these Terms or Your access to or Use of
+the Site and Materials.</p>
+<div class="tag">w.</div>
+<p>Contact Information. If you have any questions regarding these
+Terms of Use, please contact Oracle at trademar_us@oracle.com. If
+you have any other questions, contact information is available at
+the Contact Oracle page on the Site.</p>
+<p class="top"><i>Date: 6 March 2012</i></p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

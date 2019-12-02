@@ -1,0 +1,354 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 249: OCSP Stapling for TLS</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 249: OCSP Stapling for TLS</h1><table class="head"><tr><td>Owner</td><td>Jamil Nimeh</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>security-libs&#8201;/&#8201;javax.net.ssl</td></tr><tr><td>Discussion</td><td>security dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Brian Goetz, Sean Mullan</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/06/09 07:30</td></tr><tr><td>Updated</td><td>2017/05/17 00:45</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046321">8046321</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Implement OCSP stapling via the TLS Certificate Status Request extension
+(section 8 of <a href="http://tools.ietf.org/html/rfc6066">RFC 6066</a>) and the Multiple Certificate Status Request
+Extension (<a href="http://tools.ietf.org/html/rfc6961">RFC 6961</a>).</p>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>The implementation, for both client and server modes, must interoperate
+successfully with at least two third-party TLS implementations that
+support OCSP stapling.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Checking the revocation status of an X.509 certificate is a critical part
+of valid certificate-based authentication.  However, certificate status
+checking using OCSP typically involves a network request for each
+certificate being checked.  Because of the additional network requests,
+enabling OCSP checking for TLS on the client side can have a significant
+impact on performance.</p>
+<p>OCSP stapling allows the presenter of a certificate, rather than the
+issuing Certificate Authority (CA), to bear the resource cost of
+providing OCSP responses.  In a TLS context, it is the responsibility of
+the TLS server to request the OCSP response and send it to clients during
+the SSL/TLS handshake.  This also allows the server to cache OCSP
+responses and supply them to all clients that are connecting to it.  This
+significantly reduces the load on the OCSP responder since the response
+can be cached and periodically refreshed by the server rather than by
+each client.</p>
+<p>Currently, certificate revocation-status checking can be enabled on the
+client side.  This classical approach, however, faces several challenges:</p>
+<h3 id="Performance">Performance</h3>
+<p>If a client obtains the revocation status directly from the OCSP
+responder then, for each client making a connection to a specific server,
+the OCSP responder has to respond with a particular certificate status.
+For a high-traffic web site, the OCSP responder is likely to be the
+performance bottleneck.  Also, revocation-status checking involves
+several round-trips.  There is a significant performance impact if OCSP
+checking is enabled on the client side.</p>
+<h3 id="Security">Security</h3>
+<p>Adam Langley in <a href="https://www.imperialviolet.org/2014/04/19/revchecking.html">one of his blogs</a> talks about the security challenges
+that client applications face with traditional OCSP.  He describes the
+"soft-fail" behavior implemented by most browsers, a policy where a
+failure to contact an OCSP responder does not result in a failed
+revocation check.  This allows an attacker to cause the client to bypass
+revocation checking, either by intercepting or blocking the OCSP request
+from the client, or by mounting a denial-of-service attack against the
+responder itself.</p>
+<p>OCSP stapling by itself does not totally mitigate this challenge, but it
+removes the need for OCSP checks between the client and the responder.
+The server must still be able to obtain its own OCSP response and place
+it in-band as part of the TLS handshake.</p>
+<p>Currently in draft form in IETF is a proposal for a
+<a href="https://tools.ietf.org/html/draft-hallambaker-tlsfeature-05">"must-staple" certificate extension</a> which would require the
+attachment of an OCSP response during the TLS handshake.  This would,
+essentially, override any soft-fail behavior that may be employed by a
+client.  This proposed extension is beyond the scope of this JEP, but if
+this extension proceeds beyond a draft it could be a useful addition in
+the future.</p>
+<p>Finally, Java clients may not have the same needs for soft-fail defaults
+that browsers do.  In some cases clients may prefer a hard-fail approach,
+or opt to get user feedback through a dialog box in the event of a
+failure to receive an OCSP response.  As examples, the default soft-fail
+approach for both the Java Plugin and Java Web Start is to display a
+warning dialog box when loading signed applets.</p>
+<h3 id="Potential-privacy-impairment-of-OCSP-requests">Potential privacy impairment of OCSP requests</h3>
+<p>In normal OCSP scenarios, when a client sends an OCSP request, it exposes
+both the server (via the server certificate entry) and itself (via the IP
+address at least) to the OCSP responder, and hence can disclose client
+behaviors.  OCSP stapling addresses this issue since the client is no
+longer making the request to the OCSP responder.</p>
+<h3 id="Limitations-of-the-&quot;captive-portal&quot;-technique">Limitations of the "captive portal" technique</h3>
+<p>The "captive portal" technique forces an HTTP client on a network to
+download a special web page, usually for authentication purposes, before
+using the network normally.  In such environments, clients are not able
+to check the OCSP status of the SSL/TLS certificate since all network
+access is blocked until authentication is successful.</p>
+<h3 id="Summary">Summary</h3>
+<p>The above issues can be partially mitigated by using CRLs, or better
+addressed via OCSP stapling.</p>
+<p>In summary, OCSP stapling can help improve the performance of TLS by
+reducing the performance bottleneck of the OCSP responder.  It can also
+prevent the potential privacy impairment of the OCSP request, and avoid
+the limitation of the "captive portal" technique.</p>
+<h2 id="Description">Description</h2>
+<p>This feature will be implemented in the <code>SunJSSE</code> provider
+implementation.  Minor API changes are planned, with the goal to keep these changes as small as possible.  The implementation will choose reasonable defaults for OCSP specific parameters, and will provide configuration of these defaults via the following system properties:</p>
+<ul>
+<li><code>jdk.tls.client.enableStatusRequestExtension</code>: This property is true by default.  This enables the <code>status_request</code> and <code>status_request_v2</code> extensions, and enables processing for <code>CertificateStatus</code> messages sent by the server.</li>
+<li><code>jdk.tls.server.enableStatusRequestExtension</code>: This property is false by default.  This enables the server-side support for OCSP stapling.</li>
+<li><code>jdk.tls.stapling.responseTimeout</code>: This property controls the maximum amount of time the server will use to obtain OCSP responses, whether from the cache or by contacting an OCSP responder.  Those responses that have been received will be sent in a CertificateStatus message, if applicable based on the type of stapling being done.  This property takes an integer value in milliseconds, with a default value of 5000.</li>
+<li><code>jdk.tls.stapling.cacheSize</code>: This property controls the maximum cache size in entries.  The default value is 256 objects.  If the cache is full and a new response needs to be cached, the least-recently-used cache entry will be replaced with the new one.  A value of zero or less for this property means that the cache will have no upper bound on the number of responses it may contain.</li>
+<li><code>jdk.tls.stapling.cacheLifetime</code>: This property controls the maximum life of a cached response.  The value is specified in seconds, and has a default value of 3600 (1 hour).  It is possible for responses to have shorter lifetimes than the value set with this property if the response has a nextUpdate field that expires sooner than the cache lifetime.  A value of zero or less for this property disables the cache lifetime.  If an object has no nextUpdate and cache lifetimes have been disabled, then the response will not be cached.</li>
+<li><code>jdk.tls.stapling.responderURI</code>: This property allows the administrator to set a default URI in the event that certificates used for TLS do not have the Authority Info Access extension.  It will not override the AIA extension value unless the jdk.tls.stapling.responderOverride property is set (see below).  This property is not set by default.</li>
+<li><code>jdk.tls.stapling.responderOverride</code>: This property allows a URI provided through the jdk.tls.stapling.responderURI property to override any AIA extension value.  It is false by default.</li>
+<li><code>jdk.tls.stapling.ignoreExtensions</code>: This property disables the forwarding of OCSP extensions specified in the <code>status_request</code> or <code>status_request_v2</code> TLS extensions.  It is false by default.</li>
+</ul>
+<p>Client and server-side Java implementations will be capable of supporting
+the <code>status_request</code> and <code>status_request_v2</code> TLS hello extensions.  The
+<code>status_request</code> extension is described in RFC 6066.  Supporting servers
+would include a single OCSP response for the certificate used to identify
+the server in a new TLS handshake message (<code>CertificateStatus</code>).  The
+<code>status_request_v2</code> extension is described in RFC 6961.  The extension
+allows the client to request the server to provide a single OCSP response
+in the <code>CertificateStatus</code> message (similar to <code>status_request</code>) or
+request that the server fetch an OCSP response for each certificate in
+the list of certificates provided in the Certificate message (referenced
+below as the <code>ocsp_multi</code> type).</p>
+<h3 id="Client-side">Client side</h3>
+<ul>
+<li>
+<p>OCSP Stapling will be enabled by default and can be disabled by
+setting a system property.  This may be done
+through the <code>jdk.tls.client.enableStatusRequestExtension</code> property.</p>
+</li>
+<li>
+<p>Clients will, by default, assert both the <code>status_request</code> and
+<code>status_request_v2</code> extensions in the <code>ClientHello</code> handshake message.
+For the <code>status_request_v2</code> extension, both <code>ocsp</code> and <code>ocsp_multi</code>
+types will be asserted.</p>
+</li>
+<li>
+<p>Creation of the hello extensions will require the creation of new
+classes in <code>sun.security.ssl</code>, similar to how <code>ServerNameIndicator</code>,
+<code>RenegotiationInfoExtension</code>, and other extensions were implemented.</p>
+</li>
+<li>
+<p>In order to employ the new extensions the <code>ClientHello</code> class will
+have additional methods defined that add these extensions.  These
+methods will be invoked from <code>ClientHandshaker.clientHello()</code>.</p>
+</li>
+<li>
+<p>A new handshake message class in the <code>HandshakeMessage</code> class will
+need to be created to handle encoding and parsing of the
+<code>CertificateStatus</code> message.</p>
+</li>
+<li>
+<p>A public API change is necessary in <code>ExtendedSSLSession</code> which allows
+callers to obtain the OCSP responses received during the handshake
+process.  The new method is:</p>
+<pre><code>public List&lt;byte[]&gt; getStatusResponses();</code></pre>
+</li>
+</ul>
+<h3 id="Server-side">Server side</h3>
+<ul>
+<li>
+<p>The server-side implementation will have OCSP stapling disabled by default, but may be
+enabled through the <code>jdk.tls.server.enableStatusRequestExtension</code> system property.
+Servers with OCSP stapling support disabled will ignore the <code>status_request</code> and
+<code>status_request_v2</code> extensions.</p>
+</li>
+<li>
+<p>Server-side population of either <code>status_request</code> or
+<code>status_request_v2</code> information in the <code>ServerHello</code> message will
+depend upon how the client asserted these extensions.  In general the
+same request extension in the <code>ClientHello</code> will be returned in the
+<code>ServerHello</code>, with the following exceptions:</p>
+<ul>
+<li>
+<p>Servers receiving both <code>status_request</code> and <code>status_request_v2</code>
+extensions in the <code>ClientHello</code> will assert <code>status_request_v2</code>
+in the <code>ServerHello</code>.</p>
+</li>
+<li>
+<p>Servers receiving <code>status_request_v2</code> extensions in the
+<code>ClientHello</code> with both <code>ocsp</code> and <code>ocsp_multi</code> types will assert
+<code>status_request_v2</code> in the <code>ServerHello</code> mesage and <code>ocsp_multi</code> in
+the <code>CertificateStatus</code> message.</p>
+</li>
+<li>
+<p>In the case where <code>status_request_v2</code>/<code>ocsp_multi</code> is selected,
+different threads will be used to fetch each response.  This will be
+managed by a <code>StatusResponseManager</code> which will handle both fetching
+and caching of OCSP responses.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>OCSP responses should be cached whenever possible.  Clients that do
+not specify nonces in their <code>status_request[_v2]</code> extension may
+receive a cached response.</p>
+<ul>
+<li>
+<p>Cached responses should not be used if current time is later than
+the <code>nextUpdate</code> field.</p>
+</li>
+<li>
+<p>Cached responses with no <code>nextUpdate</code> field may be kept in the
+cache for a pre-determined lifetime (see Tunables below).</p>
+</li>
+<li>
+<p>Servers receiving <code>status_requests</code> with the nonce extension must
+not return cached responses in the <code>CertificateStatus</code> message.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Server-side stapling support will be tunable via the system properties described
+above.</p>
+</li>
+<li>
+<p>The <code>StatusResponseManager</code> is created as part of <code>SSLContext</code> instantiation.  The
+property values are sampled during <code>SSLContext</code> construction.  These property values
+can be changed and when a new <code>SSLContext</code> object is created, the StatusResponseManager
+will have those new values.</p>
+</li>
+</ul>
+<h3 id="Stapling-and-X509ExtendedTrustManagers">Stapling and X509ExtendedTrustManagers</h3>
+<p>Developers have some flexibility in terms of how to handle the responses
+provided through OCSP stapling.  This JEP makes no changes to the current
+methodologies involved in certificate path checking and revocation
+checking.  This means that it is possible to have both client and server
+assert the <code>status_request</code> extensions, obtain OCSP responses through the
+<code>CertificateStatus</code> message, and allow the user flexibility in how to
+react to revocation information, or the lack thereof.</p>
+<p>As with previous JDK releases, if no <code>PKIXBuilderParameters</code> is provided
+by the caller, revocation checking is disabled.  If the caller creates a
+<code>PKIXBuilderParameters</code> and uses the <code>setRevocationEnabled</code> method to
+enable revocation checking, then stapling OCSP responses will be
+evaluated.  This is also the case if the
+<code>com.sun.net.ssl.checkRevocation</code> property is set to <code>true</code>.  The table
+below shows a few different approaches as examples (assume OCSP stapling
+is enabled both in the client and server):</p>
+<table>
+  <thead>
+    <tr>
+      <th>PKIXBuilderParameters</th>
+      <th>checkRevocation Property</th>
+      <th>PKIXRevocationChecker</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>default</td>
+      <td>default</td>
+      <td>default</td>
+      <td>Revocation checking is disabled</td>
+    </tr>
+    <tr>
+      <td>default</td>
+      <td>true</td>
+      <td>default</td>
+      <td>Revocation checking enabled*, SOFT_FAIL set</td>
+    </tr>
+    <tr>
+      <td>instantiated</td>
+      <td>default</td>
+      <td>default</td>
+      <td>Revocation checking enabled*, SOFT_FAIL set</td>
+    </tr>
+    <tr>
+      <td>instantiated</td>
+      <td>default</td>
+      <td>instantiated, added to PKIXBuilderParameters</td>
+      <td>Revocation checking enabled*, hard fail behavior.</td>
+    </tr>
+  </tbody>
+</table>
+<p>* Client-side OCSP fallback will occur only if the ocsp.enable Security
+property has been set to true</p>
+<p>Further details about the configuration of the <code>PKIXBuilderParameters</code>
+and <code>PKIXRevocationChecker</code> objects and their relationship to JSSE can be
+found in both the <em>Java PKI API Programmer's Guide</em> and the <em>JSSE
+Reference Guide</em>.</p>
+<h2 id="Testing">Testing</h2>
+<ol>
+<li>
+<p>The OCSP Stapling implementation must not break backward
+compatibility.</p>
+</li>
+<li>
+<p>The client implementation must be able to send RFC 6066-style
+<code>status_request</code> <code>ClientHello</code> extensions to supporting servers.  It
+must be able to properly parse the same hello extension in the
+<code>ServerHello</code> handshake message, and properly parse the subsequent
+<code>CertificateStatus</code> handshake-message contents.</p>
+</li>
+<li>
+<p>The client implementation must be able to send RFC 6961-style
+<code>status_request_v2</code> <code>ClientHello</code> extensions to supporting servers.
+It must be able to assert <code>ocsp</code> or <code>ocsp_multi</code> types (or both) in
+the hello extension.  It must be able to properly parse the same
+hello extensions in the <code>ServerHello</code> handshake message, and properly
+parse the subsequent <code>CertificateStatus</code> handshake-message contents.</p>
+</li>
+<li>
+<p>The server implementation must be able to receive <code>status_request</code>
+and <code>status_request_v2</code> extensions in the <code>ClientHello</code> handshake
+message and query the appropriate OCSP responder.  It must be able to
+place OCSP responses in a <code>CertificateStatus</code> TLS handshake message
+to be returned to the client.</p>
+</li>
+<li>
+<p>The server implementation must be capable of caching valid OCSP
+responses for reuse with clients that do not make requests with nonce
+extensions in their <code>status_request[_v2]</code> hello extensions.</p>
+</li>
+<li>
+<p>The client must be able to interoperate with at least two different
+web servers capable of performing OCSP stapling (e.g. Apache 2.4+).</p>
+</li>
+<li>
+<p>The server must be able to interoperate with at least two different
+client implementations capable of asserting <code>status_request</code> or
+<code>status_request_v2</code>.  At this time, most major browsers (Firefox,
+Chrome, etc.) can generate the <code>status_request</code> hello extension, as
+can other tools such as OpenSSL's <code>s_client</code>.  For automated testing
+purposes, small applications could be created that link against NSS
+and OpenSSL libraries to establish TLS connections with OCSP
+stapling.</p>
+</li>
+</ol>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>The OCSP stapling feature will be enabled by default for java clients in JDK with this
+implementation.  However, there are potential interoperability issues
+with TLS servers that cannot accept the <code>status_request</code> or
+<code>status_request_v2</code> TLS extensions.  A system or security property has been
+defined to disable OCSP stapling if necessary.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

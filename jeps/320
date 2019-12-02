@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 320: Remove the Java EE and CORBA Modules</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 320: Remove the Java EE and CORBA Modules</h1><table class="head"><tr><td>Owner</td><td>Lance Andersen</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>11</td></tr><tr><td>Component</td><td>other-libs</td></tr><tr><td>Discussion</td><td>jdk dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Alex Buckley, Brian Goetz, Mark Reinhold</td></tr><tr><td>Created</td><td>2017/10/11 18:36</td></tr><tr><td>Updated</td><td>2019/05/23 17:37</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8189188">8189188</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Remove the Java EE and CORBA modules from the Java SE Platform and the JDK. These modules were <a href="//cr.openjdk.java.net/~iris/se/9/java-se-9-fr-spec/#APIs-proposed-for-removal">deprecated in Java SE 9</a> with the declared intent to remove them in a future release.</p>
+<h2 id="Motivation">Motivation</h2>
+<p><a href="https://jcp.org/en/jsr/detail?id=270">Java SE 6</a> included a full Web Services stack for the convenience of Java developers. The stack consisted of four technologies that were <a href="http://www.oracle.com/technetwork/articles/java/new1-4-142627.html">originally</a> <a href="http://www.oracle.com/technetwork/articles/java/j2ee-ws-140408.html">developed</a> for the Java EE Platform: <a href="https://jcp.org/en/jsr/detail?id=224">JAX-WS</a> (Java API for XML-Based Web Services), <a href="https://jcp.org/en/jsr/detail?id=222">JAXB</a> (Java Architecture for XML Binding), <a href="https://jcp.org/en/jsr/detail?id=925">JAF</a> (the JavaBeans Activation Framework), and <a href="https://jcp.org/en/jsr/detail?id=250">Common Annotations</a>. At the time of inclusion, the versions in Java SE were identical to the versions in Java EE, except for Java SE dropping a package in Common Annotations that concerned the Java EE security model. However, over time, the versions in Java EE evolved, which led to difficulties for the versions in Java SE:</p>
+<ul>
+<li>
+<p>The technologies gained features that were not relevant to Java SE. For example, Common Annotations added a package in Java EE 6 that concerned data sources in a Java EE container. This made it necessary to periodically snapshot and subset the Java EE versions, which was time consuming for JDK engineers and confusing for developers.</p>
+</li>
+<li>
+<p>The technologies were maintained by upstream projects on java.net and later on <a href="https://github.com/javaee">GitHub</a>. This made maintenance problematic due to having to sync the Java SE versions in OpenJDK repositories with the Java EE versions in upstream repositories.</p>
+</li>
+<li>
+<p>It was possible for developers to obtain standalone versions of the technologies from the upstream projects and deploy them via the <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/standards/index.html#standalone-technologies">Endorsed Standards Override Mechanism</a>. This longstanding mechanism allowed standalone versions to safely override the Java SE versions. Unfortunately, it was not widely used in practice, and developers instead used ad-hoc mechanisms to deploy standalone versions, such as prepending them to the JDK's bootstrap class path, or simply placing them on the class path and hoping that the resulting split packages would not cause problems.</p>
+</li>
+</ul>
+<p>Since standalone versions of the Java EE technologies are readily available from third-party sites, such as Maven Central, there is no need for the Java SE Platform or the JDK to include them.</p>
+<p>Another case of Java SE including technologies for developer convenience dates back to 1998. Under Ken Cavanaugh's distinguished leadership, Java SE <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/idl/corba.html">embraced</a> <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/idl/compatibility-CORBA.html">CORBA</a> by shipping the OMG CORBA API, an ORB implementation, a CosNaming implementation, the <code>idlj</code> compiler, and support for IDL and IIOP in the <code>rmic</code> compiler. However, over time, support for CORBA became problematic:</p>
+<ul>
+<li>
+<p>Since CORBA is an "Endorsed Standard" that evolves outside the Java Community Process, comments similar to those for Web Services apply to the maintenance of CORBA in the JDK and to the ability to safely override the JDK's CORBA implementation. There is no realistic prospect of synchronizing the ORB in the JDK with the ORBs in Java EE application servers.</p>
+</li>
+<li>
+<p>There is no significant interest in developing modern applications with CORBA in Java. Furthermore, Java EE 8 lists CORBA, RMI-IIOP, and JavaIDL as "Proposed Optional", indicating that required support for these technologies may be dropped in future.</p>
+</li>
+</ul>
+<p>Since the costs of maintaining CORBA support outweigh the benefits, there is no case for the Java SE Platform or the JDK to include it.</p>
+<p>Finally, Java SE has included a subset of <a href="https://jcp.org/en/jsr/detail?id=907">JTA</a> (Java Transaction API) since Java SE 1.3  and a subset of the  <a href="https://jcp.org/en/jsr/detail?id=95">J2EE Activity Service for Extended Transactions</a> (J2EE Activity Service) since Java SE 5.0.</p>
+<p>JTA consists of two packages that play different roles and deserve different treatment:</p>
+<ul>
+<li>
+<p>The <code>javax.transaction.xa</code> package supports XA transactions in JDBC. This "<a href="https://docs.oracle.com/javase/9/docs/api/javax/transaction/xa/package-summary.html">XA package</a>" is co-located with JDBC in the <code>java.sql</code> module in Java SE 9. Because the <code>java.sql</code> module is not upgradeable, it is not possible for a standalone version of JTA to override the Java SE version of the XA package, but this is generally acceptable to applications because the XA package has been stable for many years and the Java SE version is identical to the Java EE version. For ease of maintenance, the XA package in Java SE may be moved to a different non-upgradeable module in the future, but as an architectural matter it will remain in Java SE alongside JDBC for the long term, and is of no further interest to this JEP.</p>
+</li>
+<li>
+<p>The <code>javax.transaction</code> package defines a general transaction management API. The Java EE version of this package was always beyond the scope of Java SE and has evolved in ways that are not relevant to Java SE. For example, <a href="https://blogs.oracle.com/theaquarium/jta-12-its-not-your-grandfathers-transactions-anymore">JTA added types in Java EE 7 that concern CDI</a>. The subset of <code>javax.transaction</code> defined by Java SE supports interoperation with CORBA transaction services. This "<a href="https://docs.oracle.com/javase/9/docs/api/javax/transaction/package-summary.html">CORBA interop package</a>" exists in its own <code>java.transaction</code> module in Java SE 9. However, the Java SE version is generally not acceptable to applications that use CORBA transaction services, so they usually override it with the Java EE version.</p>
+</li>
+</ul>
+<p>The J2EE Activity Service defines a generic middleware API. It has not been updated since 2006 and is not part of the Java EE Platform. It is relevant to this JEP only because Java SE includes a subset of one of its packages, <code>javax.activity</code>, for interoperation with CORBA transaction services. This "<a href="https://docs.oracle.com/javase/9/docs/api/javax/activity/package-summary.html">activity package</a>" exists in the <code>java.corba</code> module in Java SE 9.</p>
+<p>Without CORBA support in the Java SE Platform or the JDK, there is no case for including the CORBA interop package from JTA or the activity package from the J2EE Activity Service.</p>
+<h2 id="Description">Description</h2>
+<p>In Java SE 9, the Java SE modules that contain Java EE and CORBA technologies are annotated as <a href="//openjdk.java.net/jeps/277">deprecated for removal</a>, indicating the intent to remove them in a future release:</p>
+<ul>
+<li><code>java.xml.ws</code> (JAX-WS, plus the related technologies <a href="https://jcp.org/en/jsr/detail?id=67">SAAJ</a> and <a href="https://jcp.org/en/jsr/detail?id=181">Web Services Metadata</a>)</li>
+<li><code>java.xml.bind</code> (JAXB)</li>
+<li><code>java.activation</code> (JAF)</li>
+<li><code>java.xml.ws.annotation</code> (Common Annotations)</li>
+<li><code>java.corba</code> (CORBA)</li>
+<li><code>java.transaction</code> (JTA)</li>
+</ul>
+<p>Related modules in Java SE 9 are also deprecated for removal:</p>
+<ul>
+<li><code>java.se.ee</code> (Aggregator module for the six modules above)</li>
+<li><code>jdk.xml.ws</code> (Tools for JAX-WS)</li>
+<li><code>jdk.xml.bind</code> (Tools for JAXB)</li>
+</ul>
+<p>Since deprecating modules for removal merely causes compile-time warnings, JDK 9 took a more robust step to prepare developers for the actual removal of these modules in a future release: <a href="//openjdk.java.net/jeps/261#EE-modules">The modules are not resolved in JDK 9 when code on the class path is compiled or run</a>. This allows developers on JDK 9 to deploy standalone versions of the Java EE and CORBA technologies on the class path, just like on JDK 8. Alternatively, developers on JDK 9 can use the <code>--add-modules</code> flag on the command line to resolve the modules in the JDK runtime image.</p>
+<p>This JEP will remove the nine modules listed above:</p>
+<ul>
+<li>Their source code will be deleted from the OpenJDK repository.</li>
+<li>Their classes will not exist in the JDK runtime image.</li>
+<li>Their tools will no longer be available:
+<ul>
+<li><code>wsgen</code> and <code>wsimport</code> (from <code>jdk.xml.ws</code>)</li>
+<li><code>schemagen</code> and <code>xjc</code> (from <code>jdk.xml.bind</code>)</li>
+<li><code>idlj</code>, <code>orbd</code>, <code>servertool</code>, and <code>tnamesrv</code> (from <code>java.corba</code>)</li>
+</ul>
+</li>
+<li>The JNDI <code>CosNaming</code> provider (from <code>java.corba</code>) will no longer be available.</li>
+<li>No command line flag will be capable of enabling them, as <code>--add-modules</code> does on JDK 9.</li>
+</ul>
+<p>The <code>rmic</code> compiler will be updated to remove the <code>-idl</code> and <code>-iiop</code> options. Consequently, <code>rmic</code> will no longer be able to generate IDL or IIOP stubs and tie classes.</p>
+<p>The <a href="http://docs.oracle.com/javase">JDK documentation</a> and man pages will be updated to remove any references to these modules and tools, and to indicate the <code>rmic</code> changes.</p>
+<h2 id="Testing">Testing</h2>
+<p>All JDK, JCK, and SQE tests that exercise the Java EE or CORBA APIs will be removed.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<h3 id="Java-EE-modules">Java EE modules</h3>
+<p>The risk of removing the Java EE modules is that applications will not compile or run if they rely on "out of the box" support in the JDK for Java EE APIs and tools. These applications will experience binary and source incompatibilities when migrating from JDK 6, 7, or 8, to JDK 9 or a later release. Generally speaking, these applications fall into one of two categories:</p>
+<ol>
+<li>
+<p>Standalone programs that manipulate Web Services and XML, outside of a Java EE application server.</p>
+</li>
+<li>
+<p>Applications that have no connection to Web Services or XML, but rely on individual classes in the Java EE APIs for general-purpose functionality. For example, some applications rely on JAXB not for XML binding, but rather, for the Base64 support offered by the class <code>javax.xml.bind.DatatypeConverter</code>. (Historically, this class was a better choice than the class <code>sun.misc.Base64{Encoder,Decoder}</code>, though better still is the class <code>java.util.Base64</code> that was introduced in Java SE 8.) As another example, some applications rely on the <code>@Generated</code> annotation whose type, <code>javax.annotation.Generated</code>, is co-located with JAX-WS in JDK 9. (Applications may choose instead to rely on the type <code>javax.annotation.processing.Generated</code> that was introduced in Java SE 9.).</p>
+</li>
+</ol>
+<p>Another risk of removing the Java EE modules is that applications which already migrated from JDK 6, 7, or 8, to JDK 9, will not start if they use the command line flag <code>--add-modules java.se.ee</code>, <code>--add-modules java.xml.bind</code>, etc.</p>
+<p>This proposal assumes that developers who wish to compile or run applications on the latest JDK can find and deploy alternate versions of the Java EE technologies. The Reference Implementations (RIs) of JAX-WS and JAXB are a good starting point because they are complete replacements for the <code>java.xml.ws</code> and <code>java.xml.bind</code> modules in JDK 9. The RIs are available as Maven artifacts: (note that they must be deployed on the class path)</p>
+<ul>
+<li><a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sun.xml.ws%22%20AND%20a%3A%22jaxws-ri%22">com.sun.xml.ws : jaxws-ri</a> (JAX-WS, plus SAAJ and Web Services Metadata)</li>
+<li><a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sun.xml.bind%22%20AND%20a%3A%22jaxb-ri%22">com.sun.xml.bind : jaxb-ri</a> (JAXB)</li>
+</ul>
+<p>The tools for JAX-WS and JAXB are also available as Maven artifacts:</p>
+<ul>
+<li><code>wsgen</code> and <code>wsimport</code>: <a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sun.xml.ws%22%20AND%20a%3A%22jaxws-tools%22">com.sun.xml.ws : jaxws-tools</a>, plus <a href="https://github.com/javaee/metro-jax-ws/tree/02d941b5fa7a258a041059df46116906c61f7e40/jaxws-ri/bundles/jaxws-ri/src/main/resources/bin">tool scripts</a></li>
+<li><code>schemagen</code> and <code>xjc</code>: <a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sun.xml.bind%22%20AND%20a%3A%22jaxb-jxc%22">com.sun.xml.bind : jaxb-jxc</a> and <a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sun.xml.bind%22%20AND%20a%3A%22jaxb-xjc%22">com.sun.xml.bind : jaxb-xjc</a>, plus <a href="https://github.com/javaee/jaxb-v2/tree/master/jaxb-ri/bundles/ri/src/main/resources/bin">tool scripts</a></li>
+</ul>
+<p>There are also Maven artifacts that contain just the APIs of the Java EE technologies:</p>
+<ul>
+<li><a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22javax.xml.ws%22%20AND%20a%3A%22jaxws-api%22">javax.xml.ws : jaxws-api</a> (JAX-WS, plus <a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22javax.xml.soap%22%20AND%20a%3A%22javax.xml.soap-api%22">javax.xml.soap : javax.xml.soap-api</a> for SAAJ and <a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22javax.xml%22%20AND%20a%3A%22webservices-api%22">javax.xml : webservices-api</a> for Web Services Metadata)</li>
+<li><a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22javax.xml.bind%22%20AND%20a%3A%22jaxb-api%22">javax.xml.bind : jaxb-api</a> (JAXB)</li>
+<li><a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22javax.activation%22%20AND%20a%3A%22javax.activation-api%22">javax.activation : javax.activation-api</a> (JAF)</li>
+<li><a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22javax.annotation%22%20AND%20a%3A%22javax.annotation-api%22">javax.annotation : javax.annotation-api</a> (Common Annotations)</li>
+</ul>
+<p>After this JEP is implemented these API JAR files may be deployed on the class path, just like on JDK 8 and 9. They may also be deployed on the module path so that <a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-7.html#jls-7.7">modular applications</a> can depend on them via the <code>requires</code> directive:</p>
+<ul>
+<li>
+<p>The API JAR files for JAX-WS, JAXB, and SAAJ are explicit modules called <code>java.xml.ws</code>, <code>java.xml.bind</code>, and <code>java.xml.soap</code>.</p>
+</li>
+<li>
+<p>The API JAR file for Web Services Metadata is an automatic module called <code>webservices.api</code>. (This name is derived from the JAR filename, as the JAR manifest has not been updated with an <code>Automatic-Module-Name</code> attribute.)</p>
+</li>
+<li>
+<p>The API JAR files for JAF and Common Annotations are automatic modules called <code>java.activation</code> and <code>java.annotation</code>. (These names are specified by the <code>Automatic-Module-Name</code> attribute in the JAR manifests.)</p>
+</li>
+</ul>
+<p>On JDK 9, all the modules mentioned in the Description (except for the <code>java.se.ee</code> aggregator) are <a href="//openjdk.java.net/jeps/261#Class-loaders">upgradeable</a>. This means that developers on JDK 9 who use <code>--add-modules java.xml.bind</code> etc have the choice of either relying on the Java EE modules in the JDK runtime image, or overriding them by deploying API JAR files on the <em>upgrade module path</em>. Note the involvement of the <em>upgrade module path</em> rather than the module path; deploying API JAR files on the module path on JDK 9 has no effect, even when <code>--add-modules java.xml.bind</code> etc is used, because the Java EE modules in the JDK runtime image are preferred to modules with the same name on the module path. After this JEP is implemented, the Java EE modules will not be present in the JDK runtime image, so developers can deploy API JAR files on the module path.</p>
+<h3 id="CORBA-and-JTA-modules">CORBA and JTA modules</h3>
+<p>The risks of removing the <code>java.corba</code> module are:</p>
+<ol>
+<li>
+<p>CORBA implementations will not compile or run if they include only a subset of the <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/standards/index.html#endorsed-standards-apis">"endorsed" CORBA APIs</a> and expect the JDK to provide the remainder.</p>
+</li>
+<li>
+<p>Applications and CORBA implementations that use RMI-IIOP will not compile or run. The RMI-IIOP packages (<code>javax.rmi</code> and <code>javax.rmi.CORBA</code>) are located in the <code>java.corba</code> module and tied to the CORBA implementation therein, so there will be no RMI-IIOP support in Java SE once <code>java.corba</code> is removed.</p>
+</li>
+<li>
+<p>Applications and CORBA implementations that use the <code>javax.activity</code> package will not compile or run. This package is located in the <code>java.corba</code> module and tied to the CORBA implementation therein, so there will be no support in Java SE once <code>java.corba</code> is removed.</p>
+</li>
+</ol>
+<p>There will not be a standalone version of CORBA unless third parties take over maintenance of the CORBA APIs, ORB implementation, CosNaming provider, etc. Third party maintenance is possible because the Java SE Platform endorses independent implementations of CORBA. In contrast, the API for RMI-IIOP is defined and implemented solely within Java SE. There will not be a standalone version of RMI-IIOP unless a dedicated JSR is started to maintain it, or stewardship of the API is taken over by the Eclipse Foundation. The transition of stewardship of Java EE from the JCP to the Eclipse Foundation includes <a href="https://github.com/javaee/glassfish-corba">the GlassFish implementation of CORBA and RMI-IIOP</a>. Finally, there is no standalone version of the J2EE Activity Service.</p>
+<p>A standalone version of JTA is available as the Maven artifact <a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22javax.transaction%22%20AND%20a%3A%22javax.transaction-api%22">javax.transaction : javax.transaction-api</a>. As of November 2017, this JAR file represents JTA 1.2, which consists of both the XA package and the CORBA interop package. In early 2018, JTA 1.3 will be defined to consist of just the CORBA interop package; the JAR file will be updated accordingly. The JAR files for JTA 1.2 and JTA 1.3 may be deployed as follows:</p>
+<ul>
+<li>
+<p>The JAR file for JTA 1.2 may be deployed on the class path. (The XA package in the JAR file is ignored in favor of the XA package in the <code>java.sql</code> module. The CORBA interop package in the JAR file is used in preference to the package in the <code>java.transaction</code> module, which is not resolved by default on JDK 9. Note that if <code>--add-modules java.se.ee</code> or <code>--add-modules java.transaction</code> is used on JDK 9, then the CORBA interop package in the JAR file will be ignored in favor of the package in the <code>java.transaction</code> module.)</p>
+</li>
+<li>
+<p>The JAR file for JTA 1.2 may not be deployed on the module path. (It would be treated as an automatic module that contains the XA package, but this package would conflict with the XA package in the <code>java.sql</code> module.)</p>
+</li>
+<li>
+<p>The JAR file for JTA 1.3 may be deployed on the class path. (The CORBA interop package in the JAR file is used in preference to the package in the <code>java.transaction</code> module, which is not resolved by default in JDK 9.)</p>
+</li>
+<li>
+<p>The JAR file for JTA 1.3 may be deployed on the module path and used as an automatic module called <code>java.transaction</code>.</p>
+</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

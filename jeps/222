@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 222: jshell: The Java Shell (Read-Eval-Print Loop)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 222: jshell: The Java Shell (Read-Eval-Print Loop)</h1><table class="head"><tr><td>Owner</td><td>Robert Field</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;jshell</td></tr><tr><td>Discussion</td><td>kulla dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>L</td></tr><tr><td>Duration</td><td>L</td></tr><tr><td>Reviewed by</td><td>Alex Buckley, Brian Goetz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/05/16 23:13</td></tr><tr><td>Updated</td><td>2017/06/09 04:21</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8043364">8043364</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Provide an interactive tool to evaluate declarations, statements, and
+expressions of the Java programming language, together with an API so
+that other applications can leverage this functionality.</p>
+<h2 id="Goals">Goals</h2>
+<p>The JShell API and tool will provide a way to interactively evaluate
+declarations, statements, and expressions of the Java programming
+language within the JShell state.  The JShell state includes an evolving
+code and execution state.  To facilitate rapid investigation and coding,
+statements and expressions need not occur within a method, and
+variables and method need not occur within a class.</p>
+<p>The <code>jshell</code> tool will be a command-line tool with features to ease
+interaction including: a history with editing, tab-completion, automatic
+addition of needed terminal semicolons, and configurable predefined
+imports and definitions.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>A new interactive language is not the goal: All accepted input must match
+grammar productions in the Java Language Specification (JLS).  Further,
+within an appropriate surrounding context, all accepted input must be
+valid Java code (JShell will automatically provide that surrounding
+context -- the "wrapping").  That is, if <code>X</code> is an input that JShell
+accepts (as opposed to rejects with error) then there is an <code>A</code> and <code>B</code>
+such that <code>AXB</code> is a valid program in the Java programming language.</p>
+<p>Out of scope are graphical interfaces and debugger support. The JShell API
+is intended to allow JShell functionality in IDEs and other tools, but the <code>jshell</code>
+tool is not intended to be an IDE.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Immediate feedback is important when learning a programming language and
+its APIs. The number one reason schools cite for moving away from Java as a
+teaching language is that other languages have a "REPL" and have far lower
+bars to an initial <code>"Hello, world!"</code> program.  A Read-Eval-Print Loop (REPL)
+is an interactive programming tool which loops, continually reading user input,
+evaluating the input, and printing the value of the input or a description of the
+state change the input caused.  Scala, Ruby, JavaScript,
+Haskell, Clojure, and Python all have REPLs and all allow small initial
+programs.  JShell adds REPL functionality to the Java platform.</p>
+<p>Exploration of coding options is also important for developers
+prototyping code or investigating a new API.  Interactive evaluation is
+vastly more efficient in this regard than edit/compile/execute and
+<code>System.out.println</code>.</p>
+<p>Without the ceremony of <code>class Foo { public static void main(String[] args) { ... } }</code>, learning and exploration is streamlined.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Functionality">Functionality</h3>
+<p>The JShell API will provide all of JShell's evaluation functionality.
+The code fragments that are input to the API are referred to as
+"snippets".  The <code>jshell</code> tool will also use the JShell completion API to
+determine when input is incomplete (and the user must be prompted for
+more), when it would be complete if a semicolon were added (in which case the
+tool will append the semicolon) and also how to complete input when
+completion is requested with a tab.  The tool will have a set of commands
+for query, saving and restoring work, and configuration.  Commands will
+be distinguished from snippets by a leading slash.</p>
+<h3 id="Documentation">Documentation</h3>
+<p>The JShell module API Specifications can found here:</p>
+<ul>
+<li>http://download.java.net/java/jdk9/docs/api/jdk.jshell-summary.html</li>
+</ul>
+<p>Which includes the primary JShell API (<code>jdk.jshell</code> package) Specification:</p>
+<ul>
+<li>http://download.java.net/java/jdk9/docs/api/jdk/jshell/package-summary.html</li>
+</ul>
+<p>The <code>jshell</code> tool reference:</p>
+<ul>
+<li>https://docs.oracle.com/javase/9/tools/jshell.htm</li>
+</ul>
+<p>is part of the Java Platform, Standard Edition Tools Reference:</p>
+<ul>
+<li>https://docs.oracle.com/javase/9/tools/tools-and-command-reference.htm</li>
+</ul>
+<h3 id="Terms">Terms</h3>
+<p>In this document, the term
+&#8220;class&#8221; is meant in the sense used in the Java Virtual Machine
+Specification (JVMS), which includes Java Language Specification (JLS) classes, interfaces, enums,
+and annotation types. The text makes it clear if a different meaning is intended.</p>
+<h3 id="Snippets">Snippets</h3>
+<p>A snippet must correspond to one of the following JLS syntax productions:</p>
+<ul>
+<li><em>Expression</em></li>
+<li><em>Statement</em></li>
+<li><em>ClassDeclaration</em></li>
+<li><em>InterfaceDeclaration</em></li>
+<li><em>MethodDeclaration</em></li>
+<li><em>FieldDeclaration</em></li>
+<li><em>ImportDeclaration</em></li>
+</ul>
+<p>In JShell, a "variable" is a storage location and has an associated type.  A variable is created explicitly with a <em>FieldDeclaration</em> snippet:</p>
+<pre><code>int a = 42;</code></pre>
+<p>or implicitly by an expression (see below).  Variables have a small amount of field semantics/syntax (for example,
+the <code>volatile</code> modifier is allowed). However, variables have no user-visible class enclosing them
+and will be generally viewed and used like local variables.</p>
+<p>All expressions are accepted as snippets. This includes expressions without side effects, such as constants, variable accesses, and lambda expressions:</p>
+<pre><code>1
+a
+2+2
+Math.PI
+x -&gt; x+1
+(String s) -&gt; s.length()</code></pre>
+<p>as well as expressions with side effects, such as assignments and method invocations:</p>
+<pre><code>a = 1
+System.out.println("Hello world");
+new BufferedReader(new InputStreamReader(System.in))</code></pre>
+<p>Some forms of expression snippet implicitly create a variable to store the expression's value so it can be referred to later by other snippets.
+By default, an implicitly created variable has the name <code>$</code><em>X</em> where <em>X</em> is the snippet identifier.
+A variable is not implicitly created if the expression is void (the <code>println</code> example),
+or if the value of the expression can already be referred to by a
+simple name (as in the case of 'a' and 'a=1' above; all other examples have variables implicitly created for them).</p>
+<p>All statements are accepted as snippets, except for 'break', 'continue', and 'return'. However, a snippet may contain 'break', 'continue', or 'return' statements where they meet the usual rules of the Java programming language for enclosing context. For example, the return statement in this snippet is valid because it is enclosed in a lambda expression:</p>
+<pre><code>() -&gt; { return 42; }</code></pre>
+<p>A declaration snippet (<em>ClassDeclaration</em>, <em>InterfaceDeclaration</em>,
+<em>MethodDeclaration</em>, or <em>FieldDeclaration</em>) is a snippet that explicitly introduces a name
+that can be referred to by other snippets.  A declaration snippet is subject to the following rules:</p>
+<ul>
+<li>the access modifiers (<code>public</code>, <code>protected</code>, and <code>private</code>) are ignored (all declaration snippets are accessible to all other snippets)</li>
+<li>the modifier <code>final</code> is ignored (future changes/inheritance are permitted)</li>
+<li>the modifier <code>static</code> is ignored (there is no user-visible containing class)</li>
+<li>the modifiers <code>default</code> and <code>synchronized</code> are not allowed</li>
+<li>the modifier <code>abstract</code> is allowed only on classes.</li>
+</ul>
+<p>All snippets, except for those of the form <em>ImportDeclaration</em>, may contain nested declarations. For example, a snippet that is a class instance creation expression may specify an anonymous class body with nested method declarations. The usual rules of the Java programming language apply to modifiers on nested declarations, rather than the rules above. For example, the class snippet below is accepted, and the private modifier on the nested method declaration is respected, so the snippet "<code>new C().secret()</code>" would not be accepted:</p>
+<pre><code>class C {
+  int answer() { return 2 * secret(); }
+  private int secret() { return 21; }
+}</code></pre>
+<p>A snippet may not declare a package or a module. All JShell code is placed in a single package in an unnamed module. The name of the package is controlled by JShell.</p>
+<p>Within the <code>jshell</code> tool, the terminal semicolon of a snippet can be omitted if that semicolon would be the last character of the input
+(excluding whitespace and comments).</p>
+<h3 id="State">State</h3>
+<p>The JShell state is held in an instance of <code>JShell</code>.  A snippet is
+evaluated in a <code>JShell</code> with the <code>eval(...)</code> method, producing an
+error, declaring code, or executing a statement or expression.  In the
+case of a variable with an initializer, both declaration and execution
+occur.  An instance of <code>JShell</code> contains previously-defined and
+modified variables, methods, and classes, previously-defined import
+declarations, the side-effects of previously-entered statements and
+expressions (including variable initializers), and external code bases.</p>
+<h3 id="Modification">Modification</h3>
+<p>Since the desired use is exploration, the declarations (variables,
+methods, and classes) must be able to evolve over time while, at the same
+time, preserving evaluated data.  One choice would be to make a changed
+declaration a new additional entity in some or all cases, but that is
+certain to be confusing and does not play well with exploring the
+interaction between declarations.  In JShell, each unique declaration key
+has exactly one declaration at any given time.  For variables and classes
+the unique declaration key is the name, and,
+the unique declaration key for methods is the name and the parameter
+types (to allow for overloading).  As this is Java, variable, methods,
+and classes each have their own name spaces.</p>
+<h3 id="Forward-reference">Forward reference</h3>
+<p>In the Java programming language, within the body of a class,
+references to members which will appear later
+can appear; this is a forward reference.  As code is entered
+and evaluated sequentially in JShell, these references will be
+temporarily unresolved. In some cases, for example mutual recursion,
+forward reference is required.  This can also occur in exploratory
+programming while entering code, for example, realizing that another (so
+far unwritten) method should be called.  JShell supports forward
+references in method bodies, return type, and parameter types, in
+variable type, and, within a class.
+Since the semantics requires them to be immediately
+executed, forward references in variable initializers is not supported.</p>
+<h3 id="Snippet-dependencies">Snippet dependencies</h3>
+<p>The code state is kept up-to-date and consistent; that is, when a snippet
+is evaluated, any changes to dependent snippets are immediately
+propagated.</p>
+<p>When a snippet is successfully declared, the declaration will be one of
+three kinds: <em>Added</em>, <em>Modified</em>, or <em>Replaced</em>.  A snippet is <em>Added</em> if
+it is the first declaration with that key.  A snippet is <em>Replaced</em> if
+its key matches a previous snippet, but their signatures differ.  A
+snippet is <em>Modified</em> if its key matches a previous snippet and their
+signatures match; in this case, no dependent snippets are impacted.  In
+both the <em>Modified</em> and <em>Replaced</em> cases the previous snippet is no
+longer part of the code state.</p>
+<p>When a snippet is <em>Added</em> it may be providing an unresolved reference.
+When a snippet is <em>Replaced</em> it may update an existing snippet.  For
+example, if a method's return type is declared to be of class <code>C</code> and
+then class <code>C</code> is <em>Replaced</em> then the method's signature has changed and
+the method must be <em>Replaced</em>.  Note: This can cause previously-valid
+methods or classes to become invalid.</p>
+<p>The desire is that user data persist whenever possible.  This is attained
+except in the case of variable <em>Replace</em>.  When a variable is replaced,
+either directly by the user or indirectly via a dependency update, the
+variable is set to its default value (<code>null</code> since this can only occur
+with reference variables).</p>
+<p>When a declaration is invalid, either because of a forward-reference or
+becoming invalid through an update, the declaration is "corralled".  A
+corralled declaration can be used in other declarations and code,
+however, if an attempt is made to execute it a runtime exception will
+occur which will explain the unresolved references or other issues.</p>
+<h3 id="Wrapping">Wrapping</h3>
+<p>In the Java programming language, variables, methods, statements,
+and expressions must be nested within other constructs, ultimately a class.
+When the implementation of JShell compiles a variable, method,
+statement, and expression snippet as
+Java code an artificial context is needed, as follows:</p>
+<ul>
+<li>Variables, Methods, and Classes
+<ul>
+<li>As static members of a synthetic class</li>
+</ul>
+</li>
+<li>Expressions and Statements
+<ul>
+<li>As expressions and statements within a synthetic static method within a
+synthetic class</li>
+</ul>
+</li>
+</ul>
+<p>This wrapping also enables snippet update, so, note that a snippet
+class is also wrapped in a synthetic class.</p>
+<h3 id="Modular-Environment-Configuration">Modular Environment Configuration</h3>
+<p>The <code>jshell</code> tool has the following options for controlling the modular
+environment:</p>
+<ul>
+<li><code>--module-path</code></li>
+<li><code>--add-modules</code></li>
+<li><code>--add-exports</code></li>
+</ul>
+<p>The modular environment can also be configured by direct addition
+to the compiler and runtime options.
+Compiler flags may be added with the <code>-C</code> option.  Runtime flags
+may be added with the <code>-R</code> option.</p>
+<p>All <code>jshell</code> tool options are documented in the Tool Reference (see
+above).</p>
+<p>The modular environment can be configured at the API level with
+the <code>compilerOptions</code> and <code>remoteVMOptions</code> methods on
+<code>JShell.Builder</code>.</p>
+<p>The set of modules read by JShell's unnamed module is the same as the default set of root modules for the unnamed module, as established by JEP 261 "Root modules":</p>
+<ul>
+<li>http://openjdk.java.net/jeps/261</li>
+</ul>
+<h3 id="Naming">Naming</h3>
+<ul>
+<li>Module
+<ul>
+<li><code>jdk.jshell</code></li>
+</ul>
+</li>
+<li>Tool launcher
+<ul>
+<li><code>jshell</code></li>
+</ul>
+</li>
+<li>API package
+<ul>
+<li><code>jdk.jshell</code></li>
+</ul>
+</li>
+<li>SPI package
+<ul>
+<li><code>jdk.jshell.spi</code></li>
+</ul>
+</li>
+<li>Execution engine "library" package
+<ul>
+<li><code>jdk.jshell.execution</code></li>
+</ul>
+</li>
+<li>Tool launching API package
+<ul>
+<li><code>jdk.jshell.tool</code></li>
+</ul>
+</li>
+<li>Tool implementation package
+<ul>
+<li><code>jdk.internal.jshell.tool</code></li>
+</ul>
+</li>
+<li>OpenJDK Project
+<ul>
+<li>Kulla</li>
+</ul>
+</li>
+</ul>
+<h2 id="Alternatives">Alternatives</h2>
+<p>A simpler alternative is just to provide a batch scripting wrapper
+without interactive/update support.</p>
+<p>Another alternative is to maintain the status quo: Use another language
+or use a third-party REPL such as <a href="http://beanshell.org">BeanShell</a>,
+though that particular REPL has been dormant for many years, is based on
+JDK 1.3, and makes arbitrary changes to the language.</p>
+<p>Many IDEs, for example the NetBeans debugger and BlueJ's CodePad, provide
+mechanisms to interactively evaluate expressions.  Preserved context and
+code remains class-based, and method granularity is not supported.  They
+use specially crafted parsers/interpreters.</p>
+<h2 id="Testing">Testing</h2>
+<p>The API facilitates detailed point testing.  A test framework makes
+writing tests straight-forward.</p>
+<p>Because the evaluation and query functionality of the tool is built on
+the API, most testing is of the API.  Command testing and sanity testing
+of the tool is, however, also needed.  The tool is built with hooks for a
+testing harness, which is used for tool testing.</p>
+<p>Tests are comprised of three parts:</p>
+<ol>
+<li>
+<p>Tests for the API.  These tests cover both positive and negative
+cases.  Each public method must be covered by tests which include
+adding variables, methods, and class, redefining them, etc.</p>
+</li>
+<li>
+<p>Testing of the jshell tool.  These tests check that <code>jshell</code> commands and
+compilation, and execution of Java code, have correct behavior.</p>
+</li>
+<li>
+<p>Stress testing.  To ensure that JShell can compile all allowed Java
+snippets, correct Java code from the JDK itself will be used.  These
+tests parse the sources, feed code chunks to the API, and test
+the behavior of the API.</p>
+</li>
+</ol>
+<h2 id="Dependences">Dependences</h2>
+<p>The implementation will make every effort to leverage the accuracy and
+engineering effort of the existing language support in the JDK.  The
+JShell state is modeled as a JVM instance.  Code analysis and the
+production of executable code (<code>jdk.jshell</code> API) will be performed by the Java Compiler
+(<code>javac</code>) through the Compiler API.  Code replacement (<code>jdk.jshell.execution</code>) will use the Java
+Debug Interface (JDI).</p>
+<p>Parsing of raw snippets (i.e., snippets that have not been wrapped) will
+be done using the Compiler API with a small subclassing of the parser to
+allow raw snippets.  The resulting information will be used to wrap the
+snippet into a valid compilation unit including a class declaration with
+imports for previously evaluated code.  Further analysis and generation
+of the class file will be done with unmodified instances of the Java
+compiler.  Generated class files will be kept in memory and never written
+to storage.  <code>jdk.jshell.spi</code> SPI exists to configure the execution engine.  The default
+execution engine behaves as follows.  Class files will be sent over a
+socket to the remote process.  A remote agent will handle loading and
+execution.  Replacement will be done via the JDI
+<code>VirtualMachine.redefineClasses()</code> facility.</p>
+<p>Tab-completion analysis (<code>jdk.jshell</code> API) will also use the Compiler API.  Completion
+detection will use the <code>javac</code> lexer, custom and table-driven code.</p>
+<p>The <code>jshell</code> tool (<code>jdk.internal.jshell.tool</code>) will use 'jline2' for console input, editing, and history.
+<code>jline2</code> has been, privately, rolled into the JDK.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

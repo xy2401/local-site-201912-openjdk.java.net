@@ -1,0 +1,391 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Better hash codes</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Better hash codes</h1><table class="head"><tr><td>Owner</td><td>John Rose</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>hotspot</td></tr><tr><td>Created</td><td>2018/04/12 01:23</td></tr><tr><td>Updated</td><td>2018/07/18 21:30</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8201462">8201462</a></td></tr></table><div class="markdown"><h1>Summary</h1>
+<p>Introduce the new method <code>Object.longHashCode</code> to support the generation of
+64 bit hash codes.  Provide a set of JVM functions to optimize hash code
+generation for a wide range of types, using modern CPU instructions.
+Arrange appropriate forward and backward interoperation with the
+existing <code>Object.hashCode</code> API.</p>
+<h1>Goals</h1>
+<ul>
+<li>
+<p><strong>Generality:</strong> The new hash function, like the existing standard
+hash functions, will operate (at least potentially) on all field
+and array element types.</p>
+</li>
+<li>
+<p><strong>Size:</strong> The new hash function will supply a full 64 bits of
+mixed output, enabling it to scale to cloud-sized applications.</p>
+</li>
+<li>
+<p><strong>Mixing:</strong> As the hardware platform permits, the hash function
+will attempt to make the hash function mix thoroughly.  In
+particular, every output bit should depend on every input, with
+approximately random statistics.  That is, there should be no
+"dead bits" in the output, with respect to any part of the input.
+In addition, small numbers of input bits should not be able to
+"cancel" each others' effects on the output. That is, "funnels"
+between inputs should be avoided.</p>
+</li>
+<li>
+<p><strong>Speed:</strong> The hash function will be fast enough to serve as a
+replacement for most current applications of <code>Object.hashCode</code>,
+especially those with more than a few words of hashable input.
+Naturally this goal must be traded off carefully with the previous
+goal of good mixing.</p>
+</li>
+<li>
+<p><strong>Saltable:</strong> The hash function will be instantiable into multiple
+versions, using an optional static "salt" parameter. This will
+enable VM instances and individual data structures to somewhat
+harden themselves against hash collision attacks.</p>
+</li>
+<li>
+<p><strong>Compatible:</strong> The existing specified behavior of
+<code>Object.hashCode</code> will not change.  Use by legacy classes of the
+new algorithm will be on an opt-in basis.  There will be upgrade
+paths which will not require replacing existing class or interface
+hierarchies.</p>
+</li>
+</ul>
+<h1>Non-goals</h1>
+<ul>
+<li>
+<p><strong>Non-secure:</strong> The hash function will not claim to be
+cryptographic in strength, as that is currently impossible to
+implement at speeds consistent with ordinary uses of hash codes.</p>
+</li>
+<li>
+<p><strong>Non-reproducible:</strong> The output of the hash function will not be
+specified in such a way that independent conforming
+implementations of the Java libraries or VM will necessarily
+produce the same hashes for the same inputs. In this, the hash
+function will be free to produce arbitrary VM-assigned results,
+much like today's <code>System::identityHashCode</code>.  (As a matter of
+good engineering, accidentally non-reproducible results are to be
+avoided.)</p>
+</li>
+</ul>
+<h1>Success Metrics</h1>
+<ul>
+<li>
+<p>Collection classes can be adapted (at user option) to use new hash
+codes, and show better performance when using them on appropriate
+workloads.</p>
+</li>
+<li>
+<p>Hash code is usable as a substitability hash code for value types.</p>
+</li>
+<li>
+<p>Some bulk algorithms run significantly faster.</p>
+</li>
+</ul>
+<h1>Motivation</h1>
+<p>Existing standard implementations of the <code>Object.hashCode</code> API have
+well-known flaws, leading to excessive hash collisions and poor use of
+CPU cycles and excessive memory footprint in hashed structures.</p>
+<p>In many cases every bit of the input affects at most one bit of the
+output (<code>Integer.hashCode</code>), and/or can be trivially canceled by
+another bit (<code>Long.hashCode</code>).  Even for variably-sized types, such as
+strings and lists, this observation often applies to the last elements
+of the type.</p>
+<p>Even if the input bits are mixed a little, in most cases they are not
+mixed thoroughly, because the usual mixing function is exclusive or
+between parallel inputs, or the simple recurrence <code>h=h*31+x</code> for
+sequences of inputs.  In these functions there are many funnels
+between inputs and dead bits in the output.</p>
+<p>The existing hash codes are insufficient for industrial strength
+hashing that must avoid of pathological collision behaviors, even in
+the presence of overloaded or subverted inputs.</p>
+<p>Meanwhile, the JVM has a special role to play here.  For any given
+object layout (or value type layout), it knows how to load the hashed
+input with as few memory operations as possible, and it knows whether
+special-purpose instructions (such as AES steps) are available to
+accelerate the hash algorithm while retaining good mixing properties.
+The JVM can even sense when a vectorized hashing algorithm might be
+appropriate.  All of these considerations are inconsistent with an
+externally-specified hash algorithm such as XOR or <code>h*31+x</code>, and all
+of them are important for obtaining the best possible trade-off
+between hashing speed and quality.  It follows that we don't need just
+another library function for a few use cases, but rather a deeply
+embedded facility that the JVM can optimize for (potentially) any Java
+object, value, or array.</p>
+<h1>Description</h1>
+<p>The low-level API point <code>System.primitiveHashCode</code> will be defined
+alongside the API point <code>System.identityHashCode</code>, as a way to obtain
+a fast, high quality hash code for the publicly readable contents of
+an object, value, or array.  A variant entry point (see below) will
+direct the JVM to privately readable contents on an opt-in basis.</p>
+<p>The goals given above will be met by all instances of this algorithm.
+(Exception instances of salt selected non-randomly by an adversary
+will not serve as proof of failure.)  The JVM is encouraged to use
+appropriate technology, possibly including built-in cryptographic
+instructions or specialized vector hardware, to implement these goals.</p>
+<p>Any non-public fields, and any fields or elements of reference type in
+the object value, or array will be ignored by <code>primitiveHashCode</code>.
+This may seem to be a deep usability problem, but in fact allows
+<code>primitiveHashCode</code> to be used as building block for a range of useful
+hashcode behaviors, including those which treat references as object
+identities or as pointers to more hashable content, or some mix of
+both.</p>
+<p>The API point <code>System.primitiveHashCode(Object,Lookup)</code> will provide a
+version of the hash algorithm which inspects all fields in the given
+object, under the requirement that the <code>Lookup</code> argument validates
+access to these fields.  This API point is intended for use as a
+building block with classes whose internal structure has primitives.</p>
+<p>Any fields of value type declared in the object or value class are
+recursively scanned for non-reference inputs to the hash code
+algorithm.  Likewise, arrays of value types are recursively scanned.
+Arrays of <code>Object</code> or interface types will not be scanned, even if
+some of the elements might refer to value types.</p>
+<p>The class of the operand passed to <code>System.primitiveHashCode</code> is
+significant to the hash code.  That is, two objects with equivalent
+fields but different classes will produce independent hash codes.  Two
+arrays of the same length and numeric contents, but with different
+types (<code>short</code> vs. <code>long</code>) will produce independent hash codes.
+Likewise, the length of an array is significant to the hash code, as
+well as all of its non-reference (primitive or value) elements.</p>
+<p>As a special case, reference arrays could distribute the hash
+algorithm to each of their reference elements, instead of ignoring
+them.  But this special case seems to work better as a special method;
+see below.  For consistency, passing a reference array to
+<code>System.primitiveHashCode</code> will simply hash the array's class and
+length.</p>
+<p>Since public fields are relatively rare in standard Java APIs, there
+is also an API to adapt <code>primitiveHashCode</code> to values or objects with
+private fields.  This API includes a permission check based on a
+second argument, a <code>Lookup</code> which must exactly match the class of the
+operand.  It is <code>System.primitiveHashCode(Object,Lookup)</code>.  It is not
+caller sensitive.</p>
+<p>Internally, the JVM will make two key choices to implement
+<code>System.primitiveHashCode</code>.  First, it will statically sense any
+configuration parameters that add "salt" to the hashing algorithm, for
+this JVM instance.  Second, for each operand, it will sense the class
+and vector (if necessary for efficiency) to an appropriately
+specialized implementation of the hash function.  This second step
+will often be omitted if JIT-time type information is available.</p>
+<p>If the lookup parameter is present, a third step is required, which is
+comparing the lookup class against the object class, and ensuring that
+the lookup has the required "private" bit set which allows full
+access.</p>
+<p>The API point <code>MethodHandles.primitiveHashCode(String)</code> will provide
+an instance of the long hash code algorithm, using the given string as
+"salt".  If the string is empty, the algorithm will behave the same as
+that of <code>System.primitiveHashCode</code>.</p>
+<p>The combined API point that takes both the string and the <code>Lookup</code>
+object may also be provided, as well as (perhaps) API points which
+allow selection of a set of relevant fields and other inputs to the
+hash function, such as hashes recursively derived from reference
+fields.</p>
+<p>There will be a way to specify a salt string at JVM start-up for use
+only the in that instance of the JVM.  There will be way to ask the
+JVM to generate such a salt string randomly at start-up, and in this
+case the salt will be as unpredictable as possible.</p>
+<p>For object and value classes, the set of non-reference fields which
+are public, or the set of all fields, is often only a first
+approximation to the set of inputs required for a correct hash
+function.  In those cases, user code (or a method handle generated by
+a bootstrap method) can use <code>primitiveHashCode</code> to extract all of the
+primitive fields at once, and then mix them with hashes derived from
+other sources, such as affiliated objects or arrays.  This mixing
+can be performed on an intermediate array of type <code>long[]</code>.</p>
+<p>Additional API points may be built on top as needed:</p>
+<ul>
+<li>
+<p><code>Object.longHashCode</code> is a new overridable API point in <code>Object</code>,
+having the same guaranteed correspondence to <code>Object.equals</code> as
+<code>Object.hashCode</code>.  For compatibility, its default must be built
+on a call to <code>Object.hashCode</code> plus some extra mixing via
+<code>primitiveHashCode</code>.  Classes can easily upgrade over time.</p>
+</li>
+<li>
+<p><code>Collection.longHashCode</code> is a new overridable API point, with
+appropriate defaults based on the long hashes of the elements.
+Existing abstract superclass methods for <code>hashCode</code> will be joined
+by methods for <code>longHashCode</code>.  For lists, the definition is to
+call <code>longHashCode</code> on each element then call it once more on the
+resulting sequence of 64-bit hash codes, as if in a temporary
+<code>long[]</code> array.</p>
+</li>
+<li>
+<p><code>Objects.longHash(Object...)</code> will call <code>longHashCode</code> on each
+individual argument, and then accumulate all of the resulting
+64-bit hash values into a single hash value, as if via a temporary
+array of <code>long</code> values of the same length as the original array,
+to which is applied a final call of <code>primitiveHashCode</code> (or
+<code>mixHashCodes</code>, see below).</p>
+</li>
+<li>
+<p><code>Arrays.longHashCode(T[])</code> will produce the same result as
+<code>System.primitiveHashCode</code> if the component type is primitive or a
+value, else the the component type is a reference and it will
+produce the same result as <code>Objects.longHash</code>.</p>
+</li>
+<li>
+<p><code>Arrays.deepLongHashCode(T[])</code> will produce the same result as
+<code>System.primitiveHashCode</code> if the component type is primitive or
+value, else the the component type is a reference and it will
+produce the same result as calling <code>deepLongHashCode</code> on each
+element of the reference array, thus traversing a dynamic nest.
+It may produce stack overflow conditions for certain inputs.</p>
+</li>
+<li>
+<p><code>Collectors.longHash()</code>, when used as the terminal operation of a
+stream, will produce the same result as <code>Collectors.toList()</code>
+followed by <code>longHashCode</code> (or <code>mixHashCodes</code>, see below) on the
+resulting list.</p>
+</li>
+<li>
+<p><code>HashMap(int,float,boolean)</code> will allow individual hashmaps to
+make use of <code>longHashCode</code> instead of <code>hashCode</code>, if the new
+boolean parameter is true.  (Alternatively, a separate class
+<code>LongHashMap</code> could be built, but this seems unnecessary.)</p>
+</li>
+<li>
+<p><code>System.mixHashCodes(long...)</code> will allow users to mix hash codes
+derived from separate sources into a single hash code.  It may be
+implemented as a redirect to call <code>primitiveHashCode</code> on a
+<code>long[]</code> array, or it may do something more efficient, under the
+assumption that the inputs are already well-conditioned.</p>
+</li>
+<li>
+<p>Additional overloadings of <code>mixHashCodes</code> on between one and five
+<code>long</code> values will be equivalent to calling <code>mixHashCodes</code> on an
+array of the operands, but can help avoid boxing overheads.  As a
+special case, <code>mixHashCodes</code> on a single long value is an
+acceptable way to condition the result of a legacy
+<code>Object.hashCode</code> result to be better mixed, although it cannot
+magically remix the legacy result to perfection.</p>
+</li>
+</ul>
+<p>Publicly available block data hash algorithms, such as <a href="https://cyan4973.github.io/xxHash">xxHash</a> or
+entries in Google's <a href="https://github.com/google/cityhash">CityHash</a> are likely to be useful for building
+the above functionality.</p>
+<p>An important advantage of defining hashes with JVM assistance is
+accelerating the acquisition of initial inputs to the hash, the
+primitive bits from the original object, value, or array.  On modern
+hardware, this can often be performed most efficiently by loading an
+entire vector worth of data from the input instance.  A vector masking
+operation (either with the load, or after it) can suppress irrelevant
+portions of the object layout, such object header, fragmentation
+overhead, nearby objects, private fields (if suppressed) and fields of
+reference type.  If the object is dense enough with primitive fields,
+it is likely that a single masked vector load is competitive with a
+series of scalar loads, and the vector processing unit is often capable
+of performing significant hash steps, immediately after the load.</p>
+<p>As a specific algorithm for hash steps, note that user-mode
+instructions for a single step of the 128-bit AES encode algorithm is
+available on many significant platforms supported today by Java, and
+are well integrated with vector units.  (In some cases, the vector
+unit can run several steps in parallel.)  A 128-bit AES step is likely
+to be about as cheap as many traditiional hashing steps, such as
+64-bit multiply followed by bit swizzling. The AES step operates on
+128 bits at a time, which gives it an edge on some platforms.  Early
+experiments with <a href="https://github.com/aappleby/smhasher">SMHasher</a> suggest that two AES steps (but not one)
+are usually enough to produce robust mixing of bits.</p>
+<p>Thus, an AES-based algorithm something like this would seem to work
+well for the above APIs:</p>
+<pre><code>primitiveHashCode(x) {
+  cls = x.getClass()
+  mask1 = vectorMaskForInstance(cls)
+  bits = unsafe_vector_load(x, mask1)
+  bits = aes_step(bits, SALT1)
+  if (cls.isArray()) {
+    mask2 = vectorMaskForArrayBody(cls)
+    for (off in vectorOffsetsFor(cls, x.length)) {
+      bits2 = unsafe_vector_load(x + off, mask2)
+      bits = aes_step(bits, bits2)
+      bits2 = aes_step(bits2, SALT2)
+      bits = aes_step(bits, bits2)
+    }
+  }
+  bits = aes_step(bits, SALT3)
+  return bits
+}</code></pre>
+<p>Indeed, the CityHash project appears to have experimented briefly with
+the approach of using AES as a mixing step.</p>
+<p>The <code>SALT</code> values above can be any pseudo-random 128-bit value.  They
+determine which instance of the hash algorithm is in use.  They could
+be derived from a random number generator, or from the hashing
+(cryptographic or otherwise) of the salt string mentioned earlier.</p>
+<p>For machines which can issue several AES steps at once, for larger
+arrays, it would be a routine adjustment to unroll the above algorithm
+and rearrange it to accumulate larger state vectors, in parallel.  The
+choice of whether to do this depends sensitively on the the array
+length and the processor, which means it must be made on-line by the
+JVM and not by a prior decision, such as a mandate from a library API.</p>
+<p>A JVM instance which runs on hardware that doesn't accelerate AES
+could fall back to a standard ALU-intensive hash algorithm, such as
+<a href="https://github.com/aappleby/smhasher">MurmurHash</a> or <a href="https://cyan4973.github.io/xxHash">xxHash</a>.  The freedom to back off like
+this is integral to getting the best-quality hash available on any
+given platform.</p>
+<p>Collision resistance can be increased by adding more instructions,
+including XOR steps to carry forward duplicate values of previous
+steps (Davies-Mayer and similar constructions) and/or additional
+AES round instructions.  This construction is <em>not</em> designed to be
+a cryptographically strong hash, and collisions <em>may</em> occur.
+The use of randomly selected salt values will make it more difficult,
+though not impossible, for adversaries to engineer collisions.</p>
+<p>Java currently taps out at 64 bits on primitive size, but future value
+types will easily grow larger.  At that point, the APIs sketched above
+could be expanded to provided "extra long" hashes of arbitrary size,
+if this seems desirable.  Such jumbo hashes are relatively simple to
+derive from the above hashing algorithms, by using distinct salt
+values for each channel of the jumbo hash.</p>
+<h1>Alternatives</h1>
+<p>The special case for reference arrays could be removed, and instead
+special API points reserved for those uses: <code>Arrays.deepLongHashCode</code></p>
+<p>The various API points suggested above could be deferred until proven
+useful.</p>
+<p>We could continue to live with hash collisions from <code>h*31+x</code>.</p>
+<p>Library writers could continue to create their own hash functions,
+which will not be optimized well by the JVM and/or will have poorer
+hashing quality than what the JVM could do.</p>
+<p>It is an unusual API design to mix array-element hashing with
+instance-field hashing, all in one place.  Perhaps the concerns should
+be separated.  Perhaps polymorphism should be expressed statically, as
+method handle factories, rather than via dynamic type tests performed
+by a single magic entry point.  Note that the magic entry point has
+precedents such as <code>System.arraycopy</code> and <code>Class.newInstance</code>.  The
+common thread handled by the proposed <code>System.primitiveHashCode</code> is
+that only the JVM can know the fastest and best thing to do for each
+distinct object, value, or array layout (and for each selection of
+public fields vs. all fields).</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

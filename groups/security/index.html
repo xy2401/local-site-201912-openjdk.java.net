@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Security Group</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>The Security Group</h1>
+<p>The Security <a href="/groups/index.html">group</a> is comprised
+of developers who participate in the design, implementation, and
+maintenance of Java Security components.</p>
+<p>The current members of the Security Group are <a href="https://openjdk.java.net/census#security">listed in the
+census</a>.</p>
+<h2>Submitting Vulnerabilities</h2>
+<p>If you have any potential vulnerability to report, please see
+Oracle's <a href="https://www.oracle.com/us/support/assurance/reporting/index.html">Reporting
+Security Vulnerabilties</a> page.</p>
+<h2>Introduction</h2>
+<p>The term "Security" has broad meanings and interpretations. It
+spans a wide range of areas, including cryptography, public key
+infrastructure, secure communication, authentication, and access
+control. The security component thus comprises a large set of APIs,
+tools, and implementations of commonly-used security algorithms and
+protocols.</p>
+<p>As security concepts such as permissions are tightly interwoven
+throughout the entire Java source code, these component pages do
+not address issues in the other primary component areas (language
+features and virtual machine implementations, core libraries,
+graphics subsystems, hotspot, serviceability, etc). For a more
+detailed treatment, please see the corresponding component
+pages.</p>
+<p>The primary emphasis of these pages is to explore the core
+security components source bases, and hopefully, get developers up
+to speed quickly.</p>
+<h2>The Security Source Layout</h2>
+<p>The Java security components have been developed and expanded
+over the years, so the hierarchy may seem complicated simply due to
+the large number of source files and directories. But the files
+generally follow fairly straightforward patterns.</p>
+<p>All of the security component source code is included in the
+OpenJDK project under the <code>jdk</code> subtree. As there are so
+many different components, they are split into many subdirectories,
+generally based on functional area. In most cases, the main API and
+implementation-independent classes live in the <code>java/*</code>
+or <code>javax/*</code> hierarchy, and the implementation classes
+are in the <code>sun/*</code> hierarchy. The makefiles used to
+build these files are generally found in the <code>make</code>
+subdirectory of the same name. Like any software projects, there
+are exceptions to this guidance.</p>
+<ul>
+<li><code>src/share/classes/java/security</code><br />
+<code>src/share/classes/sun/security</code><br />
+<p>The majority of the core security classes live in these two
+major subdirectories (access control, certificates, keys, message
+digests, permissions, policy, security managers, secure random
+number generation, etc). The public API for these classes is in the
+<code>java/security</code> hierarchy.</p>
+<p>The Sun implementation-specific code is fairly extensive within
+the <code>sun/security</code> hierarchy. Some subdirectories of
+note:</p>
+<ul>
+<li><code>ec</code> - Elliptic Curve Cryptography implementation
+classes.</li>
+<li><code>jca</code> - Classes to support the
+<code>*.getInstance()</code> methods. The OpenJDK implements a
+delayed provider selection mechanism, and the actual provider is
+selected as close to the actual use as possible. This mechanism is
+useful for transient tokens such as smart cards.</li>
+<li><code>jgss</code> - Some of the JGSS implementation classes.
+Other classes are below.</li>
+<li><code>krb5</code> - Some of the Kerberos implementation
+classes.</li>
+<li><code>pkcs</code> - Miscellaneous, general PKCS support
+classes.</li>
+<li><code>pkcs12</code> - The PKCS12 keystore implementation.</li>
+<li><code>provider</code> - The "SUN" JCA provider. Many basic
+cryptographic services (besides encipherment) are implemented
+here.</li>
+<li><code>provider/certpath</code> - Certification Path builder and
+validator classes.</li>
+<li><code>rsa</code> - The "SunRsaSign" provider. These classes
+implement RSA-signatures and a very limited cipher algorithm. Note
+that RSA is not specified for bulk encipherment, and would be too
+slow anyway.</li>
+<li><code>smartcardio</code> - Smard Card implementation
+routines.</li>
+<li><code>timestamp</code> - Routines to support certificate
+timestamping.</li>
+<li><code>tools</code> - The source code for the <a href="https://docs.oracle.com/en/java/javase/11/tools/security-tools-and-commands.html">
+security tools</a> : <code>keytool</code>, <code>policytool</code>,
+and <code>jarsigner</code>.</li>
+<li><code>util</code> - A variety of utility classes (resource
+files, data structure manipulations, DER (ASN.1 encoding rules),
+and so on).</li>
+<li><code>validator</code> - Various certificate validators for
+https, codesigning, CertPath, and keystores.</li>
+<li><code>x509</code> - The major implementation classes for X509
+certificates.</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>
+<code>src/share/classes/java/lang/SecurityException.java</code><br />
+
+<code>src/share/classes/java/lang/SecurityManager.java</code><br />
+<p>Various other classes of interest.</p>
+</li>
+<li><code>src/share/classes/javax/smartcardio</code><br />
+<code>src/share/classes/javax/xml/crypto</code><br />
+<p>Public API classes for Smart Card I/O and XML Digital
+Signatures.</p>
+</li>
+<li><code>src/share/classes/javax/crypto</code><br />
+<code>src/share/classes/com/sun/crypto/provider</code><br />
+<code>src/share/classes/sun/security/pkcs11</code><br />
+<p>These directories contain the core cryptography framework and
+SunJCE and SunPKCS11 providers. SunJCE contains Java
+implementations of many popular algorithms, and the SunPKCS11
+provider allows calls made through the standard Java cryptography
+APIs to be routed into a native PKCS11 library.</p>
+</li>
+<li><code>src/share/classes/javax/net</code><br />
+<code>src/share/classes/com/sun/net/ssl</code><br />
+<code>src/share/classes/sun/security/ssl</code><br />
+<code>src/share/classes/sun/net/www/protocol/https</code><br />
+<p>The majority of the core SSL/TLS classes. The
+<code>javax/net</code> contains the APIs and platform-independent
+code. The SSL/TLS implementation is found in sun/security/ssl. The
+"https" provider is directly based on the JDK "http" provider,
+which is located in the <code>sun/net/www/protocol</code>
+directory.</p>
+<p>In JDK 1.4, the classes in the JSSE 1.x unbundled
+<code>com/sun/net/ssl</code> package were promoted to the
+javax.net.ssl package. For compatibility with JSSE 1.x, the
+original classes remain.</p>
+</li>
+<li><code>src/share/classes/org/jcp/xml/dsig/internal</code><br />
+<code>src/share/classes/com/sun/org/apache/xml/internal/security</code><br />
+
+<p>XML Digital Signature implementation classes.</p>
+</li>
+<li><code>src/share/classes/javax/security/auth</code><br />
+<code>src/share/classes/javax/security/sasl</code><br />
+<code>src/share/classes/org/ietf/jgss</code><br />
+<code>src/share/classes/com/sun/security</code><br />
+<p>Classes for JAAS authentication, SASL, and JGSS.</p>
+</li>
+<li><code>src/share/lib/security</code><br />
+<p>Security configuration files. (cacerts, java.policy,
+java.security, PKCS11 config)</p>
+<p>The cacerts file shipped with OpenJDK is initially empty.</p>
+<p>Note that until the cacerts files has been populated, things
+like the default https <code>TrustManager</code> will not have
+certificates to trust, and will thus reject https connections.</p>
+</li>
+<li><code>src/<b>solaris</b>/classes/com/sun/security</code><br />
+<code>src/<b>solaris</b>/classes/sun/security</code><br />
+<code>src/<b>windows</b>/classes/com/sun/security</code><br />
+<code>src/<b>windows</b>/classes/sun/security</code><br />
+<code>src/<b>macosx</b>/classes/apple/security</code><br />
+<p>Platform-specific Java Code. Platform-independent code is found
+in <code>src/share</code>. Platform-dependent code is found in
+<code>src/<b>{arch}</b></code> For example, the <code>MSCAPI</code>
+provider can be found in
+<code>src/windows/classes/sun/security/mscapi</code>.</p>
+<p>The "solaris" directory is somewhat incorrectly named, and
+probably has stuck only due to historical reasons. It should more
+properly be named "unix", as this is where the platform dependent
+code for both "solaris" and "linux" live.</p>
+</li>
+<li>
+<code>src/share/<b>native</b>/java/lang/SecurityManager.c</code><br />
+
+<code>src/share/<b>native</b>/java/security</code><br />
+<code>src/share/<b>native</b>/sun/security</code><br />
+<code>src/solaris/<b>native</b>/com/sun/security</code><br />
+<code>src/solaris/<b>native</b>/sun/security</code><br />
+<code>src/windows/<b>native</b>/com/sun/security</code><br />
+<code>src/windows/<b>native</b>/sun/security</code><br />
+<code>src/macosx/<b>native</b>/apple/security</code><br />
+<p>Similar to the platform-specific Java code layout, native method
+implementations are found in the corresponding native
+directories.</p>
+<p>Note that the code currently support all versions of the various
+platforms. That includes the various releases of Solaris, Linux,
+Windows and Mac OS X. Consult the current supported architectures
+guidelines for more information.</p>
+</li>
+<li><code>src/share/classes/javax/security/cert</code><br />
+<code>src/share/classes/com/sun/security/cert</code><br />
+<p>The old JSSE 1.x certificate classes, also here only for
+compatibility. These API's should be avoided in favor of the
+<code>java.security</code> equivalent classes.</p>
+</li>
+</ul>
+<h2>Cryptographic Cautions</h2>
+<p>Anyone who has worked in cryptography knows the import/export of
+cryptographic code involves complicated legal issues. The JCE in
+OpenJDK has an open cryptographic interface, meaning it does not
+restrict which providers can be used. <b>Compliance with United
+States export controls and with local law governing the
+import/export of products incorporating the JCE in the OpenJDK is
+the responsibility of the licensee.</b></p>
+<h2>Building the security components</h2>
+<p>The workspace distribution <b>MUST ALWAYS BE</b> buildable from
+scratch. As the security components have interdependencies with
+other parts of the JDK, you should always do a successful tops-down
+build on any new workspace <b>BEFORE</b> making any changes. It
+will be very helpful to keep the build log, so that if any changes
+are not compiling, you can determine the correct makefile to
+use.</p>
+<p>When you have changes that are almost ready to submit, you
+should delete your build directories and rebuild everything from
+scratch one last time, just to ensure you haven't introduced an
+incompatible build change or unexpected interdependency. If your
+changes might impact other workspaces (such as control, deploy, or
+install), you should build those workspaces as well. See the build
+instructions for more information on building the various
+workspaces.</p>
+<p>As mentioned earlier, the makefiles generally follow the package
+hierarchy. If you make a change to
+<code>java.security.KeyStore</code>, you should go to the
+<code>make/java/security</code> and issue a make command from
+there.</p>
+<h2>Testing your changes</h2>
+<p>As a rule, unit tests for fixes and new functionality are pretty
+much mandatory. However, before submitting changes, you should run
+the relevent regression tests to make sure that the existing tests
+continue to pass. For the security component, at a minimum you
+should run:</p>
+<ul>
+<li>test/*/net</li>
+<li>test/*/security</li>
+<li>test/javax/crypto</li>
+<li>test/com/sun/crypto</li>
+<li>test/javax/xml/crypto</li>
+<li>test/javax/smartcardio</li>
+<li>test/com/sun/security</li>
+<li>test/com/sun/net</li>
+<li>test/com/sun/org/apache/xml/internal/security</li>
+<li>test/lib/security</li>
+</ul>
+<p>The full suite will be run before your changes are placed into
+the source tree. However, if your changes break something, it will
+be a lot more work to diagnose, and then fix or back out. Do as
+much testing as possible.</p>
+<h2>Documentation</h2>
+<ul>
+<li><a href="https://docs.oracle.com/en/java/javase/11/security/java-security-overview1.html">
+The Java Security Overview</a> is probably the best place to start
+learning about the overall Java security architecture and
+implementation.</li>
+<li><a href="https://docs.oracle.com/en/java/javase/11/security/index.html">The
+Java SE 11 Security Documentation</a> provides much more detailed
+information, and should be understood before undertaking any work
+in this area.</li>
+<li>The book <a href="https://www.oracle.com/technetwork/java/javaee/index-141918.html"><i>
+Inside the Java 2 Platform Security-Second Edition</i></a> by Li
+Gong (et.al.) is dated (circa JDK 1.4), but provides valuable
+information and rationale for some of the JDK design
+decisions.</li>
+</ul>
+<h2>Community</h2>
+<ul>
+<li><strong>Mailing lists</strong>
+<ul>
+<li><a href="https://mail.openjdk.java.net/mailman/listinfo/security-dev">security-dev</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong>Security bloggers</strong>
+<ul>
+<li>
+<dl>
+<dt><a href="https://seanjmullan.org/blog/">Sean Mullan</a></dt>
+<dd>Lead of OpenJDK Security Group and Technical Lead of the Java
+security libraries team at Oracle.</dd>
+</dl>
+</li>
+<li>
+<dl>
+<dt><a href="http://sim.ivi.co/">Xuelei Fan</a></dt>
+<dd>Member of the Java security libraries team at Oracle, working
+on JSSE, Public Key Infrastructure (PKI) and other Java SE security
+technologies.</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK: Panama</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>Project Panama: Interconnecting JVM and native code</h1>
+<p>We are improving and enriching the connections between the Java
+<sup>TM</sup> virtual machine and well-defined but
+&#8220;foreign&#8221; (non-Java) APIs, including many interfaces
+commonly used by C programmers.</p>
+<p>To this end, Project Panama will include most or all of these
+components:</p>
+<ul>
+<li>native function calling from JVM (C, C++), specifically per JEP
+191</li>
+<li>native data access from JVM or inside JVM heap</li>
+<li>new data layouts in JVM heap</li>
+<li>native metadata definition for JVM</li>
+<li>header file API extraction tools (see below)</li>
+<li>native library management APIs</li>
+<li>native-oriented interpreter and runtime
+&#8220;hooks&#8221;</li>
+<li>class and method resolution &#8220;hooks&#8221;</li>
+<li>native-oriented JIT optimizations</li>
+<li>tooling or wrapper interposition for safety</li>
+<li>exploratory work with difficult-to-integrate native
+libraries</li>
+</ul>
+<h2>Community</h2>
+<p>This Project is sponsored by the <a href="/groups/hotspot/">Hotspot Group</a>.</p>
+<ul>
+<li>Mailing lists
+<ul>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/panama-dev">panama-dev</a>
+&#8212; the usual developer list</li>
+<li><a href="//mail.openjdk.java.net/mailman/listinfo/panama-spec-experts">
+panama-spec-experts</a> &#8212; moderated, restricted to
+specification discussions only</li>
+</ul>
+</li>
+<li>Bloggers
+<ul>
+<li><a href="http://blog.headius.com">Charles Nutter</a></li>
+<li><a href="https://blogs.oracle.com/jrose">John Rose</a></li>
+</ul>
+</li>
+<li>Links
+<ul>
+<li><a href="https://hg.openjdk.java.net/panama/dev/raw-file/foreign/doc/panama_foreign.html">
+Panama bindings/jextract tutorial</a></li>
+<li>design document: <a href="//cr.openjdk.java.net/~mcimadamore/panama/panama-binder-v3.html">
+State of the Isthmus</a></li>
+<li><a href="//mail.openjdk.java.net/pipermail/announce/2014-June/000172.html">
+new project CFV for Panama</a></li>
+<li><a href="//openjdk.java.net/jeps/191">JEP 191: Foreign
+Function Interface</a></li>
+<li>JNR example code: <a href="https://github.com/jnr">Java Native
+Runtime</a></li>
+<li>early problem space overview: <a href="//cr.openjdk.java.net/~jrose/panama/isthmus-in-the-vm-2014.html">
+the isthmus in the VM</a></li>
+</ul>
+</li>
+</ul>
+<h2>Repository organization</h2>
+<p>Project Panama is designed to incubate a series of components
+for eventual inclusion in the JDK, via curated merge. Following the
+experience of Project Amber, and Project Valhalla, we have our
+sanbox-like <a href="//hg.openjdk.java.net/panama/dev">repository</a>, whose
+default branch is kept in sync with jdk/jdk, and where each
+experimental feature is developed in its own branch.</p>
+<p>Here's a list of the branches under active development:</p>
+<ul>
+<li><i>foreign</i>, this branch provides a native <a href="//cr.openjdk.java.net/~mcimadamore/panama/panama-binder-v3.html">
+binder</a> which greatly reduces the impedence mismatch between
+native libraries and the JVM;</li>
+<li><i>foreign-memaccess</i>, this branch adds support for <a href="//cr.openjdk.java.net/~mcimadamore/panama/memaccess.html">foreign
+memory access</a>;</li>
+<li><i>vectorIntrinsics</i>, this branch adds vectorization support
+in Java through JVM intriniscs.</li>
+</ul>
+<p>When first cloning the panama repository, it is necessary to
+update it to the desired experimental branch; this can be achieved
+using the <code>hg update ${branch}</code> command.</p>
+<p>For an up-to-date list of the available branches, you might also
+want to run the <code>hg branches</code> command. For more
+information regarding each branch, please refer to the
+README.${branch} file in that branch (if that file does not exist,
+usual OpenJDK build instruction apply).</p>
+<p>The legacy Panama repository is also available <a href="//hg.openjdk.java.net/panama/panama/">here</a>, although we
+do not expect to carry out further work there; as such this
+repository should not be used (and in the future we might make this
+more explicit by marking the legacy repository as
+<i>read-only</i>).</p>
+<h2>Repository workflow</h2>
+<p>The repository will be managed as follows (note, this process is
+local and subject to change):</p>
+<ul>
+<li>No changes will be pushed to the default branch of the Panama
+repository. This branch should in fact always be in sync with the
+upstream repository (jdk/jdk) to facilitate automatic integration
+of upstream changes, as well as to allow developers to generate
+diffs against upstream in an easy and predictable fashion (see
+below).</li>
+<li>Create and update JIRA issues to informally describe chunks of
+work, using <code>repo-panama</code> as the value of the <i>Fix
+Version</i> field. Additionally, <i>labels</i> are used to identify
+the branch to which the issue refers to, as shown <a href="https://bugs.openjdk.java.net/browse/JDK-8192974">here</a>;</li>
+<li>Commit rough changesets to JDK and/or JVM code, with ad hoc
+review, change set format, and testing. A typical example of review
+process for Panama changesets can be found <a href="//mail.openjdk.java.net/pipermail/panama-dev/2017-December/000829.html">
+here</a></li>
+<li>Automated infrastructure will take care of performing regular
+test runs when new changes are pushed to any of the Panama
+branches; additionally, the infrastructure might automatically
+propagate changesets from the default branch to other experimental
+branches (not all branches might opt in on this feature given the
+subtlety of some of the changes involved).</li>
+<li>Infrequently, create a &#8220;curated&#8221; change set
+targeted at the upstream JDK repository; properly review, test,
+integrate. For an example of how this integration process might
+work, see <a href="//mail.openjdk.java.net/pipermail/compiler-dev/2017-September/011060.html">
+here</a>. Developers can easily generate a diff against upstream
+using the <code>hg diff --rev default</code> command from any
+experimental branch.</li>
+</ul>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

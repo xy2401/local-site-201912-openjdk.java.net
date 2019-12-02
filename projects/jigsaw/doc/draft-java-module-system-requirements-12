@@ -1,0 +1,742 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=ascii" /><title>Java Module-System Requirements &#8212; DRAFT 12</title><style type="text/css">
+
+      A { text-decoration: none; }
+      A:link { color: #437291; }
+      A:visited { color: #666666; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+
+      BODY {
+        background: white;
+        margin: 2em;
+        margin-bottom: 100%;
+        font-size: medium;
+        width: 42em;
+      }
+      BODY { font-family: Bitstream Vera Sans, Verdana, Helvetica, Arial, sans serif; }
+      PRE, TT { font-family: Courier New; font-weight: bold; }
+
+      H1, H2, H3, H4 { color: green; font-weight: bold; }
+
+      P { margin: 1ex 0em; }
+      PRE { padding: 1ex; margin: 0px; background: #eee; width: 45em; }
+      BLOCKQUOTE { margin: 1.5ex 0ex; margin-left: 2em; }
+      LI BLOCKQUOTE { margin-left: 0em; }
+      LI { margin: 1ex 0em; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+
+      TABLE { border-collapse: collapse; padding: 0px; }
+      TD { padding: 0px; vertical-align: top; }
+
+      .warn { color: #ee0000; font-size: small; font-weight: bold; }
+      DIV.doctitle { font-size: x-large; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-size: smaller; font-weight: bold;
+                  margin-bottom: 1.5ex; }
+      DIV.authors { margin-top: 1ex; margin-bottom: 1.5em; font-size: large; }
+      DIV.author A, DIV.feedback A { font-style: italic; }
+      DIV.feedback { font-size: medium; margin-top: .5ex; }
+      DIV.version { font-size: medium; margin-top: .5ex; }
+      DIV.copyright { font-size: small; margin-top: .5ex; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+
+      DIV.section { margin-top: 3ex; }
+      DIV.section DIV.title, DIV.section DIV.number SPAN {
+        font-size: large; font-weight: bold; }
+      DIV.section DIV.number { float: left; width: 1.5em; }
+      DIV.section DIV.body { margin-left: 1.5em; margin-top: 1ex; }
+
+      P.subsection { margin-top: 2ex; }
+      P.subsection:first-child { margin-top: 1ex; }
+      P.subsection SPAN.title { font-weight: bold; padding-right: 1em; }
+
+      DIV.toc { margin-left: 1.5em; margin-top: 2ex; margin-bottom: 2ex;
+                padding-left: 2em; padding-right: 2em; }
+      TABLE.toc TD:first-child { font-weight: bold; padding-right: 1em; }
+      TABLE.toc TH { font-size: large; font-weight: bold; text-align: left; }
+      TABLE.toc TD.subcontent { padding-left: 1.5em; font-size: smaller; }
+
+      UL.req { padding-left: 2em; }
+
+    </style></head><body>
+
+  <div class="head"><div class="doctitle">Java Module-System Requirements &#8212; DRAFT 12</div><div class="authors"><div class="author">Mark Reinhold</div><div class="version">2011/4/19 21:20 -0700
+          [<span>12</span>]
+        </div><div class="copyright">Copyright &#169; 2011 Oracle and/or its affiliates &#183; All Rights Reserved</div></div></div>
+
+  <div class="section"><div class="body">
+
+   <p> Comments and discussion: <a href="mailto:jigsaw-dash-dev@openjdk-dot-java-dot-net">jigsaw dash dev at
+    openjdk dot java dot net</a> </p>
+
+  </div></div>
+
+  <div class="toc"><table class="toc" summary="Contents"><tr><th colspan="2">Contents</th></tr><tr><td>1</td><td><a href="#_1">Fundamentals</a></td></tr><tr><td></td><td class="subcontent"><a href="#module-dependences"><span style="white-space: nowrap">Module dependences</span></a>&#160;&#183; <a href="#resolution-in-all-phases"><span style="white-space: nowrap">Resolution in all phases</span></a>&#160;&#183; <a href="#fidelity-across-all-phases"><span style="white-space: nowrap">Fidelity across all phases</span></a>&#160;&#183; <a href="#encapsulation"><span style="white-space: nowrap">Encapsulation</span></a>&#160;&#183; <a href="#versioning"><span style="white-space: nowrap">Versioning</span></a>&#160;&#183; <a href="#optional-modules"><span style="white-space: nowrap">Optional modules</span></a>&#160;&#183; <a href="#refactoring"><span style="white-space: nowrap">Refactoring</span></a>&#160;&#183; <a href="#substitution"><span style="white-space: nowrap">Substitution</span></a>&#160;&#183; <a href="#module-constraints-on-targets"><span style="white-space: nowrap">Module constraints on targets</span></a>&#160;&#183; <a href="#target-constraints-on-modules"><span style="white-space: nowrap">Target constraints on modules</span></a>&#160;&#183; <a href="#native-code"><span style="white-space: nowrap">Native code</span></a>&#160;&#183; <a href="#services"><span style="white-space: nowrap">Services</span></a>&#160;&#183; <a href="#resources"><span style="white-space: nowrap">Resources</span></a>&#160;&#183; <a href="#read-only-operation"><span style="white-space: nowrap">Read-only operation</span></a>&#160;&#183; <a href="#platform-modularization"><span style="white-space: nowrap">Platform modularization</span></a>&#160;&#183; <a href="#package-subsets"><span style="white-space: nowrap">Package subsets</span></a>&#160;&#183; <a href="#shared-class-loaders"><span style="white-space: nowrap">Shared class loaders</span></a></td></tr><tr><td>2</td><td><a href="#_2">Developers</a></td></tr><tr><td></td><td class="subcontent"><a href="#tool-chain"><span style="white-space: nowrap">Tool chain</span></a>&#160;&#183; <a href="#module-declarations-alongside-source-code"><span style="white-space: nowrap">Module declarations alongside source code</span></a>&#160;&#183; <a href="#exploded-modules"><span style="white-space: nowrap">Exploded modules</span></a>&#160;&#183; <a href="#diagnostic-messages"><span style="white-space: nowrap">Diagnostic messages</span></a>&#160;&#183; <a href="#diagnostic-tooling"><span style="white-space: nowrap">Diagnostic tooling</span></a>&#160;&#183; <a href="#debug-libraries"><span style="white-space: nowrap">Debug libraries</span></a></td></tr><tr><td>3</td><td><a href="#_3">Containers</a></td></tr><tr><td></td><td class="subcontent"><a href="#reification"><span style="white-space: nowrap">Reification</span></a>&#160;&#183; <a href="#simultaneous-multiple-versions"><span style="white-space: nowrap">Simultaneous multiple versions</span></a></td></tr><tr><td>4</td><td><a href="#_4">Migration and interoperation</a></td></tr><tr><td></td><td class="subcontent"><a href="#modular-jar-files"><span style="white-space: nowrap">Modular JAR files</span></a>&#160;&#183; <a href="#jar-files-depending-upon-modules"><span style="white-space: nowrap">JAR files depending upon modules</span></a>&#160;&#183; <a href="#modularize-jar-files"><span style="white-space: nowrap">Modularize JAR files</span></a>&#160;&#183; <a href="#maven-support"><span style="white-space: nowrap">Maven support</span></a>&#160;&#183; <a href="#osgi-support"><span style="white-space: nowrap">OSGi support</span></a>&#160;&#183; <a href="#extensible-module-declarations"><span style="white-space: nowrap">Extensible module declarations</span></a>&#160;&#183; <a href="#authoritative-module-declarations"><span style="white-space: nowrap">Authoritative module declarations</span></a>&#160;&#183; <a href="#manipulable-module-metadata"><span style="white-space: nowrap">Manipulable module metadata</span></a></td></tr><tr><td>5</td><td><a href="#_5">Packaging</a></td></tr><tr><td></td><td class="subcontent"><a href="#java-native-module-file-format"><span style="white-space: nowrap">Java-native module-file format</span></a>&#160;&#183; <a href="#signed-module-files"><span style="white-space: nowrap">Signed module files</span></a>&#160;&#183; <a href="#java-modules-as-native-packages"><span style="white-space: nowrap">Java modules as native packages</span></a></td></tr><tr><td>6</td><td><a href="#_6">Publication</a></td></tr><tr><td></td><td class="subcontent"><a href="#web-publication"><span style="white-space: nowrap">Web publication</span></a>&#160;&#183; <a href="#exploratory-installation"><span style="white-space: nowrap">Exploratory installation</span></a></td></tr><tr><td>7</td><td><a href="#_7">Performance</a></td></tr><tr><td></td><td class="subcontent"><a href="#no-performance-regressions"><span style="white-space: nowrap">No performance regressions</span></a>&#160;&#183; <a href="#startup-time-improvements"><span style="white-space: nowrap">Startup-time improvements</span></a>&#160;&#183; <a href="#enable-future-performance-improvements"><span style="white-space: nowrap">Enable future performance improvements</span></a></td></tr><tr><td>8</td><td><a href="#_8">Open requirements</a></td></tr><tr><td></td><td class="subcontent"><a href="#friend-constraints"><span style="white-space: nowrap">&#8220;Friend&#8221; constraints</span></a>&#160;&#183; <a href="#jsr-294"><span style="white-space: nowrap">JSR 294</span></a>&#160;&#183; <a href="#multi-platform-installations"><span style="white-space: nowrap">Multi-platform installations</span></a>&#160;&#183; <a href="#predictability"><span style="white-space: nowrap">Predictability</span></a>&#160;&#183; <a href="#service-declarations"><span style="white-space: nowrap">Service declarations</span></a>&#160;&#183; <a href="#package-level-dependences"><span style="white-space: nowrap">Package-level dependences</span></a>&#160;&#183; <a href="#java-like-syntax"><span style="white-space: nowrap">Java-like syntax</span></a>&#160;&#183; <a href="#source-form-metadata-in-modular-jar-files"><span style="white-space: nowrap">Source-form metadata in modular JAR files</span></a>&#160;&#183; <a href="#compiled-module-declarations"><span style="white-space: nowrap">Compiled module declarations</span></a>&#160;&#183; <a href="#non-java-source-file-names"><span style="white-space: nowrap">Non-Java source-file names</span></a>&#160;&#183; <a href="#java-source-file-names"><span style="white-space: nowrap">Java source-file names</span></a></td></tr><tr><td>9</td><td><a href="#_9">Non-requirements</a></td></tr><tr><td></td><td class="subcontent"><a href="#fine-grained-java-se-modularization"><span style="white-space: nowrap">Fine-grained Java SE modularization</span></a></td></tr><tr><td>A</td><td><a href="#_A">Acknowledgements</a></td></tr><tr><td>B</td><td><a href="#_B">Change history</a></td></tr><tr><td>C</td><td><a href="#_C">Commentary on module-metadata formats</a></td></tr></table></div>
+
+  <div class="section"><div class="body">
+
+   <p> The terms &#8220;must,&#8221; &#8220;must not,&#8221; &#8220;required,&#8221; &#8220;shall,&#8221; &#8220;shall not,&#8221;
+   &#8220;should,&#8221; &#8220;should not,&#8221; &#8220;recommended,&#8221; &#8220;may,&#8221; and &#8220;optional&#8221; in this
+   document are to be interpreted as described in <a href="http://www.ietf.org/rfc/rfc2119.txt">RFC 2119</a>. </p>
+
+
+  </div></div>
+
+  <div class="section"><div class="number"><span>1</span></div><div class="title"><span>Fundamentals</span><a name="_1" id="_1">&#160;</a></div><div class="body">
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="module-dependences" id="module-dependences" href="#module-dependences"><em>Module dependences</em></a> &#8212;  The module system must replace the
+      class path and its explicit enumeration of JAR files with a less
+      error-prone system of named, versioned modules and explicit dependences
+      between them.  Where possible this approach should borrow from UNIX
+      shared-library concepts.  Most developers and deployers are quite
+      comfortable with this model since it is used not only by shared libraries
+      but also Maven, .NET, and most UNIX/Linux packaging systems. </p></li>
+
+      <li><p><a class="anchor" name="resolution-in-all-phases" id="resolution-in-all-phases" href="#resolution-in-all-phases"><em>Resolution in all phases</em></a> &#8212;  Build-time, install-time, and
+      run-time module resolution and linking must all be supported.  UNIX has
+      all three models and they are all still in use 40 years later. </p></li>
+
+      <li><p><a class="anchor" name="fidelity-across-all-phases" id="fidelity-across-all-phases" href="#fidelity-across-all-phases"><em>Fidelity across all phases</em></a> &#8212;  The set of modules seen by a
+      library or application must be computed by the same algorithm at build
+      time, install time, and run time. </p></li>
+
+      <li><p><a class="anchor" name="encapsulation" id="encapsulation" href="#encapsulation"><em>Encapsulation</em></a> &#8212;  If a module contains a type, whether
+      defined therein or imported from some other module, then it must be
+      possible to declare that it makes that type available for use by modules
+      depending upon it, or that it does not do so. </p></li>
+
+      <li><p><a class="anchor" name="versioning" id="versioning" href="#versioning"><em>Versioning</em></a> &#8212;  The module system must support common
+      version-string schemes such as those defined by OSGi and Maven and also
+      those found in both proprietary and open-source software products.
+      Version strings must be totally ordered but otherwise the module system
+      must not impose any particular structure or semantics upon them.  It must
+      be possible to specify a range of allowable versions when declaring a
+      module dependence. </p></li>
+
+      <li><p><a class="anchor" name="optional-modules" id="optional-modules" href="#optional-modules"><em>Optional modules</em></a> &#8212;  It must be possible to declare that a
+      module depends optionally upon some other module.  If that second module
+      is available then it is resolved and linked normally.  If it is not
+      available, however, then no exception is thrown and no error is reported
+      by the module system.  A simple API must be provided so that a running
+      program can test whether a particular optional module has been resolved
+      and linked. </p></li>
+
+      <li><p><a class="anchor" name="refactoring" id="refactoring" href="#refactoring"><em>Refactoring</em></a> &#8212;  It must be possible to refactor a module
+      into a set of smaller modules, without breaking existing modules or
+      applications that depend upon the original module (splitting).  Likewise,
+      it must be possible to refactor a set of modules so that they appear to
+      be a single module, without breaking existing modules or applications
+      that depend upon the original modules (aggregation). </p></li>
+
+      <li><p><a class="anchor" name="substitution" id="substitution" href="#substitution"><em>Substitution</em></a> &#8212;  It must be possible to declare that one
+      module can substitute for another.  This supports <a href="#refactoring">refactoring</a> via aggregation and also allows a
+      module to resolve against any one of a set of equivalent implementation
+      modules.  JREs from different vendors, <i>e.g.</i>, can all declare that they
+      are substitutes for the &#8220;java&#8221; module.  An application module that
+      requires only standard Java SE APIs can declare that it requires the
+      &#8220;java&#8221; module rather than some specific JRE module, and that dependence
+      will be satisfied by any one of those JREs. </p></li>
+
+      <li><p><a class="anchor" name="module-constraints-on-targets" id="module-constraints-on-targets" href="#module-constraints-on-targets"><em>Module constraints on targets</em></a> &#8212;  In a module declaration it
+      must be possible to declare that the module can only be used on target
+      platforms with specific properties, <i>e.g.</i>, particular operating systems,
+      processor architectures, or display geometries.  The resolution algorithm
+      must ignore any module whose platform constraints are not satisfied by
+      the target platform. </p></li>
+
+      <li><p><a class="anchor" name="target-constraints-on-modules" id="target-constraints-on-modules" href="#target-constraints-on-modules"><em>Target constraints on modules</em></a> &#8212;  On a particular target
+      platform it must be possible to declare that only modules with specific
+      properties can be installed, <i>e.g.</i>, particular authors, publishers, or
+      licenses.  The resolution algorithm must ignore any module that does not
+      satisfy the target platform&#8217;s module constraints. </p></li>
+
+      <li><p><a class="anchor" name="native-code" id="native-code" href="#native-code"><em>Native code</em></a> &#8212;  The module system must provide a way to
+      package both Java class files and native libraries in a single artifact
+      and control linking in a similar way for both.  The existing <a href="http://download.java.net/jdk7/docs/api/java/lang/System.html#loadLibrary(java.lang.String)"><tt>System.loadLibrary</tt></a>
+      method and related methods must be enhanced to be module-aware.  It must
+      be possible for a native library in a Java module to have a native
+      dependence upon another native library that is either in the same Java
+      module, in some other Java module, or elsewhere in the target platform.
+      </p></li>
+
+      <li><p><a class="anchor" name="services" id="services" href="#services"><em>Services</em></a> &#8212;  It must be possible to package service
+      providers into modules so that they can be discovered via an enhanced
+      version of the
+      existing <a href="http://download.java.net/jdk7/docs/api/java/util/ServiceLoader.html"><tt>java.util.ServiceLoader</tt></a>
+      API. </p></li>
+
+      <li><p><a class="anchor" name="resources" id="resources" href="#resources"><em>Resources</em></a> &#8212;  It must be possible to package localization
+      data into modules so that it can be discovered via an enhanced version of
+      the
+      existing <a href="http://download.java.net/jdk7/docs/api/java/util/ResourceBundle.html"><tt>java.util.ResourceBundle</tt></a>
+      API. </p></li>
+
+      <li><p><a class="anchor" name="read-only-operation" id="read-only-operation" href="#read-only-operation"><em>Read-only operation</em></a> &#8212;  The module system must be able to
+      function at run time when running from a read-only volume.  This is a
+      security requirement in some scenarios and may also be required for some
+      compliance regimes. </p></li>
+
+      <li><p><a class="anchor" name="platform-modularization" id="platform-modularization" href="#platform-modularization"><em>Platform modularization</em></a> &#8212;  The module system must support
+      a medium-grained modularization of the Java SE API whose minimal
+      configuration defines an API roughly the size of the current Java ME CDC
+      platform.  It must provide a safety valve to prevent the JDK from
+      continuing to grow without bound (<i>e.g.</i>, a hypothetical java.3d API
+      shouldn&#8217;t need to go into the base platform).  It must be possible to
+      provide subsets of the platform such as &#8220;headless&#8221; (no
+      2d/awt/swing/audio/sound) and &#8220;client&#8221; (no RMI, CORBA, <i>etc.</i>) commonly
+      requested by developers of embedded SE and EE solutions.  Finally, it
+      must be possible to release and update logically-separate portions of the
+      Java API separately. </p></li>
+
+      <li><p><a class="anchor" name="package-subsets" id="package-subsets" href="#package-subsets"><em>Package subsets</em></a> &#8212;  In support of <a href="#platform-modularization">platform modularization</a>, it must be
+      possible for the types defined in a Java package to be provided by more
+      than one module yet still be loaded by the same class loader at run time.
+      This is required so that CDC-sized subsets of large legacy packages such
+      as java.util can be defined. </p></li>
+
+      <li><p><a class="anchor" name="shared-class-loaders" id="shared-class-loaders" href="#shared-class-loaders"><em>Shared class loaders</em></a> &#8212;  In support of <a href="#platform-modularization">platform modularization</a>, it must be
+      possible to declare that the types defined in a specific set of modules
+      must be loaded by the same class loader. </p></li>
+
+    </ul>
+  </div></div>
+
+  <div class="section"><div class="number"><span>2</span></div><div class="title"><span>Developers</span><a name="_2" id="_2">&#160;</a></div><div class="body">
+
+    <p> Developers are the most important consumers of the module system.
+    Those familiar with Maven, with OSGi bundles, with .NET assemblies, or with
+    UNIX shared libraries should be immediately comfortable and productive with
+    Java modules.  The compile-link-debug cycle should be fast and they should
+    be able to diagnose problems quickly.  Features that don&#8217;t encourage best
+    practices should be omitted. </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="tool-chain" id="tool-chain" href="#tool-chain"><em>Tool chain</em></a> &#8212;  A command-line tool chain that supports the
+      creation, installation, linking, and removal of modules must be provided.
+      Its usability should compare favorably with that of the corresponding
+      tools in .NET. </p></li>
+
+      <li><p><a class="anchor" name="module-declarations-alongside-source-code" id="module-declarations-alongside-source-code" href="#module-declarations-alongside-source-code"><em>Module declarations alongside source code</em></a> &#8212;  It must be
+      easy for developers to both write and read module declarations.  The Java
+      language syntax must be extended to define declarations of module
+      metadata.  The syntax and, to the degree possible, the semantics of
+      module declarations must be specified in the Java Language Specification.
+      A module declaration must be written in a file that resides with the
+      module&#8217;s source content, rather than in a side file in some other format
+      or, even worse, a set of command-line arguments baked into a build
+      script. </p></li>
+
+      <li><p><a class="anchor" name="exploded-modules" id="exploded-modules" href="#exploded-modules"><em>Exploded modules</em></a> &#8212;  During development it must be possible
+      to compile against and run modules that are &#8220;exploded&#8221; on disk rather
+      than packaged and then installed.  In other words, a development-time
+      format analogous to the class directories currently supported by the java
+      and javac commands must be supported. </p></li>
+
+      <li><p><a class="anchor" name="diagnostic-messages" id="diagnostic-messages" href="#diagnostic-messages"><em>Diagnostic messages</em></a> &#8212;  ClassCastException and related
+      exceptions must be enhanced to provide as much information as possible
+      about the lineage of the classes involved.  Errors arising from run-time
+      linkage problems must be clearly defined and thrown at well-specified
+      times. </p></li>
+
+      <li><p><a class="anchor" name="diagnostic-tooling" id="diagnostic-tooling" href="#diagnostic-tooling"><em>Diagnostic tooling</em></a> &#8212;  The module system must define a
+      public API that allows running code to examine the class-loader and
+      module structure, determine the lineage of a given class, understand the
+      reason for resolution decisions, and so forth. </p></li>
+
+      <li><p><a class="anchor" name="debug-libraries" id="debug-libraries" href="#debug-libraries"><em>Debug libraries</em></a> &#8212;  There should be a well-understood
+      convention for building and using debug libraries (<i>e.g.</i>, those built with
+      javac -g). </p></li>
+
+    </ul>
+  </div></div>
+
+  <div class="section"><div class="number"><span>3</span></div><div class="title"><span>Containers</span><a name="_3" id="_3">&#160;</a></div><div class="body">
+
+    <p> Containers such as IDEs, Java EE containers, and applet containers are
+    the second-most important constituency for the module system.  They have
+    specific requirements for dynamism and multiple-version support.  For Java
+    EE the primary use case should be an assumed future modular WAR standard in
+    which a WAR file contains one or more Java modules. </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="reification" id="reification" href="#reification"><em>Reification</em></a> &#8212;  The module system must provide a public API
+      for inspecting all of a module&#8217;s metadata.  Using the API it must be
+      possible to do the following from within a running Java program: Create a
+      new module library, install modules into that library, optionally resolve
+      and link modules in the library, get a class loader for one of these
+      modules, and then reverse all of these operations. </p></li>
+
+      <li><p><a class="anchor" name="simultaneous-multiple-versions" id="simultaneous-multiple-versions" href="#simultaneous-multiple-versions"><em>Simultaneous multiple versions</em></a> &#8212;  A container must be able
+      to load a group of modules that, as a whole, requires a different version
+      of one or more modules already loaded by the container.  A canonical
+      example is that of a web application requiring a different version of the
+      XML parser than that built-in to the web container.  Multi-version
+      support should only be enabled when type collisions can be detected and
+      reported as errors.  This most likely means that it cannot be enabled for
+      run-time linking since detecting collisions is nontrivial. </p></li>
+
+    </ul>
+  </div></div>
+
+  <div class="section"><div class="number"><span>4</span></div><div class="title"><span>Migration and interoperation</span><a name="_4" id="_4">&#160;</a></div><div class="body">
+
+    <p> In order to be adopted the module system must &#8220;play well&#8221; with existing
+    file formats, tool chains, build systems, and module systems. </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="modular-jar-files" id="modular-jar-files" href="#modular-jar-files"><em>Modular JAR files</em></a> &#8212;  For pure, Java-only modules it must
+      be possible to create a single file that can be used both as a JAR on the
+      class path and installed as a module in a module library.  This will
+      allow library developers to continue to produce one artifact for both
+      traditional and modular applications.  It must be possible to sign such
+      JARs in the usual way. </p></li>
+
+      <li><p><a class="anchor" name="jar-files-depending-upon-modules" id="jar-files-depending-upon-modules" href="#jar-files-depending-upon-modules"><em>JAR files depending upon modules</em></a> &#8212;  It must be possible to
+      modify a &#8220;plain old&#8221; JAR file to declare that it depends upon modules of
+      specific names and possibly version ranges.  This will support the
+      incremental modularization of existing code bases from the &#8220;inside out.&#8221;
+      </p></li>
+
+      <li><p><a class="anchor" name="modularize-jar-files" id="modularize-jar-files" href="#modularize-jar-files"><em>Modularize JAR files</em></a> &#8212;  A tool must be provided that will
+      transform a &#8220;plain old&#8221; JAR file into a <a href="#modular-jar-files">modular JAR file</a> by adding specified
+      metadata or, possibly, inferring it from the JAR file&#8217;s name and legacy
+      manifest information. </p></li>
+
+      <li><p><a class="anchor" name="maven-support" id="maven-support" href="#maven-support"><em>Maven support</em></a> &#8212;  The module system must be able to
+      download, install, resolve, and link a Maven artifact and its transitive
+      dependences as if they were modules.  Maven is a popular and widely used
+      modular build and assembly system which most Java developers are familiar
+      with today, so making the module system work really well with it will be
+      important to adoption. </p></li>
+
+      <li><p><a class="anchor" name="osgi-support" id="osgi-support" href="#osgi-support"><em>OSGi support</em></a> &#8212;  It must be demonstrated by prototype to be
+      feasible to modify an OSGi micro-kernel such that OSGi bundles running in
+      that kernel can depend upon Java modules.  The kernel must be able to
+      load Java modules directly and resolve them using its own resolver,
+      except for core system modules.  Core system modules can only be loaded
+      using the module system&#8217;s reification API. </p></li>
+
+      <li><p><a class="anchor" name="extensible-module-declarations" id="extensible-module-declarations" href="#extensible-module-declarations"><em>Extensible module declarations</em></a> &#8212;  To support tools and
+      frameworks built on top of the module system the syntax of <a href="#module-declarations-alongside-source-code">module-declaration
+      source files</a> must be extensible, allowing arbitrary structured
+      content in addition to the standard declaration clauses.  The syntax must
+      place all extended metadata after all standard metadata, with a clear
+      delineation between them. </p></li>
+
+      <li><p><a class="anchor" name="authoritative-module-declarations" id="authoritative-module-declarations" href="#authoritative-module-declarations"><em>Authoritative module declarations</em></a> &#8212;  A module declaration
+      must completely and authoritatively define its module&#8217;s metadata.  No
+      additional metadata shall be required in order to produce or consume a
+      module. </p></li>
+
+      <li><p><a class="anchor" name="manipulable-module-metadata" id="manipulable-module-metadata" href="#manipulable-module-metadata"><em>Manipulable module metadata</em></a> &#8212; Module metadata must in all
+      phases be easily read, edited, and written by module-management tools and
+      by people, not just by Java compilers. </p></li>
+
+    </ul>
+
+    <p> A primary use case for <a href="#osgi-support">OSGi support</a> is
+    Eclipse.  The adoption of Java modules will be hindered if they cannot
+    easily be used in the context of Eclipse.  An Eclipse plug-in for JPA,
+    <i>e.g.</i>, must be able to declare dependences upon standard JPA API modules as
+    well as upon specific implementations. </p>
+
+  </div></div>
+
+  <div class="section"><div class="number"><span>5</span></div><div class="title"><span>Packaging</span><a name="_5" id="_5">&#160;</a></div><div class="body">
+
+    <p> In order to make Java more widely useful, <i>i.e.</i>, beyond the usual
+    Java&#160;EE and applet/JNLP scenarios, we should make it easy to package
+    modules that contain both Java and native code.  (This is also required for
+    the modularization of the JDK itself.)  We should also make it possible to
+    package modules in the standard native-package formats of popular operating
+    systems so that Java libraries and applications can be managed in the way
+    most familiar to developers and end users. </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="java-native-module-file-format" id="java-native-module-file-format" href="#java-native-module-file-format"><em>Java-native module-file format</em></a> &#8212;  A format designed solely
+      for packaging and transporting modules from one system to another must be
+      defined.  Unlike JAR files, this format will not also serve as an
+      execution format.  The format must support appropriate content-specific
+      compression algorithms, <i>e.g.</i>, Pack200 for class files and bzip2 or lzma
+      for native libraries. </p></li>
+
+      <li><p><a class="anchor" name="signed-module-files" id="signed-module-files" href="#signed-module-files"><em>Signed module files</em></a> &#8212;  Like signed JAR files, module files
+      must be capable of carrying one or more cryptographic signatures and
+      associated certificate chains so that the integrity and authenticity of a
+      module can be verified.  The process of verifying signatures must be no
+      more costly than for JAR files, and should be less so.  Verification
+      must, when possible, be done as part of the installation process rather
+      than at run time. </p></li>
+
+      <li><p><a class="anchor" name="java-modules-as-native-packages" id="java-modules-as-native-packages" href="#java-modules-as-native-packages"><em>Java modules as native packages</em></a> &#8212;  A tool for delivering
+      Java modules as native RPM or Solaris IPS packages must be provided.
+      Support for similarly-capable packaging systems on other platforms (<i>e.g.</i>,
+      Debian, AIX, and HP-UX) must be feasible. </p></li>
+
+    </ul>
+  </div></div>
+
+  <div class="section"><div class="number"><span>6</span></div><div class="title"><span>Publication</span><a name="_6" id="_6">&#160;</a></div><div class="body">
+
+    <p> Maven provides a way to publish Java code for web discovery and
+    download at build time but it doesn&#8217;t work for deployers or end users when
+    they need to install libraries and applications for use at run time.  To
+    make Java more widely useful it needs to catch up with Perl (which has
+    CPAN), Python (PyPI), Ruby (Gems), and Scala (Bazaars). </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="web-publication" id="web-publication" href="#web-publication"><em>Web publication</em></a> &#8212;  A convention must be defined for
+      publishing module files on an HTTP server so that modules can be
+      discovered, downloaded, and installed for use with an existing base JRE.
+      The convention should require only static content.  The command-line tool
+      for manipulating collections of installed modules must implement this
+      convention.  This functionality is necessary for Windows and other
+      operating systems that do not have sufficiently-capable native packaging
+      systems; it is also useful for modules that are installed by end users
+      rather than administrators. </p></li>
+
+      <li><p><a class="anchor" name="exploratory-installation" id="exploratory-installation" href="#exploratory-installation"><em>Exploratory installation</em></a> &#8212;  It must be possible to
+      determine, from a description of a yet-to-be installed module M, which
+      other modules, if any, must be installed along with M so that all of its
+      dependences will be satisfied, regardless of whether those additional
+      modules are direct or indirect requirements of M. </p></li>
+
+    </ul>
+  </div></div>
+
+  <div class="section"><div class="number"><span>7</span></div><div class="title"><span>Performance</span><a name="_7" id="_7">&#160;</a></div><div class="body">
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="no-performance-regressions" id="no-performance-regressions" href="#no-performance-regressions"><em>No performance regressions</em></a> &#8212;  The initial release must not
+      regress HelloWorld or any of the other usual JDK performance
+      metrics. </p></li>
+
+      <li><p><a class="anchor" name="startup-time-improvements" id="startup-time-improvements" href="#startup-time-improvements"><em>Startup-time improvements</em></a> &#8212;  The module system must
+      support the pre-verification of class files and an optimized path for
+      loading a class file given a class name. </p></li>
+
+      <li><p><a class="anchor" name="enable-future-performance-improvements" id="enable-future-performance-improvements" href="#enable-future-performance-improvements"><em>Enable future performance improvements</em></a> &#8212;  The long-term
+      roadmap should include other optimizations such as class pre-loading and
+      module pre-compilation.  The roadmap should show potential for cutting
+      HelloWorld startup time by a factor of 2. </p></li>
+
+    </ul>
+  </div></div>
+
+  <div class="section"><div class="number"><span>8</span></div><div class="title"><span>Open requirements</span><a name="_8" id="_8">&#160;</a></div><div class="body">
+
+    <p> These requirements are not yet settled, pending further investigation.
+    Some of these open requirements conflict with each other, as noted. </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="friend-constraints" id="friend-constraints" href="#friend-constraints"><em>&#8220;Friend&#8221; constraints</em></a> &#8212;  It must be possible for a module
+      to specify the set of modules that can depend directly upon it, and to
+      have that restriction be enforced at run time. </p></li>
+
+      <li><p><a class="anchor" name="jsr-294" id="jsr-294" href="#jsr-294"><em>JSR 294</em></a> &#8212;  A new Java language keyword must be defined for
+      controlling module-level type and member accessibility. </p></li>
+
+      <li><p><a class="anchor" name="multi-platform-installations" id="multi-platform-installations" href="#multi-platform-installations"><em>Multi-platform installations</em></a> &#8212;  It must be possible to
+      install multiple variants of a module, each targeted to a different
+      combination of operating system, processor architecture, and possibly
+      other platform properties. </p></li>
+
+      <li><p><a class="anchor" name="predictability" id="predictability" href="#predictability"><em>Predictability</em></a> &#8212;  The set of modules seen by an
+      application must not depend upon the application&#8217;s behavior, or that of
+      any other application, unless the application is interacting directly
+      with the module system to perform run-time resolution and linking. </p></li>
+
+      
+
+      <li><p><a class="anchor" name="service-declarations" id="service-declarations" href="#service-declarations"><em>Service declarations</em></a> &#8212;  A module must be able to declare
+      that it requires and/or provides specific services. </p></li>
+
+      
+
+      <li><p><a class="anchor" name="package-level-dependences" id="package-level-dependences" href="#package-level-dependences"><em>Package-level dependences</em></a> &#8212;  It must be possible to
+      declare that a module depends upon one or more Java packages, leaving it
+      to the module system to resolve which modules will be linked to provide
+      the types defined in those packages. </p></li>
+
+      
+
+      <li><p><a class="anchor" name="java-like-syntax" id="java-like-syntax" href="#java-like-syntax"><em>Java-like syntax</em></a> &#8212;  The syntax of module declarations must
+      be similar to that of declarations of a like nature in the Java
+      programming language. </p></li>
+
+    </ul>
+
+    <p> The following two requirements conflict.  Please see <a href="#_C">Appendix&#160;C</a> for commentary. </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="source-form-metadata-in-modular-jar-files" id="source-form-metadata-in-modular-jar-files" href="#source-form-metadata-in-modular-jar-files"><em>Source-form metadata in modular JAR files</em></a> &#8212;  The module
+      metadata in a <a href="#modular-jar-files">modular JAR file</a> must use
+      the same Java syntax as <a href="#module-declarations-alongside-source-code">module-declaration
+      source files</a>.  This will ease deployment debugging and tool
+      construction. </p></li>
+
+      
+
+      <li><p><a class="anchor" name="compiled-module-declarations" id="compiled-module-declarations" href="#compiled-module-declarations"><em>Compiled module declarations</em></a> &#8212;  Module declarations must
+      be compiled by a Java compiler into a standard compact binary form, just
+      as Java class declarations are compiled into class files. </p></li>
+
+    </ul>
+
+    <p> The following two requirements also conflict. </p>
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="non-java-source-file-names" id="non-java-source-file-names" href="#non-java-source-file-names"><em>Non-Java source-file names</em></a> &#8212;  When a module declaration is
+      stored in a file then the name of the file must, by convention, end with
+      a string other than &#8220;.java&#8221;. </p></li>
+
+      <li><p><a class="anchor" name="java-source-file-names" id="java-source-file-names" href="#java-source-file-names"><em>Java source-file names</em></a> &#8212;  When a module declaration is
+      stored in a file then the name of the file must, by convention, end with
+      the string &#8220;.java&#8221;. </p></li>
+
+    </ul>
+
+  </div></div>
+
+  <div class="section"><div class="number"><span>9</span></div><div class="title"><span>Non-requirements</span><a name="_9" id="_9">&#160;</a></div><div class="body">
+
+    <ul class="req">
+
+      <li><p><a class="anchor" name="fine-grained-java-se-modularization" id="fine-grained-java-se-modularization" href="#fine-grained-java-se-modularization"><em>Fine-grained Java SE modularization</em></a> &#8212;  The precise
+      requirements on Java API modularization are beyond the scope of this
+      document, but it is worth stating explicitly here that it is not a
+      requirement to be able to modularize the API to the point that it would
+      fit into a traditional CLDC-class device. </p></li>
+
+    </ul>
+  </div></div>
+
+  <div class="section"><div class="number"><span>A</span></div><div class="title"><span>Acknowledgements</span><a name="_A" id="_A">&#160;</a></div><div class="body">
+
+    <p> This document includes contributions from Alex Buckley, Jonathan
+    Gibbons, Karen Kinnear, and Adam Messinger.  It has been improved with the
+    help of comments and suggestions from Roberto Chinnici, Jerome Dochez, Bill
+    Shannon, David Bosschaert, BJ Hargrave, Doug Lea, and Jeff McAffer. </p>
+
+  </div></div>
+
+  <div class="section"><div class="number"><span>B</span></div><div class="title"><span>Change history</span><a name="_B" id="_B">&#160;</a></div><div class="body">
+
+    <p>Version 12</p>
+
+    <ul>
+
+      <li> Removed the confidentiality header and added a feedback address in
+      preparation for publication </li>
+
+    </ul>
+
+    <p>Version 11, 2011/4/19</p>
+
+    <ul>
+
+      <li> Added OSGi as an example in the introductory paragraph of
+      <a href="#_2">section 2</a> </li>
+
+      <li> Rephrased <a href="#module-declarations-alongside-source-code">Module
+      declarations alongside source code</a> to avoid any implication that
+      module declarations will be compiled </li>
+
+      <li> Clarified <a href="#osgi-support">OSGi support</a> </li>
+
+      <li> Added a third argument in favor of compiling module declarations
+      to <a href="#_C">Appendix C</a> </li>
+
+    </ul>
+
+    <p>Version 10, 2011/4/5</p>
+
+    <ul>
+
+      <li> Rearranged some pairs of open requirements to highlight areas of
+      disagreement </li>
+
+      <li> Clarified the second argument in favor of compiled module
+      declarations to note that it depends upon how a related open requirement
+      is resolved </li>
+
+    </ul>
+
+    <p>Version 9, 2011/3/29</p>
+
+    <ul>
+
+      <li> Renamed &#8220;module definition&#8221; to &#8220;module declaration&#8221; throughout </li>
+
+      <li> Clarified <a href="#reification"><i>Reification</i></a> so as not to
+      appear to imply that module declarations must be compiled into a binary
+      form </li>
+
+      <li> Clarified <a href="#maven-support"><i>Maven support</i></a> so as
+      not to imply that Maven is a full module system </li>
+
+      <li> Expanded <a href="#module-declarations-alongside-source-code"><i>Module declarations
+      in source code</i></a> to state that the Java syntax must be extended to
+      define module declarations and that the syntax and semantics of such
+      declarations must be specified in the JLS </li>
+
+      <li> Clarified <a href="#extensible-module-declarations"><i>Extensible
+      module declarations</i></a> to require a clear delineation between
+      standard and extended module metadata </li>
+
+      <li> Added <a href="#authoritative-module-declarations"><i>Authoritative
+      module declarations</i></a> and <a href="#manipulable-module-metadata"><i>Manipulable module
+      metadata</i></a> </li>
+
+      <li> Added open requirements: <a href="#java-like-syntax"><i>Java-like
+      syntax</i></a>, <a href="#java-source-file-names"><i>Java source
+      files</i></a>, and <a href="#compiled-module-declarations"><i>Compiled
+      module declarations</i></a> </li>
+
+      <li> Added <a href="#_C">Appendix C</a> </li>
+
+    </ul>
+
+    <p>Version 8, 2011/2/16</p>
+
+    <ul>
+
+      <li> Added <a href="#module-constraints-on-targets"><i>Module constraints
+      on targets</i></a> </li>
+
+      <li> Rewrote <i>Virtual modules</i>
+      as <a href="#substitution"><i>Substitution</i></a> </li>
+
+      <li> Added <a href="#multi-platform-installations"><i>Multi-platform
+      installations</i></a> </li>
+
+      <li> Simplified <a href="#resolution-in-all-phases"><i>Resolution in all
+      phases</i></a> to omit the constraint that run-time resolution must not
+      modify persistent module storage, which is really an implementation
+      detail </li>
+
+      <li> Added <a href="#target-constraints-on-modules"><i>Target constraints
+      on modules</i></a> </li>
+
+      <li> Clarified <a href="#fidelity-across-all-phases"><i>Fidelity across all
+      phases</i></a> to require the same algorithm </li>
+
+      <li> Moved <a href="#predictability"><i>Predictability</i></a> to the
+      open-requirements section</li>
+
+      <li> Clarified <a href="#encapsulation"><i>Encapsulation</i></a> to mention
+      neither visibility nor accessibility specifically </li>
+
+      <li> Clarified <a href="#versioning"><i>Versioning</i></a> to say that version
+      strings are totally ordered but otherwise opaque </li>
+
+      <li> Revised <a href="#native-code"><i>Native code</i></a> to mention
+      <tt>System.loadLibrary</tt> and native dependences </li>
+
+      <li> Split the <a href="#services"><i>Services</i></a> requirement, creating a
+      new open requirement <a href="#service-declarations"><i>Service
+      declarations</i></a> </li>
+
+      <li> Removed the statement allowing degraded quality-of-service from <a href="#read-only-operation"><i>Read-only operation</i></a> </li>
+
+      <li> Added <a href="#shared-class-loaders"><i>Shared class
+      loaders</i></a> </li>
+
+      <li> Added <a href="#extensible-module-declarations"><i>Extensible module
+      declarations</i></a> </li>
+
+      <li> Added <a href="#source-form-metadata-in-modular-jar-files"><i>Source-form metadata
+      in modular JAR files</i></a> </li>
+
+      <li> Revised <a href="#debug-libraries"><i>Debug libraries</i></a> to say that
+      they should rather than must be supported </li>
+
+      <li> Clarified <a href="#reification"><i>Reification</i></a> to say that the
+      API must expose all module metadata </li>
+
+      <li> Revised <a href="#jar-files-depending-upon-modules"><i>JAR files
+      depending upon modules</i></a> to not mandate a new manifest header </li>
+
+      <li> Added <a href="#modularize-jar-files"><i>Modularize JAR files</i></a>
+      </li>
+
+      <li> Clarified <a href="#osgi-support"><i>OSGi support</i></a> to say that the
+      prototype OSGi kernel can either use the reification API, or load modules
+      directly, with certain exceptions in each case </li>
+
+      <li> Moved <a href="#package-level-dependences"><i>Package-level
+      dependences</i></a> to the open-requirements section </li>
+
+      <li> Revised open requirements to remove commentary </li>
+
+    </ul>
+
+  </div></div>
+
+  <div class="section"><div class="number"><span>C</span></div><div class="title"><span>Commentary on module-metadata formats</span><a name="_C" id="_C">&#160;</a></div><div class="body">
+
+    <p> Among those who have reviewed this document there are divergent
+    opinions as to whether module declarations must, or must not, be compiled
+    by a Java compiler into a standard binary form.  The arguments of each side
+    are captured here for the record. </p>
+
+    <p> If module declarations are not compiled then they must remain in source
+    form across all phases, <i>i.e.</i>, the module metadata in a packaged module
+    would be a textual copy of the original module declaration source
+    code. </p>
+
+    <p> Arguments for requiring that module declarations not be compiled: </p>
+
+    <ul>
+
+      <li> Having a distinct compiled form would complicate or eliminate usage
+      scenarios in which people or tools update module metadata independently
+      of compilation tools. </li>
+
+      <li> It avoids the need to specify a compiled form, which gives
+      implementors more freedom to choose efficient internal private forms, but
+      only if they are unobservable (<i>e.g.</i>, constructed in the process of
+      caching). </li>
+
+    </ul>
+
+    <p> Arguments for requiring that module declarations be compiled: </p>
+
+    <ul>
+
+      <li> It is more efficient to read in a structured binary than to parse
+      source-form Java module declarations.  When combined with new ways of
+      packaging compiled files it may even open up opportunities for further
+      efficiencies. </li>
+
+      <li> If it&#8217;s decided that <a href="#java-source-file-names">the names of
+      module declaration files should end with the string &#8220;.java&#8221;</a>, then why
+      should there be an exception to the convention that &#8220;.java&#8221; files always
+      compile into &#8220;.class&#8221; files?  Creating such an exception would violate
+      the principle of least surprise, presenting one more stumbling block to
+      developers trying to adopt the module system. </li>
+
+      <li> A compiled form helps to ensure validity, since it&#8217;s more difficult
+      to modify a file incorrectly when doing so requires the use of a tool.
+      This will help to reduce failures in all phases, and especially at
+      deployment time. </li>
+
+    </ul>
+
+  </div></div>
+
+</body></html>
+

@@ -1,0 +1,572 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JVM Language Summit &#8212; Agenda</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    .nonprep {background: #437291; text-align: left; padding: 0 0 0 24pt}
+    /* adjustments to this enclosing style, which works poorly against sun-blue:
+       A { text-decoration: none; }
+       A:link { color: #437291; }
+       A:visited { color: #666666; }
+       A[href]:hover { color: #e76f00; }
+    */
+    .nonprep A { text-decoration: none; }
+    .nonprep A:link { color: #111848; }
+    .nonprep A:visited { color: #444444; }
+    .nonprep A[href]:hover { color: #e76f00; }
+/**/
+</style><style type="text/css">
+/**/
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: right; font: 13.0px}
+    p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 13.0px}
+    p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px; min-height: 16.0px}
+    p.p5 {margin: 0.0px 0.0px 2.0px 0.0px; font: 11.0px}
+    p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px; color: #0000ee}
+    p.p7 {margin: 0.0px 0.0px 0.0px 0.0px; font: 16.0px}
+    table.t1 {width: 644.0px; margin: 0.0px 0.0px 0.0px 5.0px; border-collapse: collapse}
+    td.td1 {width: 45.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td2 {width: 5.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td3 {width: 33.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td4 {width: 128.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td5 {width: 35.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td6 {width: 150.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td7 {width: 505.0px; background-color: #4e7290; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td8 {width: 34.0px; background-color: #7cb281; border-style: solid; border-width: 1.0px 1.0px 0.0px 1.0px; border-color: #000000 #000000 transparent #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td9 {width: 149.0px; background-color: #7cb281; border-style: solid; border-width: 1.0px 1.0px 0.0px 0.0px; border-color: #000000 #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td10 {width: 34.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 1.0px 1.0px; border-color: transparent #000000 #000000 #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td11 {width: 149.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 1.0px 0.0px; border-color: transparent #000000 #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td12 {width: 176.0px; background-color: #4e7290; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td13 {width: 33.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td14 {width: 128.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td15 {width: 35.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td16 {width: 5.0px; border-style: solid; border-width: 0.0px 1.0px 0.0px 0.0px; border-color: transparent #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td17 {width: 32.0px; background-color: #7cb281; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td18 {width: 176.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 0.0px 1.0px; border-color: transparent #000000 transparent #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td19 {width: 149.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td20 {width: 32.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td21 {width: 176.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 1.0px 1.0px; border-color: transparent #000000 #000000 #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td22 {width: 149.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td24 {width: 177.0px; background-color: #4e7290; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td25 {width: 314.0px; background-color: #4e7290; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td26 {width: 149.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 0.0px 0.0px; border-color: transparent #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td27 {width: 150.0px; background-color: #4e7290; padding: 0.0px 7.0px 0.0px 7.0px}
+/**/
+</style></head><body><div id="main">
+<h1>JVM Language Summit &#8212; Agenda</h1>
+<p>Please refer to the wiki for <a href="http://wiki.jvmlangsummit.com/">the detailed agenda, with linked
+talk summaries</a>.</p>
+<p>Our three days will be divided as follows:</p>
+<!-- begin SpeakerAgenda-rtf.html -->
+<table cellspacing="0" cellpadding="0" class="t1" summary="Agenda">
+<tbody>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Monday, 7/26</p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Tuesday, 7/27</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Wednesday, 7/28</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">8:30</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="4" valign="bottom" class="td7">
+<p class="p3"><i>Breakfast (30 min)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">9:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1"><i>Welcome (Goetz)</i></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td rowspan="2" valign="bottom" class="td6">
+<p class="p1">Doug Lea</p>
+<p class="p1"><i>(keynote)</i></p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Theodorou / Groovy</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Nutter / JRuby</p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Forax / PHP</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">10:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Caspole / AMD</p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Bloch / Google</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Bothner / Kawa</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="4" valign="bottom" class="td7">
+<p class="p3"><i>Break (30 min)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">11:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Rose / HotSpot</p>
+</td>
+<td valign="bottom" class="td8">
+<p class="p1">W1A</p>
+</td>
+<td valign="bottom" class="td9">
+<p class="p4">Rose</p>
+</td>
+<td valign="bottom" class="td9">
+<p class="p4">Hickey</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Wimmer / UCI</p>
+</td>
+<td valign="bottom" class="td10">
+<p class="p1">W1B</p>
+</td>
+<td valign="bottom" class="td11">
+<p class="p4">McKinney</p>
+</td>
+<td valign="bottom" class="td11">
+<p class="p4">TBD</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">12:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="2" rowspan="2" valign="middle" class="td12">
+<p class="p3"><i>Lunch (60 min)</i></p>
+</td>
+<td colspan="2" valign="bottom" class="td25">
+<p class="p3"><i>Lunch (30 min)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Reinhold / JDK7</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Messinger / Oracle</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">1:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Stadler / JKU</p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Gafter/ LINQ</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Pollak / Scala</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Deva / Chronon</p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Field / Thorn</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Flood / Fortress</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">2:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td13">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td14">
+<p class="p1">&#214;hrstr&#246;m / JRockit</p>
+</td>
+<td valign="bottom" class="td15">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="2" valign="bottom" class="td25">
+<p class="p3"><i>Break (30 min)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td16">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td17">
+<p class="p1">W1A</p>
+</td>
+<td colspan="2" valign="bottom" class="td18">
+<p class="p4">&#214;hrstr&#246;m</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Heidinga / J9</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Clement / ECJ</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">3:00</p>
+</td>
+<td valign="bottom" class="td16">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td20">
+<p class="p1">W1B</p>
+</td>
+<td colspan="2" valign="bottom" class="td21">
+<p class="p4">Titzer</p>
+</td>
+<td valign="bottom" class="td19">
+<p class="p1">Click / Azul</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Pliss / Monty</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td13">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="2" valign="bottom" class="td24">
+<p class="p1"><i>Break (30 min)</i></p>
+</td>
+<td valign="bottom" class="td22">
+<p class="p1">Thorup / Erjang</p>
+</td>
+<td valign="bottom" class="td22">
+<p class="p5">Van De Venter / Maxine</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">4:00</p>
+</td>
+<td valign="bottom" class="td16">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td17">
+<p class="p1">W2A</p>
+</td>
+<td colspan="2" valign="bottom" class="td18">
+<p class="p4">Nutter</p>
+</td>
+<td valign="bottom" class="td26">
+<p class="p4">Thorup</p>
+</td>
+<td valign="bottom" class="td26">
+<p class="p4">Click</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td16">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td20">
+<p class="p1">W2B</p>
+</td>
+<td colspan="2" valign="bottom" class="td21">
+<p class="p4">TBD</p>
+</td>
+<td valign="bottom" class="td11">
+<p class="p4">Field</p>
+</td>
+<td valign="bottom" class="td11">
+<p class="p4">Bothner</p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">5:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1"><i>(break)</i></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1"><i>(lightning talks)</i></p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1"><i>(final break)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1"><i>&#160;</i></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1"><i>&#160;</i></p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1"><i>&#160;</i></p>
+</td>
+</tr>
+<tr>
+<td valign="bottom" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1"><i>&#160;</i></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p2">6:00</p>
+</td>
+<td valign="bottom" class="td27">
+<p class="p3">Dinner at <a href="http://www.faultlinebrewing.com/">Faultline Brewing
+Company</a></p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1"><i>&#160;</i></p>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- end SpeakerAgenda-rtf.html -->
+<p>Workshop sessions will run for 60 minutes, with two or more
+sessions in parallel. On the agenda, time blocks for workshops are
+<span style="background:#7cb281">colored green</span>.</p>
+<p>We expect all the talks to be deeply technical, given by
+designers and implementors to designers and implementors. We all
+speak Code here!</p>
+<p>These talks, we hope and expect, will inform the audience, in
+detail, about the state of the art of language design and
+implementation on the JVM, and the present and future capabilities
+of the JVM itself. (Some will do so indirectly by discussing
+non-JVM technologies.) Beyond that, these talks will inspire us to
+work together with JVM-based technologies to build the next great
+software systems.</p>
+<table border="0" cellpadding="5" cellspacing="0" width="100%" summary="Notes">
+<tbody>
+<tr>
+<td valign="top" style="width:80%">
+<h2>JVM Language Summit &#8212; Notes on the Agenda</h2>
+<ul>
+<li>The summit conference is running three days, July 26-28.</li>
+<li>All plenary talks are in Oracle&#8217;s Stanford Conference
+Room (SCA05-1116); it is set up classroom style.</li>
+<li>As last year, light breakfast and lunch are served on
+site.</li>
+<li>Two or three breakout rooms are available for workshops, quiet
+conversation, and ad hoc consultations.</li>
+<li>To log into <a href="http://wiki.jvmlangsummit.com">the
+wiki</a>, use the initial credentials (supplied on-site with your
+agenda card), then register yourself. Or re-activate last
+year&#8217;s login, if you were there.</li>
+</ul>
+</td>
+<td valign="middle" style="width:20%"><a href="http://wiki.jvmlangsummit.com"><img title="the Vitruvian Duke" style="border: 0px solid ; width: 356px; height: 340px;" src="../images/DukeVitru.png" alt="Vitruvian Duke" /></a></td>
+</tr>
+</tbody>
+</table>
+<h3><a name="speakers" id="speakers">Notes to Speakers:</a></h3>
+<p>It is expected that the conference will be recorded
+professionally and posted on the internet. We encourage you to
+allow your talk (including audio and slides) to be recorded and
+posted. We will not do this, however, without a signed <a href="../pdf/JVMLSPubReleaseForm2010.pdf">speaker release form</a>, so
+if you do not wish your talk to be recorded, simply do not complete
+the release form.</p>
+<p>If you release our use of your written materials on the speaker
+release form, we will put your talk&#8217;s PDF (or other
+presentation file) on the conference wiki, so that the other
+conference participants, and the rest of the world, can see it
+there.</p>
+<p>All talks (except breakouts) will be held in Oracle&#8217;s
+<em>Stanford conference room</em>, which has an overhead Infocus
+projector with a VGA connector. Please send PDFs of your slides in
+advance to Brian Goetz, so that we can have them ready to project
+from our laptop. But, if you plan to present from your own machine,
+please make sure it can talk to a VGA connector. (Macs generally
+require an adapter to do this.) We will also supply a clip-on
+microphone.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

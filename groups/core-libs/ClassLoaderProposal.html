@@ -1,0 +1,939 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="CONTENT-TYPE" content="text/html; charset=us-ascii" /><meta name="GENERATOR" content="NeoOffice 2.2 (Unix)" /><meta name="CREATED" content="0;0" /><meta name="CHANGED" content="20081126;16403200" /><title>ClassLoaderForTest &lt; HotspotRuntime &lt; JavaSE</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<p><br /></p>
+<h2>Class Loader API Modifications for Deadlock Fix</h2>
+<ul>
+<li>
+<p>Version .04: March&#160; 30, 2009</p>
+</li>
+<li>
+<p>Authors: Valerie Peng, Jeff Nisewanger, Karen Kinnear</p>
+</li>
+<li>
+<p>Audience: Community Review</p>
+</li>
+</ul>
+<h3>Goals</h3>
+<ul>
+<li>
+<p>The goal of Class Loader API modifications is to resolve a
+critical customer issue: it is easy to deadlock custom class
+loaders that do not adhere to an acyclic class loader delegation
+model.</p>
+</li>
+</ul>
+<h3>Non-Goals</h3>
+<ul>
+<li>
+<p>Other Class Loader RFEs that require API modification will be
+addressed via individual RFEs, separately from this fix for the
+deadlock problem.</p>
+</li>
+<li>
+<p>This proposal does not address any re-architecture for
+performance</p>
+</li>
+</ul>
+<h3>Motivation</h3>
+<ul>
+<li>
+<p>Top webbug: 817 SDN votes April 2008 4670071
+java.lang.ClassLoader.loadClassInternal(String) is too
+restrictive</p>
+</li>
+<li>
+<p>Causing problems for key customers with no good workaround that
+works for everyone.</p>
+</li>
+</ul>
+<h3>Technical Design Constraints</h3>
+<ul>
+<li>
+<p>Must allow non-hierarchical class delegation topologies without
+deadlocks</p>
+</li>
+<li>
+<p>Must be backwards compatible</p>
+<ul>
+<li>
+<p>Existing class loaders must continue to work unchanged</p>
+</li>
+<li>
+<p>including class loaders which override findClass(...),
+loadClass(String), and/or loadClass(String, boolean)</p>
+</li>
+<li>
+<p>Existing code that invokes a class loader directly via
+loadClass(String) or a class loader that calls loadClass(String,
+boolean) must continue to work unchanged</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Must continue to support the temporary risky flag combination
+-XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass</p>
+<ul>
+<li>
+<p>The intention is to deprecate the -XX:+UnsyncloadClass flag when
+customers adopt the new mechanism.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Common workaround</p>
+<ul>
+<li>
+<p>Right now some customers work around the deadlock by explicitly
+issuing a wait() on the class loader lock. While this has not been
+sufficient to solve many customers problems, we need to continue to
+support this until those customers have an opportunity to migrate
+to the new mechanism.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Must be possible to define guidance to migrate custom class
+loaders to take advantage of asynchronous behavior</p>
+</li>
+<li>
+<p>Today, with the class loader lock held around class loader
+operations, class loaders are not required to handle asynchronous
+multi-threaded class loading. A mechanism which avoids deadlock
+will require multi-thread safety awareness. Given that supporting
+multi-threaded class loading requires careful thought and planning,
+the new mechanism must provide a way for a class loader to
+explicitly claim that they are multi-thread safe.</p>
+</li>
+<li>
+<p>Therefore: the fix for these bugs will require code changes by
+custom class loader authors if their class loaders are candidates
+for deadlock.</p>
+</li>
+<li>
+<p>Given that each class loader that chooses to adopt the new
+mechanism must be explicitly safe for concurrent class loading by
+multiple threads, the claim that a class loader is multi-thread
+safe must not be automatically inherited.</p>
+</li>
+<li>
+<p>Class loaders that adopt the new mechanism must be able to run
+on older JREs. So, for example, the design must allow for a way to
+detect if the mechanism exists, and can not count on inheritance of
+classes or interfaces that may not be present.</p>
+</li>
+<li>
+<p>Goal: minimal code changes for custom class loader authors</p>
+</li>
+<li>
+<p>Goal: If we need to make trade offs on how much thought and
+changes are needed for custom class loader authors, depending on
+whether they override findClass(String) or
+loadClass(String)/loadClass(String, boolean), make it simpler for
+those who override findClass(String). There are more of those
+custom class loaders and generally to override either
+loadClass(...) already requires dealing with more class loader
+complexity.</p>
+</li>
+</ul>
+<h3>Class loader Deadlock Problem</h3>
+<h4>Brief Overview of Class Loading Interactions Between Class
+loader and the VM</h4>
+<p>Class loading requires cooperation between the VM and user level
+class loaders. Specifically, when the VM is performing constant
+pool resolution, among other things, the VM needs to call out to
+the user level class loader in order to find and define the
+requested class. On the other side, the class loader responsible
+for loading a class needs to call into the VM to determine if the
+class has already been loaded (findLoadedClass), and to define the
+class based on a bytecode stream (defineClass).</p>
+<p>The current recommended logic in detail is:</p>
+<pre>
+User Level Class Loader                               VM<br />                                                            constant pool resolution<br />                                                            first acquire class loader lock<br />  --&gt;private synchronized loadClassInternal(String)    &lt;--- calls out to loadClassInternal(String)<br />  |     public loadClass(String)                             <br />  |       protected synchronized loadClass(String,boolean) <br />  |         protected final findLoadedClass(...)             ---&gt;  VM SystemDictionary cache lookup<br />  |                                                                (can not trigger further class loading)<br />  |         delegate (e.g. parent.loadClass(String))<br />  |         protected findClass(String)  <br />  |           reads in bytes<br />  |           protected final defineClass(...)               ---&gt; resolves superclasses and superinterfaces<br />  |                                                               which recursively calls out to<br />  --------------------------------------------------   &lt;---       loadClassInternal(String)   </pre>
+<p>Custom class loader authors are encouraged to override
+findClass(String) to allow them to determine where or how the byte
+code stream is obtained. Some custom class loader authors override
+loadClass (String) or loadClass(String, boolean) to be able to
+change the delegation strategy.</p>
+<p>Currently many class loading interactions are synchronized on
+the class loader lock. This works well for class loader delegation
+that assumes a DAG-based delegation hierarchy.</p>
+<p>Customers have requested the ability to delegate to arbitrary
+class loaders. Currently this can cause deadlocks if class loaders
+delegate to each other without a fixed ordering.</p>
+<h4>Sample Deadlock Scenario: non-tree based delegation
+hierarchy</h4>
+<pre>
+Class Hierarchy:<br />  class A extends B<br />  class C extends D<br /><br />ClassLoader Delegation Hierarchy:<br /><br />Custom Classloader CL1:<br />  directly loads class A <br />  delegates to custom ClassLoader CL2 for class B<br /><br />Custom Classloader CL2:<br />  directly loads class C<br />  delegates to custom ClassLoader CL1 for class D<br /><br />Thread 1:<br />  Use CL1 to load class A (locks CL1)<br />    defineClass A triggers<br />      loadClass B (try to lock CL2)<br /><br />Thread 2:<br />  Use CL2 to load class C (locks CL2)<br />    defineClass C triggers<br />      loadClass D (try to lock CL1)</pre>
+<h3>Proposed Solution</h3>
+<pre>
+User Level Class Loader                                   VM<br />                                                              constant pool resolution <br />                                                              If ParallelCapable:lock class/class loader pair<br />                                                                 else acquire class loader lock<br />       *DEPRECATE*: private synchronized loadClassInternal    <br />  |--&gt;public loadClass(String)                          &lt;---  calls out to loadClass(String)<br />  |      call loadClass(String,boolean) (*no longer synchronized*)<br />  |         *if ParallelCapable:* <br />  |           *synchronize on a class-name-based-lock*<br />  |           *else synchronize on "this" (backward compatibility)*<br />  |         protected final findLoadedClass(...)              ---&gt;  VM SystemDictionary cache lookup<br />  |                                                                 (can not trigger further class loading)<br />  |         delegate (e.g. parent.loadClass(String))<br />  |         protected findClass(String)  <br />  |           reads in by<br />  |           protected final defineClass(...)                ---&gt; resolves superclasses and superinterfaces<br />  |                                                                which recursively calls out to<br />  --------------------------------------------------     &lt;---      loadClass(String) </pre>
+<h4>API Modifications</h4>
+<h5>Java APIs</h5>
+<ul>
+<li>
+<p>New protected static method in java.lang.ClassLoader, boolean
+registerAsParallelCapable()</p>
+<ul>
+<li>
+<p>To be called once from class initialization of a subclass of
+java.lang.ClassLoader which supports parallel loading of
+classes.</p>
+</li>
+<li>
+<p>In order for a class loader class to register itself as parallel
+capable, its superclasses must also already be registered as
+parallel capable when invoking this protected static method. This
+is the simplest way to ensure that any methods this class loader
+inherits have been explicitly made multi-thread safe. Otherwise the
+request will be ignored.</p>
+</li>
+<li>
+<p>registerAsParallelCapable() will return true if the class loader
+successfully registers as parallelCapable, even if accidentally
+called a second time. It will return false on failure.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>New protected method in java.lang.ClassLoader, Object
+getClassLoadingLock(String className)</p>
+<ul>
+<li>
+<p>Returns the lock object for class loading operations.</p>
+</li>
+<li>
+<p>For backward compatibility, the default implementation of this
+method behaves as follows:</p>
+<ul>
+<li>If this ClassLoader object is registered as parallel capable,
+the method returns a dedicated object associated with the specified
+class name.</li>
+<li>Otherwise, the method returns this ClassLoader object.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>java.lang.ClassLoader API changes:</p>
+<ul>
+<li>
+<p>Deprecate private loadClassInternal(), retain temporarily for
+backward compatibility</p>
+</li>
+<li>
+<p>Remove the synchronized keyword from:</p>
+<ul>
+<li>
+<p>protected synchronized Class&lt;?&gt; loadClass(String name,
+boolean resolve) method.</p>
+</li>
+<li>
+<p>public synchronized void setDefaultAssertionStatus(boolean
+enabled)</p>
+</li>
+<li>
+<p>public synchronized void setPackageAssertionStatus(String
+packageName, boolean enabled)</p>
+</li>
+<li>
+<p>public synchronized void setClassAssertionStatus(String
+className, boolean enabled)</p>
+</li>
+<li>
+<p>public synchronized void clearAssertionStatus()</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h5>VM Flags for early access testing</h5>
+<ul>
+<li>
+<p>AlwaysLockClassLoader - default false. Provided for
+ParallelClassLoader that has a bug in handling multiple threads in
+parallel. Expected to ship in product.</p>
+</li>
+<li>
+<p>AllowParallelDefineClass - default false. If two threads try to
+define the same class/class loader pair in parallel, throw
+linkageError, duplicate class definition. If you change the flag,
+we would allow parallel defineClass requests, using the result of
+the first requester. This would require a JVMS clarification.
+Experimental in product for early access feedback only, not
+expected to ship.</p>
+</li>
+<li>
+<p>MustCallLoadClassInternal - default false. In case a customer
+actually depended on this call, perhaps expecting to find this on
+the stack. Note that this will only enforce calling
+loadClassInternal(String). For instances of parallel capable class
+loaders, neither the VM nor loadClassInternal(String) will acquire
+the class loader lock. Expected to ship in product for one or two
+releases until deprecated loadClassInternal(String) can be safely
+removed.</p>
+</li>
+</ul>
+<h5>Java &lt;-&gt; VM interface changes</h5>
+<ul>
+<li>
+<p>VM calls loadClass(String) NOT loadClassInternal(String) always
+(note: backward compatibility -XX:+MustCallLoadClassInternal flag
+override)</p>
+</li>
+<li>
+<p>VM acquires class loader lock only if class loader instance is
+not a ParallelCapable class</p>
+</li>
+<li>
+<p>java.lang.ClassLoader's instance constructor will look up the
+class for a new class loader, and if it is registered as parallel
+capable, set a private instance field, parallelLockMap to non-null
+for the vm to query.</p>
+</li>
+</ul>
+<h4>&#160;Class Loader changes required</h4>
+<ul>
+<li>
+<p>java.lang.ClassLoader:</p>
+<ul>
+<li>
+<p>Add itself to the list of parallel-capable class loaders during
+class initialization</p>
+</li>
+<li>
+<p>Modify the code to ensure thread-safe concurrency</p>
+<ul>
+<li>
+<p>Ensure no internal methods synchronize on the class loader
+object for parallel capable class loaders</p>
+</li>
+<li>
+<p>Ensure all critical sections are safe when executed by multiple
+threads loading different classes</p>
+</li>
+</ul>
+</li>
+<li>
+<p>protected loadClass(String, boolean) changes:</p>
+<ul>
+<li>
+<p>Remove synchronized keyword</p>
+</li>
+<li>
+<p>If "this" is not a parallel capable class loader, synchronize on
+"this" for backward compatibility</p>
+</li>
+<li>
+<p>else synchronize on a class-name-based-lock</p>
+</li>
+<li>
+<p>The synchronization in protected loadClass(String, boolean)
+ensures that defineClass(...) will not be called multiple times in
+parallel for the same class name/class loader pair.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>AssertionStatus related APIs</p>
+<ul>
+<li>
+<p>Replace synchronized keyword with internal synchronization logic
+for:</p>
+<ul>
+<li>
+<p>public synchronized void setDefaultAssertionStatus(boolean
+enabled)</p>
+</li>
+<li>
+<p>public synchronized void setPackageAssertionStatus(String
+packageName, boolean enabled)</p>
+</li>
+<li>
+<p>public synchronized void setClassAssertionStatus(String
+className, boolean enabled)</p>
+</li>
+<li>
+<p>public synchronized void clearAssertionStatus()</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Internal synchronization logic:</p>
+<ul>
+<li>
+<p>If "this" is not a ParallelCapable class loader, synchronize on
+"this" for backward compatibility</p>
+</li>
+<li>
+<p>else synchronize on a dedicated internal lock object for all
+assertion related fields</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>add new protected static method: registerAsParallelCapable()</p>
+<ul>
+<li>
+<p>If all superclasses which are instances of java.lang.ClassLoader
+succeeded in registering as ParallelCapable, the calling class will
+also successfully register as parallel capable.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>java.security.SecureClassLoader</p>
+<ul>
+<li>
+<p>Invoke registerAsParallelCapable() during class
+initialization</p>
+</li>
+<li>
+<p>No modifications were necessary to ensure thread-safe
+concurrency</p>
+</li>
+</ul>
+</li>
+<li>
+<p>java.net.URLClassLoader:</p>
+<ul>
+<li>
+<p>Invoke registerAsParallelCapable() during class
+initialization</p>
+</li>
+<li>
+<p>Modify the code to ensure thread-safe concurrency</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4>Suggested Model for Custom Class Loaders</h4>
+<ul>
+<li>
+<p>Custom class loaders that have no history of deadlocks require
+no changes.</p>
+</li>
+<li>
+<p>Custom class loaders that support a non-hierarchical delegation
+model and so are candidates for deadlock may choose to adopt the
+new mechanism. If you adopt this new mechanism, you need to modify
+all custom class loaders that could interact in a deadlock.</p>
+</li>
+<li>
+<p>Current class loaders frequently rely on the synchronization on
+the class loader lock provided by the enclosing methods
+loadClassInternal and protected loadClass(String, boolean). To
+resolve the current deadlocking on class loader locks, finer
+grained locking is needed. For class loader classes that
+successfully register themselves as parallel capable, the
+java.lang.ClassLoader class will no longer synchronize on the
+current class loader object when called to load a class. Instead
+java.lang.ClassLoader uses its own private lock which is unique for
+each class name. This allows concurrent loading of different
+classes for the same class loader instance. This locking logic is
+in the protected loadClass(String, boolean) method and will be
+passed to custom parallel class loaders through inheritance if not
+overridden.</p>
+</li>
+<li>
+<p>Recommended modifications for custom class loaders that need to
+avoid deadlocks:</p>
+<ul>
+<li>
+<p>1. REQUIRED: In the class initializer, invoke
+java.lang.ClassLoader registerAsParallelCapable()</p>
+<ul>
+<li>
+<p>This registration indicates that all instances of this class
+loader class are multi-thread safe for concurrent class loading</p>
+</li>
+<li>
+<p>If the registration succeeds, java.lang.ClassLoader will allow
+concurrent loading of classes for the same class loader
+instance</p>
+</li>
+</ul>
+</li>
+<li>
+<p>2. REQUIRED: Modify the code to ensure multi-thread safety</p>
+<ul>
+<li>
+<p>Decide upon an internal locking scheme. E.g.
+java.lang.ClassLoader uses a class-name-based locking scheme.</p>
+</li>
+<li>
+<p>Remove all synchronization on the class loader lock</p>
+</li>
+<li>
+<p>Ensure that critical sections are safe for multiple threads
+loading different classes.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>3. REQUIRED: Ensure that all class loader classes that this
+custom class loader extends also invoke registerAsParallelCapable()
+in the class initializer and ensure they are multi-thread safe for
+concurrent class loading</p>
+</li>
+<li>
+<p>4.a Class loaders that invoke registerAsParallelCapable(), that
+override findClass(String), (recommended overriding):</p>
+<ul>
+<li>
+<p>No further modifications required</p>
+</li>
+</ul>
+</li>
+<li>
+<p>4.b. Class loaders that invoke registerAsParallelCapable(), that
+override protected loadClass(String, boolean) or public
+loadClass(String)</p>
+<ul>
+<li>
+<p>We recommend that you override findClass(String) instead, if at
+all possible</p>
+</li>
+<li>
+<p>To ensure that the protected defineClass(...) method is only
+called once for the same class name, you need to implement a
+finer-grained locking scheme. One option would be to adopt the
+class name based locking mechanism from java.lang.ClassLoader's
+protected loadClass(String, boolean) method.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Internal Implementation Details</h3>
+<p>The most important point to make is that all class loaders that
+want the deadlock fix, must be cleaned up to ensure that they are
+multi-thread safe, i.e. that they allow the class loader to load
+multiple classes at the same time. The basic approach is to remove
+synchronization on the class loader itself, and provide smaller
+granularity locking for critical sections. It is critical that
+there be no synchronization on the class loader lock for parallel
+capable class loaders. Given that class loading is frequently
+triggered implicitly, e.g. by newInstance, and given the
+interactions between the VM and class loaders, acquiring the class
+loader lock holds the risk of causing a deadlock.</p>
+<p>All of the JRE class loaders which customers extend to create
+custom class loaders need to invoke registerAsParallelCapable().
+They all must be made multi-thread safe for concurrent class
+loading of different class name/class loader pairs, so methods
+inherited by parallel capable custom class loaders are thread-safe.
+Sun will need to commit to these changes for customers to count on,
+and will need to add this to the documentation of these classes. In
+addition, in some cases the JRE class loaders need to delegate in
+other than the traditional tree-based hierarchy. These include:</p>
+<ul>
+<li>
+<p>java.lang.ClassLoader<br /></p>
+</li>
+<li>
+<p>java.security.SecureClassLoader<br /></p>
+</li>
+<li>
+<p>java.net.URLClassLoader</p>
+</li>
+<li>
+<p>Extension class loader: sun.misc.Launcher$ExtClassloader</p>
+</li>
+<li>
+<p>sun.misc.launcher$AppClassLoader</p>
+</li>
+</ul>
+<p>Other class loaders do not require any changes. These
+include:<br /></p>
+<ul>
+<li>Class loaders with alternative mechanisms for preventing
+deadlock
+<ul>
+<li>
+<p>javax.management.loading.MLet, PrivateMLet: provides non
+cyclical delegation based on registration order</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Class loaders that customers can not extend</p>
+<ul>
+<li>sun.applet.AppletClassLoader<br /></li>
+<li>sun.plugin.javascript.JSClassLoader<br /></li>
+<li>sun.plugin.security.PluginClassLoader<br /></li>
+<li>sun.plugin2.applet.JNLP2ClassLoader<br /></li>
+<li>sun.plugin2.applet.Applet2ClassLoader<br /></li>
+<li>sun.plugin2.applet.Plugin2ClassLoader</li>
+<li>com.sun.jnlp.JNLPClassLoader</li>
+</ul>
+</li>
+</ul>
+<h4><a name="VM_Behavior_Changes1" id="VM_Behavior_Changes1"></a>VM
+Behavior Changes</h4>
+<p>Sincere apologies on how long it has taken us to fix this
+problem. Part of the reason this fix has taken so long is that we
+first needed to modify the VM in the following ways:</p>
+<ul>
+<li>
+<p>Fixed problems with circularity detection (JDK6)</p>
+</li>
+<li>
+<p>Modified the VM common class resolution logic to handle parallel
+class loading (HotSpot 10, JDK 6u4)</p>
+</li>
+</ul>
+<h5>Details of VM handling of&#160; specific class loader
+cases:<br /></h5>
+<ul>
+<li>
+<p>Traditional class loaders</p>
+<ul>
+<li>
+<p>When using traditional class loaders to load classes, lock class
+loader object lock, call loadClass(String)</p>
+</li>
+</ul>
+</li>
+<li>
+<p>-XX:+UnlockDiagnosticOptions -XX:+UnsyncloadClass -
+DEPRECATED</p>
+<ul>
+<li>
+<p>no class loader object lock for class loaders, call
+loadClass(String)</p>
+<ul>
+<li>
+<p>allow parallel overall class resolution, parallel superclass
+loading, and parallel defineClass() calls</p>
+</li>
+<li>
+<p>parallel defineClass() handling: if there are two define class
+requests at the same time for the same class/class loader pair, the
+second requester waits for the first requester and returns the
+first request or's results, instead of throwing a linkageError.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>parallelCapable class loaders<br /></p>
+<ul>
+<li>
+<p>No class loader object lock for class loaders, call
+loadClass(String)</p>
+<ul>
+<li>
+<p>allow parallel overall class resolution, and parallel superclass
+loading</p>
+</li>
+<li>
+<p>parallel defineClass requests will throw LinkageErrors (for
+early access experimentation: see AllowParallelDefineClass
+flag)</p>
+</li>
+<li>VM ignores parallelCapable registration for JDK &lt;=
+JDK7<br /></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>bootstrap class loader</p>
+<ul>
+<li>
+<p>No global lock, allow parallel overall class resolution</p>
+<ul>
+<li>
+<p>wait for parallel superclass loads to complete</p>
+</li>
+<li>
+<p>parallel defineClass requests will throw LinkageErrors</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>breaking the class loader lock</p>
+<ul>
+<li>
+<p>Special handling: for both overall class resolution and
+superclass loads: first requester completes, others wait for
+completion</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3><a name="Alternatives_Considered_and_Not" id="Alternatives_Considered_and_Not"></a><a name="Alternatives_Considered_and_Not_" id="Alternatives_Considered_and_Not_"></a> Alternatives Considered and
+Not Chosen</h3>
+<ul>
+<li>
+<p>Marker interface.</p>
+<ul>
+<li>
+<p>Proposal: Provide a marker interface which a class loader can
+implement to declare that it is a parallel capable class
+loader.</p>
+</li>
+<li>
+<p>Reasons not chosen:</p>
+<ul>
+<li style="color: rgb(0, 0, 0);">
+<p>Custom class loaders which extend a parallel capable class
+loader will automatically become parallel capable through
+inheritance. This is not desirable since child class loaders may
+accidentally become parallel capable if any of their ancestor class
+loaders are changed to be parallel capable.<br /></p>
+</li>
+<li>
+<p><font color="#FF0000"><span style="color: rgb(0, 0, 0);">Some
+class loaders need to be able to run across various versions of
+JREs. They can't implement a new interface which does not exist in
+the older JREs.</span></font></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Annotations</p>
+<ul>
+<li>
+<p>Proposal: Use annotations to indicate that a class loader is
+parallel capable.</p>
+</li>
+<li>
+<p>Reason not chosen:</p>
+<ul>
+<li>
+<p>Annotations were explicitly designed to NOT modify VM runtime
+behavior, only to provide information, i.e. annotations were not
+intended to be a macro language for the VM. If run on a VM that
+does not understand an annotation, the behavior should not
+change.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>New loadClassXXX(String) API without a registration
+mechanism<br /></p>
+<ul>
+<li>
+<p>Proposal: Remove the synchronized keyword from the protected
+method loadClass(String, boolean), and add a new protected method
+loadClass2(String) which by default acquires the class loader lock
+before calling loadClass(String, boolean).&#160; Class loaders that
+support parallel loading should override loadClass2(String) to
+provide their own synchronization mechanism. Both the VM and the
+public method loadClass(String) call loadClass2(String) for loading
+classes.<br /></p>
+</li>
+<li>
+<p>Reasons not chosen:</p>
+<ul>
+<li>
+<p>The VM would have no way of knowing if the class loader supports
+parallel class loading or not. For preventing deadlock the VM needs
+to allow parallel class resolution and parallel superclass loading.
+For backward compatibility, the VM needs to disallow parallel class
+resolution and parallel superclass loading.</p>
+</li>
+<li>
+<p>There are multiple paths into class loading today which must
+continue to work for backward compatibility.</p>
+<ul>
+<li style="color: rgb(0, 0, 0);">Custom class loaders that call the
+protected synchronized method loadClass(String, boolean) must
+continue to work. Thus, loadClass(String, boolean) would still have
+to acquire the class loader lock when calling existing
+(non-parallel-capable) class loaders. Same applies to
+loadClass(String).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>New loadClassXXX(String, boolean) API in addition to
+registration mechanism</p>
+<ul>
+<li>
+<p>Proposal: In addition to a registration mechanism, introduce a
+new protected loadClassUnsync(String, boolean) which essentially
+has the same behavior as the protected method loadClass(String,
+boolean) except that it does not have the synchronized
+keyword.&#160; VM calls the public method loadClass(String) which
+then dispatches to loadClass(String, boolean) or
+loadClassUnsync(String, boolean) depending on whether the class
+loader is parallel capable or not.</p>
+</li>
+<li>
+<p>Reasons not chosen:</p>
+<ul>
+<li>
+<p>Strongly considered and in fact prototyped. While we believe
+this could work technically, we believe the current proposal is the
+simplest we have so far devised in terms of requiring minimal
+changes for custom class loaders which need to deal with deadlocks,
+and no changes for others.</p>
+</li>
+<li>
+<p>Requires both the same changes the current proposal does for
+custom class loader author and additional changes:</p>
+<ul>
+<li>
+<p>All parallel capable class loaders would need to override
+loadClassUnsync(String, boolean) and provide their own
+synchronization mechanism, i.e. we would not provide the
+per-class-name synchronization that we do today</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Per-instance registerAsParallelCapable():</p>
+<ul>
+<li>
+<p>Proposal: Instead of registering as parallel capable at the
+class level, allow instances of the same class loader to register
+themselves as parallel capable or not.</p>
+</li>
+<li>
+<p>Reason not chosen. Not needed.</p>
+<ul>
+<li>
+<p>The registration is intended to indicate that a class loader
+implementation is multi-thread safe. That information is meaningful
+on a per-class bases. If a custom class loader author wishes, they
+can go back to locking on the class loader object for instances in
+which they would like to disable the parallel class loading
+capability in their implementation. By registering as
+parallelCapable, they have that option. Note that tracking of
+parallel capable is based on the Class instance of the class loader
+and not based on the class name. So <font style="color: rgb(0, 0, 0);" color="#FF0000">different class loaders with
+the same class name will still be tracked independently.</font></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>New LinkageError for parallel duplicate requests</p>
+<ul>
+<li>
+<p>Proposal: It has been suggested that one way of handing parallel
+duplicate requests would be to define a new LinkageError subclass
+passing back the original defined class, rather than the current
+error of "duplicate". I think the intention of this proposal was
+that the caller of defineClass() could check if the original class
+matched the requested class, and if so, do a findLoadedClass() to
+use the previously defined class.</p>
+</li>
+<li>
+<p>Reason not chosen: A problem with the proposal is that the VM
+does not actually cache the original unprocessed byte stream, and
+it would not be worth the overhead to do so.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Ability to override the requirement that all superclasses must
+be parallel capable.</p>
+<ul>
+<li>
+<p>Proposal: Some custom class loader authors would like to state
+that a given class loader is parallelCapable and they guarantee
+that all superclasses are parallel capable even though they are not
+registered as such.</p>
+</li>
+<li>
+<p>Reasons not chosen:</p>
+<ul>
+<li>
+<p>A strong concern is that authors of the superclass would not
+know that future changes would be expected to support the
+multi-thread safety that parallel capable implies, and so there
+would be a strong risk of breaking undocumented, unofficial,
+backward compatibility.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Use the term Async instead of parallel capable</p>
+<ul>
+<li>
+<p>Proposal: use the term Async.</p>
+</li>
+<li>
+<p>Reasons not chosen:</p>
+<ul>
+<li>Async could imply an analogy with asynchronous I/O, i.e. the
+class loading would take place later - so that is probably not the
+best alternative.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Open Issues</h3>
+<ul>
+<li>
+<p>Modify JVMS and defineClass(...) behavior</p>
+<ul>
+<li>
+<p>Proposal: There is a suggestion to modify defineClass() behavior
+such that for parallel capable class loaders, if two
+defineClass(...) requests for the same class/class loader pair
+occur in parallel, rather than throwing a LinkageError for a
+duplicate definition, defineClass() would have enforce
+first-definition-wins-behavior. All defineClass(...) requests would
+parse the byte stream for ClassFileFormatError. The first requester
+will complete the definition process, subsequent requesters will
+wait and use the results of the first request.</p>
+</li>
+<li>
+<p>The prototype will offer a flag, -XX:+AllowParallelDefineClass,
+so that you can provide feedback based on experimentation.</p>
+</li>
+<li>
+<p>Feedback: so far both defaults have been requested. Looking for
+additional feedback once the prototype is available.</p>
+</li>
+</ul>
+</li>
+</ul>
+<br />
+<br />
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

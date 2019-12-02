@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 110: HTTP/2 Client (Incubator)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 110: HTTP/2 Client (Incubator)</h1><table class="head"><tr><td>Owner</td><td>Michael McMahon</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.net</td></tr><tr><td>Discussion</td><td>net dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>XL</td></tr><tr><td>Duration</td><td>XL</td></tr><tr><td>Relates to</td><td><a href="244">JEP 244: TLS Application-Layer Protocol Negotiation Extension</a></td></tr><tr><td>Reviewed by</td><td>Alan Bateman</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/05/12 16:26</td></tr><tr><td>Updated</td><td>2017/06/07 10:30</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8042950">8042950</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Define a new HTTP client API that implements HTTP/2 and WebSocket, and
+can replace the legacy <code>HttpURLConnection</code> API.  The API will be
+delivered as an incubator module, as defined in
+<a href="//openjdk.java.net/jeps/11">JEP 11</a>, with JDK 9.  This implies:</p>
+<ul>
+<li>
+<p>The API and implementation will not be part of Java SE.</p>
+</li>
+<li>
+<p>The API will live under the jdk.incubtor namespace.</p>
+</li>
+<li>
+<p>The module will not resolve by default at compile or run time.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>The existing <code>HttpURLConnection</code> API and its implementation have numerous
+problems:</p>
+<ul>
+<li>
+<p>The base <code>URLConnection</code> API was designed with multiple protocols in
+mind, nearly all of which are now defunct (<code>ftp</code>, <code>gopher</code>, etc.).</p>
+</li>
+<li>
+<p>The API predates HTTP/1.1 and is too abstract.</p>
+</li>
+<li>
+<p>It is hard to use, with many undocumented behaviors.</p>
+</li>
+<li>
+<p>It works in blocking mode only (i.e., one thread per
+request/response).</p>
+</li>
+<li>
+<p>It is very hard to maintain.</p>
+</li>
+</ul>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Must be easy to use for common cases, including a simple blocking
+mode.</p>
+</li>
+<li>
+<p>Must provide notification of events such as "headers received",
+errors, and "response body received".  This notification is not necessarily
+based on callbacks but can use an asynchronous mechanism like
+CompletableFuture.</p>
+</li>
+<li>
+<p>A simple and concise API which caters for 80-90% of application
+needs.  This probably means a relatively small API footprint
+that does not necessarily expose all the
+capabilities of the protocol.</p>
+</li>
+<li>
+<p>Must expose all relevant aspects of the HTTP protocol request to a
+server, and the response from a server (headers, body, status codes,
+etc.).</p>
+</li>
+<li>
+<p>Must support standard and common authentication mechanisms. This will initially be limited to just Basic authentication.</p>
+</li>
+<li>
+<p>Must be able to easily set up the WebSocket handshake.</p>
+</li>
+<li>
+<p>Must support <a href="http://http2.github.io/">HTTP/2</a>.  (The
+application-level semantics of HTTP/2 are mostly the same as 1.1,
+though the wire protocol is completely different.)</p>
+<ul>
+<li>
+<p>Must be able to negotiate an upgrade from 1.1 to 2 (or not), or
+select 2 from the start.</p>
+</li>
+<li>
+<p>Must support server push, i.e., the ability of the server to push
+resources to the client without an explicit request by the client.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Must perform security checks consistent with the existing networking
+API.</p>
+</li>
+<li>
+<p>Should be friendly towards new language features such as lambda
+expressions.</p>
+</li>
+<li>
+<p>Should be friendly towards embedded-system requirements, in
+particular the avoidance of permanently running timer threads.</p>
+</li>
+<li>
+<p>Must support HTTPS/TLS.</p>
+</li>
+<li>
+<p>Performance requirements for HTTP/1.1:</p>
+<ul>
+<li>
+<p>Performance must be on par with the existing <code>HttpURLConnection</code>
+implementation.</p>
+</li>
+<li>
+<p>Performance must be on par with the Apache HttpClient library and
+with Netty and Jetty when used as a client API.</p>
+</li>
+<li>
+<p>Memory consumption of the new API must be on par or lower than that
+of <code>HttpURLConnection</code>, Apache HttpClient, and Netty and Jetty when
+used as a client API.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Performance requirements for HTTP/2:</p>
+<ul>
+<li>
+<p>Performance must be better than HTTP/1.1 in the ways expected by
+the new protocol (i.e., in scalability and latency),
+notwithstanding any platform limitations (e.g., TCP segment ack
+windows).</p>
+</li>
+<li>
+<p>Performance must be on par with Netty and Jetty when used as a
+client API for HTTP/2.</p>
+</li>
+<li>
+<p>Memory consumption of the new API must be on par or lower than when
+using <code>HttpURLConnection</code>, Apache HttpClient, and Netty and Jetty
+when used as a client API.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Performance comparisons will only be in the context of comparable
+modes of operation, since the new API will emphasise simplicity and
+ease of use over covering all possible use cases,</p>
+</li>
+<li>
+<p>This work is intended for JDK 9.  Some of the code may be re-used by
+Java EE in their implementation of HTTP/2 in the Servlet 4.0 API,
+so only JDK 8 language features and, where possible, APIs will be
+used.</p>
+</li>
+<li>
+<p>It is intended that with the benefit of experience using the API
+in JDK 9, it will be possible to standardize the API in Java SE
+under the java.net namespace in JDK 10. When this happens, as part
+of a future JEP, the API will no longer exist as an incubator module.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>This API is intended to eventually replace the <code>HttpURLConnection</code> API for new code,
+but we do not intend immediately to re-implement the old API using the
+new API.  This may happen as future work.</p>
+<p>Some requirements were considered in earlier versions of this JEP for JDK
+8, but they are being left out in order to keep the API as simple as
+possible:</p>
+<ul>
+<li>Request/response filtering,</li>
+<li>A pluggable connection cache, and</li>
+<li>A general upgrade mechanism.</li>
+</ul>
+<p>Some of these requirements, e.g., connection caching, will become less
+important with the gradual adoption of HTTP/2.</p>
+<h2 id="Description">Description</h2>
+<p>Some prototyping work has been done for JDK 9 in which separate classes
+were defined for the HTTP client, requests, and responses.  The builder
+pattern was used to separate mutable entities from the immutable
+products.  A synchronous blocking mode is defined for sending and receiving
+and an asynchronous mode built on java.util.concurrent.CompletableFuture
+is also defined.</p>
+<p>The prototype was built on NIO SocketChannels with asynchronous
+behavior implemented with Selectors and externally provided ExecutorServices.</p>
+<p>The prototype implementation was standalone, i.e., the existing stack was
+not changed so as to ensure compatibility and allow a phased approach in
+which not all functionality must be supported at the start.</p>
+<p>The prototype API also included:</p>
+<ul>
+<li>Separate requests and responses, like the Servlet and HTTP server API;</li>
+<li>Asynchronous notification of the following events:
+<ul>
+<li>Response headers received,</li>
+<li>Response error,</li>
+<li>Response body received, and</li>
+<li>Server push (HTTP/2 only);</li>
+</ul>
+</li>
+<li>HTTPS, via <code>SSLEngine</code>;</li>
+<li>Proxying;</li>
+<li>Cookies; and</li>
+<li>Authentication.</li>
+</ul>
+<p>The part of the API most likely to need further work is in the support of
+HTTP/2 multi responses (server push) and HTTP/2 configuration.
+The prototype implementation supports almost all of HTTP/1.1
+but not yet HTTP/2.</p>
+<p>HTTP/2 proxying will be implemented in a following change.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>A number of existing HTTP client APIs and implementations exist, e.g.,
+<a href="http://eclipse.org/jetty">Jetty</a> and the <a href="https://hc.apache.org/httpcomponents-client-ga/">Apache HttpClient</a>.
+Both of these are both rather heavy-weight in terms of the numbers of
+packages and classes, and they don't take advantage of newer language
+features such as lambda expressions.</p>
+<h2 id="Testing">Testing</h2>
+<p>The internal HTTP server will provide a suitable basis for regression and
+TCK tests.  Functional tests could use that also, but they may need to
+test against real HTTP servers.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

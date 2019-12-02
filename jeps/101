@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 101: Generalized Target-Type Inference</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 101: Generalized Target-Type Inference</h1><table class="head"><tr><td>Owner</td><td>Maurizio Cimadamore</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>8</td></tr><tr><td>Component</td><td>specification&#8201;/&#8201;language</td></tr><tr><td>JSR</td><td><a href="https://jcp.org/en/jsr/detail?id=335">335</a></td></tr><tr><td>Discussion</td><td>lambda dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Depends</td><td><a href="126">JEP 126: Lambda Expressions &amp; Virtual Extension Methods</a></td></tr><tr><td>Reviewed by</td><td>Brian Goetz</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2011/02/22 20:00</td></tr><tr><td>Updated</td><td>2015/02/26 22:25</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8046091">8046091</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Smoothly expand the scope of method type-inference to support (i) inference in
+method context and (ii) inference in chained calls.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>Add support for method type-parameter inference in method context</li>
+<li>Add support for method type-parameter inference in chained calls</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>Global type-inference</li>
+</ul>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>Improve usability of generics by reducing method type-inference corner
+cases. Improve readability of code by reducing explicit type-arguments in
+generic method calls.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Type-arguments in generic method calls are automatically inferred by the
+compiler since JDK 5. Type-inference is important not only as explicit type
+arguments are somewhat awkward and verbose, but primarily because many
+programmers are unfamiliar with them and, as a result, are unable to cope with
+situations where type-argument inference fails to give the correct answer. It
+is thus important to minimize cases in which method type-inference fails; we
+believe method type-inference could be greatly improved by adding the support
+for following features (i) inference in argument position and (ii) inference in
+chained calls.</p>
+<h2 id="Description">Description</h2>
+<p>Here we propose some improvements to the existing type-argument inference
+support that will significantly reduce the need for explicit type-arguments in
+generic method calls.</p>
+<p>i. Inference in argument position</p>
+<p>Consider the following class declaration:</p>
+<pre><code>class List&lt;E&gt; {
+   static &lt;Z&gt; List&lt;Z&gt; nil() { ... };
+   static &lt;Z&gt; List&lt;Z&gt; cons(Z head, List&lt;Z&gt; tail) { ... };
+   E head() { ... }
+}</code></pre>
+<p>The result of a generic method, such as List.nil() may be inferred from the
+right-hand side of an assignment:</p>
+<pre><code>List&lt;String&gt; ls = List.nil();</code></pre>
+<p>The compiler's type-inference mechanism figures out that the type-argument to
+the List.nil() call is indeed String. It seems reasonable that the compiler
+should be able to infer the type when the result of such a generic method
+invocation is passed to another method, as below:</p>
+<pre><code>List.cons(42, List.nil()); //error: expected List&lt;Integer&gt;, found List&lt;Object&gt;</code></pre>
+<p>Unfortunately, this is not allowed in JDK 5/6/7 -- the only option available to
+the programmer is to use an explicit type-argument:</p>
+<pre><code>List.cons(42, List.&lt;Integer&gt;nil());</code></pre>
+<p>It would be nice if type-argument inference would be extended to consider the
+formal parameter type in a method call (target typing).</p>
+<p>ii. Inference in chained calls</p>
+<p>Another fairly common problem is when generic method calls are chained
+together, as below:</p>
+<pre><code>String s = List.nil().head(); //error: expected String, found Object</code></pre>
+<p>The right-hand type in the above assignment is unused during type-argument
+inference -- as a result, the only option for the programmer is (again) to
+manually specify type-arguments, as in:</p>
+<pre><code>String s = List.&lt;String&gt;nil().head();</code></pre>
+<p>Again, it would be nice to remove the burden of explicit type-arguments by
+allowing the right-hand type of the assignment (String) to flow through the
+chain of generic method calls.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>Manually specify type-parameters (as today).</p>
+<h2 id="Testing">Testing</h2>
+<p>Need to verify that the new inference algorithm behaves as expected. Need to
+verify that the new inference algorithm doesn't break backward compatibility in
+unexpected ways (or need to ensure that cases in which backward compatibility
+is not preserved are sufficiently rare).</p>
+<p>There are no special platform or hardware requirements.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>As pointed out above, the primary risk of this change is that any change
+affecting method type-inference has the potential for backwards
+incompatibility. Since the changes described in this document affect a delicate
+area of the Java language/compiler (type-system), test resources are needed to
+check that the proposed change do not affect backward compatibility in
+unexpected ways. If needed, a prototype supporting the described feature can be
+provided in a relatively short timeframe (i.e. before Project Lambda is
+complete).</p>
+<h2 id="Dependences">Dependences</h2>
+<p>This work depends on the Project Lambda JEP -- Project Lambda requires a novel
+way of type-inference, called target-typing inference, that is used to infer
+the type of the formals of a lambda expression from the context in which the
+lambda expression is used. Part of this work (inference in method context) is
+simply a generalization of the approach exploited in project lambda. Another
+part of this work (inference in chained calls) is an inference improvements
+that will help adoption of Project Lambda for developing LinQ-like.</p>
+<h2 id="Impact">Impact</h2>
+<ul>
+<li>Customers: more readable code (less explicit type-arguments) -- easier to
+use generic methods/constructor/diamond.</li>
+<li>CCC: A CCC will be required to cover the type-inference changes</li>
+<li>Compatibility: The new inference scheme might alter the set of compilable
+programs in a subtle way -- it is crucial that JCK team will test the
+changes.</li>
+<li>Doc: None</li>
+<li>JCP: None</li>
+<li>L10N: Minimal impact: likely to add new error messages</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

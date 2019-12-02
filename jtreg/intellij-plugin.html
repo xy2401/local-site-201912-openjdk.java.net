@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Style-Type" content="text/css" /><meta name="generator" content="pandoc" /><title></title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+code{white-space: pre;}
+/**/
+</style></head><body><div id="main">
+<h1 id="jtreg-plugin-for-intellij-ide">jtreg plugin for IntelliJ
+IDE</h1>
+<h5 id="maurizio-cimadamore-and-chris-hegarty-september-2016-version-0.3">
+<em>Maurizio Cimadamore and Chris Hegarty, September 2016, version
+0.3</em></h5>
+<p>This is a convenience plugin which adds jtreg capabilities to
+the IntelliJ IDE. With this plugin, OpenJDK developers can write,
+run, debug jtreg tests without the need of leaving their IDE
+environment.</p>
+<h3 id="changes-from-0.2">Changes from 0.2</h3>
+<ul>
+<li>updated instruction on how to build the plugin</li>
+</ul>
+<h3 id="changes-from-0.1">Changes from 0.1</h3>
+<ul>
+<li>more detailed instructions on how to configure the plugin
+project</li>
+<li>updated section <code>What needs to be rebuilt before a test
+run?</code> to reflect latest plugin changes</li>
+</ul>
+<h2 id="plugin-setup">Plugin setup</h2>
+<p>This section covers the initial steps that are required in order
+to correctly setup the plugin project inside the IntelliJ IDE.</p>
+<h3 id="folder-layout">Folder layout</h3>
+<p>The output of this folder is as follows:</p>
+<pre><code> idea
+   |-src (plugin sources)
+   |-build (where build files are stored)
+   |-resources (plugin resources - the plugin.xml file lives here)
+   |-.idea (a template project for editing/building/testing the plugin itself)</code></pre>
+<h3 id="building-the-plugin">Building the plugin</h3>
+<p>To build the plugin, you need to have IntelliJ installed. From
+IntelliJ, simply browse to the location of this folder (<a href="//hg.openjdk.java.net/code-tools/jtreg/file/tip/plugins/idea">plugins/idea</a>
+within a clone of the <a href="//hg.openjdk.java.net/code-tools/jtreg">jtreg repo</a>), and
+open it as an IntelliJ project. The project can be built by
+clicking on <code>Build -&gt; Make Project</code>. Once this step
+is done, you should be able to run/debug the plugin.</p>
+<p>Note: You might need to tweak the IDE project settings to
+correctly configure the plugin project. The two following steps are
+required:</p>
+<ul>
+<li>
+<p>When the IDE project for the plugin is first opened, IntelliJ
+will complain about the lack of a path variable called
+<code>JTREG_HOME</code>. Please follow the IDE instructions, and
+set this path variable to point to your jtreg installation. This
+step is required as the project depends on some of the jtreg
+libraries.</p>
+</li>
+<li>
+<p>You need to create an Intellij SDK and name it <code>IDEA
+JDK</code> for the project to work correctly. To create a new SDK,
+click on <code>File -&gt; Project Structure</code>. When the dialog
+opens, click on the <code>SDKs</code> entry in the left pane, and
+add a new SDK (by clicking on the green <em>plus</em> icon). The
+SDK we want to create is an 'IntelliJ Platform Plugin SDK'. Once
+the new SDK type has been selected, you will have to tell IntelliJ
+what's the SDK path - you will see that IntelliJ will already point
+to the folder containing your IntelliJ installation - that is a
+fine choice. Secondly, you will have to tell IntelliJ which JDK to
+use together with the plugin SDK. Any JDK 8 is a fine choice here.
+Once this is done, don't forget to change the SDK name to
+<code>IDEA JDK</code> which will allow the project to pick it up
+correctly.</p>
+</li>
+</ul>
+<p>Note: by running the plugin here we mean running it in a sandbox
+environment - for truly installing the plugin in your IDE, see the
+steps below.</p>
+<h3 id="installing-the-plugin">Installing the plugin</h3>
+<p>To install the plugin in your IDE, first you need to prepare a
+plugin module file (a <code>.jar</code> file). This can be done by
+selecting <code>Build -&gt; Prepare Plugin Module for
+Deployment</code>. Once that is done, a new jar file should be
+created under the hidden <code>.idea</code> folder (and a related
+pop up notification should appear).</p>
+<p>Once you have a jar file, you can easily install it in your IDE;
+go in <code>File -&gt; Settings</code>, and select
+<code>Plugins</code> from the right panel. Then click on
+<code>Install plugin from disk</code> and point the IDE to the zip
+file you have created in the step above. The IDE will ask you to
+restart - once restart is completed the installation process is
+completed, and the plugin is ready to be used to run and debug
+jtreg tests.</p>
+<h2 id="using-the-plugin">Using the plugin</h2>
+<p>This section covers the the functionalities supported by the
+jtreg plugin.</p>
+<h3 id="configuring-jtreg">Configuring jtreg</h3>
+<p>The plugin allows user to configure how jtreg should be invoked
+by the plugin. Possible options include:</p>
+<ul>
+<li>which jtreg should be used to run the tests</li>
+<li>which JDK should be used to run the tests</li>
+<li>which jtreg options should be used to run tests</li>
+<li>where jtreg should put its output files</li>
+</ul>
+<p>Configuring such parameters is possible through the dialog
+located under <code>File -&gt; Settings</code>, under the
+<code>jtreg</code> panel. By default, such settings are saved on a
+per-project basis. If, however, you would like to specify IDE-wide
+default, you can do so by accessing a similar dialog under
+<code>File -&gt; Other Settings -&gt; Default Settings</code>.</p>
+<p>Note: the settings specified here will be used as defaults for
+creating new jtreg run/debug configurations. As a result, if any
+error is made when configuring global jtreg settings, such errors
+will be propagated in all newly created jtreg test
+configurations.</p>
+<h3 id="runningdebugging-jtreg-tests">Running/debugging jtreg
+tests</h3>
+<p>In order to run a test, you need to create a run configuration.
+To create a configuration, simply open a jtreg test file,
+right-click on it and select <code>Run</code> (or
+<code>Debug</code>). This should create a configuration for the
+selected test, and run that configuration. The configuration will
+then become available for inspection under the <code>Run -&gt; Edit
+Configurations</code> menu. If you wish to run all tests in a given
+folder, the process is the same: simply right click on the test
+folder (in the left panel) of choice and select
+<code>Run</code>.</p>
+<p>A jtreg run configuration contains the following
+information:</p>
+<ul>
+<li>which test (or folder of tests) should be given as input to
+jtreg</li>
+<li>which JDK should be used to run the tests</li>
+<li>which jtreg options should be used to run tests</li>
+<li>where jtreg should put its output files</li>
+</ul>
+<p>The last three options can be used to override global settings
+(e.g. in case a test needs more memory to run).</p>
+<p>Once a configuration has been created, the new configuration
+will appear in the top right panel. If you notice a red mark beside
+the configuration name, it means that the configuration contains
+errors that will likely result in test failures. If that happens,
+please open the <code>Run -&gt; Edit Configurations</code> dialog,
+and select the problematic configuration; this dialog should
+contain additional information as to why the configuration is
+problematic (e.g. missing JDK path).</p>
+<p>To run an existing configuration, simply select it from the drop
+down list in the top right panel, and click on the <code>Run</code>
+(an icon similar to a <em>play</em> button) icon. If you wish to
+debug instead, simply press the icon beside <code>Run</code> (the
+one with the little bug in it).</p>
+<p>Debugging works as for any other Java application. Simply set
+breakpoints (this can be done by left-clicking the area to the left
+of the code in the source editor, which will cause a red circle to
+appear). During a test debug, execution will stop at any given
+breakpoints, allowing you to see values of variables, set watch
+expressions, etc.</p>
+<h3 id="inspecting-jtreg-test-results">Inspecting jtreg test
+results</h3>
+<p>Once a test (or a group of tests) have finished running, you can
+inspect test results in the corresponding bottom panel. This panel
+is organized in two sub-panels: the one on the left allows you to
+chose the test whose results you'd like to inspect; the panel on
+the right contains the actual test output (e.g. the
+<code>jtr</code> file).</p>
+<p>During test execution you will see green and red bars appearing,
+notifying test passes/failures. It is possible to filter out the
+tests that show up in the left panel so that e.g. only failed test
+are displayed (that is done by clicking on the little circle with
+the <code>OK</code> label in the bottom panel); ignored tests can
+be filtered in a similar fashion.</p>
+<p>If you click on the very first entry of the left panel (the one
+named 'Test Results'), some general information will be presented
+in the right panel - such as how many tests were run, how many
+pass/fail there were, etc. You will also see the URL to the
+location where test results have been written (this can be opened
+using your browser of choice).</p>
+<h3 id="creating-new-tests">Creating new tests</h3>
+<p>To create a new jtreg test, simply create a new file under a
+jtreg test root. Then add a javadoc comment like this:</p>
+<pre><code>/*
+ * @test</code></pre>
+<p>And press <code>CTRL + &lt;Space&gt;</code> - the IDE will show
+you possible completion suggestions for creating a
+positive/negative jtreg test. Once the right completion path is
+selected, a full jtreg header will be populated by the IDE. The IDE
+will then highlight the sections in the header that require user
+intervention (e.g. add summary in the <code>@summary</code> tag,
+etc.). Once you have finished typing in the input for a given
+section, just press enter and the IDE will move to the next section
+which requires manual intervention. Repeat the process until all
+required fields have been entered. At the end of this process, a
+new jtreg test will have been created.</p>
+<h2 id="miscellaneous">Miscellaneous</h2>
+<h3 id="what-needs-to-be-rebuilt-before-a-test-run">What needs to
+be rebuilt before a test run?</h3>
+<p>The jtreg plugin is very flexible when it comes to defining the
+actions that should be taken by IntelliJ to rebuild the project
+before running/debugging a test. If your project does not use Ant,
+the default action associated with a jtreg test configuration is to
+simply run <code>Make</code> - which is the standard way in which
+IntelliJ builds a project. However, if your project uses Ant (this
+is the case with the JDK and the langtools IntelliJ projects), the
+plugin can launch any desired ant target before running a given
+test.</p>
+<p>To select which Ant target to run before a jtreg test, simply go
+in the <code>File -&gt; Settings -&gt; jtreg</code> menu, and add
+ant targets to the drop down list. You can add, remove targets as
+well as changing order of existing targets.</p>
+<h3 id="dealing-with-bugs">Dealing with bugs</h3>
+<p>In the unfortunate case you run into a plugin bug, you will
+notice a red mark in the bottom right part of the IDE. If you click
+on that icon, you will have the ability to show the stack trace
+associated with the error (and you will also be offered the option
+of disabling the plugin). If you want to report a bug against the
+jtreg plugin, we recommend that you copy the stack trace along with
+the IDE log file (this can be found under <code>Help -&gt; Show Log
+in Files</code>) and submit them along with a description of the
+experienced buggy behavior. Please forward such bug reports to
+<code>jtreg-dev@openjdk.java.net</code>.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

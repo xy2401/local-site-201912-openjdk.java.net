@@ -1,0 +1,484 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Java Platform Module System (&#8202;JSR 376)Expert Group Minutes: 2017/5/18</title><meta name="viewport" content="width=device-width, initial-scale=.6" /><link rel="stylesheet" type="text/css" href="//openjdk.java.net/.fonts/dejavu.css" /><style type="text/css">
+
+      HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,
+      BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,
+      IMG, INS, KBD, Q, S, SAMP, SMALL, STRIKE, STRONG, SUB, SUP, TT, VAR, B, U,
+      I, CENTER, DL, DT, DD, OL, UL, LI, FIELDSET, FORM, LABEL, LEGEND, TABLE,
+      CAPTION, TBODY, TFOOT, THEAD, TR, TH, TD, ARTICLE, ASIDE, CANVAS, DETAILS,
+      EMBED, FIGURE, FIGCAPTION, FOOTER, HEADER, HGROUP, MENU, NAV, OUTPUT, RUBY,
+      SECTION, SUMMARY, TIME, MARK, AUDIO, VIDEO {
+        margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit;
+        vertical-align: baseline; }
+      ARTICLE, ASIDE, DETAILS, FIGCAPTION, FIGURE, 
+      FOOTER, HEADER, HGROUP, MENU, NAV, SECTION { display: block; }
+      BLOCKQUOTE, Q { quotes: none; }
+      BLOCKQUOTE:before, BLOCKQUOTE:after, Q:before, Q:after {
+              content: ''; content: none; }
+      TABLE { border-collapse: collapse; border-spacing: 0; }
+
+      A { text-decoration: none; }
+      A:link, TABLE.toc A:visited { color: #437291; }
+      A:visited { color: #666666; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+
+      HTML { font-size: 20px; } /* baseline grid */
+      HTML > BODY { font-size: 14px; }
+      BODY {
+        background: white;
+        margin: 40px;
+        margin-bottom: 150%;
+        width: 560px;
+        line-height: 20px;
+        -webkit-text-size-adjust: 100%; /* iOS */
+        color: #222;
+      }
+
+      /* BODY { background: url("grid.png") repeat 0 5px; } */
+
+      BODY { font-family: "DejaVu Serif", "Bitstream Vera Serif",
+                          "Lucida Bright", "Bookman Old Style",
+                          Georgia, serif; }
+      CODE, TT, .jref, DIV.spec .open, TABLE.profiles {
+        font-family: "DejaVu Sans", "Bitstream Vera Sans",
+                     "Lucida Sans", Helvetica, sans-serif; }
+      PRE, PRE > CODE { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+                        Monaco, "Courier New", monospace; }
+
+      @media only screen
+      and (min-device-width: 320px) and (max-device-width: 480px) {
+        BODY { width: 90%; }
+      }
+
+      I, EM { font-style: italic; }
+      B, STRONG, TH { font-weight: bold; }
+      SPAN.open { font-weight: bold; font-size: 12px; }
+
+      P { text-indent: 40px; }
+      P:first-child, UL + P, OL + P, BLOCKQUOTE + P, TABLE + P, P.subsection,
+        P.br, P.intro, DIV.toc + P, DIV.image + P { text-indent: 0; }
+      P.br, LI > P { margin-top: 10px; }
+      P.intro { margin-top: 32px; } /* grid tweak */
+      LI { margin-right: 20px; }
+
+      P.subsection { margin-top: 20px; }
+      P.subsection SPAN.title { font-weight: bold; padding-right: 20px; }
+
+      UL, OL { margin: 10px 0; padding-left: 40px; }
+      UL UL { margin: 0; }
+      LI { ZZmargin-bottom: 10px; }
+      UL.compact LI { margin-bottom: 0; }
+
+      PRE { padding: 0; margin: 10px 0 10px 40px; ZZwidth: 45em; }
+      BLOCKQUOTE { margin: 10px 0; margin-left: 40px; }
+      LI BLOCKQUOTE { margin-left: 0; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+      .error { color: red; font-weight: bold; }
+      .warn { color: #ee0000; font-weight: bold; }
+
+
+      H1 + P, H2 + P, H3 + P, PRE + P, BLOCKQUOTE + P { text-indent: 0; }
+      P.small { font-size: 11px; line-height: 16px; }
+
+      H1, DIV.h1-number, H2, DIV.h2-number, H3 { font-weight: bold; }
+
+      /*
+      H1 { margin-top: -13px; font-size: 22px; line-height: 40px; }
+      H2 { font-size: 17px; margin-top: 20px; margin-bottom: 10px; }
+      H3 { margin-top: 14px; margin-bottom: 10px; font-style: italic; }
+      */
+
+      DIV.doctitle, H1:first-child { margin-top: -13px;
+        font-size: 20px; line-height: 30px; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-weight: bold; margin-bottom: 9px; }
+      DIV.subtitle { margin-top: 2px; font-size: 18px; font-weight: bold; }
+      DIV.authors { margin-top: 10px; margin-bottom: 10px; font-size: 16px; }
+      DIV.author A { font-style: italic; }
+      DIV.version { margin-top: 13px; } /* grid tweak */
+      DIV.version, DIV.legal-notice { font-size: 11px; line-height: 15px; }
+      SPAN.hash { font-size: 11px; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+      DIV.head { margin-bottom: 20px; }
+
+      DIV.section > DIV.title, DIV.section DIV.number SPAN, H1, H2 {
+        ZZfont-size: 15px; font-weight: bold;
+        ZZline-height: 40px; margin-top: 20px; margin-bottom: 10px; }
+
+      H1, DIV.h1-number { font-size: 13px; letter-spacing: 1px;
+        text-transform: uppercase; margin-top: 30px; }
+
+      H1 SMALL { font-size: 18px; }
+
+      .sc { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+      .draft, .confidential { font-size: 13px; font-weight: bold;
+        letter-spacing: 1px; text-transform: uppercase; color: #e00; }
+
+      H1:first-child { letter-spacing: 0; text-transform: none;
+                       margin-bottom: 0; }
+      H1:first-child + H1 { margin-top: 1px; } /* grid tweak */
+
+      H1 + H2, H1 + H1 { margin-top: 0; }
+
+      H3 { margin-top: 10px; margin-bottom: 10px; font-style: italic; }
+
+      H1, H2, DIV, BODY > P, BODY > UL, BODY > OL, IMG { margin-left: 00px; }
+      PRE { margin-left: 80px; }
+      DIV.h1-number, DIV.h2-number { float: left; margin-left: 10px;
+        width: 20px; text-align: right; }
+      DIV.h1-number { font-size: 20px; }
+      DIV.h2-number { margin-top: 20px; }
+      DIV.h2-number SPAN { font-size: 12px; }
+      DIV.section DIV.body { margin-left: 00px; }
+
+      DIV.toc { margin: 20px 0; margin-left: 60px; margin-right: 20px; }
+
+      TABLE.toc { font-size: 14px; }
+      TD + TD { padding-left: 10px; }
+      TABLE.toc TH { font-weight: bold; text-align: left; }
+      TABLE.toc TD.subsections { font-size: 12px; }
+      TABLE.toc TD.number { font-weight: bold; font-size: 13px; }
+      TABLE.toc TD.title { text-transform: uppercase; font-size: 13px;
+        letter-spacing: 1px; font-weight: bold; }
+      TABLE.toc SPAN.subsection { white-space: nowrap; }
+      TABLE.toc TR.section TD { padding-top: 10px; }
+      TABLE.toc TR.section:first-child TD { padding-top: 0; }
+
+      SPAN.new { color: #e76f00; font-size: smaller; }
+      SPAN.update { font-size: smaller; }
+
+      DIV.image { margin: 20px 0 20px 20px; }
+
+  </style></head><body>
+<h1>Java Platform Module System <small>(&#8202;JSR 376)</small><br />Expert Group Minutes: <small>2017/5/18</small></h1>
+<p class="br"> Iris Clark</p>
+<div class="version">2017/5/24 11:29 -0700<span class="hash">&#8192;[f74587617484]</span></div><div class="legal-notice">Copyright &#169; 2017 Oracle and/or its affiliates &#183; All Rights Reserved &#183; <a href="license.pdf">License</a></div>
+<p class="intro"> The Expert Group met via video conference on Thursday, 17
+May 2017 at 15:00 UTC in order to work toward closure on various
+technical issues and prepare to submit a revised Public Review Draft
+Specification to the JCP by 7 June.</p>
+<p class="br"> <em>Attendees:</em> Wayne Beaton (Eclipse, about 15 minutes late),
+Alex Buckley (Oracle), Tim Ellison (IBM), R&#233;mi Forax, Brian Fox (Apache
+Maven), Brian Goetz (Oracle, moderator), Markus Keller (Eclipse), David
+Lloyd (Red Hat), Mark Reinhold (Oracle), Robert Scholte (Apache Maven),
+and Tom Watson (IBM).</p>
+<p class="br"> The intent of these minutes is capture the conversational
+flow of the discussion and to record decisions.  If you are only
+interested in the latter, search for the word &#8220;RESOLUTION&#8221; throughout the
+text.</p>
+<p class="br"> These minutes were taken during the meeting.  All
+participants had the opportunity to review and correct them for accuracy
+and completeness prior to publication.</p>
+<h2 id="Welcome-and-logistics">Welcome and logistics</h2>
+<p>Mark started the meeting by thanking everyone for joining.  He immediately
+introduced Brian Goetz as the meeting moderator, who would ensure that
+everyone has a chance to be heard and keep the conversation running smoothly.</p>
+<p>Brian began by reiterating his goal to keep the meeting running efficiently
+and reminded everybody that there were many issues to cover and not much time
+to resolve them.  His first request was that people use the &#8220;raise hand&#8221;
+feature of the conference system to indicate a desire to speak.  A roll call
+established the attendees.</p>
+<p>Iris Clark from Oracle was introduced to take notes.  In the name of
+transparency, draft minutes will be made available to attendees for review as
+soon as practical.  After a 24-hour review period for accuracy and
+completeness, the minutes will be sent to the <a href="//mail.openjdk.java.net/mailman/listinfo/jpms-spec-experts">public EG list</a>.</p>
+<p>It was determined that this meeting would run 90 minutes to accommodate those
+with hard stops.  There would be no meeting on Friday to accommodate travel
+plans and those in Europe.</p>
+<h2 id="Agenda">Agenda</h2>
+<p>Brian stated that the goal of the meeting was to work efficiently to reach
+closure on four categories of technical issues: issues resolved since the
+first Public Review draft; issues raised by the JCP Executive Committee;
+currently open issues; and closed issues about which new information has
+recently become available.  He reminded attendees to make their cases in
+this forum rather than on a mailing list or in the court of public opinion.</p>
+<p>The meetings will work through an agenda which has been seeded with a few new
+information items, existing open issues, and issues of concern to the JCP
+Executive Committee (EC).  For each item, the goal is to assign one of three
+dispositions:</p>
+<ul>
+<li>
+<p>NOW &#8212; The issue must be addressed in this release.</p>
+</li>
+<li>
+<p>LATER &#8212; The issue may be resolved in some unspecified later release.</p>
+</li>
+<li>
+<p>NEVER &#8212; There is no interest in further work on this item.</p>
+</li>
+</ul>
+<p>Caution should be exercised for the &#8220;NOW&#8221; disposition, given the short time
+frame.</p>
+<p class="br"> This is the initial agenda:</p>
+<ul>
+<li>
+<p>Two &#8220;new information&#8221; items</p>
+</li>
+<li>
+<p>Review of issues resolved since the first Public Review (PR) submission</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#VersionsInModuleNames">#VersionsInModuleNames</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MoveModuleAndLayerClasses">#MoveModuleAndLayerClasses</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AutomaticModuleNames">#AutomaticModuleNames</a> &amp;
+  <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ModuleNameInManifest">#ModuleNameInManifest</a></li>
+</ul>
+</li>
+<li>
+<p>Other open issues</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ModuleIdentifiers">#ModuleIdentifiers</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#StandardModuleAttributes">#StandardModuleAttributes</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#CompilationWithConcealedPackages">#CompilationWithConcealedPackages</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ResolutionAtCompileTime">#ResolutionAtCompileTime</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#RestrictedKeywords">#RestrictedKeywords</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#VersionSyntax">#VersionSyntax</a></li>
+</ul>
+</li>
+<li>
+<p>One issue of specific interest to the JCP EC</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AvoidConcealedPackageConflicts">#AvoidConcealedPackageConflicts</a></li>
+</ul>
+</li>
+</ul>
+<p>Additional items may be added after these have been addressed.</p>
+<p>Tim expressed his concern that limiting discussion to these meetings alone
+would prevent others in the community from contributing to the conversation
+and resolution.  Brian said that this ground rule should not be read as intent
+to ignore anybody&#8217;s input.  It is about the EG working together and discussing
+concerns during these meetings rather than using a list or the court of public
+opinion for decisions.  He continued saying that the JCP EC was unhappy with
+the use of the court of public opinion because it reflects poorly on the JCP,
+and the EC had encouraged EG members to talk directly with each other.</p>
+<h2 id="New-information">New information</h2>
+<p>Mark brought forward two items of new information.</p>
+<p>The first item has been mentioned by a few people from Oracle at a couple of
+JCP EC meetings, and discussed informally at recent developer conferences.
+The general idea is that the ecosystem would be better served by a more-rapid
+release cadence for Java SE and the JDK.  Since the inception of Java, big
+features or a handful of big features have driven major releases every two to
+three years.  This was reasonable in the 1990&#8217;s and 2000&#8217;s.  Going forward,
+Java needs to move at a faster pace in order to remain competitive.  People
+are therefore exploring the possibility of shifting to a yearly or even a
+six-month cycle.  If a big feature is ready, it goes in; otherwise, it waits
+for the next release.  There is no formal proposal at this time; however,
+discussion is expected in the JCP and OpenJDK communities in the next few
+months.  It is relevant to these EG meetings because &#8220;LATER&#8221; may be sooner
+than expected.  It could be twelve months after Java SE 9 GA, or even six
+months.  This doesn&#8217;t mean that everything will occur in the next year, just
+that there are likely to be more opportunities for changes to be made.</p>
+<p>The second item is a proposal posted to <a href="//mail.openjdk.java.net/mailman/listinfo/jigsaw-dev">jigsaw-dev</a> to <a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012673.html">allow
+illegal reflective access by default</a> in JDK
+9.  As more and more people have tested <a href="//jdk.java.net/9/">JDK 9 EA builds</a> it has
+become clear in wide discussions over the past few months that turning off
+reflective access from code on the class path is too aggressive for the
+initial release.  The proposal is to allow this access by default in JDK 9,
+and disallow it in a future release.  A warning will be issued on the first
+access.  This proposal will not address all migration concerns, but it changes
+the migration from one huge step to multiple smaller steps spread across
+multiple releases.  This proposal is technically not part of JSR 376, since
+376 is just about the module system; it is part of the <a href="//openjdk.java.net/projects/jdk9/spec/">JSR 379</a>
+platform specification, which will contain the necessary conformance text.</p>
+<p>Tom had a question about how this proposal related to the unnamed module.
+Mark provided a quick answer saying that unnamed modules would have access to
+every package in every explicit module.  He referenced the proposal for
+additional details.</p>
+<h2 id="VersionsInModuleNames"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#VersionsInModuleNames">#VersionsInModuleNames</a></h2>
+<p>This issue was resolved since the first PR submission.  It is included in this
+meeting to confirm that resolution.</p>
+<p>Mark summarized the issue saying that this had been a controversial topic for a
+while.  After broad feedback, the specification was revised to allow digits
+at the end of module names.  Brian asked for and received no feedback or
+objections.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: NOW, as <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#VersionsInModuleNames">previously decided</a>.</p>
+</blockquote>
+<h2 id="MoveModuleAndLayerClasses"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MoveModuleAndLayerClasses">#MoveModuleAndLayerClasses</a></h2>
+<p>This issue was resolved since the first PR submission.  It is included in this
+meeting to confirm that resolution.</p>
+<p>Mark described this issue as a familiar step in designing APIs.  The <code>Module</code>
+and <code>Layer</code> classes which allow reflective access to modules were originally
+added to the <code>java.lang.reflect</code> package, because that was the obvious place.
+On further thought, this decision was not aligned with the likely future of
+the platform, which is shifting from the old core-reflection APIs in
+<code>java.lang.refect</code> to the method-handle APIs in the <code>java.lang.invoke</code>
+package.  This proposal moved <code>Module</code>, <code>Layer</code>, and the associated
+<code>InstantiationException</code> to the <code>java.lang</code> package.  Some renaming and a few
+other adjustments were also necessary.  Mark said that there were previously
+no comments and while a few people did notice this change, it did not seem to
+be a problem.</p>
+<p>Brian solicited for feedback and comments.  Tim replied saying that
+everything was fine and he was happy about the resolution to the previous
+issue as well.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: NOW, as <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MoveModuleAndLayerClasses">previously decided</a>.</p>
+</blockquote>
+<h2 id="AutomaticModuleNames--ModuleNameInManifest"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AutomaticModuleNames">#AutomaticModuleNames</a> &amp; <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ModuleNameInManifest">#ModuleNameInManifest</a></h2>
+<p>This issue was resolved since the first PR submission.  It is included in this
+meeting to confirm that resolution.</p>
+<p>Mark repeated his thanks to all who helped describe the issues around Maven.
+<a href="https://en.wikipedia.org/wiki/Reverse_domain_name_notation">Reverse DNS</a> is now the preferred convention for naming modules,
+and maintainers of existing libraries may specify a preferred module name in
+the <code>MANIFEST.MF</code> file of a JAR file containing code which is not modular.
+Mark reported that the implementation had been in the <a href="//jdk.java.net/jigsaw/">Jigsaw EA
+builds</a> for over a week and that members of the London Java
+Community have been testing it.</p>
+<p>Brian Fox thanked Mark for continuing to listen and said he was happy with the
+resolution.  He emphasized the need for recommendations for when to use the
+JAR manifest entry.  Robert thought that there may be a problem for
+dependencies if a module name is identified before the code itself is
+modularized.  Brian Fox believed it was helpful to provide users with a stable
+name for the code even before it was modularized.  Robert explained that the
+speculative name did not belong in Maven Central because it was not reliable.
+R&#233;mi pointed out that while the tools were all in place, what the Community
+needed was guidance for how to use them effectively.  He suggested a public
+FAQ containing possibly different recommendations for how to use the manifest
+entry by application and library writers.</p>
+<p>David thought that migration to JDK 9 would be in multiple phases for typical
+libraries.  First, changes for compatibility and new APIs need to be
+addressed.  If a JAR file&#8217;s manifest declares a module name prior to that
+point then it would appear that it&#8217;s compatible before it actually is, so the
+name should be declared in the manifest only when the JAR file is known to
+work on JDK 9.  In the next phase of migration the code is explicitly
+modularized, and at that point its name is taken from its module declaration.</p>
+<p>Robert believed that a library maintainer should only start using module
+descriptors after all dependencies have been modularized or have a name via
+the <code>Automatic-Module-Name</code> attribute in the manifest file.  He offered to
+provide a sample project to further illustrate his concern.  Brian Fox noted
+that it was a challenge to wait for all dependencies to modularize and that
+determining a module name should be encouraged.</p>
+<p>Mark agreed with David&#8217;s earlier thoughts, saying that if you maintain a
+library then make it work with JDK 9 first.  When the code is compatible, add
+a nice DNS module name to the JAR manifest and publish it to Central.  During
+the transition period to full modularization, rely on Gradle or Maven to get
+all the dependencies right.  Tim thought that this migration problem did not
+need to be solved as part of the specification; a public FAQ or guidance would
+be sufficient aid for migration.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: NOW, as previously decided <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AutomaticModuleNames">here</a> and
+<a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ModuleNameInManifest">here</a>.  Additional guidance should be provided in an
+addendum to the specification or in a separate document.</p>
+</blockquote>
+<h2 id="ModuleIdentifiers"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ModuleIdentifiers">#ModuleIdentifiers</a></h2>
+<p>This is an open issue.</p>
+<p>Mark opened this discussion by noting that he raised this issue yesterday.
+In feedback over the last couple of years, and in particular over the last
+few months, it&#8217;s become clear that many developers expected the module system
+to handle multiple versions.  We chose specifically not to do that in this
+release, but at this point it might be wise to leave room in the specification
+so that it can be extended to handle multiple versions in a future release.</p>
+<p>In the issue he suggested, specifically, that we should make room for
+identifying a module by more than just a simple <code>String</code> name.  If only a
+<code>String</code> is used, it is likely that solutions for multiple versions would
+either require a violent API refactoring or the <code>String</code> would need to encode
+additional information.  Both are distasteful.  The forward-looking proposal
+is to use a new class, <code>ModuleId</code>, as the identifier.  For JDK 9 it would
+simply be a wrapper around a <code>String</code>.  In the future the class could be
+enhanced to carry additional information.  This change does not add a new
+feature; it simply leaves room in the design space for future evolution.</p>
+<p>David described a similar situation encountered in 2012 in JBoss Modules.  A
+field was added for the version number.  The wrapper object added some
+overhead, but it did not really buy anything.  The information could have been
+encoded in the name and that is what JBoss Modules does now.</p>
+<p>R&#233;mi noted that the problem is that the find algorithm would necessarily
+change.  He preferred an encoded <code>String</code> over a new class and its associated
+penalties.  He continued saying that whatever the choice, simply adding a new
+field would not work by default.</p>
+<p>Tim&#8217;s opinion was that having something that encapsulates the version of the
+module was useful since any logic would be localized, rather than spread
+across multiple places.  He noted that parsing strings to extract version
+numbers would be error prone and burdensome.  Tim expressed concern about the
+impact of versioning to unnamed modules.  Mark said that the proposal was
+about introducing a concrete class, not about having version constraints in a
+<code>requires</code> directive.  There would be an object that identifies a module which
+is potentially richer than the wrapped <code>String</code> for JDK 9.  David added that
+the algorithm used to identify a module should be one way (a graph).  Tom said
+that he did not see a need for future-proofing unless there was a need for
+module identity to go beyond a name and a version; however, seeing the
+proposed API would help with visualization and providing concrete suggestions.</p>
+<p>Brian summarized saying that the general sense was that people wanted to
+think about the proposal.  It should be revisited at the next meeting.  Mark
+committed to post draft Javadoc for the API next Monday or Tuesday.</p>
+<h2 id="StandardModuleAttributes"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#StandardModuleAttributes">#StandardModuleAttributes</a></h2>
+<p>This is an open issue.</p>
+<p>Mark opened the discussion by saying that this issue had been sitting around
+for a while.  There are a set of optional module-info class-file attributes
+which are not required by the module system but are generally useful for
+improving performance and for tools.  He briefly outlined the current set of
+attributes and their intended uses.  At the conclusion of the short list, Mark
+suggested that this list be finalized for this release.  Additional attributes
+could be defined in a future release.</p>
+<p>R&#233;mi said that he&#8217;d played a bit with <code>module-info.class</code> files.  He
+discovered some problems in cases where modules are renamed.  Mark understood
+the issue, but did not think his situation was fixable in the remaining time.
+R&#233;mi agreed with Mark&#8217;s characterization of being uncomfortable with the
+situation, but not objecting.</p>
+<p>Robert wondered whether it would be possible to store compile time arguments
+in the module-info file.  He thought, while unattractive, there may be cases
+where knowledge of these arguments would be helpful at run time.  Without such
+a mechanism, there would be no way for users to discover how code was built.
+R&#233;mi believed that propagation of this information should be left to the build
+tool.  Tim objected to this standardization despite its potential usefulness.</p>
+<p>Mark stated that notionally what belongs in <code>module-info</code> files is just what
+is needed for the module system to operate at compile time and run time.
+Command-line flags which may be used to break in should be considered only as
+transitional tools to get to the future.  Mark theorized that if the flags
+were stored in <code>module-info</code> files, they would never go away.  Robert agreed
+with this.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: NOW, as proposed: Standardize the attributes presently in the
+specification.  A future specification may standardize additional
+attributes.</p>
+</blockquote>
+<h2 id="CompilationWithConcealedPackages"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#CompilationWithConcealedPackages">#CompilationWithConcealedPackages</a></h2>
+<p>This is an open issue.</p>
+<p>Alex defined this as largely a technical specification issue.  Compilers are
+powerful because they can see the source code from many modules at once.  So
+how does the Java Language Specification (JLS) mandate how the compiler
+differentiates between classes of the same name?  The request from the Eclipse
+team was to clarify the JLS for type identification.  He continued saying that
+name resolution is the most twisty part of the JLS.</p>
+<p>Markus said that the proposed changes sounded good but he needed to read and
+consider the details.</p>
+<p>Brian recapped the issue saying that there is agreement in spirit that the
+identity of a class should include provenance.  Eclipse will review Alex&#8217;s
+text and provide feedback during a later meeting.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: PENDING: Eclipse to review the proposed specification, which
+has since <a href="//cr.openjdk.java.net/~mr/jigsaw/spec/">been published</a>.</p>
+</blockquote>
+<h2 id="ResolutionAtCompileTime"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ResolutionAtCompileTime">#ResolutionAtCompileTime</a></h2>
+<p>This is an open issue.</p>
+<p>Alex summarized saying that the compiler is now expected by the JLS to respect
+any `requires&#8217; directives that it finds in the source of a module declaration.
+Historically the JLS has avoided defining how files are found.  The class path
+and source path are exclusively defined by the compiler implementation.  With
+JPMS, a compiler of the language must be connected to the rest of the module
+system to &#8220;resolve&#8221; dependencies and &#8220;read&#8221; another module.  Whatever is true
+at run time must also be true at compile time.  For most people this is a
+run-time issue, so the API specification will contain that information at a
+high level.  The JLS will then refer to the API specification.</p>
+<p>Markus confirmed that as long as the JLS specifically pointed to the API
+specification then there would be something stable for compiler implementors.
+He said that he was looking forward to seeing the JLS and API updates.  Tim
+stressed that Markus was the expert; however he reserved the right to comment.</p>
+<p>Brian&#8217;s summary was that there was agreement in spirit but time was needed to
+review the specification.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: PENDING: Oracle to provide updated specification for review.</p>
+</blockquote>
+<h2 id="Next-meeting">Next meeting</h2>
+<p>Brian estimated that two more hours would be needed for the remaining agenda
+items:</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#RestrictedKeywords">#RestrictedKeywords</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#VersionSyntax">#VersionSyntax</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AvoidConcealedPackageConflicts">#AvoidConcealedPackageConflicts</a></li>
+<li>Any additional items</li>
+</ul>
+<p>He surveyed availability on Monday.  After a short discussion, a meeting at
+15:00 UTC for 90 minutes was agreed upon.  Due to attendance, the discussion
+of <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#RestrictedKeywords">#RestrictedKeywords</a> would be deferred until Tuesday.</p>
+<p class="br"> At this point the EG adjourned.</p></body></html>

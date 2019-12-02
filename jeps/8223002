@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Keyword Management for the Java Language</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Keyword Management for the Java Language</h1><table class="head"><tr><td>Owner</td><td>Alex Buckley</td></tr><tr><td>Type</td><td>Informational</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>specification&#8201;/&#8201;language</td></tr><tr><td>Discussion</td><td>jdk dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Created</td><td>2019/04/26 00:26</td></tr><tr><td>Updated</td><td>2019/05/30 17:55</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8223002">8223002</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Evolving the Java language often means new keywords for new features, but new keywords risk breaking existing programs. To balance compatibility and readability, a new kind of keyword may be used: a <em>hyphenated keyword</em> that is a compound of pre-existing keywords and identifiers, such as <code>non-final</code>, <code>break-with</code>, and <code>short-circuit</code>.</p>
+<p><em>Note: All examples in this JEP are intended solely to illustrate a syntactic form under discussion. They are not intended to suggest that any particular language feature is being considered for inclusion in Java now or in the future.</em></p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Explore the syntactic options open to Java language designers for denoting new features.</p>
+</li>
+<li>
+<p>Solve the perpetual problem of keyword tokens being so scarce and expensive that language designers have to constrain or corrupt the Java programming model to fit the keywords available.</p>
+</li>
+<li>
+<p>Advise language designers on the style of keyword suited to different kinds of features.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>In any proposal for new elements of Java syntax, it is important to avoid being influenced by the (often strawman) syntax of language features presently in development.</p>
+</li>
+<li>
+<p>It is not a goal to optimize new elements of Java syntax for ease of implementation by compiler developers.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>A <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.9">keyword</a> is a sequence of ASCII letters that cannot be used as an <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.8">identifier</a> in Java programs. Java uses a small set of keywords to denote the most fundamental features of the language:</p>
+<ul>
+<li>
+<p>Primitive types: <code>boolean</code>, <code>byte</code>, <code>char</code>, <code>double</code>, <code>float</code>, <code>int</code>, <code>long</code>, <code>short</code></p>
+</li>
+<li>
+<p>Reference types and their members: <code>package</code>, <code>class</code>, <code>interface</code>, <code>extends</code>, <code>implements</code>, <code>throws</code>, <code>enum</code>, <code>abstract</code>, <code>final</code>, <code>native</code>, <code>private</code>, <code>protected</code>, <code>public</code>, <code>static</code>, <code>strictfp</code>, <code>synchronized</code>, <code>transient</code>, <code>void</code>, <code>volatile</code></p>
+</li>
+<li>
+<p>Statements: <code>assert</code>, <code>break</code>, <code>case</code>, <code>catch</code>, <code>continue</code>, <code>default</code>, <code>do</code>, <code>else</code>, <code>for</code>, <code>finally</code>, <code>if</code>, <code>import</code>, <code>return</code>, <code>switch</code>, <code>throw</code>, <code>try</code>, <code>while</code></p>
+</li>
+<li>
+<p>Expressions: <code>instanceof</code>, <code>new</code>, <code>super</code>, <code>this</code></p>
+</li>
+</ul>
+<p>Over time, Java language designers face a challenge: the keywords conceived for the features of Java 1.0 are rarely suitable for denoting new features. There are several obvious techniques for addressing this problem:</p>
+<ul>
+<li>
+<p>Eminent domain: Reclassify an identifier as a keyword, such as <code>assert</code> in Java 1.4 and <code>enum</code> in Java 1.5. A similar but more conservative move is to reclassify some unusual set of identifiers as keywords, such as identifiers that begin with two underscores (e.g., <code>__nonnull</code>), a style often seen in feature prototypes and inspired by <a href="https://wiki.sei.cmu.edu/confluence/display/c/DCL37-C.+Do+not+declare+or+define+a+reserved+identifier">reserved identifiers</a> in C.</p>
+</li>
+<li>
+<p>Overload: Reuse an existing keyword for a new feature. For example, reuse the <code>default</code> keyword from a <code>switch</code> statement to declare an <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-9.html#jls-9.6.2">annotation element</a> and a <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-9.html#jls-9.4-200">default method</a>. As another example, reuse the <code>break</code> keyword from a <code>switch</code> statement to yield a value as the result of a <code>switch</code> expression (<code>break &lt;value&gt;;</code> which unfortunately looks like <code>break &lt;label&gt;;</code>).</p>
+</li>
+<li>
+<p>Distort: Find a syntax that doesn't require a new keyword, such as <code>@interface</code> to declare an <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-9.html#jls-9.6">annotation type</a>.</p>
+</li>
+<li>
+<p>Smoke and mirrors: Create the illusion of new keywords in new contexts through various linguistic heroics, such as treating the identifier <code>var</code> as a type name <em>but only in local variable declarations</em>, or reclassifying the identifier <code>module</code> as a keyword <em>but only in module declarations</em>.</p>
+</li>
+</ul>
+<p>For most new features, all of these techniques are on the table -- but most of the time, none are very good. Given that all of these techniques are problematic, and there is not even a least-problematic technique that works in all situations, it is <a href="//mail.openjdk.java.net/pipermail/amber-spec-experts/2019-January/000945.html">desirable</a>
+to try to expand the set of syntactic forms that serve as keywords. Otherwise, the lack of reasonable techniques for extending the syntax of the language will become a significant impediment to language evolution.</p>
+<p>In addition, modifiers like <code>static</code> and <code>final</code> make up a quarter of all keywords, but the set of modifiers is not complete; there is no way to say "not static" or "not final". Consequently, it is not possible to create features where variables or classes are <code>final</code> by default, or members are <code>static</code> by default, because there is no way to denote the opt out of "not static" or "not final". Leaving a feature out of Java for reasons of simplicity is fine; leaving it out because there is no way to denote the obvious semantics is not. This is a constant problem in evolving the language, and an ongoing tax paid by every Java developer.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Syntax-in-feature-design">Syntax in feature design</h3>
+<p>The best syntax for a new feature -- whether declaration, statement, or expression -- is inherently feature-specific.</p>
+<p>Some features are denoted best with <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.5">tokens</a>
+other than keywords: the <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.12">operator</a> <code>-&gt;</code> for a lambda expression, the <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.11">separator</a> <code>::</code> for a method reference expression, and the separator <code>...</code> for a varargs parameter declaration. Also, features that support built-in types tend to find their own syntactic ground independent of keywords: the literals <code>true</code>, <code>false</code>, and <code>null</code>, the delimiter <code>"""</code> for multi-line string literals, the prefix <code>0b</code> for binary literals, and the suffixes <code>L</code>, <code>F</code>, <code>D</code>, etc for numeric literals.</p>
+<p>Most features, though, are denoted best with keywords whose length, alphabet, and tone align with pre-existing keywords. That means 2-20 ASCII letters which spell out a simple noun, verb, or adjective of U.S. English. Traditionally, there were two kinds of keyword that met these constraints:</p>
+<ul>
+<li>
+<p>Classic keyword: A sequence of <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.8-120">Java letters</a> that is always tokenized as a keyword, never as an identifier.</p>
+</li>
+<li>
+<p>Contextual keyword: A sequence of Java letters that is tokenized as a keyword in certain contexts but as an identifier in all other contexts (e.g. <code>module</code>, a <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.9-200">restricted keyword</a> in Java 9). Alternatively, a sequence of Java letters that is always tokenized as an identifier but for which special provision is made in certain contexts (e.g., <code>var</code>, a <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-14.html#jls-14.4-100">restricted identifier</a> for <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-14.html#jls-14.4.1-200">local variables</a> in Java 10).</p>
+</li>
+</ul>
+<p>Each classic and contextual keyword is <em>unitary</em> -- an individual token -- but this JEP opens up new syntactic ground by allowing a keyword to be a <em>compound</em> of multiple tokens, separated by delimiters. The delimiter is a familiar ASCII character that is not a Java letter, namely <code>-</code> (hyphen). This leads to two kinds of <em>hyphenated keyword</em>:</p>
+<ul>
+<li>
+<p>Hyphenated classic keyword: A keyword that is formed by using a hyphen to join a (unitary) classic keyword with identifiers, literals, other (unitary) classic keywords, and (unitary) contextual keywords.</p>
+</li>
+<li>
+<p>Hyphenated contextual keyword: A keyword that is formed by using a hyphen to join a (unitary) contextual keyword with identifiers, literals, and other (unitary) contextual keywords.</p>
+</li>
+</ul>
+<h3 id="Hyphenated-keywords">Hyphenated keywords</h3>
+<p>Hyphenation admits a rich array of phrases relevant to current and potential constructs of the Java language.</p>
+<p><em>Hyphenated classic keywords</em></p>
+<ul>
+<li><code>non-final</code> (if the default for method parameters was to be made <code>final</code>)</li>
+<li><code>break-with</code> (to yield a value from a switch expression)</li>
+<li><code>package-private</code> (the default accessibility for class members)</li>
+<li><code>public-read</code> (to denote "publicly readable, privately writable")</li>
+<li><code>enum-class</code> and <code>annotation-interface</code> (versus <code>enum</code> and <code>@interface</code>)</li>
+<li><code>value-class</code> and <code>record-class</code> (versus <code>value class</code> and <code>record</code>)</li>
+<li><code>default-value</code> (for elements of an annotation type)</li>
+<li><code>this-class</code> (to denote the class literal for the current class)</li>
+<li><code>this-return</code> (to mark a setter or builder method as returning its receiver)</li>
+<li><code>short-circuit</code> (perhaps useful for <a href="https://cr.openjdk.java.net/~rpressler/loom/Loom-Proposal.html">fibers</a>)</li>
+</ul>
+<p><em>Hyphenated contextual keywords</em></p>
+<ul>
+<li><code>non-null</code></li>
+<li><code>read-only</code></li>
+<li><code>lazy-var</code> (to declare a <a href="https://openjdk.java.net/jeps/8209964">lazy final field</a>)</li>
+<li><code>eventually-true</code> (perhaps useful for lazy final fields)</li>
+</ul>
+<p>Hyphenated keywords are terminal symbols of the <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-2.html#jls-2.3">syntactic grammar</a> of the Java language. This presents a challenge for the lower-level <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-2.html#jls-2.2">lexical grammar</a> of the Java language, where input characters and line terminators are <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.2">tokenized</a> into keywords, identifiers, literals, operators, and separators. The easy case is a hyphenated keyword that starts with a classic keyword: after tokenizing the Java letters that make up the classic keyword, the lexer has to tokenize a trailing <code>-</code> character and Java letters <em>not</em> as an operator and an identifier, but rather as part of the hyphenated keyword. The hard case is a hyphenated keyword that starts with something other than a classic keyword, because the lexer has to realize that a sequence of characters which it tokenized as an identifier (e.g., <code>non</code>) is in fact, after further tokenization of an operator (<code>-</code>) and a classic keyword (<code>final</code>), the start of a hyphenated keyword.</p>
+<p>A future version of this JEP may suggest notions of compound keywords other than hyphenated keywords, such as keywords joined with <code>+</code> or <code>:</code> delimiters.</p>
+<h3 id="Keyword-management">Keyword management</h3>
+<p>The following policy is commended to Java language designers:</p>
+<ol>
+<li>
+<p>Use a hyphenated classic keyword when you want to introduce a keyword in the middle of code, at a place where an identifier may occur.</p>
+</li>
+<li>
+<p>Use a hyphenated {classic, contextual} keyword when you want a keyword at a declaration site (class, field, method).</p>
+</li>
+<li>
+<p>Use a unitary {classic, contextual} keyword only in the most extreme cases where no hyphenated keyword is suitable.</p>
+</li>
+</ol>
+<p>The following subsections provide rationale for this policy.</p>
+<p><strong>Avoid classic keywords</strong></p>
+<p>While it may be legal for language designers to define <code>i</code> as a keyword in a future version of Java, it would likely break every program in the world, since <code>i</code> is used so commonly as an identifier. (When the <code>assert</code> keyword was added in 1.4, it broke every testing framework.) The cost of remediating the effect of such an incompatible change varies as well: invalidating a name choice for a local variable has a local fix, but invalidating the name of a public type or an interface method might well be fatal.</p>
+<p>Additionally, the keywords that language designers are likely to want to reclaim are often those that are popular as identifiers (e.g., <code>value</code>, <code>var</code>, <code>method</code>), making such fatal collisions more likely. In some cases, if the keyword candidate in question is rarely used as an identifier, designers might opt to take the source-compatibility hit -- but candidates that are unlikely to collide (e.g., <code>usually_but_not_always_final</code>) are probably not the keywords anyone is hoping for.</p>
+<p>Realistically, the space of identifiers is unlikely to be a well that language designers can draw from very often to find keywords, and the bar must be very high.</p>
+<p>As a historical note, <code>const</code> and <code>goto</code> have been keywords since Java 1.0, even though they are not used by any language feature. They were defined as keywords <em>not</em> because a future version of Java was expected to use them, but because it supported a broader goal: migration from the then-preeminent C++ to the then-fledgling Java. Per the Java Language Specification in 1996, it allowed "a Java compiler to produce better error messages if these C++ keywords incorrectly appear in programs". (Namely, if <code>const</code> had been an identifier, then <code>const int x = ...</code> would have been flagged by a Java compiler as "Error, 'const' found where a keyword was expected", which is incongruent to a C++ developer who thinks <code>const</code> <em>is</em> a keyword; by making <code>const</code> a keyword in Java, Java compilers were forced to recognize it and flag "Error, 'const' keyword not allowed here", which is more comprehensible to a C++ developer.) Given the vast amount of code now written in Java, and the source incompatibility of a new classic keyword, there would be no justification for eagerly defining a classic keyword to support migration from another language. For example, it would be unacceptable to reclassify <code>function</code> from an
+identifier to a keyword in order to improve error messages for <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/function">code copy-pasted from ECMAScript</a>.</p>
+<p><strong>Cautiously consider contextual keywords</strong></p>
+<p>At first glance, unitary contextual keywords (and their friends, reserved type names) appear to be a magic wand: they let language designers create the illusion of new keywords without breaking existing programs. However, the positive track record of unitary contextual keywords hides a great deal of complexity and distortion.</p>
+<p>The process of introducing a unitary contextual keyword is not a simple matter of choosing a word and adding it to the grammar; each one requires an analysis of potential current and future interactions. Each grammar position is its own story: contextual keywords that might be used as modifiers (e.g., <code>readonly</code>) have different ambiguity considerations than those that might be used in code (e.g., a <code>match</code> expression). While a small number of special situations can be managed in a specification or a compiler, the more heavily that unitary contextual keywords are used, the more likely there would be more significant maintenance costs and longer bug tails.</p>
+<p>Beyond specifications and compilers, unitary contextual keywords distort the language for IDEs. IDEs often have to guess whether an identifier is meant to be an identifier or a unitary contextual keyword, and it may not have enough information to make a good guess until it has seen more input. While this is easy to dismiss as &#8220;not my problem&#8221;, in reality, it results in worse code highlighting, auto-completion, and refactoring abilities for everybody. (IDEs have the same trouble with hyphenated contextual keywords too.)</p>
+<p>Finally, each identifier that is a candidate for dual-purposing as a unitary contextual keyword may have its own special considerations. For example, the use of <code>var</code> as a restricted identifier is justified only because the <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-6.html#jls-6.1">naming conventions for type names</a> are so broadly adhered to. Using a hyphenated contextual keyword rather than a unitary contextual keyword can sidestep these considerations, since the hyphenated phrase has never been used as an identifier, though the ambiguity issue remains.</p>
+<p>In summary, unitary contextual keywords are a tool in the language design toolbox, but they should be used with care.</p>
+<p><strong>Prefer hyphenated keywords</strong></p>
+<p>Hyphenated {classic, contextual} keywords create less trouble than unitary contextual keywords because the lexer can tell with fixed lookahead whether <code>A-B</code> should become three tokens (identifier, operator, identifier) or one (hyphenated keyword), whereas arbitrary lookahead may be required to tokenize an identifier as a unitary contextual keyword. There is less trouble for parsing as well; for example, <code>non-null</code> cannot be confused for a subtraction expression. In sum, this gives a lot more room for creating new, less-conflicting keywords. Happily, these new keywords are likely to be good names, as many of the missing concepts that might be added to Java can fundamentally be described by their relationship to pre-existing concepts (e.g., <code>non-null</code>).</p>
+<p>There is a technical constraint on the space of hyphenated keywords, because some terms of the form <code>A-B</code> already have semantic meaning as expressions or statements:</p>
+<ul>
+<li>
+<p>Expressions that use a classic keyword as their first token and may appear on the RHS of a subtraction. For example, the notional hyphenated keyword <code>lazy-int</code> would clash with pre-existing code that uses the expression <code>int.class</code> in a subtraction, as in <code>int lazy = ...; int x = lazy-int.class.hashCode();</code>. Similarly, the notional hyphenated keyword <code>object-new</code> would clash with pre-existing code that uses a <code>new</code> expression in a subtraction, as in <code>int object = ...; int x = object-new Foo().f;</code></p>
+</li>
+<li>
+<p>Statements that take an expression as an operand. For example, the notional hyphenated keyword <code>return-never</code> would clash with pre-existing code that returns the negation of the numeric variable <code>never</code>.</p>
+</li>
+</ul>
+<p>These examples show type-<em>correct</em> expressions and statements, but there are also type-<em>incorrect</em> expressions and statements that would clash with hyphenated keywords. That is, some terms of the form <code>A-B</code> are not semantically meaningful, but they are syntactically valid, and overloading them as hyphenated keywords would make lexing and parsing very difficult. In particular, the terms are:</p>
+<ul>
+<li>
+<p>Expressions that use a classic keyword as their last token. For example, consider the reference-typed expressions <code>Foo.class</code>, <code>Foo.this</code>, and <code>Foo::new</code> -- the subtractions <code>Foo.class-day</code>, <code>Foo.this-day</code>, and <code>Foo::new-day</code> are valid Java syntax when <code>day</code> is a numeric variable, but they are not semantically meaningful because subtraction does not accept a reference-typed expression as its left operand. Overloading the syntax by introducing a notional hyphenated keyword <code>class-day</code>, <code>this-day</code>, or <code>new-day</code> would be an unreasonable burden on compiler and IDE vendors.</p>
+</li>
+<li>
+<p>Statements that take an expression as an operand. For example, the statement <code>throw-quickly</code> is valid Java syntax when <code>quickly</code> is a variable in scope, but it is not semantically meaningful (<code>-quickly</code> is not a <code>Throwable</code> regardless of the type of <code>quickly</code>). Overloading the syntax by introducing a notional hyphenated keyword <code>throw-quickly</code> would also roil compiler and IDE vendors.</p>
+</li>
+</ul>
+<p>Formally, the hyphenated classic keyword <code>A-B</code> would be problematic if A is {<code>assert</code>, <code>case</code>, <code>class</code>, <code>new</code>, <code>return</code>, <code>this</code>, <code>throw</code>}, or if B is {<code>boolean</code>, <code>byte</code>, <code>char</code>, <code>double</code>, <code>float</code>, <code>int</code>, <code>long</code>, <code>new</code>, <code>short</code>, <code>super</code>, <code>switch</code>, <code>this</code>, <code>void</code>}.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>A strategy to mitigate the cost of a new classic keyword would be to have a mechanism that allows the keyword to still be used as an identifier. This would have allowed developers in the Java 1.4 era to fix up their variables called <code>assert</code> so that their programs still compiled. However, any such mechanism would bring its own complexity and interactions with other features, and the idea of asking developers to revisit code in this way is undesirable. As a matter of interest, Kotlin allows a keyword to be used as an identifier by <a href="https://kotlinlang.org/docs/reference/java-interop.html#escaping-for-java-identifiers-that-are-keywords-in-kotlin">enclosing the keyword in backticks</a>, but the goal is specifically to allow Kotlin code to use Java declarations whose names are identifiers in Java but keywords in Kotlin, such as <code>is</code> and <code>when</code>. General-purpose expansion of the Kotlin keyword space is accomplished with <a href="https://kotlinlang.org/docs/reference/keyword-reference.html">soft keywords</a>, which map to unitary contextual keywords in this JEP.</p>
+<p>Reusing the same classic keyword for different features has ample precedent in Java. For example, <code>final</code> is (ab)used to mean "not mutable" and "not overridable" and "not extensible". Using a pre-existing keyword in a new feature is sometimes natural and sensible, but usually it is not the first choice. Over time, as the range of demands placed on the keyword space expands, this may descend into the ridiculous; no one wants to use <code>null final</code> as a way of negating finality. (While one might think such things are too ridiculous to consider, there were serious-seeming suggestions during <a href="//openjdk.java.net/jeps/325">JEP 325</a> to use <code>new switch</code> to describe a switch with different semantics, presumably to be followed by <code>new new switch</code> in ten years.)</p>
+<p>One way to live without making new keywords is to stop evolving Java entirely. While there are some who think this is a fine idea, doing so because of the lack of available tokens would be a silly reason. Java has a long life ahead, and Java developers are excited about new features that enable to them to write more expressive and reliable code.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>Some Java developers will have a negative reaction to the idea of hyphenated keywords, while others may accept the idea but dislike the hyphenated suggestions that emerge over time for particular language features. However, this risk is likely to diminish over time, because many such reactions are possibly-transient responses to unfamiliarity.</p>
+<p>Java has a long tradition of declarations having default properties (e.g., package accessibility for classes, mutability for fields, and concreteness for methods) and then using keywords to modify the properties of a given declaration (e.g., <code>public</code>, <code>final</code>, <code>abstract</code>). Hyphenated keywords could subvert this tradition by "merging" a modifier and the declaration into a single term, such as <code>value-class D {..}</code> rather than <code>value class D {..}</code>. Similarly, a hyphenated keyword could simulate a modifier on a modifier (<code>public-read</code>, <code>non-final</code>, <code>semi-abstract</code>) when it may be better to find a unitary term that describes the desired concept and introduce it as a contextual or even classic keyword.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

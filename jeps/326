@@ -1,0 +1,575 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 326: Raw String Literals (Preview)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1 class="withdrawn">JEP 326: Raw String Literals (Preview)</h1><table class="head"><tr><td>Owner</td><td>Jim Laskey</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Withdrawn</td></tr><tr><td>Component</td><td>tools</td></tr><tr><td>Discussion</td><td>amber dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="355">JEP 355: Text Blocks (Preview)</a></td></tr><tr><td>Reviewed by</td><td>Alex Buckley</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2018/01/23 15:40</td></tr><tr><td>Updated</td><td>2019/06/14 17:41</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8196004">8196004</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Add <em>raw string literals</em> to the Java programming language. A raw string
+literal can span multiple lines of source code and does not interpret
+escape sequences, such as <code>\n</code>, or Unicode escapes, of the form <code>\uXXXX</code>.
+This is a <a href="//openjdk.java.net/jeps/12">preview language feature</a> in JDK 12.</p>
+<p><em>Please note: this JEP is superseded by <a href="https://openjdk.java.net/jeps/355">JEP 355</a>, which targets JDK 13.</em></p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>Make it easier for developers to
+<ul>
+<li>express sequences of characters in a readable form, free of Java
+indicators,</li>
+<li>supply strings targeted for grammars other than Java, and</li>
+<li>supply strings that span several lines of source without supplying
+special indicators for new lines.</li>
+</ul>
+</li>
+<li>Raw string literals should be able to express the same strings as
+traditional string literals, except for platform-specific line
+terminators.</li>
+<li>Include library support to replicate the current <code>javac</code> string-literal
+interpretation of escapes and manage left-margin trimming.</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>Do not introduce any new String operators.</li>
+<li>Raw string literals do not directly support string interpolation.
+Interpolation may be considered in a future JEP.</li>
+<li>No change in the interpretation of traditional string literals in any
+way, including:
+<ul>
+<li>multi-line capability,</li>
+<li>customization of delimiters with repeating open and close
+double-quotes, and</li>
+<li>handling of escape sequences.</li>
+</ul>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Escape sequences have been defined in many programming languages, including
+Java, to represent characters that can not be easily represented
+directly. As an example, the escape sequence <code>\n</code> represents the ASCII
+newline control character. To print "hello" and "world" on separate
+lines the string <code>"hello\nworld\n"</code> can be used;</p>
+<pre><code>System.out.print("hello\nworld\n");</code></pre>
+<p>Output:</p>
+<pre><code>hello
+world</code></pre>
+<p>Besides suffering from readability issues, this example fixedly targets
+Unix based systems, where other OSes use alternate new line
+representations, such as <code>\r\n</code> (Windows). In Java, we use a higher
+level method such as <code>println</code> to provide the platform appropriate
+newline sequence:</p>
+<pre><code>System.out.println("hello");
+System.out.println("world");</code></pre>
+<p>If "hello" and "world" are being displayed using a GUI library, control
+characters may not have any significance at all.</p>
+<p>The escape sequence indicator, backslash, is represented in Java string
+literals as <code>\\</code>. This doubling up of backslashes leads to the
+<a href="https://en.wikipedia.org/wiki/Leaning_toothpick_syndrome">Leaning Toothpick Syndrome</a>,
+where strings become difficult to interpret because of excessive
+backslashes. Java developers are familiar with examples such as:</p>
+<pre><code>Path path = Paths.get("C:\\Program Files\\foo");</code></pre>
+<p>Escape sequences, such as <code>\"</code> to represent the double-quote
+character, also lead to interpretation issues when used in non-Java
+grammars. For example, searching for a double-quote within a string
+requires:</p>
+<pre><code>Pattern pattern = Pattern.compile("\\\"");</code></pre>
+<p>The reality of escape sequences is they are often the exception and not
+the rule in everyday Java development. We use control characters less,
+and escape presence adversely affects the readability and maintainability
+of our code. Once we come to this realization, the notion of a
+non-interpreted string literal becomes a well reasoned result.</p>
+<p>Real-world Java code, which frequently embeds fragments of other
+programs (SQL, JSON, XML, regex, etc) in Java programs, needs a
+mechanism for capturing literal strings as-is, without special handling
+of Unicode escaping, backslash, or new lines.</p>
+<p>This JEP proposes a new kind of literal, a <em>raw string literal</em>, which
+sets aside both Java escapes and Java line terminator specifications, to
+provide character sequences that under many circumstances are more
+readable and maintainable than the existing traditional string literal.</p>
+<h3 id="File-Paths-Example">File Paths Example</h3>
+<table>
+<tbody><tr>
+<th>Traditional String Literals</th>
+<th>Raw String Literals</th>
+</tr>
+<tr>
+<td>
+<pre style="text-align:left;">Runtime.getRuntime().exec("\"C:\\Program Files\\foo\" bar");
+</pre>
+</td>
+<td>
+<pre style="text-align:left;">Runtime.getRuntime().exec(`"C:\Program Files\foo" bar`);
+</pre>
+</td>
+</tr>
+</tbody></table>
+<h3 id="Multi-line-Example">Multi-line Example</h3>
+<table>
+<tbody><tr>
+<th>Traditional String Literals</th>
+<th>Raw String Literals</th>
+</tr>
+<tr>
+<td>
+<pre style="text-align:left;">String html = "&lt;html&gt;\n" +
+              "    &lt;body&gt;\n" +
+              "		    &lt;p&gt;Hello World.&lt;/p&gt;\n" +
+              "    &lt;/body&gt;\n" +
+              "&lt;/html&gt;\n";
+</pre>
+</td>
+<td>
+<pre style="text-align:left;">String html = `&lt;html&gt;<br />                   &lt;body&gt;<br />                       &lt;p&gt;Hello World.&lt;/p&gt;<br />                   &lt;/body&gt;<br />               &lt;/html&gt;<br />              `;<br />
+</pre>
+</td>
+</tr>
+</tbody></table>
+<h3 id="Regular-Expression-Example">Regular Expression Example</h3>
+<table>
+<tbody><tr>
+<th>Traditional String Literals</th>
+<th>Raw String Literals</th>
+</tr>
+<tr>
+<td>
+<pre style="text-align:left;">System.out.println("this".matches("\\w\\w\\w\\w"));
+</pre>
+</td>
+<td>
+<pre style="text-align:left;">System.out.println("this".matches(`\w\w\w\w`));
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>Output:</p>
+<pre><code>true</code></pre>
+<h3 id="Polyglot-Example">Polyglot Example</h3>
+<table>
+<tbody><tr>
+<th>Traditional String Literals</th>
+<th>Raw String Literals</th>
+</tr>
+<tr>
+<td>
+<pre style="text-align:left;">String script = "function hello() {\n" +
+                "   print(\'\"Hello World\"\');\n" +
+                "}\n" +
+                "\n" +
+                "hello();\n";
+ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
+Object obj = engine.eval(script);
+</pre>
+</td>
+<td>
+<pre style="text-align:left;">String script = `function hello() {<br />                    print('"Hello World"');<br />                 }<br />				<br />                 hello();<br />                `;<br />
+ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
+Object obj = engine.eval(script);
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>Output:</p>
+<pre><code>"Hello World"</code></pre>
+<h3 id="Database-Example">Database Example</h3>
+<table>
+<tbody><tr>
+<th>Traditional String Literals</th>
+<th>Raw String Literals</th>
+</tr>
+<tr>
+<td>
+<pre style="text-align:left;">String query = "SELECT `EMP_ID`, `LAST_NAME` FROM `EMPLOYEE_TB`\n" +
+               "WHERE `CITY` = &#8216;INDIANAPOLIS'\n" +
+               "ORDER BY `EMP_ID`, `LAST_NAME`;\n";
+</pre>
+</td>
+<td>
+<pre style="text-align:left;">String query = ``SELECT&#160;`EMP_ID`,&#160;`LAST_NAME`&#160;FROM&#160;`EMPLOYEE_TB`<br />                 WHERE&#160;`CITY`&#160;=&#160;&#8216;INDIANAPOLIS'<br />                 ORDER&#160;BY&#160;`EMP_ID`,&#160;`LAST_NAME`;<br />               ``;<br />
+</pre>
+</td>
+</tr>
+</tbody></table>
+<h2 id="Description">Description</h2>
+<p>A raw string literal is a new form of literal.</p>
+<pre><code>Literal:
+  IntegerLiteral
+  FloatingPointLiteral
+  BooleanLiteral
+  CharacterLiteral
+  StringLiteral
+  RawStringLiteral
+  NullLiteral
+
+RawStringLiteral:
+  RawStringDelimiter RawInputCharacter {RawInputCharacter} RawStringDelimiter
+
+RawStringDelimiter:
+    ` {`}</code></pre>
+<p>A raw string literal consists of one or more characters enclosed in
+sequences of backticks <code>`</code> (<code>\u0060</code>) (backquote, accent grave).
+A raw string literal opens with a sequence of one or more
+backticks. The raw string literal closes when a backtick sequence
+is encountered of equal length as opened the raw string literal.
+Any other sequence of backticks is treated as part of the string body.</p>
+<p>Embedding backticks in a raw string literal can be accomplished by
+increasing or decreasing the number of backticks in the open/close
+sequences to mismatch any embedded sequences.
+However, this does not help when a backtick is desired as the first
+or last character in the raw string literal, since that character will be
+treated as <a href="//mail.openjdk.java.net/pipermail/compiler-dev/2018-November/012665.html">part of the open/close sequence</a>.
+In this case, it is necessary to <a href="//mail.openjdk.java.net/pipermail/compiler-dev/2018-November/012657.html">use a workaround</a>,
+such as padding the body of the raw string literal and then stripping the padding.</p>
+<p>Characters in a raw string literal are never interpreted, with the
+exception of CR and CRLF, which are platform-specific line terminators.
+CR (<code>\u000D</code>) and CRLF (<code>\u000D\u000A</code>) sequences are always translated
+to LF (<code>\u000A</code>). This translation provides the least surprising behavior across platforms.</p>
+<p>Traditional string literals support two kinds of escapes:
+<a href="https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.3">Unicode escapes</a> of the form <code>\uxxxx</code>,
+and <a href="https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.10.6">escape sequences</a> such as <code>\n</code>.
+Neither kind of escape is processed in raw string literals;
+the individual characters that make up the escape are used as-is.
+This implies that processing of Unicode escapes is disabled
+when the lexer encounters an opening backtick and reenabled when
+encountering a closing backtick. For consistency, the Unicode escape
+<code>\u0060</code> may not be used as a substitute for the opening backtick.</p>
+<p>The following are examples of raw string literals:</p>
+<pre><code>`"`                // a string containing " alone
+``can`t``          // a string containing 'c', 'a', 'n', '`' and 't'
+`This is a string` // a string containing 16 characters
+`\n`               // a string containing '\' and 'n'
+`\u2022`           // a string containing '\', 'u', '2', '0', '2' and '2'
+`This is a
+two-line string`   // a single string constant</code></pre>
+<p>It is a compile-time error to have an open backtick sequence and no
+corresponding close backtick sequence before the end of the compilation unit.</p>
+<p>In a <code>class</code> file, a <a href="https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.4.3">string constant</a>
+does not record whether it was derived from a raw string literal or a traditional string literal.</p>
+<p>At run time, a raw string literal is evaluated to an instance of <code>String</code>,
+like a traditional string literal. Instances of <code>String</code> that are derived
+from raw string literals are treated in the same manner as those
+derived from traditional string literals.</p>
+<h3 id="Escapes">Escapes</h3>
+<p>It is highly probable that a developer may want a string that is
+multi-line but has interpreted escape sequences. To facilitate this
+requirement, instance methods will be added to the <code>String</code> class to
+support the run-time interpretation of escape sequences. Primarily,</p>
+<pre><code>public String unescape()</code></pre>
+<p>will translate each character sequence beginning with <code>\</code> that has
+the same <em>spelling</em> as an escape defined in the JLS
+(either a <a href="https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.3">Unicode escape</a>
+or an <a href="https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.10.6">escape sequence</a>)
+to the character represented by that sequence.</p>
+<p>Examples (b0 thru b3 are true):</p>
+<pre><code>boolean b0 = `\n`.equals("\\n");
+boolean b1 = `\n`.unescape().equals("\n");
+boolean b2 = `\n`.length == 2;
+boolean b3 = `\n`.unescape().length == 1;</code></pre>
+<p>Other methods will provide finer control over which escapes are
+translated.</p>
+<p>There will also be a provision for tools to invert escapes. The following
+method will also be added to the <code>String</code> class:</p>
+<pre><code>public String escape()</code></pre>
+<p>which will convert all characters less than <code>' '</code> into Unicode or
+character escape sequences, characters above <code>'~'</code> to Unicode escape
+sequences, and the characters <code>"</code>,  <code>'</code>,  <code>\</code> to escape sequences.</p>
+<p>Examples (b0 thru b3 are true):</p>
+<pre><code>boolean b0 = "\n".escape().equals(`\n`);
+boolean b1 = `&#8226;`.escape().equals(`\u2022`);
+boolean b2 = "&#8226;".escape().equals(`\u2022`);
+boolean b3 = !"&#8226;".escape().equals("\u2022");</code></pre>
+<h3 id="Source-Encoding">Source Encoding</h3>
+<p>If a source file contains non-ASCII characters, ensure use of the
+correct encoding on the javac command line (see javac -encoding).
+Alternatively, supply the appropriate Unicode escapes in the raw string
+and then use one of the provided library routines described above to
+translate Unicode escapes to the desired non-ASCII characters.</p>
+<h3 id="Margin-Management">Margin Management</h3>
+<p>One of the issues with multi-line strings is whether to format the
+string against the left margin (as in heredoc) or, ideally, blend with
+the indentation used by surrounding code.  The question then becomes,
+how to manage this <em>incidental indentation</em>.</p>
+<p>For example, some developers may choose to code as</p>
+<pre><code>String s = `
+this is my
+    embedded string
+`;</code></pre>
+<p>while other developers may not like the outdenting style and choose to
+embed relative to the indentation of the code</p>
+<pre><code>String html = `
+                       this is my
+                           embedded string
+                      `;</code></pre>
+<p>In the latter case, the developer probably intends that <code>this</code> should be
+left-justified while <code>embedded</code> should be relatively indented by four
+spaces, and we surely want to support this, but we are reluctant to try
+and read the developer's mind and assume that this white space is
+incidental.</p>
+<p>To allow for contrasting coding styles, while providing a flexible and
+enduring solution, raw string literals are scanned with the incidental
+indentation intact; i.e., raw. The consequence of this design is that if
+the developer chooses the above former case, they need no further
+processing. Otherwise, the developer will have access to easy-to-use
+library support for a variety of alternate coding styles. This will
+permit coding style change without affecting the JLS.</p>
+<p>We believe the most common case will be the latter case above. For that
+reason, we will provide the following <code>String</code> instance method:</p>
+<pre><code>public String align()</code></pre>
+<p>which after removing all leading and trailing blank lines, left
+justifies each line without loss of relative indentation. Thus,
+stripping away all incidental indentation and line spacing.</p>
+<p>Example:</p>
+<pre><code>String html = `
+                       &lt;html&gt;
+                           &lt;body&gt;
+                               &lt;p&gt;Hello World.&lt;/p&gt;
+                           &lt;/body&gt;
+                       &lt;/html&gt;
+                  `.align();
+    System.out.print(html);</code></pre>
+<p>Output:</p>
+<pre><code>&lt;html&gt;
+    &lt;body&gt;
+        &lt;p&gt;Hello World.&amp;&lt;/p&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>Further, generalized control of indentation will be provided with the
+following <code>String</code> instance method:</p>
+<pre><code>public String indent(int n)</code></pre>
+<p>where <code>n</code> specifies the number of white spaces to add or remove from
+each line of the string; a positive <code>n</code> adds n spaces (U+0020) and
+negative <code>n</code> removes n white spaces.</p>
+<p>Example:</p>
+<pre><code>String html = `
+                       &lt;html&gt;
+                           &lt;body&gt;
+                               &lt;p&gt;Hello World.&lt;/p&gt;
+                           &lt;/body&gt;
+                       &lt;/html&gt;
+                  `.align().indent(4);
+    System.out.print(html);</code></pre>
+<p>Output:</p>
+<pre><code>&lt;html&gt;
+        &lt;body&gt;
+            &lt;p&gt;Hello World.&amp;&lt;/p&gt;
+        &lt;/body&gt;
+    &lt;/html&gt;</code></pre>
+<p>In the cases where align() is not what the developer wants, we expect the
+preponderance of cases to be align().indent(n). Therefore, an additional
+variation of <code>align</code> will be provided:</p>
+<pre><code>public String align(int n)</code></pre>
+<p>where <code>n</code> is the indentation applied to the string after <em>alignment</em>.</p>
+<p>Example:</p>
+<pre><code>String html = `
+                       &lt;html&gt;
+                           &lt;body&gt;
+                               &lt;p&gt;Hello World.&lt;/p&gt;
+                           &lt;/body&gt;
+                       &lt;/html&gt;
+                  `.align(4);
+    System.out.print(html);</code></pre>
+<p>Output:</p>
+<pre><code>&lt;html&gt;
+        &lt;body&gt;
+            &lt;p&gt;Hello World.&amp;&lt;/p&gt;
+        &lt;/body&gt;
+    &lt;/html&gt;</code></pre>
+<p>Customizable margin management will be provided by the string instance method:</p>
+<pre><code>&lt;R&gt; R transform&#8203;(Function&lt;String,&#8203;R&gt; f)</code></pre>
+<p>where the supplied function f is called with <code>this</code> string as the argument.</p>
+<p>Example:</p>
+<pre><code>public class MyClass {
+    private static final String MARKER= "| ";
+    public String stripMargin(String string) {
+        return lines().map(String::strip)
+                      .map(s -&gt; s.startsWith(MARKER) ? s.substring(MARKER.length()) : s)
+                      .collect(Collectors.joining("\n", "", "\n"));
+    }
+
+    String stripped = `
+                          | The content of
+                          | the string
+                      `.transform(MyClass::stripMargin);
+    System.out.print(stripped);</code></pre>
+<p>Output:</p>
+<pre><code>The content of
+the string</code></pre>
+<p>It should be noted that concern for class file size and runtime impact
+by this design is addressed by the <em>constant folding</em> features of
+<a href="//openjdk.java.net/jeps/303">JEP 303</a>.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<h3 id="Choice-of-Delimiters">Choice of Delimiters</h3>
+<p>A traditional string literal and a raw string literal both enclose their
+character sequence with <em>delimiters</em>. A traditional string literal uses
+the double-quote character as both the opening and closing delimiter.
+This symmetry makes the literal easy to read and parse. A raw string
+literal will also adopt symmetric delimiters, but it must use a
+different delimiter because the double-quote character may appear
+unescaped in the character sequence. The choice of delimiters for a raw
+string literal is informed by the following considerations:</p>
+<ul>
+<li>
+<p>Delimiters should have a low profile for small character sequences,
+margin management, and general readability.</p>
+</li>
+<li>
+<p>The opening delimiter should be a clear indication that what follows
+is the body of a raw string literal.</p>
+</li>
+<li>
+<p>The closing delimiter should have a low probability of occurring in the
+string body. If the closing delimiter needs to occur in the body of the
+string then the rules for embedding the closing delimiter should be
+clean and simple. Embedding must be accomplished without the use of
+escapes.</p>
+</li>
+</ul>
+<p>We assume that the string-literal delimiter choice includes only the
+three Latin1 quote characters: single-quote, double-quote, and backtick.
+Any other choice would affect clarity and be inconsistent with
+traditional string literals.</p>
+<p>Still, it is necessary to differentiate a raw string literal from a
+traditional string literal. For example, double-quote could be combined
+with other characters or custom phrases to form a kind of compound
+delimiter for raw string literals. For example, <code>$"xyz"$</code> or
+<code>abcd"xyz"abcd</code>. These compound delimiters meet the basic requirements,
+but lack a clean and simple embedding of the closing delimiter. Also,
+there is a temptation in the custom phrases case to assign semantic
+meaning to the phrase, heralding another industry similar to Java
+annotations.</p>
+<p>There is the possibility to use quote repetition: <code>"""xyz"""</code>. Here we have
+to be cautious to avoid ambiguity. Example: <code>"" + x + ""</code> can be
+parsed as the concatenation of a traditional string literal with a
+variable and another traditional string literal, or as a raw string
+literal for the seven-character string <code>" + x + "</code>.</p>
+<p>The advantage of the backtick is that it does not require repurposing.
+We can also avoid the ambiguity created by quote repetition and the empty
+string. It is a <em>new</em> delimiter in terms of the Java Language
+Specification. It meets all the delimiter requirements, including a
+simple embedding rule.</p>
+<p>Another consideration for choice of delimiters is the potential for
+future technologies. With raw and traditional string literals both using
+simple delimiters, any future technology could be applied symmetrically.</p>
+<p>This JEP proposes to use backtick character. It is distinct from existing
+quotes in the language but conveys similar purpose.</p>
+<h3 id="Multi-line-Traditional-String-Literals">Multi-line Traditional String Literals</h3>
+<p>Even though this option has been set aside as a raw string literal
+solution, it may still be reasonable to allow multi-line traditional
+string literals in addition to raw string literals. Enabling such a
+feature would affect tools and tests that assume multi-line traditional
+string literals as an error.</p>
+<h3 id="Other-Languages">Other Languages</h3>
+<p>Java remains one of a small group of contemporary programming languages
+that do not provide language-level support for raw strings.</p>
+<p>The following programming languages support raw string literals and were
+surveyed for their delimiters and use of raw and multi-line strings; C,
+C++, C#, Dart, Go, Groovy, Haskell, JavaScript, Kotlin, Perl, PHP,
+Python, R, Ruby, Scala and Swift. The Unix tools bash, grep and sed were
+also examined for string representations.</p>
+<p>A multi-line literal solution could have been simply achieved by
+changing the Java specification to allow CR and LF in the body of a
+double-quote traditional string literal. However, the use of double
+quote implies that escapes must be interpreted.</p>
+<p>A different delimiter was required to signify different interpretation
+behavior. Other languages chose a variety of delimiters:</p>
+<table>
+<tbody><tr>
+<th><p><strong>Delimiters</strong></p></th>
+<th><p><strong>Language/Tool</strong></p></th>
+</tr>
+<tr>
+<td><p><code>"""..."""</code></p></td>
+<td><p>Groovy, Kotlin, Python, Scala, Swift</p></td>
+</tr>
+<tr>
+<td><p><code>`...`</code></p></td>
+<td><p>Go, JavaScript</p></td>
+</tr>
+<tr>
+<td><p><code>@"..."</code></p></td>
+<td><p>C#</p></td>
+</tr>
+<tr>
+<td><p><code>R"..."</code></p></td>
+<td><p>Groovy (old style)</p></td>
+</tr>
+<tr>
+<td><p><code>R"xxx(...)xxx"</code></p></td>
+<td><p>C/C++</p></td>
+</tr>
+<tr>
+<td><p><code>%(...)</code></p></td>
+<td><p>Ruby</p></td>
+</tr>
+<tr>
+<td><p><code>qq{...}</code></p></td>
+<td><p>Perl</p></td>
+</tr>
+</tbody></table>
+<p>Python, Kotlin, Groovy and Swift have opted to use triple double quotes
+to indicate raw strings. This choice reflects the connection with
+existing string literals.</p>
+<p>Go and JavaScript use the backtick. This choice uses a character that
+is not commonly used in strings. This is not ideal for use in Markdown
+documents, but addresses a majority of cases.</p>
+<p>A unique meta-tag such as <code>@"..."</code> used in C# provides similar
+functionality to the backticks proposed here. However, <code>@</code> suggests
+annotations in Java. The use of another meta-tag limits the use of that
+meta-tag for future purposes.</p>
+<h3 id="Heredoc">Heredoc</h3>
+<p>An alternative to quoting for raw strings is using "here" documents or
+heredocs. Heredocs were first used in Unix shells and have found their
+way into programming languages such as Perl. A heredoc has a placeholder
+and an end marker. The placeholder indicates where the string is to be
+inserted in the code as well as providing the description of end marker.
+The end marker comes after the body of the string. For example,</p>
+<pre><code>System.out.println(&lt;&lt;HTML);
+&lt;html&gt;
+    &lt;body&gt;
+        &lt;p&gt;Hello World.&lt;/p&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+HTML</code></pre>
+<p>Heredocs provide a solution for raw strings, but are thought by many to
+be an anachronism. They are also obtrusive and complicate margin
+management.</p>
+<h2 id="Testing">Testing</h2>
+<p>String test suites should be extended to duplicate existing tests replacing
+traditional string literals with raw string literals.</p>
+<p>Negative tests should be added to test corner cases for line terminators and
+end of compilation unit.</p>
+<p>Tests should be added to test escape and margin management methods.</p>
+<p>Tests should be added to ensure we can embed Java-in-Java and
+Markdown-in-Java.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

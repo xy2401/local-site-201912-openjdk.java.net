@@ -1,0 +1,637 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JVM Language Summit &#8212; Agenda</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    .nonprep {background: #437291; text-align: left; padding: 0 0 0 24pt}
+    /* adjustments to this enclosing style, which works poorly against sun-blue:
+       A { text-decoration: none; }
+       A:link { color: #437291; }
+       A:visited { color: #666666; }
+       A[href]:hover { color: #e76f00; }
+    */
+    .nonprep A { text-decoration: none; }
+    .nonprep A:link { color: #111848; }
+    .nonprep A:visited { color: #444444; }
+    .nonprep A[href]:hover { color: #e76f00; }
+/**/
+</style><style type="text/css">
+/**/
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: right; font: 12.0px}
+    p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 12.0px}
+    p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px; color: #0018ea}
+    p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; font: 16.0px}
+    span.s1 {color: #000000}
+    span.s2 {text-decoration: underline}
+    table.t1 {width: 800.0px; margin: 0.0px 0.0px 0.0px 5.0px; border-collapse: collapse}
+    td.td1 {width: 44.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td2 {width: 5.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td3 {width: 33.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td4 {width: 128.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td5 {width: 35.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td6 {width: 153.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td7 {width: 148.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td8 {width: 506.0px; background-color: #4e7290; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td9 {width: 34.0px; background-color: #7cb281; border-style: solid; border-width: 1.0px 1.0px 0.0px 1.0px; border-color: #000000 #000000 transparent #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td10 {width: 152.0px; background-color: #7cb281; border-style: solid; border-width: 1.0px 1.0px 0.0px 0.0px; border-color: #000000 #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td11 {width: 147.0px; background-color: #7cb281; border-style: solid; border-width: 1.0px 1.0px 0.0px 0.0px; border-color: #000000 #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td12 {width: 34.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 1.0px 1.0px; border-color: transparent #000000 #000000 #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td13 {width: 152.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 1.0px 0.0px; border-color: transparent #000000 #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td14 {width: 147.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 1.0px 0.0px; border-color: transparent #000000 #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td15 {width: 33.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td16 {width: 128.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td17 {width: 35.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td18 {width: 5.0px; border-style: solid; border-width: 0.0px 1.0px 0.0px 0.0px; border-color: transparent #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td19 {width: 32.0px; background-color: #7cb281; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td20 {width: 176.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 0.0px 1.0px; border-color: transparent #000000 transparent #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td21 {width: 152.0px; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td22 {width: 32.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td23 {width: 176.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 1.0px 1.0px; border-color: transparent #000000 #000000 #000000; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td24 {width: 152.0px; background-color: #4e7290; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td25 {width: 177.0px; background-color: #4e7290; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td26 {width: 153.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td27 {width: 148.0px; border-style: solid; border-width: 0.0px 0.0px 1.0px 0.0px; border-color: transparent transparent #000000 transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td28 {width: 152.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 0.0px 0.0px; border-color: transparent #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td29 {width: 147.0px; background-color: #7cb281; border-style: solid; border-width: 0.0px 1.0px 0.0px 0.0px; border-color: transparent #000000 transparent transparent; padding: 0.0px 7.0px 0.0px 7.0px}
+    td.td30 {width: 153.0px; background-color: #4e7290; padding: 0.0px 7.0px 0.0px 7.0px}
+/**/
+</style></head><body><div id="main">
+<h1>JVM Language Summit &#8212; Agenda</h1>
+<!-- begin SpeakerAgenda-rtf.html -->
+<table cellspacing="0" cellpadding="0" class="t1" summary="Agenda">
+<tbody>
+<tr>
+<td valign="top" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Wednesday, 9/16</p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Thursday, 9/17</p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Friday, 9/18</p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">8:30</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="4" valign="bottom" class="td8">
+<p class="p3"><i>Breakfast (30 min)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">9:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Goetz/Pampuch,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Welcome">Welcome</a></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td rowspan="2" valign="bottom" class="td6">
+<p class="p1">Hickey,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Clojure_Keynote">Clojure
+Keynote</a></p>
+<p class="p1">&#160;<br />
+&#160;</p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Parr,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Parsers_in_Java">Parsers in
+Java</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Reinhold,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/JDK7_and_Beyond">JDK7 and
+Beyond</a></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Stadler,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/JVM_Continuations">JVM
+Continuations</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">10:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Rose,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Da_Vinci_Machine">Da Vinci
+Machine</a></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Click,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/JVM_Performance">JVM
+Performance</a></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Wimmer,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Trace-based_JIT">Trace-based
+JIT</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="4" valign="bottom" class="td8">
+<p class="p3"><i>Break (30 min)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">11:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Randal,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Exploring_Dynamism">Exploring
+Dynamism</a></p>
+</td>
+<td valign="bottom" class="td9">
+<p class="p1">W1A</p>
+</td>
+<td valign="bottom" class="td10">
+<p class="p1">Click,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/JVM_Performance_-W-">JVM
+Performance</a></p>
+</td>
+<td valign="bottom" class="td11">
+<p class="p1">Bini,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Optimizing_Ioke_-W-">Optimizing
+Ioke</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Nutter,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Better_Ruby">Better Ruby</a></p>
+</td>
+<td valign="bottom" class="td12">
+<p class="p1">W1B</p>
+</td>
+<td valign="bottom" class="td13">
+<p class="p1">Randal,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Dynamic_Features_-W-">Dynamic
+Features</a></p>
+</td>
+<td valign="bottom" class="td14">
+<p class="p1">Hickey,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Clojure_Deep_Dive_-W-">Clojure Deep
+Dive</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">12:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td rowspan="2" colspan="4" valign="middle" class="td8">
+<p class="p3">&#160;<br />
+<i>Lunch (60 min)</i><br />
+&#160;</p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">1:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Szegedi,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/MOP_and_Invokedynamic">MOP and
+Invokedynamic</a></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Wuerthinger,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Hotswap">Hotswap</a></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Gafter,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Static_Dynamic_Types">Static Dynamic
+Types</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1">Sabin,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Scala_IDE">Scala IDE</a></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Theodorou,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Groovy_Performance">Groovy
+Performance</a></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Siek,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Blame_Tracking">Blame
+Tracking</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">2:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td15">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td16">
+<p class="p1">Pollak,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Scala_Basics">Scala Basics</a></p>
+</td>
+<td valign="bottom" class="td17">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1">Tanase,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Sun_update">Sun update</a></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Field,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/JavaFX_Binding">JavaFX
+Binding</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">2:30</p>
+</td>
+<td valign="bottom" class="td18">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td19">
+<p class="p1">W1A</p>
+</td>
+<td colspan="2" valign="bottom" class="td20">
+<p class="p1">Eagle,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/noop_Language_-W-">noop
+Language</a></p>
+</td>
+<td valign="bottom" class="td21">
+<p class="p1">Meijer,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/NET_Reactive_Framework">.NET
+Reactive Framework</a></p>
+</td>
+<td valign="bottom" class="td24">
+<p class="p3"><i>Break (30 min)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">3:00</p>
+</td>
+<td valign="bottom" class="td18">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td22">
+<p class="p1">W1B</p>
+</td>
+<td colspan="2" valign="bottom" class="td23">
+<p class="p1">Nutter,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Duby_and_Friends_-W-">JRuby/Duby/Juby</a></p>
+</td>
+<td valign="bottom" class="td21">
+<p class="p1">&#214;hrstr&#246;m,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Anti-Optimizations">Anti-Optimizations</a></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1">Baker,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Jython">Jython</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td15">
+<p class="p1">&#160;</p>
+</td>
+<td colspan="2" valign="bottom" class="td25">
+<p class="p3"><i>Break (30 min)</i></p>
+</td>
+<td valign="bottom" class="td26">
+<p class="p1">Bini,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Ioke_Folding_Language">Ioke Folding
+Language</a></p>
+</td>
+<td valign="bottom" class="td27">
+<p class="p1">Forax,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/JSR_292_Backport_Deep_Dive">JSR 292
+Backport Deep Dive</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">4:00</p>
+</td>
+<td valign="bottom" class="td18">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td19">
+<p class="p1">W2A</p>
+</td>
+<td colspan="2" valign="bottom" class="td20">
+<p class="p1">Rose,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Invokedynamic_Deep_Dive_-W-">Invokedynamic
+Deep Dive</a></p>
+</td>
+<td valign="bottom" class="td28">
+<p class="p1">Meijer,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Asynchronicus_Anonymous_-W-">Asynchronicus
+Anonymous</a></p>
+</td>
+<td valign="bottom" class="td29">
+<p class="p1">Baker,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Jython_-W-">Jython</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td18">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td22">
+<p class="p1">W2B</p>
+</td>
+<td colspan="2" valign="bottom" class="td23">
+<p class="p1">Sabin,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Multilanguage_Java_Tools_-W-">Multilanguage
+Java Tools</a></p>
+</td>
+<td valign="bottom" class="td13">
+<p class="p1">Szegedi,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/MOP_with_Runtime_-W-">MOP with
+Runtime</a></p>
+</td>
+<td valign="bottom" class="td14">
+<p class="p1">Pestov,<br />
+&#160;&#160;&#160;<a href="http://wiki.jvmlangsummit.com/Factor_Optimizing_Compiler_-W-">Factor
+Optimizing Compiler</a></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">5:00</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1"><i>(break)</i></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1"><i>(lightning talks)</i></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1"><i>(final break)</i></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1"><i>&#160;</i></p>
+</td>
+<td valign="bottom" class="td5">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td6">
+<p class="p1"><i>&#160;</i></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1"><i>&#160;</i></p>
+</td>
+</tr>
+<tr>
+<td valign="top" class="td1">
+<p class="p2">&#160;</p>
+</td>
+<td valign="bottom" class="td2">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td3">
+<p class="p1">&#160;</p>
+</td>
+<td valign="bottom" class="td4">
+<p class="p1"><i>&#160;</i></p>
+</td>
+<td valign="top" class="td5">
+<p class="p2">6:00</p>
+</td>
+<td valign="bottom" class="td30">
+<p class="p4"><span class="s1">&#160;<br />
+Dinner at<br />
+<a href="http://www.faultlinebrewing.com/"><span class="s2">Faultline Brewing Company</span></a><br />
+&#160;</span></p>
+</td>
+<td valign="bottom" class="td7">
+<p class="p1"><i>&#160;</i></p>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- end SpeakerAgenda-rtf.html -->
+<p>Workshop sessions will run for 60 minutes, with two or more
+sessions in parallel. On the agenda, time blocks for workshops are
+<span style="background:#7cb281">colored green</span>.</p>
+<p>We expect all the talks to be deeply technical, given by
+designers and implementors to designers and implementors. We all
+speak Code here!</p>
+<p>These talks, we hope and expect, will inform the audience, in
+detail, about the state of the art of language design and
+implementation on the JVM, and the present and future capabilities
+of the JVM itself. (Some will do so indirectly by discussing
+non-JVM technologies.) Beyond that, these talks will inspire us to
+work together with JVM-based technologies to build the next great
+software systems.</p>
+<table border="0" cellpadding="5" cellspacing="0" style="width:100%" summary="Notes">
+<tbody>
+<tr>
+<td valign="top" style="width:80%">
+<h2>JVM Language Summit &#8212; Notes on the Agenda</h2>
+<ul>
+<li>The summit conference is running three days, September
+16-18.</li>
+<li>All plenary talks are in Sun&#8217;s Stanford Conference Room
+(SCA05-1116); it is set up classroom style.</li>
+<li>As last year, light breakfast and lunch are served on
+site.</li>
+<li>Two or three breakout rooms are available for workshops, quiet
+conversation, and ad hoc consultations.</li>
+<li>To log into <a href="http://wiki.jvmlangsummit.com">the
+wiki</a>, use the initial credentials printed on your agenda card,
+then register yourself (or re-activate last year&#8217;s
+login).</li>
+</ul>
+</td>
+<td valign="middle" style="width:20%"><!--
+      <a href="index.html"><img title="a beautiful mind" style="border: 0px solid ; width: 281px; height: 363px;" src="../images/leonardo_box.jpg" /></a>
+-->
+<a href="index.html"><img title="the Vitruvian Duke" style="border: 0px solid ; width: 356px; height: 340px;" src="../images/DukeVitru.png" alt="Vitruvian Duke" /></a></td>
+</tr>
+</tbody>
+</table>
+<h3><a name="speakers" id="speakers">Notes to Speakers:</a></h3>
+<p>The conference will be recorded professionally by <a href="http://infoq.com">InfoQ.com</a>, who will be posting them on the
+internet. We encourage you to allow your talk (including audio and
+slides) to be recorded and posted. We will not do this, however,
+without a signed <a href="../pdf/JVMLSPubReleaseForm2009.pdf">release form</a>, so if you do
+not wish your talk to be recorded, simply do not complete the
+release form.</p>
+<p>If you mark the indicated spot on the <a href="../pdf/JVMLSPubReleaseForm2009.pdf">speaker release form</a>, we
+will put your talk&#8217;s PDF (or other presentation file) on the
+conference wiki, so that the other conference participants, and the
+rest of the world, can see it there.</p>
+<p>All talks (except breakouts) will be held in Sun&#8217;s
+<em>Stanford conference room</em>, which has an overhead Infocus
+projector with a VGA connector. Please send PDFs of your slides in
+advance to Brian Goetz, so that we can have them ready to project
+from our laptop. But, if you plan to present from your own machine,
+please make sure it can talk to a VGA connector. (Macs generally
+require an adapter to do this.) We will also supply a clip-on
+microphone.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

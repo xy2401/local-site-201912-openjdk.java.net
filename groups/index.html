@@ -1,0 +1,459 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>OpenJDK Groups</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+         PRE { padding: 1ex; margin: 1ex 0; background: #eee; width: 40em;
+               font-size: inherit; }
+         DT { margin-top: 2ex; margin-bottom: 1ex; }
+         DT.subst {font-family: Luxi Mono, Courier New, monospace; 
+                    font-weight: bold; }
+/**/
+</style></head><body><div id="main">
+<h1>Groups</h1>
+<p>A <a href="/bylaws#group">Group</a> is a collection of <a href="/bylaws#participant">Participants</a> who engage in open
+conversation about a common interest. That interest may be in the
+creation, enhancement, or maintenance of a specific body of code or
+it may lie in other areas, <i>e.g.</i>, quality or
+documentation.</p>
+<p>Groups are meant to capture the slowly-evolving social structure
+of the Community. They are usually longer-lived than <a href="../projects">Projects</a> and therefore more difficult to <a href="#new-group">create</a> and dissolve. Generally speaking, a new
+Group should be proposed only after it has become clear that an
+existing nontrivial set of regular Participants who are already
+collaborating together would benefit from its creation. These are
+not meant to be lightweight "interest groups".</p>
+<p>A Group may have web content, independent of any Project, which
+is writable by all of the Group's Members. A Group also has one or
+more <a href="//mail.openjdk.java.net">mailing lists</a>. A
+Group does not have file repositories of its own but it may sponsor
+<a href="/projects">Projects</a>, which do.</p>
+<p>The <a href="/bylaws">Bylaws</a> define several ways for the
+Community to expand via Groups. A step-by-step guide is provided
+here for the following common cases:</p>
+<ul>
+<li><a href="#group-member">Nominating a Contributor to be a Group
+Member</a></li>
+<li><a href="#openjdk-member">Nominating a Committer or Group
+Member to be an OpenJDK Member</a></li>
+<li><a href="#new-group">Proposing a New Group</a></li>
+<li><a href="#lead">Nominating an OpenJDK Member who is a Group
+Member to be Group Lead</a></li>
+</ul>
+<p>This page is a summary and interpretation of the <a href="/bylaws">Bylaws</a>. If there is a conflict between this page and
+the Bylaws then the Bylaws are considered authoritative.</p>
+<h2><a name="group-member" id="group-member">Nominating a
+Contributor to be a Group Member</a></h2>
+<p>Any <a href="/bylaws#group-member">Member</a> of a Group may
+nominate a <a href="/bylaws#contributor">Contributor</a> to
+Membership in that Group. Group membership is one route to becoming
+an OpenJDK Member.</p>
+<p>As a rough guide, a Contributor should be regularly active in a
+Group or its sponsored Projects for at least a year before being
+nominated to be a Group Member.</p>
+<dl>
+<dt><a name="member-nominate" id="member-nominate"></a><i>Step 1:
+Nominate</i></dt>
+<dd>
+<p>Send a call-for-votes to the Group's OpenJDK <a href="//mail.openjdk.java.net">mailing list</a>. The voting method
+for approval is <a href="/bylaws#lazy-consensus">Lazy Consensus</a>
+and only current <a href="/census">Group Members</a> are eligible
+to vote.</p>
+<pre><code>To: <b>&lt;OpenJDK group mailing list&gt;</b>
+Subject: CFV: New <b>&lt;group name&gt;</b> Group Member: <b>&lt;full name&gt;</b>
+
+I hereby nominate <b>&lt;full name&gt;</b> to Membership in the <b>&lt;group name&gt;</b>
+Group.
+
+<b>&lt;contributor description&gt;</b>
+
+Votes are due by <b>&lt;deadline&gt;</b>.
+
+Only current Members of the <b>&lt;group name&gt;</b> Group [1] are eligible
+to vote on this nomination.  Votes must be cast in the open by 
+replying to this mailing list
+
+For Lazy Consensus voting instructions, see [2].
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://openjdk.java.net/census
+[2] http://openjdk.java.net/groups/#member-vote</code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;OpenJDK group mailing list&gt;</dt>
+<dd>The primary <a href="//mail.openjdk.java.net/mailman/listinfo">OpenJDK mailing
+list</a> for the group.</dd>
+<dt class="subst">&lt;full name&gt;</dt>
+<dd>The full name of the nominated Contributor (not e-mail address,
+OpenJDK name, etc.).</dd>
+<dt class="subst">&lt;group name&gt;</dt>
+<dd>The short name for the Group as listed on the left side-bar of
+the main <a href="//openjdk.java.net">OpenJDK page</a>.</dd>
+<dt class="subst">&lt;contributor description&gt;</dt>
+<dd>Describe the nominee's past contributions to the Group, and any
+relevant qualifications.</dd>
+<dt class="subst">&lt;deadline&gt;</dt>
+<dd>Insert a date and time, with time zone, two weeks after the
+call-for-votes is sent.</dd>
+<dt class="subst">&lt;nominator&gt;</dt>
+<dd>Nominating Group Member's name.</dd>
+</dl>
+</dd>
+<dt><a name="member-vote" id="member-vote"></a><i>Step 2:
+Vote</i></dt>
+<dd>
+<p>Group Members vote by replying to the proposal with the first
+line of the message body in the following form:</p>
+<pre><code>Vote: <b>&lt;vote&gt;</b></code></pre>
+<p>where <code><b>&lt;vote&gt;</b></code> is one of
+<code><b>yes</b></code>, <code><b>veto</b></code>, or
+<code><b>abstain</b></code>. A justification for the vote may be
+provided on subsequent lines, and is required in order for a
+<code><b>veto</b></code> vote to be valid. Multiple votes are
+allowed but only the most recent vote will be counted. Votes must
+be cast in the open, on the mailing list to which the
+call-for-votes was originally sent; votes sent as private replies
+will not be counted.</p>
+<p>The following is a minimum affirmative reply.</p>
+<pre><code>To: <b>&lt;OpenJDK group mailing list&gt;</b>
+Subject: Re: CFV: New <b>&lt;group name&gt;</b> Group Member: <b>&lt;full name&gt;</b>
+
+Vote: yes</code></pre></dd>
+<dt><a name="member-announce" id="member-announce"></a><i>Step 3:
+Announce Result</i></dt>
+<dd>
+<p>Once all Group Members have voted or the deadline has passed
+then the result must be announced to the mailing list where the
+call-for-votes and voting took place. If the announcement is
+approval then it must also be sent to the <a href="mailto:registrar.at.openjdk.dot.java.dot.net">registrar</a>. The
+registrar will contact the new Member to obtain additional
+information, if necessary, and will update the Census.</p>
+<p>This is a typical announcement of approval:</p>
+<pre><code>To: <b>&lt;OpenJDK mailing list&gt;</b>
+CC: registrar at openjdk dot java dot net
+Subject: Result: New <b>&lt;group name&gt;</b> Group Member: <b>&lt;full name&gt;</b>
+
+The vote for <b>&lt;full name&gt;</b> [1] is now closed.
+
+Yes: <b>&lt;number of "yes" votes&gt;</b>
+Veto: 0
+Abstain: <b>&lt;number of "abstain" votes&gt;</b>
+
+According to the Bylaws definition of Lazy Consensus, this is
+sufficient to approve the nomination.
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://mail.openjdk.java.net/<b>&lt;reference to original CFV&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;reference to original CFV&gt;</dt>
+<dd>Find the original call-for-votes in the OpenJDK mail archives
+and provide a link to it.</dd>
+</dl>
+</dd>
+</dl>
+<h2><a name="openjdk-member" id="openjdk-member">Nominating a
+Committer or Group Member to be an OpenJDK Member</a></h2>
+<p>Any <a href="/bylaws#openjdk-member">OpenJDK Member</a> may
+nominate any <a href="/bylaws#group-member">Group Member</a> or
+<a href="/bylaws#committer">Project Committer</a> to be an OpenJDK
+Member. OpenJDK Members may vote on new Project proposals and
+participate in various Governing Board-related activities, such as
+voting on revisions of the Bylaws, attending open meetings, and
+nominating and voting for At-Large members.</p>
+<p>As a rough guide, a candidate should be a Member of at least one
+Group, or a Reviewer or Project Lead of at least one Project, and
+make regular and significant contributions to that Group or Project
+for at least one year before being nominated to be an OpenJDK
+Member.</p>
+<p>The nomination and voting process for new OpenJDK Members is the
+same as <a href="#member-nominate">above</a>, except that the
+voting method is <a href="/bylaws#three-vote-consensus">Three-Vote
+Consensus</a>.</p>
+<h2><a name="new-group" id="new-group">Proposing a New
+Group</a></h2>
+<p>Any <a href="/bylaws#openjdk-member">OpenJDK Member</a> may
+propose the creation of a new Group.</p>
+<dl>
+<dt><a name="new-group-discuss" id="new-group-discuss"></a><i>Step
+0: Discuss [optional]</i></dt>
+<dd>
+<p>It is strongly recommended that any proposal for a new Group be
+discussed publicly before being sent to the Governing Board. Send
+an e-mail describing the motivation, scope, goals, initial Lead,
+and suggested initial Members of the proposed Group to the <a href="mailto:discuss.at.openjdk.dot.java.dot.net">general discussion
+list</a>. The proposing OpenJDK Member should be an active
+participant in any subsequent discussion and should refine the
+proposal as necessary in response to comments.</p>
+<p>The header for the Group proposal e-mail is as follows:</p>
+<pre><code>To: discuss at openjdk dot java dot net
+Subject: Group Proposal: <b>&lt;group name&gt;</b></code></pre>
+<p>Where <code><b>&lt;group name&gt;</b></code> is the suggested
+short name of the Group as it would appear on the left side-bar of
+the main <a href="//openjdk.java.net">OpenJDK page</a>.</p>
+</dd>
+<dt><a name="new-group-propose" id="new-group-propose"></a><i>Step
+1: Propose</i></dt>
+<dd>
+<p>Send an e-mail to the <a href="/bylaws#openjdk-lead">OpenJDK
+Lead</a> containing the Group name, description, initial Lead name
+and qualifications, and suggested initial Members. The OpenJDK Lead
+(or designate) will send a combined motion to create the Group and
+appoint its initial Lead to the <a href="/bylaws#governing-board">Governing Board</a>. The voting method is
+<a href="/bylaws#simple-majority">Simple Majority</a> and only
+current <a href="/census#gb">Governing Board Members</a> are
+eligible to vote.</p>
+<p>The format for the combined motion is as follows:</p>
+<pre><code>To: gb-discuss at openjdk dot java dot net
+Subject: CFV: New Group: <b>&lt;group name&gt;</b>
+
+On behalf of <b>&lt;proposer&gt;</b> I hereby propose creation of the
+<b>&lt;group name&gt;</b> Group with <b>&lt;lead name&gt;</b> as the initial Lead.
+
+<b>&lt;group description&gt;</b>
+
+<b>&lt;lead description&gt;</b>
+
+<b>&lt;list of suggested initial members&gt;</b>
+
+Only current Governing Board Members[1] are eligible to vote on 
+this motion.  Votes must be cast in the open by replying to this
+mailing list.
+
+For Simple Majority voting instructions, see [2].
+
+<b>&lt;OpenJDK Lead&gt;</b>
+
+[1] http://openjdk.java.net/census#gb
+[2] http://openjdk.java.net/groups/#new-group-vote</code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;group name&gt;</dt>
+<dd>The name of the proposed Group as it would appear on the left
+side-bar of the main <a href="//openjdk.java.net">OpenJDK
+page</a>.</dd>
+<dt class="subst">&lt;group description&gt;</dt>
+<dd>Describe the Group's motivation, scope, and goals.</dd>
+<dt class="subst">&lt;lead name&gt;</dt>
+<dd>The full name of the proposed Group Lead (not e-mail address,
+OpenJDK name, etc.)</dd>
+<dt class="subst">&lt;lead description&gt;</dt>
+<dd>Describe the proposed Lead's relevant qualifications.</dd>
+<dt class="subst">&lt;list of suggested initial group
+members&gt;</dt>
+<dd>Provide the full names (not e-mail address, OpenJDK name, etc.)
+of people which the prospective Group Lead may choose to appoint as
+initial Members.</dd>
+<dt class="subst">&lt;proposer&gt;</dt>
+<dd>The name of the OpenJDK Member proposing the creation of the
+new Group.</dd>
+<dt class="subst">&lt;deadline&gt;</dt>
+<dd>Insert a date and time, with time zone, two weeks after the
+call-for-votes is sent.</dd>
+</dl>
+<p>The Bylaws specify separate votes on the creation of a new Group
+and the appointment of its initial Lead. Any Board Member may
+therefore request that the two motions be voted upon independently,
+though this is not expected to be the common case.</p>
+</dd>
+<dt><a name="new-group-vote" id="new-group-vote"></a><i>Step 2:
+Vote</i></dt>
+<dd>
+<p>Governing Board Members vote by replying to the proposal with
+the first line of the message body in the following form:</p>
+<pre><code>Vote: <b>&lt;vote&gt;</b></code></pre>
+<p>where <code><b>&lt;vote&gt;</b></code> is one of
+<code><b>yes</b></code>, <code><b>no</b></code>, or
+<code><b>abstain</b></code>. A reason for the vote may be provided
+on subsequent lines but is not required, even for a
+<code><b>no</b></code>. Multiple votes are allowed but only the
+most recent vote will be counted. Votes must be cast in the open;
+votes sent as private replies will not be counted.</p>
+<p>The following is a minimum affirmative reply:</p>
+<pre><code>To: gb-discuss at openjdk dot java dot net
+Subject: Re: CFV: New Group: <b>&lt;group name&gt;</b>
+
+Vote: yes</code></pre></dd>
+<dt><a name="new-group-announce" id="new-group-announce"></a><i>Step 3: Announce Results</i></dt>
+<dd>
+<p>Once all Governing Board Members have voted or the deadline has
+passed, the OpenJDK Lead will send results to the <a href="mailto:announce.at.openjdk.dot.java.dot.net">announcement
+list</a>. If the announcements are of approval then they must also
+be sent to the <a href="mailto:registrar.at.openjdk.dot.java.dot.net">registrar</a>.</p>
+<p>This is a typical announcement of approval:</p>
+<pre><code>To: announce at openjdk dot java dot net
+CC: registrar at openjdk dot java dot net
+Subject: Result: New Group: <b>&lt;group name&gt;</b>
+
+Voting on the <b>&lt;group name&gt;</b> Group with initial Lead <b>&lt;lead name&gt;</b> [1]
+is now closed.
+
+Yes: <b>&lt;number of "yes" votes&gt;</b>
+No: <b>&lt;number of "no" votes&gt;</b>
+Abstain: <b>&lt;number of "abstain" votes&gt;</b>
+
+According to the Bylaws definition of Simple Majority, this is 
+sufficient to approve the new Group and its initial Lead.
+
+<b>&lt;OpenJDK Lead&gt;</b>
+
+[1] http://mail.openjdk.java.net/<b>&lt;reference to original CFV&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;reference to original CFV&gt;</dt>
+<dd>Find the original call-for-votes in the OpenJDK mail archives
+and provide a link to it.</dd>
+</dl>
+</dd>
+<dt><a name="new-group-appoint" id="new-group-appoint"></a><i>Step
+4: Appoint</i></dt>
+<dd>
+<p>The registrar will send an e-mail questionnaire to the new Group
+Lead to collect any information necessary to launch the Group on
+OpenJDK. In addition to information for web pages and mailing
+list(s) the Lead will be asked to select the initial Group Members.
+The registrar will issue registration invitations as necessary and
+will update the Census.</p>
+</dd>
+</dl>
+<h2><a name="lead" id="lead">Nominating an OpenJDK Member who is a
+Group Member to be Group Lead</a></h2>
+<p>Any <a href="/bylaws#openjdk-member">OpenJDK Member</a> may
+nominate any OpenJDK Member who is a Member of a particular
+<a href="/bylaws#group">Group</a> to be that <a href="/bylaws#group-lead">Group's</a> new Lead.</p>
+<p>As a rough guide, a candidate should be regularly active in the
+Group for at least a year before being nominated to be the Lead.
+They should be recognized for their technical breadth and
+leadership skills.</p>
+<dl>
+<dt><a name="lead-nominate" id="lead-nominate"></a><i>Step 1:
+Nominate</i></dt>
+<dd>
+<p>Send a call-for-votes to the Group's OpenJDK <a href="//mail.openjdk.java.net">mailing list</a>. The voting method
+for approval is <a href="//openjdk.java.net/bylaws#simple-majority">Simple
+Majority</a> and only current <a href="/census/index.html">Group
+Members</a> are eligible to vote.</p>
+<pre><code>To: <b>&lt;OpenJDK group mailing list&gt;</b>
+Subject: CFV: New <b>&lt;group name&gt;</b> Group Lead: <b>&lt;full name&gt;</b>
+
+I hereby nominate <b>&lt;full name&gt;</b> to <b>&lt;group name&gt;</b> Group Lead [1].
+
+<b>&lt;Group/OpenJDK Member description&gt;</b>
+
+Votes are due by <b>&lt;deadline&gt;</b>.
+
+Only current Members of the <b>&lt;group name&gt;</b> Group [2] are eligible to
+vote on this nomination.  Votes must be cast in the open by 
+replying to this mailing list.
+
+For Simple Majority voting instructions, see [3].
+
+<b>&lt;nominator&gt;</b>
+
+[1]: http://openjdk.java.net/bylaws#group-lead
+[2]: http://openjdk.java.net/census
+[3]: http://openjdk.java.net/groups#lead-vote</code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;OpenJDK group mailing list&gt;</dt>
+<dd>The primary <a href="//mail.openjdk.java.net/mailman/listinfo">OpenJDK mailing
+list</a> for the Group.</dd>
+<dt class="subst">&lt;full name&gt;</dt>
+<dd>The full name of the nominated Group/OpenJDK Member (not e-mail
+address, OpenJDK name, etc.).</dd>
+<dt class="subst">&lt;group name&gt;</dt>
+<dd>The short name for the Group as listed on the left side-bar of
+the main <a href="//openjdk.java.net">OpenJDK page</a>.</dd>
+<dt class="subst">&lt;Group/OpenJDK Member description&gt;</dt>
+<dd>Describe the nominee's past contributions to the Group, and any
+relevant qualifications.</dd>
+<dt class="subst">&lt;deadline&gt;</dt>
+<dd>Insert a date and time, with time zone, two weeks after the
+call-for-votes is sent.</dd>
+<dt class="subst">&lt;nominator&gt;</dt>
+<dd>Nominating OpenJDK Member's name.</dd>
+</dl>
+</dd>
+<dt><a name="lead-vote" id="lead-vote"></a><i>Step 2: Vote to
+Approve by Group Members</i></dt>
+<dd>
+<p>Group Members vote by replying to the proposal with the first
+line of the message body in the following form:</p>
+<pre><code>Vote: <b>&lt;vote&gt;</b></code></pre>
+<p>where <code><b>&lt;vote&gt;</b></code> is either
+<code><b>yes</b></code>, <code><b>no</b></code>, or
+<code><b>abstain</b></code>. A justification for the vote may be
+provided on subsequent lines, and is <b>not</b> required, even for
+a <code><b>no</b></code>. Multiple votes are allowed but only the
+most recent vote will be counted. Votes must be cast in the open,
+on the mailing list to which the call-for-votes was originally
+sent; votes sent as private replies will not be counted.</p>
+<p>The following is a minimum affirmative reply.</p>
+<pre><code>To: <b>&lt;OpenJDK group mailing list&gt;</b>
+Subject: Re: CFV: New <b>&lt;group name&gt;</b> Group Lead: <b>&lt;full name&gt;</b>
+
+Vote: yes</code></pre></dd>
+<dt><a name="lead-approve" id="lead-approve"></a><i>Step 3:
+Announce Approval Results</i></dt>
+<dd>
+<p>Once all Group Members have voted or the deadline has passed
+then the result must be announced to the mailing list where the
+call-for-votes and voting took place. If the announcement is
+approval then it must also be sent to the <a href="/bylaws#openjdk-lead">OpenJDK Lead</a>.</p>
+<p>This is a typical announcement of approval:</p>
+<pre>
+<code>To: <b>&lt;OpenJDK group mailing list&gt;</b>, <b>&lt;OpenJDK Lead&gt;</b>
+Subject: Result: New <b>&lt;group name&gt;</b> Group Lead: <b>&lt;full name&gt;</b>
+
+Voting for <b>&lt;group name&gt;</b> Group Lead <b>&lt;lead name&gt;</b> [1] is now closed.
+
+Yes: <b>&lt;number of "yes" votes&gt;</b>
+No: <b>&lt;number of "no" votes&gt;</b>
+Abstain: <b>&lt;number of "abstain" votes&gt;</b>
+
+According to the Bylaws definition of Simple Majority, this is 
+sufficient to approve the new Group Lead.  The OpenJDK Lead will
+ask the Governing Board to ratify this nomination.
+
+<b>&lt;nominator&gt;</b>
+
+[1] http://mail.openjdk.java.net/<b>&lt;reference to original CFV&gt;</b></code></pre>
+<p>Where the following substitutions are made in the message:</p>
+<dl>
+<dt class="subst">&lt;OpenJDK Lead&gt;</dt>
+<dd>The OpenJDK Lead is also the Group Lead of the <a href="/census#members">OpenJDK Members Group</a>.</dd>
+<dt class="subst">&lt;reference to original CFV&gt;</dt>
+<dd>Find the original call-for-votes in the OpenJDK mail archives
+and provide a link to it.</dd>
+</dl>
+</dd>
+<dt><a name="lead-ratify" id="lead-ratify"></a><i>Step 4: Ratify
+and Announce Results</i></dt>
+<dd>
+<p>The nomination and voting process for the Governing Board to
+ratify a the new Group Lead is the same as <a href="#new-group">above</a>. Sending the results of approval to the
+<a href="/bylaws#openjdk-lead">OpenJDK Lead</a> is sufficient to
+trigger the appropriate Governing Board vote. If the ratification
+announcement is of approval, it will be sent to the Group in
+addition to the <a href="mailto:announce.at.openjdk.dot.java.dot.net">announcement
+list</a>.</p>
+</dd>
+</dl>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

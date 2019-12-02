@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 303: Intrinsics for the LDC and INVOKEDYNAMIC Instructions</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 303: Intrinsics for the LDC and INVOKEDYNAMIC Instructions</h1><table class="head"><tr><td>Author</td><td>Brian Goetz</td></tr><tr><td>Owner</td><td>Vicente Arturo Romero Zaldivar</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Candidate</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;javac</td></tr><tr><td>Discussion</td><td>valhalla dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Depends</td><td><a href="334">JEP 334: JVM Constants API</a></td></tr><tr><td>Relates to</td><td><a href="309">JEP 309: Dynamic Class-File Constants</a></td></tr><tr><td>Created</td><td>2017/04/07 14:01</td></tr><tr><td>Updated</td><td>2018/09/11 15:05</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8178320">8178320</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Expose intrinsified library support allowing Java developers to write Java source code that reliably translates into <code>INVOKEDYNAMIC</code> invocations, so they can directly access functionality implemented via <code>invokedynamic</code> bootstraps.  Expose the ability to lazily initialize create runtime entities expressible as JVM constants (like <code>Class</code> and <code>MethodHandle</code>) without compromising performance.  Enhance constant propagation to include descriptor types for relevant constant pool entry types, such as <code>Class</code>, <code>MethodType</code>, and <code>MethodHandle</code>.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>It is not a goal to provide a mechanism to represent all possible bytecodes, provide fine-grained control over code generation, or provide a translation specification from Java source code to Java classfiles.  It is not a goal to extend the treatment of the <code>ConstantValue</code> attribute to support greater constant inlining across compilation units.  It would be highly undesirable for this feature to introduce new language syntax.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>JSR-292 added the <code>invokedynamic</code> ("indy") bytecode and several new constant pool types for representing method types and method handles.  Originally, these facilities were aimed at dynamically typed languages, but statically typed languages like Java have discovered ways to benefit from them as well (both lambda conversion and string concatenation in <code>javac</code> are translated using indy, and wider use is anticipated.)  As more runtime functionality is expressed in terms of indy bootstraps, the inability to access this functionality from Java source code (including for purposes of testing these bootstraps) increasingly becomes an impediment.  (This problem will get even worse with the introduction of "constant dynamic" (condy), the subject of a separate JEP.)</p>
+<p>Code that uses the new constant pool forms -- <code>MethodType</code> and <code>MethodHandle</code> -- typically initialized them statically, to avoid the cost of lazy initialization, but the cost of this is extra work (including loading of classes) at class initialization time.  The JVM already provides a mechanism to efficiently lazily initialize and intern shared constants -- the constant pool.  Providing a means to nominally describe constants, and load them via <code>LDC</code>, means that Java developers can leverage this mechanism directly.</p>
+<p>Further, a nominal form for complex constant pool types is needed anyway for bytecode APIs and compiler plugin APIs, which often have to reinvent them anew each time, such as ASMs <code>Handle</code> class.  (And again, this problem will get worse with the introduction of "constant dynamic.")</p>
+<h2 id="Description">Description</h2>
+<p>For every object that can be described via a constant pool entry, we want a companion object that describes that entry in terms only of other constants (as the constant pool does), where names of classes are interpreted relative to the class loader of the class in which they are resolved.  (This means that one can create a description for a class that is not loaded, and that creating a descriptor does not trigger any class loading.)  Some constant pool forms (such as <code>Integer</code> or <code>String</code>) can act as their own descriptor; for more complex constants (<code>Class</code>, <code>MethodType</code>) an explicit descriptor is needed.</p>
+<pre><code>public interface Constable&lt;T&gt; {
+    T resolveConstant(MethodHandles.Lookup lookup) throws ReflectiveOperationException;
+}
+
+public static final class ClassConstant implements Constable&lt;Class&gt; {
+    private final String descriptor;
+
+    private ClassConstant(String descriptor) { ... }
+
+    public static ClassConstant of(String descriptor) {
+        return new ClassConstant(descriptor);
+    }
+
+    public String descriptorString() {
+        return descriptor;
+    }
+
+    public Class resolveConstant(MethodHandles.Lookup lookup) throws ReflectiveOperationException { ... }
+}</code></pre>
+<p>Creating a <code>ClassConstant</code> merely validates the structure of the descriptor and stores it; no class loading takes place.  More complex constant descriptors, such as <code>MethodTypeConstant</code>, use <code>ClassConstant</code> to describe its parameter and return types, and <code>MethodHandleConstant</code> uses <code>ClassConstant</code> and <code>MethodTypeConstant</code>, so that complex descriptors are "nominal all the way down."</p>
+<h3 id="Constant-propagation">Constant propagation</h3>
+<p>We enhance the set of variables and expressions that are considered to be constant expressions (CE), and for these constant expressions, the compiler tracks and propagates their values during compilation, and ultimately can use these propagated constants when they are used as arguments to intrinsified methods.  We do not perform any new constant <em>folding</em> -- we merely track the value of any expressions that are CE according to the following rules, and if a CE is used as an argument to an intrinsic method, the constant value is used at the point of intrinsification.</p>
+<ul>
+<li>int, long, float, double, and String literals are CE.</li>
+<li>static final fields whose initializer is a CE are CE.</li>
+<li>effectively final local variables whose initializer is a CE are CE.</li>
+<li>For a suitable set of static factory methods in <code>XxxConstant</code>, when all arguments are CE, the result is CE. So for example, if we invoke <code>ClassConstant.of()</code> with the CE argument `"Lcom/Foo;", the result is CE.</li>
+<li>For a suitable set of instance methods in <code>XxxConstant</code>, when all arguments are CE and the receiver is CE, then the result is CE. So for example, if we create a <code>MethodHandleConstant</code> via a factory with with only constant inputs, and then call its <code>type()</code> method, the result is a CE <code>MethodTypeConstant</code>.</li>
+</ul>
+<h3 id="LDC-intrinsification">LDC intrinsification</h3>
+<p>There will be some method corresponding to the <code>LDC</code> bytecode:</p>
+<pre><code>class Intrinsics {
+    public static&lt;T&gt; T ldc(Constable&lt;T&gt; constant) { ... }
+}</code></pre>
+<p>which the compiler will <em>intrinsify</em>, meaning that it will replace the invocation of the method with an actual <code>LDC</code> bytecode, with an operand corresponding to the constant described by <code>constant</code>.  It will be a compile-time error if the <code>Constable</code> passed is not a CE (and the compiler can issue compile-time warnings if this constant or any of the constants indirectly referenced by it describe a class or member that is not present on the compile-time class path.)  These intrinsic methods would most likely not be reflectively invocable.</p>
+<h3 id="Invokedynamic-descriptors">Invokedynamic descriptors</h3>
+<p>An <code>invokedynamic</code> bootstrap is described by a structure similar to <code>XxxConstant</code>, for which the compiler also provide CE propagation:</p>
+<pre><code>public static final class BootstrapSpecifier {
+    final MethodHandleConstant bsm;
+    final String invocationName;
+    final MethodTypeConstant invocationDesc;
+    final Constable&lt;?&gt;[] bsmArgs;
+
+    private BootstrapSpecifier(MethodHandleConstant bsm, String invocationName, MethodTypeConstant invocationDesc, Constable&lt;?&gt;... bsmArgs) {
+        this.bsm = bsm;
+        this.invocationName = invocationName;
+        this.invocationDesc = invocationDesc;
+        this.bsmArgs = bsmArgs;
+    }
+
+    public static BootstrapSpecifier of(MethodHandleConstant bsm, String invocationName, MethodTypeConstant invocationDesc, Constable&lt;?&gt;... bsmArgs) {
+        return new BootstrapSpecifier(bsm, invocationName, invocationDesc, bsmArgs);
+    }
+}</code></pre>
+<h3 id="Invokedynamic-intrinsification">Invokedynamic intrinsification</h3>
+<p>Corresponding to <code>ldc()</code>, there is an intrinsic for <code>invokedynamic</code>:</p>
+<pre><code>class Intrinsics {
+    @PolymorphicSignature
+    public static Object invokedynamic(BootstrapSpecifier indy, Object... args) { return null; }
+}</code></pre>
+<p>Again, the <code>indy</code> argument must be CE, or it is a compile-time error.  The compiler intrinsifies calls to <code>invokedynamic()</code> to a real <code>invokedynamic</code> instruction, described by a <code>BootstrapMethods</code> entry corresponding to the <code>BootstrapSpecifier</code>.  The invocation descriptor is copied from that of the <code>BootstrapSpecifier</code>, and arguments or return values are typed-checked and adapted against that signature.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>JDK 7 explored direct syntactic support for indy, which was rejected because it added language complexity for a use case only needed by an extreme minority of Java developers.</p>
+<p>We also considered deterministic constant folding, where initialization of <code>Class</code> and <code>MethodHandle</code> objects from constant inputs could be intrinsified, propagated, and folded by the compiler, but rejected this approach because the timing of side-effects was insufficiently transparent.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>This feature interacts with "constant dynamic"; when that is available, additional support for dynamic constants will be required.</p>
+<p>This feature would likely be useful to Isolated Methods (JDK-8158765).</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

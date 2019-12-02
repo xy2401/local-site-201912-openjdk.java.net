@@ -1,0 +1,730 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Project Jigsaw: Goals &amp; Requirements (DRAFT 3)</title><meta name="viewport" content="width=device-width, initial-scale=.6" /><link rel="stylesheet" type="text/css" href="//openjdk.java.net/.fonts/dejavu.css" /><style type="text/css">
+
+      HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,
+      BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,
+      IMG, INS, KBD, Q, S, SAMP, SMALL, STRIKE, STRONG, SUB, SUP, TT, VAR, B, U,
+      I, CENTER, DL, DT, DD, OL, UL, LI, FIELDSET, FORM, LABEL, LEGEND, TABLE,
+      CAPTION, TBODY, TFOOT, THEAD, TR, TH, TD, ARTICLE, ASIDE, CANVAS, DETAILS,
+      EMBED, FIGURE, FIGCAPTION, FOOTER, HEADER, HGROUP, MENU, NAV, OUTPUT, RUBY,
+      SECTION, SUMMARY, TIME, MARK, AUDIO, VIDEO {
+        margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit;
+        vertical-align: baseline; }
+      ARTICLE, ASIDE, DETAILS, FIGCAPTION, FIGURE, 
+      FOOTER, HEADER, HGROUP, MENU, NAV, SECTION { display: block; }
+      BLOCKQUOTE, Q { quotes: none; }
+      BLOCKQUOTE:before, BLOCKQUOTE:after, Q:before, Q:after {
+              content: ''; content: none; }
+      TABLE { border-collapse: collapse; border-spacing: 0; }
+
+      A { text-decoration: none; }
+      A:link { color: #437291; }
+      A:visited { color: #666666; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+
+      HTML { font-size: 20px; } /* baseline grid */
+      HTML > BODY { font-size: 14px; }
+      BODY {
+        background: white;
+        margin: 40px;
+        margin-bottom: 150%;
+        width: 560px;
+        line-height: 20px;
+        -webkit-text-size-adjust: 100%; /* iOS */
+        color: #222;
+      }
+
+      /* BODY { background: url("grid.png") repeat 0 5px; } */
+
+      BODY { font-family: "DejaVu Serif", "Bitstream Vera Serif",
+                          "Lucida Bright", "Bookman Old Style",
+                          Georgia, serif; }
+      CODE, TT, .jref, DIV.spec .open, TABLE.profiles {
+        font-family: "DejaVu Sans", "Bitstream Vera Sans",
+                     "Lucida Sans", Helvetica, sans-serif; }
+      PRE { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+                          Monaco, "Courier New", monospace; }
+
+      @media only screen
+      and (min-device-width: 320px) and (max-device-width: 480px) {
+        BODY { width: 90%; }
+      }
+
+      I, EM { font-style: italic; }
+      STRONG, TH { font-weight: bold; }
+      SPAN.open { font-weight: bold; font-size: 12px; }
+
+      P { text-indent: 40px; }
+      P:first-child, UL + P, OL + P, BLOCKQUOTE + P, TABLE + P, P.subsection,
+        P.br, P.intro, DIV.profiles-table + P { text-indent: 0; }
+      P.br { margin-top: 10px; }
+      P.intro { margin-top: 30px; }
+
+      P.subsection { margin-top: 20px; }
+      P.subsection SPAN.title { font-weight: bold; padding-right: 20px; }
+
+      UL, OL { margin: 10px 0; padding-left: 40px; }
+      LI { margin-bottom: 10px; }
+      UL.compact LI { margin-bottom: 0; }
+
+      PRE { padding: 0; margin: 10px 0 10px 20px; background: #eee; width: 45em; }
+      BLOCKQUOTE { margin: 10px 0; margin-left: 20px; }
+      LI BLOCKQUOTE { margin-left: 0; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+      .error { color: red; font-weight: bold; }
+      .warn { color: #ee0000; font-weight: bold; }
+
+
+      H1 + P, H2 + P, H3 + P, PRE + P, BLOCKQUOTE + P { text-indent: 0; }
+      P.small { font-size: 11px; line-height: 16px; }
+
+      BLOCKQUOTE {
+        background: #e8e8e8;
+        padding: 10px;
+        font-size: 11px; line-height: 16px;
+      }
+
+      H1, H2, H3 { font-weight: bold; }
+
+      /*
+      H1 { margin-top: -13px; font-size: 22px; line-height: 40px; }
+      H2 { font-size: 17px; margin-top: 20px; margin-bottom: 10px; }
+      H3 { margin-top: 14px; margin-bottom: 10px; font-style: italic; }
+      */
+
+      DIV.doctitle, H1 { margin-top: -13px;
+        font-size: 22px; line-height: 40px; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-weight: bold; margin-bottom: 9px; }
+      DIV.subtitle { margin-top: 2px; font-size: 18px; font-weight: bold; }
+      DIV.authors { margin-top: 10px; margin-bottom: 10px; font-size: 16px; }
+      DIV.author A { font-style: italic; }
+      DIV.version { margin-top: 10px; }
+      DIV.version, DIV.legal-notice { font-size: 11px; line-height: 15px; }
+      SPAN.hash { font-size: 11px; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+      DIV.head { margin-bottom: 20px; }
+
+      DIV.section > DIV.title, DIV.section DIV.number SPAN, H2 {
+        font-size: 15px; font-weight: bold;
+        ZZline-height: 40px; margin-top: 20px; margin-bottom: 10px; }
+      H2 { font-size: 16px; }
+
+      H3 { margin-top: 10px; margin-bottom: 10px; font-style: italic; }
+
+      DIV.section DIV.number { float: left; width: 20px; }
+      DIV.section DIV.body { margin-left: 20px; }
+
+      DIV.toc { margin: 20px 0; padding-left: 40px; }
+      DIV.toc-section { margin-top: 10px; }
+      P.toc-reqs { font-size: 12px; text-indent: 0; margin-left: 20px; }
+      SPAN.toc-req { ZZwhite-space: nowrap; }
+
+      TABLE.toc { font-size: 13px; } /* Hack to ensure 20px rows */
+      TABLE.toc TD:first-child { font-weight: bold; padding-right: 10px; }
+      TABLE.toc TH { font-weight: bold; text-align: left; }
+      TABLE.toc TD.subcontent { padding-left: 40px; font-size: 11px; }
+
+      DIV.feature-details { margin-left: 0; }
+      DIV.feature-details DIV.group { margin-top: 20px; margin-left: 20px; }
+      DIV.feature-details DIV.group DIV.title { font-weight: bold; margin-left: -20px; }
+
+      DIV.feature { margin-top: 10px; margin-left: 20px; }
+      DIV.feature DIV.jep, DIV.feature DIV.title { font-weight: bold; }
+      DIV.feature DIV.jep { float: right; }
+      DIV.feature DIV.summary, DIV.feature DIV.refs, DIV.feature DIV.spec { margin-top: 10px; }
+      DIV.feature DIV.refs SPAN.what { font-weight: bold; }
+      DIV.spec .body { margin-left: 20px; }
+      DIV.spec .open { float: left; width: 20px; }
+
+      TABLE.features { margin: 10px 0 10px 0; }
+      TABLE.features TR.new-group TD { padding-top: 10px; }
+      TABLE.features TD:first-child { text-align: right; padding-right: 20px; }
+      TABLE.features TR:first-child TD { padding-top: 0; }
+      TABLE.features SPAN.jsrs-wrapper { padding-left: 6px; }
+      TABLE.features SPAN.jsrs { ZZfont-size: 11px; }
+      TABLE.features TD { white-space: nowrap; }
+
+      SPAN.new { color: #e76f00; font-size: smaller; }
+      SPAN.update { font-size: smaller; }
+
+      TABLE.jsr-list TD { vertical-align: baseline; }
+      TABLE.jsr-list TD.name { padding-left: 10px; }
+      TABLE.jsr-list TD.stage { padding-left: 40px; font-style: italic; white-space: nowrap; }
+
+      DIV.profiles-table { margin: 20px 0 20px 20px; }
+      TABLE.profiles { font-size: 12px; line-height: 16px; }
+      TABLE.profiles TH { text-align: left; }
+      TABLE.profiles TH + TH { padding-left: 40px; }
+      TABLE.profiles TD + TD { padding-left: 40px; }
+
+  </style></head><body>
+<h1>Project Jigsaw: Goals &amp; Requirements</h1>
+<p><strong> DRAFT 3</strong></p>
+<p class="br"> Mark Reinhold</p>
+<div class="version">2014/7/2 09:19 -0700<span class="hash">&#8192;[3822d297ef2f]</span></div><div class="legal-notice">Copyright &#169; 2014 Oracle and/or its affiliates &#183; All Rights Reserved</div><div class="legal-notice">This version: <a href="//openjdk.java.net/projects/jigsaw/goals-reqs/03"><code>http://openjdk.java.net/projects/jigsaw/goals-reqs/03</code></a><br />Latest version: <a href="//openjdk.java.net/projects/jigsaw/goals-reqs/"><code>http://openjdk.java.net/projects/jigsaw/goals-reqs/</code></a></div>
+<p class="intro"> The primary goals of <a href="//openjdk.java.net/projects/jigsaw">Project Jigsaw</a> are to:</p>
+<ul>
+<li>
+<p>Make the Java SE Platform, and the JDK, more easily scalable down
+    to small computing devices;</p>
+</li>
+<li>
+<p>Improve the security and maintainability of Java SE Platform
+    Implementations in general, and the JDK in particular;</p>
+</li>
+<li>
+<p>Enable improved application performance; and</p>
+</li>
+<li>
+<p>Make it easier for developers to construct and maintain libraries
+    and large applications, for both the Java SE and EE Platforms.</p>
+</li>
+</ul>
+<p>To achieve these goals we propose to design and implement a standard
+module system for the Java SE Platform and to apply that system to the
+Platform itself, and to the JDK.  The module system should be powerful
+enough to modularize the JDK and other large legacy code bases, yet still
+be approachable by all developers.</p>
+<p class="br"> What follows is an expansion of the above goals into a set of
+sub-goals, or requirements.  We also list some global constraints upon
+any design as well as some non-requirements, in order to make it clear
+what this project is not trying to achieve.  The non-requirements are
+motivated by our general experience with the JDK over many years, and
+also by specific experience gained from a series of prototype designs and
+implementations.</p>
+<p class="br"> Each (non-)requirement is shown as</p>
+<ul>
+<li id="indented-bulleted-text-with-an-italic-title"><em>Indented, bulleted text with an italic title</em> &#8212; Followed by a
+    statement of the requirement.</li>
+</ul>
+<p>Motivational or explanatory comments sometimes follow a requirement, in
+non-indented text.</p>
+<p class="br"> This document supersedes the <a href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12">Java Module-System
+Requirements</a> document last published in draft form in April 2011.
+In this document we have attempted to tie each requirement more tightly
+to the high-level goals of the project, which are somewhat different now.
+We have also endeavored to omit any requirement that is actually a design
+decision in disguise.</p>
+<p class="br"> The terms &#8220;must,&#8221; &#8220;must not,&#8221; &#8220;required,&#8221; &#8220;shall,&#8221; &#8220;shall
+not,&#8221;&#8220;should,&#8221; &#8220;should not,&#8221; &#8220;recommended,&#8221; &#8220;may,&#8221; and &#8220;optional&#8221; in this
+document are to be interpreted as described in <a href="http://www.ietf.org/rfc/rfc2119.txt">RFC
+2119</a>.</p>
+<p class="br"> Please send comments on this draft to <a href="mailto:jigsaw%20dash%20dev@openjdk%20dot%20java%20dot%20net">jigsaw dash dev at
+openjdk dot java dot net</a>.  You&#8217;ll need first to <a href="//mail.openjdk.java.net/mailman/listinfo/jigsaw-dev">subscribe</a>,
+if you haven&#8217;t done so already.</p>
+<h2 id="contents">Contents</h2>
+<div class="toc"><div class="toc-section"><div class="title"><a href="#constraints">Constraints</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#preserve-existing-deliverables">Preserve existing deliverables</a>&#160;&#183;</span> <span class="toc-req"><a href="#preserve-compatibility">Preserve compatibility</a>&#160;&#183;</span> <span class="toc-req"><a href="#preserve-performance">Preserve performance</a>&#160;&#183;</span> <span class="toc-req"><a href="#preserve-workflows">Preserve workflows</a></span></p></div><div class="toc-section"><div class="title"><a href="#the-modular-jdk">The Modular JDK</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#modular-structure">Modular structure</a>&#160;&#183;</span> <span class="toc-req"><a href="#medium-grained-modular-structure">Medium-grained modular structure</a>&#160;&#183;</span> <span class="toc-req"><a href="#standard-jdk-specific-and-jdk-internal-modules">Standard, JDK-specific, and JDK-internal modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#refactoring">Refactoring</a>&#160;&#183;</span> <span class="toc-req"><a href="#build-time-configuration">Build-time configuration</a>&#160;&#183;</span> <span class="toc-req"><a href="#launch-time-configuration">Launch-time configuration</a>&#160;&#183;</span> <span class="toc-req"><a href="#compile-time-configuration">Compile-time configuration</a>&#160;&#183;</span> <span class="toc-req"><a href="#upgradeable-modules">Upgradeable modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#reflection-debugging-and-tools">Reflection, debugging, and tools</a>&#160;&#183;</span> <span class="toc-req"><a href="#os-specific-module-packaging">OS-specific module packaging</a>&#160;&#183;</span> <span class="toc-req"><a href="#preserve-testability">Preserve testability</a>&#160;&#183;</span> <span class="toc-req"><a href="#preserve-ease-of-jdk-development">Preserve ease of JDK development</a>&#160;&#183;</span> <span class="toc-req"><a href="#post-build-augmentation">Post-build augmentation</a>&#160;&#183;</span> <span class="toc-req"><a href="#launch-time-replacement">Launch-time replacement</a>&#160;&#183;</span> <span class="toc-req"><a href="#run-time-replacement">Run-time replacement</a>&#160;&#183;</span> <span class="toc-req"><a href="#mix-and-match">Mix-and-match</a>&#160;&#183;</span> <span class="toc-req"><a href="#preserve-run-time-image-internals">Preserve run-time image internals</a>&#160;&#183;</span> <span class="toc-req"><a href="#provisioning">Provisioning</a></span></p></div><div class="toc-section"><div class="title"><a href="#security--maintainability">Security &amp; maintainability</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#strongly-encapsulate-jdk-internal-apis">Strongly encapsulate JDK-internal APIs</a>&#160;&#183;</span> <span class="toc-req"><a href="#limit-the-use-of-jdk-internal-apis">Limit the use of JDK-internal APIs</a>&#160;&#183;</span> <span class="toc-req"><a href="#obviate-the-securitymanager-checkpackageaccess-method">Obviate the SecurityManager.checkPackageAccess method</a>&#160;&#183;</span> <span class="toc-req"><a href="#create-proper-public-apis-for-commonly-used-jdk-internal-apis">Create proper public APIs for commonly-used JDK-internal APIs</a></span></p></div><div class="toc-section"><div class="title"><a href="#performance">Performance</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#enable-ahead-of-time-whole-program-optimization-techniques">Enable ahead-of-time, whole-program optimization techniques</a>&#160;&#183;</span> <span class="toc-req"><a href="#optimize-existing-code-as-is">Optimize existing code as-is</a>&#160;&#183;</span> <span class="toc-req"><a href="#actual-optimizations">Actual optimizations</a>&#160;&#183;</span> <span class="toc-req"><a href="#launch-time-configuration-of-optimized-images">Launch-time configuration of optimized images</a></span></p></div><div class="toc-section"><div class="title"><a href="#modular-libraries--applications">Modular libraries &amp; applications</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#developer-modules">Developer modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#developer-modules-akin-to-jdk-modules">Developer modules akin to JDK modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#configuration-of-developer-modules">Configuration of developer modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#launch-time-augmentation-of-developer-modules">Launch-time augmentation of developer modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#native-code-in-developer-modules">Native code in developer modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#integrate-smoothly-with-existing-tools">Integrate smoothly with existing tools</a>&#160;&#183;</span> <span class="toc-req"><a href="#multi-mode-artifacts">Multi-mode artifacts</a>&#160;&#183;</span> <span class="toc-req"><a href="#gradual-migration-of-applications">Gradual migration of applications</a>&#160;&#183;</span> <span class="toc-req"><a href="#os-specific-packaging-of-developer-modules">OS-specific packaging of developer modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#os-specific-packaging-of-applications">OS-specific packaging of applications</a>&#160;&#183;</span> <span class="toc-req"><a href="#provisioning-of-developer-modules">Provisioning of developer modules</a></span></p></div><div class="toc-section"><div class="title"><a href="#versioning">Versioning</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#version-strings">Version strings</a>&#160;&#183;</span> <span class="toc-req"><a href="#non-prescriptive-version-strings">Non-prescriptive version strings</a>&#160;&#183;</span> <span class="toc-req"><a href="#version-strings-in-reflective-apis">Version strings in reflective APIs</a>&#160;&#183;</span> <span class="toc-req"><a href="#version-constraints">Version constraints</a>&#160;&#183;</span> <span class="toc-req"><a href="#overrideable-version-information">Overrideable version information</a>&#160;&#183;</span> <span class="toc-req"><a href="#enforced-version-constraints">Enforced version constraints</a>&#160;&#183;</span> <span class="toc-req"><a href="#multiple-versions">Multiple versions</a>&#160;&#183;</span> <span class="toc-req"><a href="#version-selection">Version selection</a></span></p></div><div class="toc-section"><div class="title"><a href="#dynamic-configuration">Dynamic configuration</a></div><p class="toc-reqs"> <span class="toc-req"><a href="#basic-dynamic-configuration">Basic dynamic configuration</a>&#160;&#183;</span> <span class="toc-req"><a href="#run-time-augmentation-of-jdk-modules">Run-time augmentation of JDK modules</a>&#160;&#183;</span> <span class="toc-req"><a href="#multiple-dynamic-configurations">Multiple dynamic configurations</a>&#160;&#183;</span> <span class="toc-req"><a href="#isolated-dynamic-configurations">Isolated dynamic configurations</a>&#160;&#183;</span> <span class="toc-req"><a href="#nested-dynamic-configurations">Nested dynamic configurations</a>&#160;&#183;</span> <span class="toc-req"><a href="#alternate-module-versions-in-dynamic-configurations">Alternate module versions in dynamic configurations</a></span></p></div><div class="toc-section"><div class="title"><a href="#acknowledgements">Acknowledgements</a></div><p class="toc-reqs"></p></div></div>
+<h2 id="constraints">Constraints</h2>
+<p>In order to protect investments in existing libraries and applications,
+any approach to the goal-driven requirements listed in later sections is
+constrained by the following global, product-level requirements.</p>
+<ul>
+<li id="preserve-existing-deliverables">
+<p><em>Preserve existing deliverables</em> &#8212; The JDK build process must
+    continue to produce binary run-time images that are essentially
+    equivalent to the existing Compact Profiles, the client and server
+    JREs, and the JDK.</p>
+</li>
+<li id="preserve-compatibility">
+<p><em>Preserve compatibility</em> &#8212; An application that uses only standard
+    Java SE APIs, and possibly also JDK-specific APIs, must work the same
+    way on modular Compact Profile, JRE, and JDK images as it does today.</p>
+</li>
+</ul>
+<p>A <em>standard Java SE API</em> is one that is part of the Java&#160;SE
+Platform, and whose specification is therefore governed by the <a href="http://jcp.org">Java
+Community Process</a>.  A&#160;<em>JDK-specific API</em> is one that is not
+part of the Java SE Platform but is nonetheless documented and intended
+for use outside the JDK.  (As of JDK&#160;8, every JDK-specific API is
+identified as such via the <a href="http://docs.oracle.com/javase/8/docs/jdk/api/javac/tree/jdk/Exported.html"><code>@jdk.Exported(true)</code></a> annotation.)
+All other APIs of the JDK are <em>JDK-internal</em>, and are not intended for
+external use.</p>
+<ul>
+<li id="preserve-performance">
+<p><em>Preserve performance</em> &#8212; The static footprint, startup time, memory
+    footprint, and run-time performance of an application running on a
+    modular Compact Profile, JRE, or JDK image must be no worse than it
+    is today, except that footprint metrics may increase in order to
+    accommodate new features.</p>
+</li>
+<li id="preserve-workflows">
+<p><em>Preserve workflows</em> &#8212; Existing compilation, build, packaging, and
+    deployment techniques must continue to work as they do today.</p>
+</li>
+</ul>
+<h2 id="the-modular-jdk">The Modular JDK</h2>
+<ul>
+<li id="modular-structure"><em>Modular structure</em> &#8212; Divide the APIs of the Java SE Platform and
+    the JDK, and hence their implementations, into a set of modules.</li>
+</ul>
+<p>A <em>module</em>, here, is a self-describing collection of code and data.  Its
+code can include Java class files as well as native code, in the form of
+dynamically-loadable libraries; its data can include static resource
+files and user-editable configuration files.</p>
+<p>A module specifies the modules upon which it depends, and it may define
+APIs for use by modules which depend upon it.  Like a package, class, or
+interface it has both a specification and one or more implementations.
+It is a large-grained unit of compilation, packaging, release, transport,
+and re-use.</p>
+<p>We do not propose to modularize the Java Language Specification, the Java
+Virtual Machine Specification, or their implementations in the JDK.  The
+Java programming language is, itself, indivisible.  A particular Java
+Virtual Machine implementation may have its own internal modular
+structure, but we do not see a compelling need to expose such low-level
+details in the form of modules; doing so would, moreover, be very
+difficult.</p>
+<ul>
+<li id="medium-grained-modular-structure">
+<p><em>Medium-grained modular structure</em> &#8212; The modular structure of the
+    JDK must support significantly more configuration flexibility than is
+    presently provided by the very coarse-grained <a href="//openjdk.java.net/jeps/161">Compact
+    Profiles</a>, but it should not be so fine-grained that it is
+    difficult to comprehend or costly to implement.</p>
+</li>
+<li id="standard-jdk-specific-and-jdk-internal-modules">
+<p><em>Standard, JDK-specific, and JDK-internal modules</em> &#8212; There must be
+    a clear distinction between standard Java SE modules, JDK-specific
+    modules, and JDK-internal modules.</p>
+</li>
+</ul>
+<p>The APIs that are part of the Java SE Platform will be divided into a set
+of <em>standard modules</em> that will be proposed for inclusion in the Platform
+Specification.  The JDK-specific APIs will be placed into a set of
+<em>JDK-specific modules</em>.  The entire set of JDK modules will include the
+standard modules, the JDK-specific modules, and possibly some
+<em>JDK-internal modules</em>.</p>
+<ul>
+<li id="refactoring"><em>Refactoring</em> &#8212; It must be possible to refactor the set of JDK
+    modules over time, by splitting a module into smaller modules or
+    merging an existing set of modules into a single module, without
+    having to modify any external component that makes use of the
+    original modules.</li>
+</ul>
+<p>We expect the Java SE Platform and the JDK to continue to evolve for many
+years to come, so we must be able to evolve its modular structure in a
+compatible way that does not force existing applications to change.</p>
+<ul>
+<li id="build-time-configuration"><em>Build-time configuration</em> &#8212; Provide a tool which a developer can
+    use to combine modules into a custom binary run-time image that
+    contains a specific <em>configuration</em> of modules, <em>i.e.</em>, a set of
+    modules and the modules transitively required by those modules.</li>
+</ul>
+<p>The result of this process may be the full JDK itself, with all of its
+APIs and related tools, or it may be a minimal run-time image that
+contains only the <code>java</code> command-line launcher and one or a few modules.</p>
+<ul>
+<li id="launch-time-configuration"><em>Launch-time configuration</em> &#8212; Enhance the <code>java</code> launcher so that a
+    run-time image can be invoked so as to appear to contain only a
+    specific configuration of modules, so long as all of the necessary
+    modules are already present in the image.</li>
+</ul>
+<p>This will make it possible to develop, debug, and test an application
+intended to run on a small run-time image without having to build that
+image.</p>
+<ul>
+<li id="compile-time-configuration"><em>Compile-time configuration</em> &#8212; Enhance <code>javac</code> so that, for a given
+    configuration of modules, the types available to the code being
+    compiled are the same as those available in that configuration at
+    build time and run time.</li>
+</ul>
+<p>Fidelity across all phases of development is critical to developer
+productivity.</p>
+<ul>
+<li id="upgradeable-modules"><em>Upgradeable modules</em> &#8212; If a JDK module implements an <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/standards/index.html">endorsed
+    standard or standalone technology</a> then it must be possible to
+    use a version of that module from a later release in any phase,
+    <em>i.e.</em>, at compile time, build time, or run time.</li>
+</ul>
+<p>Applications that currently require newer versions of the endorsed or
+standalone technologies included in the JRE can satisfy such needs by
+using the <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/standards/index.html">endorsed-standards mechanism</a>.  To do that, however,
+entails either modifying the JRE itself or setting a system property, and
+in some scenarios neither of those actions is possible.  The mechanism is
+also brittle and subject to abuse, since all it really does is prepend
+the overriding <code>jar</code> files to the bootstrap class path.</p>
+<ul>
+<li id="reflection-debugging-and-tools">
+<p><em>Reflection, debugging, and tools</em> &#8212; Reflective and diagnostic APIs
+    and tools such the <code>java.lang.reflect</code> package, the
+    <code>javax.lang.model</code> package, stack traces, JVMTI, and Javadoc must be
+    upgraded to convey information about the available modules and, when
+    appropriate, provide the ability to manipulate modules, in much the
+    same manner as they already do for classes.</p>
+</li>
+<li id="os-specific-module-packaging">
+<p><em>OS-specific module packaging</em> &#8212; It must be possible for an
+    operating-system provider to use existing tools to package a set of
+    JDK modules into a set of corresponding operating-system-specific
+    packages, in formats such as RPM, Debian, and Solaris IPS, such that
+    the installation of those packages creates a run-time image
+    essentially equivalent to the image that would have resulted from
+    combining those modules at build time.</p>
+</li>
+</ul>
+<p>This requirement does not apply to Windows or Mac OS because those
+operating systems do not have built-in, general-purpose packaging
+systems.</p>
+<ul>
+<li id="preserve-testability">
+<p><em>Preserve testability</em> &#8212; Modular JDK code must be at least as
+    testable as it is today; the white-box testing of JDK-internal APIs,
+    in particular, must continue to be supported.</p>
+</li>
+<li id="preserve-ease-of-jdk-development">
+<p><em>Preserve ease of JDK development</em> &#8212; It must not be more difficult
+    to maintain and evolve the JDK code base than it is today; build
+    times, in particular, must not change significantly, and incremental
+    builds must continue to be supported.</p>
+</li>
+</ul>
+<p>We expect that it will, in fact, be substantially easier to maintain and
+evolve the JDK code base once it has been modularized, but at the very
+least it must not get any more difficult.</p>
+<h3>Non-requirements</h3>
+<ul>
+<li id="post-build-augmentation">
+<p><em>Post-build augmentation</em> &#8212; It is not necessary to be able to
+    integrate additional JDK modules into an existing run-time image.</p>
+</li>
+<li id="launch-time-replacement">
+<p><em>Launch-time replacement</em> &#8212; It is not necessary to be able to
+    invoke a run-time image so that it appears to contain a version of a
+    JDK module different from one already present, except as necessary to
+    support upgradeable modules.</p>
+</li>
+<li id="run-time-replacement">
+<p><em>Run-time replacement</em> &#8212; It is not necessary to be able to replace
+    a JDK module with a different version of that module after a run-time
+    image has been invoked.</p>
+</li>
+<li id="mix-and-match">
+<p><em>Mix-and-match</em> &#8212; It is not necessary to be able to configure the
+    compiler or the run-time system to contain modules from different
+    releases, or even different builds, of the JDK, except as necessary
+    to support upgradeable modules.</p>
+</li>
+<li id="preserve-run-time-image-internals">
+<p><em>Preserve run-time image internals</em> &#8212; It is not necessary to
+    preserve the current structure and content of JDK run-time images.</p>
+</li>
+</ul>
+<p>The layout and content of the Compact Profile, JRE, or JDK binary images
+can be changed if there are good reasons to do so.  In particular, if
+<code>rt.jar</code> needs to be replaced in order to meet the requirements laid out
+here then that is perfectly acceptable.</p>
+<ul>
+<li id="provisioning"><em>Provisioning</em> &#8212; It is not necessary to provide a new mechanism by
+    which modules can be published to and downloaded from a server,
+    either by specific request or as they are needed.</li>
+</ul>
+<p>Providing a JDK-specific module-publication, download, and install
+mechanism was a requirement of earlier iterations of Project Jigsaw.
+This functionality is already provided well enough during development by
+the dependency-management features of build tools such as Maven, Ivy, and
+Gradle, while OS-specific packaging systems suffice for deployment and
+installation.</p>
+<h2 id="security--maintainability">Security &amp; maintainability</h2>
+<ul>
+<li id="strongly-encapsulate-jdk-internal-apis"><em>Strongly encapsulate JDK-internal APIs</em> &#8212; The internal APIs of the
+    JDK must be available for use, in any phase, only within the JDK
+    itself, even when a security manager is not present.</li>
+</ul>
+<p>Broad use of the JDK&#8217;s internal APIs by libraries and applications
+<a href="//mail.openjdk.java.net/pipermail/jdk7u-dev/2013-June/006791.html">continues to be</a> both a security risk and a significant
+maintenance burden.  At the moment the only boundary we have around these
+APIs is the compile-time <code>ct.sym</code> mechanism, which is easy to bypass.</p>
+<ul>
+<li id="limit-the-use-of-jdk-internal-apis"><em>Limit the use of JDK-internal APIs</em> &#8212; A JDK-internal API must be
+    available for use, in any phase, only by those JDK components that
+    actually need to use it, even when a security manager is not present.</li>
+</ul>
+<p>Limiting the use of internal APIs even within the JDK itself helps to
+improve security, by limiting the APIs available to an adversary who
+cracks into a particular module, and also maintainability, by making it
+clear exactly which JDK components make use of which internal APIs.</p>
+<ul>
+<li id="obviate-the-"><em>Obviate the <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/SecurityManager.html#checkPackageAccess-java.lang.String-"><code>SecurityManager.checkPackageAccess</code></a> method</em>
+    &#8211; The constraints currently enforced via this method must be
+    enforced by other, less brittle, means.</li>
+</ul>
+<p>Painful experience has shown that a single omitted invocation of the
+<code>checkPackageAccess</code> method can amount to a serious, exploitable security
+vulnerability.  (A solution to the previous two requirements will likely
+satisfy this requirement.)</p>
+<ul>
+<li id="create-proper-public-apis-for-commonly-used-jdk-internal-apis"><em>Create proper public APIs for commonly-used JDK-internal APIs</em> &#8212;
+    Survey existing bodies of source code to learn which JDK-internal
+    APIs are commonly used and, where feasible, create JDK-specific or
+    possibly standard APIs to replace them.</li>
+</ul>
+<h2 id="performance">Performance</h2>
+<ul>
+<li id="enable-ahead-of-time-whole-program-optimization-techniques"><em>Enable ahead-of-time, whole-program optimization techniques</em> &#8212;
+    Provide a tool which a developer can use to collect compiled code
+    from a variety of sources, including modules and the application
+    class path, and then analyze and optimize the code as a whole and
+    produce a custom binary run-time image containing the result.</li>
+</ul>
+<p>The optimization techniques envisioned here include, but are not limited
+to: Fast lookup of both JDK and application classes; early bytecode
+verification; aggressive inlining of, <em>e.g.</em>, lambda expressions, and
+other standard compiler optimizations; construction of JVM-specific
+memory images that can be loaded more efficiently than class files;
+ahead-of-time compilation of method bodies to native code; and the
+removal of unused fields, methods, and classes.  These kinds of
+techniques tend to work best when JDK and application code is analyzed
+together, prior to run time.</p>
+<p>A modular JDK is, strictly speaking, not a prerequisite for such
+techniques.  The <a href="#build-time-configuration">build-time configuration of run-time
+images</a> is, however, a very natural point in
+the development cycle at which to apply them.  The program analyses
+required by many of these techniques, moreover, can be more effective
+when it is known that a class can refer only to classes in a few other
+specific modules rather than to any arbitrary class in the run-time
+environment.</p>
+<ul>
+<li id="optimize-existing-code-as-is">
+<p><em>Optimize existing code as-is</em> &#8212; It must be possible to apply the
+    optimizer tool to existing code already packaged in traditional <code>jar</code>
+    files, without changing those files.</p>
+</li>
+<li id="actual-optimizations">
+<p><em>Actual optimizations</em> &#8212; As a proof of concept, provide at least
+    two optimizations that deliver nontrivial performance benefits.</p>
+</li>
+</ul>
+<h3>Non-requirements</h3>
+<ul>
+<li id="launch-time-configuration-of-optimized-images"><em>Launch-time configuration of optimized images</em> &#8212; It is not
+    necessary to be able to invoke an optimized image so that it appears
+    to contain only a specific subset of the modules that it contains.</li>
+</ul>
+<p>More-sophisticated whole-program optimization techniques may merge code
+and even entire API elements across module boundaries, thereby making it
+impossible to separate the content of one module from another.  The
+launch-time configuration of less-aggressively optimized images will,
+most likely, still be possible.</p>
+<h2 id="modular-libraries--applications">Modular libraries &amp; applications</h2>
+<ul>
+<li id="developer-modules">
+<p><em>Developer modules</em> &#8212; Provide a means for developers to structure
+    their own code into modular components, each of which specifies the
+    developer modules and the JDK modules upon which it depends.</p>
+</li>
+<li id="developer-modules-akin-to-jdk-modules">
+<p><em>Developer modules akin to JDK modules</em> &#8212; Developer modules must be
+    able to leverage the facilities available to JDK modules for <a href="#refactoring">refactoring</a>, <a href="#reflection-debugging-and-tools">reflection, debugging</a>, <a href="#preserve-testability">testing</a>, <a href="enable-ahead-of-time-whole-program-optimization-techniques">optimization</a>,
+    <a href="#strongly-encapsulate-internal-apis">encapsulation</a>, and
+    <a href="#limit-the-use-of-internal-apis">limitation</a>.</p>
+</li>
+</ul>
+<p>An application structured solely as a set of modules need not make any
+use, in any phase, of the existing slow and error-prone class-path
+mechanism.</p>
+<ul>
+<li id="configuration-of-developer-modules"><em>Configuration of developer modules</em> &#8212; Developer modules must be
+    able to participate equally with JDK modules in the <a href="#compile-time-configuration">compile-time</a>, <a href="#build-time-configuration">build-time</a>, and <a href="#launch-time-configuration">launch-time</a> configuration
+    processes described above.</li>
+</ul>
+<p>In the case of build-time configuration, the result of combining
+developer modules and JDK modules together at build time will be a custom
+run-time image that contains the developer modules and just the JDK
+modules that they require, either directly or indirectly, together with a
+launcher to invoke the application.</p>
+<ul>
+<li id="launch-time-augmentation-of-developer-modules"><em>Launch-time augmentation of developer modules</em> &#8212; It must be
+    possible to specify developer modules to the <code>java</code> launcher so that
+    they can participate in the launch-time configuration process,
+    thereby augmenting the set of developer modules and JDK modules
+    already present.</li>
+</ul>
+<p>This will provide a modular analogue to the current class-path mechanism.</p>
+<ul>
+<li id="native-code-in-developer-modules"><em>Native code in developer modules</em> &#8212; It must be possible for a
+    developer module to contain native code which will be loaded and
+    linked at run time, though this may be limited due to native-level
+    restrictions imposed by the underlying operating system.</li>
+</ul>
+<p>Such limitations may include, <em>e.g.</em>, not creating name clashes with
+previously-loaded bodies of native code.</p>
+<ul>
+<li id="integrate-smoothly-with-existing-tools"><em>Integrate smoothly with existing tools</em> &#8212; A developer who
+    currently uses tools such as Maven, Ivy, or Gradle to build a library
+    or application should be able to use that tool to build the modular
+    form of that library or application with a minimum of fuss.</li>
+</ul>
+<p>A dead-simple adoption story around existing build tools is essential.
+To achieve this may require that we create and contribute custom plugins
+for at least some of these build tools.</p>
+<ul>
+<li id="multi-mode-artifacts"><em>Multi-mode artifacts</em> &#8212; The existing <code>jar</code>-file format must be
+    enhanced so that a module that does not contain native code can be
+    delivered in a single artifact that can be used both on the class
+    path and as a module.</li>
+</ul>
+<p>This will allow library developers to continue to produce a single
+artifact for both class-path and module-based applications.</p>
+<ul>
+<li id="gradual-migration-of-applications">
+<p><em>Gradual migration of applications</em> &#8212; It should be possible for a
+    developer to convert an existing application into modular form in a
+    series of incremental steps, which gradually move code from the class
+    path into modules, rather than one single step, which immediately
+    moves all code into modules.</p>
+</li>
+<li id="os-specific-packaging-of-developer-modules">
+<p><em>OS-specific packaging of developer modules</em> &#8212; It must be possible
+    for a developer to use existing tools to package a set of developer
+    modules into one or more OS-specific packages, in formats such as
+    RPM, Debian, and Solaris IPS, such that the modules can, once the
+    package is installed, make use of developer modules and JDK modules
+    installed on the target system in like manner.</p>
+</li>
+</ul>
+<p>As with the earlier requirement to support <a href="#os-specific-module-packaging">OS-specific packaging of JDK
+modules</a>, this requirement does not apply to Windows or Mac OS because
+those operating systems do not have built-in, general-purpose packaging
+systems.</p>
+<ul>
+<li id="os-specific-packaging-of-applications"><em>OS-specific packaging of applications</em> &#8212; Provide a tool which a
+    developer can use to package a set of developer modules comprising an
+    application, together with the JDK modules that they require, if
+    necessary, into an OS-specific package which can be installed and
+    invoked by an end user in the manner that is customary for the target
+    system.</li>
+</ul>
+<p>If the target system is expected already to include the necessary JDK
+modules then they need not be included in the application package.</p>
+<p>This requirement is intended to apply to all target operating systems,
+including Windows and Mac OS.</p>
+<h3>Non-requirements</h3>
+<ul>
+<li id="provisioning-of-developer-modules"><em>Provisioning of developer modules</em> &#8212; It is not necessary to
+    provide a new mechanism by which developer modules can be published
+    to and downloaded from a server, either by specific request or as
+    they are needed.</li>
+</ul>
+<p>As with the <a href="#provisioning">provisioning of JDK modules</a>, we see no need
+to replicate functionality already provided well enough by existing,
+widely-used systems.</p>
+<h2 id="versioning">Versioning</h2>
+<p>If all modules were JDK modules then the requirements for versioning
+would be very simple.  If developers are going to create their own
+modules, however, then they will reasonably expect to be able to add
+version information to them and, moreover, use that information to
+constrain how modules are configured.</p>
+<ul>
+<li id="version-strings">
+<p><em>Version strings</em> &#8212; A module must be able to indicate a version
+    string.</p>
+</li>
+<li id="non-prescriptive-version-strings">
+<p><em>Non-prescriptive version strings</em> &#8212; Version strings must have a
+    precisely-defined syntax and be totally ordered, but otherwise their
+    format should be as general as possible in order to accommodate
+    existing popular version-string schemes.</p>
+</li>
+<li id="version-strings-in-reflective-apis">
+<p><em>Version strings in reflective APIs</em> &#8212; The various <a href="#reflection-debugging-and-tools">reflective and
+    diagnostic APIs</a> must be upgraded to
+    convey the version strings of modules, when present.</p>
+</li>
+<li id="version-constraints">
+<p><em>Version constraints</em> &#8212; A module must be able to express
+    constraints upon the acceptable versions of the modules upon which it
+    depends.</p>
+</li>
+<li id="overrideable-version-information">
+<p><em>Overrideable version information</em> &#8212; It must be possible, in all
+    phases, to override the version strings and version constraints of an
+    existing developer module.</p>
+</li>
+</ul>
+<p>This capability allows a developer to make use of modules that may have
+been published with incorrect version information, yet without having to
+modify those modules.</p>
+<ul>
+<li id="enforced-version-constraints"><em>Enforced version constraints</em> &#8212; The process of configuring a set
+    of modules must, in all phases, satisfy every version constraint of
+    every module except for constraints that are overridden, in which
+    case the overriding constraint must be satisfied.</li>
+</ul>
+<h3>Non-requirements</h3>
+<ul>
+<li id="multiple-versions">
+<p><em>Multiple versions</em> &#8212; It is not necessary to support more than one
+    version of a module within a single configuration.</p>
+</li>
+<li id="version-selection">
+<p><em>Version selection</em> &#8212; The process of configuring a set of developer
+    modules and JDK modules, in any phase, need not consider more than
+    one version of any particular module.</p>
+</li>
+</ul>
+<p>In other words, we see no need to build yet another dependency-resolution
+mechanism.  Maven, Ivy, and Gradle have all tackled this difficult
+problem.  We should leave it to these and other build tools to discover
+and select a set of candidate modules for a given library or application;
+the module system need only validate that the set of modules selected by
+the build system satisfies each module&#8217;s dependences and version
+constraints.</p>
+<h2 id="dynamic-configuration">Dynamic configuration</h2>
+<p>The requirements for dynamic configuration are motivated by applications
+with plug-in or container architectures such as IDEs, test harnesses, and
+application servers.  For the Java EE Platform, in particular, the goal
+is to enable a future modular <code>war</code>-file standard in which the components
+in a <code>war</code> file can be developer modules.</p>
+<ul>
+<li id="basic-dynamic-configuration">
+<p><em>Basic dynamic configuration</em> &#8212; It must be possible for a running
+    application to load an additional set of developer modules, relate
+    them in a new configuration to each other and to modules in the
+    application&#8217;s existing configuration, invoke them as necessary, and
+    then release them for eventual garbage collection.</p>
+</li>
+<li id="run-time-augmentation-of-jdk-modules">
+<p><em>Run-time augmentation of JDK modules</em> &#8212; It must be possible to
+    load and configure additional JDK modules after a run-time image has
+    been invoked.</p>
+</li>
+</ul>
+<p>This will allow a container application to load additional JDK modules in
+order to satisfy the needs of the applications it hosts.</p>
+<ul>
+<li id="multiple-dynamic-configurations">
+<p><em>Multiple dynamic configurations</em> &#8212; An application must be able to
+    create and manipulate multiple independent dynamic configurations.</p>
+</li>
+<li id="isolated-dynamic-configurations">
+<p><em>Isolated dynamic configurations</em> &#8212; An application must be able to
+    isolate the code in different dynamic configurations at least as well
+    as is possible today, where this is typically done by using multiple
+    class loaders.</p>
+</li>
+<li id="nested-dynamic-configurations">
+<p><em>Nested dynamic configurations</em> &#8212; An application must be able to
+    create a dynamic configuration that relates to an existing dynamic
+    configuration rather than to the application&#8217;s existing
+    configuration.</p>
+</li>
+<li id="alternate-module-versions-in-dynamic-configurations">
+<p><em>Alternate module versions in dynamic configurations</em> &#8212; An
+    application must be able to arrange for a dynamic configuration to
+    include versions of developer modules and upgradeable JDK modules
+    that are different from those already available in the enclosing
+    configuration, and it must be able to control the manner in which
+    such alternate versions are selected.</p>
+</li>
+</ul>
+<p>A canonical example of using multiple versions of an upgradeable API in a
+Java EE environment is that of a web application requiring a different
+version of the JAX-WS stack than is already available to the web
+container.</p>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>This document includes contributions from Alan Bateman, Alex Buckley,
+Mandy Chung, Jonathan Gibbons, Chris Hegarty, Karen Kinnear, and Paul
+Sandoz.  It has been improved with the help of comments and suggestions
+from Brian Goetz, Bill Shannon, and Henrik St&#229;hl.</p></body></html>

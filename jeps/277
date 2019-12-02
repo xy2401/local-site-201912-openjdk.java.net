@@ -1,0 +1,550 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 277: Enhanced Deprecation</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 277: Enhanced Deprecation</h1><table class="head"><tr><td>Owner</td><td>Stuart Marks</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.lang</td></tr><tr><td>Discussion</td><td>jdk9 dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Reviewed by</td><td>Alex Buckley, Mark Reinhold</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2014/11/20 23:58</td></tr><tr><td>Updated</td><td>2017/12/08 23:29</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8065614">8065614</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Revamp the <code>@Deprecated</code> annotation, and provide tools to strengthen the
+API life cycle.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Provide better information about the status and intended disposition
+of APIs in the specification.</p>
+</li>
+<li>
+<p>Provide a tool to analyze an application's static usage of deprecated APIs.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>It is not a goal of this project to unify the <code>@deprecated</code> Javadoc
+tag with the <code>@Deprecated</code> annotation.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Deprecation is a technique to communicate information about the life cycle of an API:
+to encourage applications to migrate away from the API, to discourage applications
+from forming new dependencies on the API, and to inform developers of the risks of
+continuing dependence upon the API.</p>
+<p>Java offers two mechanisms to express deprecation: the <code>@deprecated</code> Javadoc tag,
+introduced in JDK 1.1, and the <code>@Deprecated</code> annotation, introduced in Java SE 5.
+The API specification for the <code>@Deprecated</code> annotation, mirrored in The Java Language
+Specification, is:</p>
+<blockquote>
+<p>A program element annotated <code>@Deprecated</code> is one that programmers
+are discouraged from using, typically because it is dangerous, or
+because a better alternative exists. Compilers warn when a
+deprecated program element is used or overridden in non-deprecated
+code.</p>
+</blockquote>
+<p>However, the <code>@Deprecated</code> annotation ended up being used for several
+different purposes. Very few deprecated APIs were actually removed,
+leading some people to believe that nothing would ever be removed.
+On the other hand, other people believed that everything that was deprecated
+might eventually be removed, which was never the intent either. (Although it
+wasn't stated explicitly in the specifications, various documents mentioned that
+deprecated APIs would be removed at some point.) This resulted in an unclear
+message being delivered to developers about the meaning of <code>@Deprecated</code>,
+and what, if anything, developers should do when they encountered usage of a
+deprecated API. Everybody was confused about what deprecation actually meant,
+and nobody took it seriously. This in turn has made it difficult ever to remove
+anything from the Java SE API.</p>
+<p>Another problem with deprecation is that warnings are issued only at
+compile time. As APIs become deprecated in successive versions of Java
+SE, existing binaries continue to depend and use the deprecated APIs
+with no warnings. If a deprecated API were to be removed in a JDK
+release, even after one or more releases where it was deprecated, this
+would come as an unpleasant surprise to users of old application
+binaries. The application would suddenly fail with a linkage error,
+with no warnings having ever been emitted. Worse, there is no means
+for developers to check whether existing binaries have any
+dependencies on deprecated APIs. This causes significant tension
+between the ability to run old binaries on new JDK releases versus
+the need to evolve the specification through the retirement of old
+APIs.</p>
+<p>In summary, the deprecation mechanisms have been applied inconsistently
+in the Java SE API, resulting in confusion about the meaning of deprecation
+in principle and the proper use of deprecation in practice.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Specifications">Specifications</h3>
+<p>The primary purpose of enhancing the <code>@Deprecated</code> annotation is to
+provide finer-grained information to tools about the deprecation
+status of an API. These tools in turn use the annotation to report
+information to users of the API. The <code>@Deprecated</code> annotation has
+runtime retention and therefore consumes heap memory.  The information
+here should therefore be minimal and well-specified.</p>
+<p>The following elements are to be added to the <code>java.lang.Deprecated</code>
+annotation type:</p>
+<ul>
+<li>
+<p>A method <code>forRemoval()</code> returning a <code>boolean</code>. If <code>true</code>, it means that this API
+element is earmarked for removal in a future release. If <code>false</code>, the API element
+is deprecated, but there is currently no intention to remove it in a future release.
+The default value of this element is <code>false</code>.</p>
+</li>
+<li>
+<p>A method named <code>since()</code> returning <code>String</code>. This string should
+contain the release or version number at which this API became
+deprecated. It has free-form syntax, but the release numbering should
+follow the same scheme as the <code>@since</code> Javadoc tag for the project
+containing the deprecated API. Note that this value is <em>not</em> redundant
+with the Javadoc <code>@since</code> tag, because that records the release in
+which the API was introduced, whereas the <code>since()</code> method in a
+<code>@Deprecated</code> annotation records the release in which the API was
+deprecated. The default value of this element is the empty string.</p>
+</li>
+</ul>
+<p>Since these elements are being added to the existing <code>@Deprecated</code>
+annotation, annotation processing programs will see the default values
+for <code>forRemoval()</code> and <code>since()</code> if they are processing a class file
+that was compiled with a version of <code>@Deprecated</code> older than JDK 9.</p>
+<p>The presence of the <code>@Deprecated</code> annotation on an API is
+communication from the author or maintainer of the API to users of the
+API. Most generally, deprecation is advice that users migrate their
+usage away from the deprecated API, that they avoid adding
+dependencies on this API from new code or while maintaining old code,
+or that there is a certain amount of risk in maintaining code that
+depends on this API.  There are many reasons to recommend such
+migration. Reasons might include the following:</p>
+<ul>
+<li>
+<p>the API is flawed and is impractical to fix,</p>
+</li>
+<li>
+<p>usage of the API is likely to lead to errors,</p>
+</li>
+<li>
+<p>the API has been superseded by another API,</p>
+</li>
+<li>
+<p>the API is obsolete,</p>
+</li>
+<li>
+<p>the API is experimental and is subject to
+incompatible changes,</p>
+</li>
+<li>
+<p>or any combination of the above.</p>
+</li>
+</ul>
+<p>The exact reasons for deprecating an API are often too subtle to be
+expressed as flags or element values in the annotation. It is strongly
+recommended that the reasons for deprecating an API be described in
+that API's documentation comments. In addition, it is also recommended
+that potential replacement APIs be discussed and linked from the
+documentation.</p>
+<p>One specific flag value is provided, however. The <code>forRemoval()</code> boolean
+element, if <code>true</code>, indicates intent that the API element is to be removed in
+some future release of the project. Users of the API are thus given
+advance warning that, if they don't migrate away from the API, their
+code is liable to break when upgrading to a newer release. If
+<code>forRemoval()</code> is <code>false</code>, this indicates a recommendation to migrate away
+from the deprecated API, but without any specific intent to remove that
+API.</p>
+<p>The <code>@Deprecated</code> annotation and the <code>@deprecated</code> javadoc tag should
+both be present or both be absent on an API element. The presence of
+one without the other is considered to be a mistake. The <code>javac</code> lint
+flag <code>-Xlint:dep-ann</code> will issue warnings if the <code>@deprecated</code> tag is
+present on an API that lacks the <code>@Deprecated</code> annotation. There is
+currently no warning if the reverse is true; see
+<a href="https://bugs.openjdk.java.net/browse/JDK-8141234">JDK-8141234</a>.</p>
+<p>The <code>@Deprecated</code> annotation should have no direct impact on the
+behavior of deprecated APIs, and there should negligible performance
+impact.</p>
+<h3 id="Usage-in-Java-SE">Usage in Java SE</h3>
+<p>The <code>@Deprecated</code> annotation type appears in Java SE, and thus it may
+be applied to the APIs any class library that uses the Java SE platform.
+The exact rules and policies for how those class libraries use the
+<code>@Deprecated</code> annotation type is a matter for the maintainers of those
+libraries to determine. It is recommended that class library maintainers
+develop and document such policies.</p>
+<p>This section describes the uses of the <code>@Deprecated</code> annotation type on
+Java SE APIs themselves and also the policies governing such use.</p>
+<p>Several Java SE APIs will have a <code>@Deprecated</code> annotation
+added, updated, or removed. The changes implemented in Java SE 9 are listed below.
+Unless otherwise specified, the deprecations listed here are not for removal.
+Note that this is not a comprehensive list of deprecations in Java SE 9.</p>
+<ul>
+<li>
+<p>add <code>@Deprecated</code> to constructors for boxed primitives (<code>Boolean</code>, <code>Integer</code>, etc.)
+(<a href="https://bugs.openjdk.java.net/browse/JDK-8145468">JDK-8145468</a>)</p>
+</li>
+<li>
+<p>add <code>@Deprecated(forRemoval=true)</code> to the <code>Runtime.traceInstructions</code> and
+<code>Runtime.traceMethodCalls</code> methods (<a href="https://bugs.openjdk.java.net/browse/JDK-8153330">JDK-8153330</a>)</p>
+</li>
+<li>
+<p>add <code>@Deprecated</code> to various <code>java.applet</code> and related classes
+(<a href="//openjdk.java.net/jeps/289">JEP 289</a>)</p>
+</li>
+<li>
+<p>add <code>@Deprecated</code> to <code>java.util.Observable</code> and <code>Observer</code>
+(<a href="https://bugs.openjdk.java.net/browse/JDK-8154801">JDK-8154801</a>)</p>
+</li>
+<li>
+<p>add <code>@Deprecated(forRemoval=true)</code> to various superseded security APIs, including
+<code>java.security.acl</code> (<a href="https://bugs.openjdk.java.net/browse/JDK-8157847">JDK-8157847</a>),
+<code>javax.security.cert</code> and <code>com.sun.net.ssl</code> (<a href="https://bugs.openjdk.java.net/browse/JDK-8157712">JDK-8157712</a>),
+<code>java.security.Certificate</code> (<a href="https://bugs.openjdk.java.net/browse/JDK-8157707">JDK-8157707</a>), and
+<code>javax.security.auth.Policy</code> (<a href="https://bugs.openjdk.java.net/browse/JDK-8157848">JDK-8157848</a>)</p>
+</li>
+<li>
+<p>add <code>@Deprecated(forRemoval=true)</code> to <code>java.lang.Compiler</code> (<a href="https://bugs.openjdk.java.net/browse/JDK-4285505">JDK-4285505</a>)</p>
+</li>
+<li>
+<p>add <code>@Deprecated</code> to several Java EE modules and the <code>java.corba</code> module (<a href="https://bugs.openjdk.java.net/browse/JDK-8169069">JDK-8169069</a>, <a href="https://bugs.openjdk.java.net/browse/JDK-8181195">JDK-8181195</a>, <a href="https://bugs.openjdk.java.net/browse/JDK-8181702">JDK-8181702</a>, <a href="https://bugs.openjdk.java.net/browse/JDK-8174728">JDK-8174728</a>)</p>
+</li>
+<li>
+<p>modify already-deprecated methods <code>Thread.destroy()</code>, <code>Thread.stop(Throwable)</code>,
+<code>Thread.countStackFrames()</code>, <code>System.runFinalizersOnExit()</code>, and various disused
+<code>Runtime</code> and <code>SecurityManager</code> methods to have <code>@Deprecated(forRemoval=true)</code>
+(<a href="https://bugs.openjdk.java.net/browse/JDK-8145468">JDK-8145468</a>)</p>
+</li>
+</ul>
+<p>Given the history of deprecation in Java SE, and the emphasis on long term
+API compatibility across versions, removal of an API is a matter of serious
+concern. Therefore, deprecation with the element <code>forRemoval=true</code> should
+be applied only when there is a clear and definite plan for removing that
+API in the next release of the Java SE platform.</p>
+<p>An API element should not be removed from the Java SE specification unless
+it has been delivered with an annotation of <code>@Deprecated(forRemoval=true)</code>
+in a previous version of Java SE. It is acceptable for a deprecation to be
+introduced with <code>forRemoval=true</code>. It isn't necessary to first deprecate with
+<code>forRemoval=false</code>, then upgrade to <code>forRemoval=true</code>, before removing the API.</p>
+<p>For API elements deprecated in Java SE 9 and beyond, the <code>since</code>
+element should contain the Java SE version string denoting the version
+in which the API element was deprecated. The version string should
+conform to the format specified in <a href="//openjdk.java.net/jeps/223">JEP 223</a>.
+Since Java SE typically makes specification changes only in major releases,
+the version string will often consist solely of the "MAJOR" version number.
+Thus, for API elements deprecated in Java SE 9, the <code>since</code> element value
+should simply be "9".</p>
+<p>API elements that had been deprecated prior to Java SE 9 will have
+their <code>since</code> value filled in only as time permits. (Doing this for
+all APIs is of marginal value and is mainly an exercise in historical
+research.) The string used for the <code>since</code> value in such cases should
+conform to the JDK version conventions used for the <code>@since</code> javadoc tag
+for those releases, typically <code>1.0</code> through <code>1.8</code> but sometimes with a "micro"
+release number, such as <code>1.0.2</code>. Annotation processing tools looking for this
+value on Java SE APIs and finding an empty string should assume
+that the deprecation occurred in Java SE 8 or earlier.</p>
+<p>Deprecating APIs will increase the number of mandatory warnings that projects encounter
+when building against newer versions of Java SE. Some projects, including the JDK itself,
+build with compiler options that enable verbose warnings and that turn warnings into
+errors. For such projects, adding deprecated APIs to Java SE can introduce a large number
+of warnings, adding significantly to the effort of migrating to a new version of Java SE.
+Existing mechanisms for managing warnings, such the <code>@SuppressWarnings</code> annotation and
+compiler command-line options, are insufficient for dealing with this issue. This effectively
+places a limit on which APIs can be deprecated in a given Java SE release, and it makes
+deprecation of obsolete but popular APIs nearly impossible. This calls for a future effort
+to enhance the mechanisms available to manage deprecation warnings.</p>
+<h3 id="Impact-of-forRemoval-on-Warning-Policy">Impact of <code>forRemoval</code> on Warning Policy</h3>
+<p>The <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.6.4.6">Java Language Specification, section 9.6.4.6</a>
+mandates specific warning behaviors that depend upon the deprecation status of an
+API that is being depended upon (the "declaration site"), in combination with the
+deprecation status of the code that is using that API (the "use site"). The addition
+of the <code>forRemoval</code> element adds another set of cases that must be defined. For the
+sake of brevity, we will refer to a deprecation with <code>forRemoval=false</code> as an
+"ordinary deprecation" and a deprecation with <code>forRemoval=true</code> as a
+"terminal deprecation."</p>
+<p>In Java SE 8 and earlier, <code>forRemoval</code> did not exist, so the only kind of deprecations
+were ordinary deprecations. Whether a deprecation warning was issued depended upon
+the deprecation status of both the use site and the declaration site.
+Here is a table of cases that existed in Java SE 8:</p>
+<pre><code>use site     | API declaration site
+    context      | not dep.   deprecated
+                 +-----------------------
+    not dep.     |    N          W
+                 |
+    deprecated   |    N          N (1)
+
+        N = no warning
+        W = warning</code></pre>
+<p>(Note 1) This is an odd case. If the use and declaration site are both deprecated, no warning
+is issued. This makes sense if both sites are within a single class library that is maintained
+and released as a unit. Since they are maintained together, there is little point in issuing a
+warning in this case. However, if the use site is within a class library that is maintained
+separately from the declaration site, they may evolve at different rates, and so not issuing a
+warning in this case is likely to be a misfeature. However, this mechanism was useful for
+reducing the number of warnings from compilation of the JDK, prior to the introduction of the
+<code>@SuppressWarnings</code> annotation in Java SE 5.</p>
+<p>(JLS 9.6.4.6 also requires no warnings to be issued if the use site is within the
+<em>same outermost class</em> as the declaration site. In such cases the use and declaration
+sites are by definition maintained together, so the rationale for not
+issuing a warning applies well.)</p>
+<p>In Java SE 9, the introduction of <code>forRemoval</code> adds several new cases having to
+do with terminal deprecation. This requires the introduction of a new kind of warning.</p>
+<p>Warnings issued at the point of use of an ordinarily deprecated API are "ordinary deprecation
+warnings" which are the same as in Java SE 8 and earlier. These are often simply called
+"deprecation warnings" as a holdover from previous usage.</p>
+<p>Warnings issued at the point of use of a terminally deprecated API might formally be called
+"terminal deprecation warnings" but this is rather verbose. Instead we will refer to such
+warnings as "removal warnings".</p>
+<p>The proposed table of cases is shown below:</p>
+<pre><code>use site     |      API declaration site
+    context      | not dep.   ord. dep.   term. dep.
+                 +----------------------------------
+    not dep.     |    N         oW (2)       rW (5)
+                 |
+    ord. dep.    |    N          N (3)       rW (6)
+                 |
+    term. dep.   |    N          N (4)       rW (7)</code></pre>
+<p>(Note 2) "oW" refers to an "ordinary deprecation warning" which is the same kind
+of warning that has occurred in this case in Java SE 8 and earlier.</p>
+<p>(Note 3) The upper left four elements are the same as in the Java SE 8
+table, for reasons of backward compatibility.</p>
+<p>(Note 4) No warning is issued here by extrapolating from compatible behavior.
+If both use and declaration site are both ordinarily deprecated, it would be
+perverse if changing the use site to be terminally deprecated were to introduce
+a warning. Thus, no warning is issued in this case.</p>
+<p>(Note 5) "rW" refers to a "removal warning". All warnings issued at use sites of
+terminally deprecated APIs are removal warnings.</p>
+<p>(Note 6) This case is quite significant. We always want the use of a terminally deprecated
+API to generate a removal warning, even if the use site is within deprecated code.</p>
+<p>(Note 7) This is similar to (6). One might think that, since both the use and
+declaration sites are terminally deprecated, both are "going away" and that it
+would be pointless to issue a warning here. But the possibility is that the declaration
+site is within a library that is evolving more quickly than the use site, so the use
+site might outlive the declaration site. Therefore, a warning about the impending removal
+of the declaration site is necessary.</p>
+<p>The general rule that covers the lower right four elements is as follows. If the use site
+is deprecated, whether ordinarily or terminally, no ordinary deprecation warnings will be
+issued, but removal warnings will still be issued.</p>
+<p>An example of an ordinary deprecation warning might be as follows:</p>
+<pre><code>UseSite.java:3: warning: [deprecation] ordinary() in DeclSite has been deprecated</code></pre>
+<p>An example of a removal warning might be as follows:</p>
+<pre><code>UseSite.java:4: warning: [removal] removal() in DeclSite has been deprecated and marked for removal</code></pre>
+<p>The specific wording of the warnings, and the mechanisms for customization of warnings, may differ
+from compiler to compiler.</p>
+<h3 id="Suppression-of-Deprecation-Warnings">Suppression of Deprecation Warnings</h3>
+<p>In Java SE 8 and earlier, it was possible to suppress deprecation warnings
+by annotating the use site with <code>@SuppressWarnings("deprecation")</code>. This behavior
+needs to be modified in the presence of terminal deprecation.</p>
+<p>Consider a case where a use site depends on an API that is
+ordinarily deprecated, and that the resulting warning has been suppressed
+with a <code>@SuppressWarnings("deprecation")</code> annotation. If the declaration site were
+to be modified to be terminally deprecated,
+we would want a removal warning to occur at the use site, even though warnings
+at the use site have already been suppressed. If a new warning were not
+issued in this case, it would be possible for an API to be terminally
+deprecated and then removed without any warnings at its use sites.</p>
+<p>The following scenario illustrates the problem. Suppose that the
+<code>@SuppressWarnings("deprecation")</code> annotation were to suppress both ordinary
+deprecation warnings as well as removal warnings. Then, the following
+could occur:</p>
+<ol>
+<li>Use site X depends on API Y, currently not deprecated</li>
+<li>Y's declaration changes to ordinary deprecation, generating ordinary deprecation warning at X</li>
+<li>X is annotated with <code>@SuppressWarnings("deprecation")</code>, suppressing the warning</li>
+<li>Y's declaration changes to terminal deprecation; removal warning at X still suppressed</li>
+<li>Y is removed entirely, causing X to break unexpectedly</li>
+</ol>
+<p>Inasmuch as the purpose of deprecation is to communicate information about API evolution,
+particularly about removal of APIs, the lack of any warning in this case is a serious problem.
+It follows that a warning should be given when a deprecation is "upgraded"
+from an ordinary to a terminal deprecation, even if the warnings at that use site had
+previously been suppressed.</p>
+<p>We need a mechanism for suppressing removal warnings that differs
+from the mechanism currently used for suppressing ordinary deprecation warnings.
+The solution is to use a different string in the <code>@SuppressWarnings</code> annotation.</p>
+<p>Removal warnings -- warnings that arise from the use of terminally deprecationed APIs --
+can be suppressed with the annotation</p>
+<pre><code>@SuppressWarnings("removal")</code></pre>
+<p>This annotation suppresses only removal warnings, and not ordinary deprecation warnings.
+We considered making this be a strong form of suppression that would cover both ordinary
+deprecation warnings and removal warnings. However, this potentially leads to errors. Programmers
+might use <code>@SuppressWarnings("removal")</code> to suppress warnings from ordinary deprecations.
+This would prevent warnings from appearing if an ordinary deprecation were changed to a
+terminal deprecation, leading to unexpected breakage when the terminally deprecated API
+is eventually removed.</p>
+<p>As before, warnings from the use of ordinarily deprecated APIs can be suppressed with the annotation</p>
+<pre><code>@SuppressWarnings("deprecation")</code></pre>
+<p>As noted above, this annotation suppresses only ordinary deprecation warnings; it doesn't
+suppress removal warnings.</p>
+<p>If it is necessary to suppress both ordinary deprecation warnings and removal warnings
+at a particular site, the following construct can be used:</p>
+<pre><code>@SuppressWarnings({"deprecation", "removal"})</code></pre>
+<p>Below is a copy of the warnings table from the previous section, modified
+to show how warnings from the different cases can be suppressed.</p>
+<pre><code>use site     |      API declaration site
+    context      | not dep.   ord. dep.   term. dep.
+                 +----------------------------------
+    not dep.     |    -        @SW(d)       @SW(r)
+                 |
+    ord. dep.    |    -           -         @SW(r)
+                 |
+    term. dep.   |    -           -         @SW(r)
+
+        @SW(d) = @SuppressWarnings("deprecation")
+        @SW(r) = @SuppressWarnings("removal")</code></pre>
+<p>If a removal warning is suppressed with <code>@SuppressWarnings("removal")</code> at the use site of a
+terminally deprecated API, and that API is changed to an ordinary deprecation, it is
+somewhat odd that an ordinary deprecation warning will appear. However, we expect the evolution
+path of an API from terminal deprecation back to ordinary deprecation to be quite rare.</p>
+<p>JLS section 9.6.4.6 will need to be modified accordingly. That change is covered by
+<a href="https://bugs.openjdk.java.net/browse/JDK-8145716">JDK-8145716</a>.</p>
+<h3 id="Static-Analysis">Static Analysis</h3>
+<p>A static analysis tool <code>jdeprscan</code> will be provided that scans
+a jar file (or some other aggregation of class files) for uses of
+deprecated API elements. By default, the deprecated APIs will be
+the deprecations from Java SE itself. A future extension will provide
+for the ability to scan for deprecations that have been declared
+in a class library other than Java SE.</p>
+<h3 id="Ideas-for-Future-Work">Ideas for Future Work</h3>
+<p>A dynamic analysis tool <code>jdeprdetect</code> could be provided to track dynamic
+uses of deprecated APIs. It can be implemented by
+using a Java agent, instrumenting the deprecated API elements
+and issuing warning messages when usage of those elements is detected at
+runtime.</p>
+<p>Dynamic analysis should be helpful at catching cases that static
+analysis misses. These cases include reflective access to deprecated
+APIs, or use of deprecated providers loaded via
+<code>ServiceLoader</code>. Furthermore, dynamic analysis can show the <em>absence</em>
+of a dependency that might be flagged by static analysis. For example,
+code might reference a deprecated API, and this reference will cause
+<code>jdeprscan</code> to emit a warning. However, if the code referencing a
+deprecated API is dead code, no warning will be emitted by
+<code>jdeprdetect</code>. This information should help developers prioritize their
+code migration efforts.</p>
+<p>Certain features reside entirely within library implementations and
+aren't manifested in any public APIs. One example of this is the
+"legacy merge sort" algorithm. See
+<a href="http://www.oracle.com/technetwork/java/javase/compatibility-417013.html">Java SE 7 and JDK 7 Compatibility</a>
+for further information. Library implementations of deprecated
+features should be able to check various system properties to determine whether
+to issue log messages at runtime, and if so, what form the log message
+should take. These properties might include:</p>
+<ul>
+<li>
+<p><code>java.deprecation.enableLogging</code> &#8212; <em>boolean</em>, default <code>false</code></p>
+<p>If true, as determined by the <code>Boolean.parseBoolean</code> method, then
+library code will log deprecation messages. Messages will be
+logged using a logger obtained by calling <code>System.getLogger()</code>,
+and messages will be logged using a level of
+<code>System.Logger.Level.WARNING</code>.</p>
+</li>
+<li>
+<p><code>java.deprecation.enableStackTrace</code> &#8212; <em>boolean</em>, default <code>false</code></p>
+<p>If true, and if deprecation logging is enabled, log messages
+will include a stack trace.</p>
+</li>
+</ul>
+<p>Implementation and enhancements to other tools is beyond the scope of
+this JEP. A number of ideas for such tool enhancements are described
+here as suggestions for future work.</p>
+<p>The <code>javadoc</code> tool could be enhanced to handle the detail code of a
+<code>@Deprecated</code> annotation. It could also provide a more prominent
+display of the <code>Detail</code> values. The handling of the <code>@deprecated</code>
+Javadoc tag should be largely unchanged, though perhaps it might be
+modified somewhat to include information about the <code>forRemoval</code> and
+<code>since</code> values.</p>
+<p>The standard doclet could be modified to treat deprecated APIs
+differently. For example, deprecated members of a class might be put
+into a separate tab, along side the existing tabs for instance,
+abstract, and concrete methods. Deprecated classes could be moved to a
+separate section in the package frame. Currently, it contains sections
+for Interfaces, Classes, Enums, Exceptions, Errors, and Annotation
+Types. New sections for deprecated members could be added.</p>
+<p>The list of deprecated APIs could be enhanced as well. (This page is
+reached via the link at the very top of each page, in the bar
+containing links Overview, Package, Class, Use, Tree, Deprecated,
+Index, Help.) This page is currently organized by kind: interfaces,
+classes, exceptions, annotation types, fields, methods, constructors,
+and annotation type elements. API elements that include the value
+<code>forRemoval=true</code> should be highlighted, as their impending
+removal potentially has great impact.</p>
+<p>The enhanced <code>@Deprecated</code> annotation will impact other tools such as
+IDEs. For example, deprecated APIs should be absent from IDEs'
+auto-completion menus and dialogs by default. Or, automatic
+refactoring rules could be offered that replace calls to deprecated
+APIs with calls to their replacements.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>A set of alternatives that has been proposed includes having the JVM
+halt, having deprecated features be disabled, or having usage of
+deprecated APIs cause a compile-time error, unless a version-specific
+option is supplied. All of these proposals will succeed only at
+notifying the developer of the <em>first</em> usage of a deprecated feature,
+because the normal program (or build) flow is interrupted at that
+point. Thus, subsequent uses of deprecated features would likely go
+undetected.  Upon encountering such failures, most developers would
+simply supply the version-specific option to enable the deprecated
+features. Thus, in general, this approach won't be successful at
+providing developers information about <em>all</em> of the deprecated
+features in use by an application.</p>
+<p>It has been suggested that the <code>@deprecated</code> Javadoc tag be retired in
+favor of the <code>@Deprecated</code> annotation. The <code>@deprecated</code> Javadoc tag
+and the <code>@Deprecated</code> annotation should always both be present or
+absent.  However, they are redundant only in very abstract, conceptual
+sense. The <code>@deprecated</code> Javadoc tag provides descriptive text,
+rationale, and information and links to replacement APIs. This
+information is quite suitable for including in javadoc documentation,
+which already has facilities for it (such as link tags). Moving such
+textual information into annotation values would require javadoc to
+extract the information from annotations instead of doc comments. It
+would be harder for developers to maintain, since annotations have no
+markup support. Finally, annotation elements take up space at runtime,
+and it's unnecessary for documentation text to be present in memory at
+runtime.</p>
+<p>A string value has been proposed as a detail
+code. This appears to provide more flexibility, but it also introduces
+problems with weak typing and namespace conflicts, possibly leading to
+undetected errors.</p>
+<p>A "replacement" element in the <code>@Deprecated</code> annotation was present in
+earlier versions of this proposal. The intent was for it to denote a
+specific API that replaces the one being deprecated. In practice,
+there is never a drop-in replacement API for any deprecated API; there
+are always tradeoffs and design considerations, or choices
+to be made among several possible replacements. All of these topics
+require discussion and are thus better suited for textual
+documentation. Finally, there is no syntax for referring to another
+API from an annotation element, whereas Javadoc already supports such
+references via its <code>@see</code> and <code>@link</code> tags.</p>
+<p>Previous versions of this proposal included a variety of "reason"
+codes including UNSPECIFIED, DANGEROUS, OBSOLETE, SUPERSEDED,
+UNIMPLEMENTED, and EXPERIMENTAL. These attempted to encode the reason
+for which an API was deprecated, the risks of using it, and also whether
+a replacement API is available. In practice, all of this information is too
+subjective be encoded as values in an annotation. Instead, this
+information should be described in the Javadoc documentation comment.
+The only significant bit of detail remaining is whether there is intent
+to remove the API. This is expressed in the <code>forRemoval</code> annotation element.</p>
+<h2 id="Testing">Testing</h2>
+<p>A reasonably simple set of tests will be constructed for the new
+tooling. A set of cases will be provided where each different kind of
+API element that can be deprecated is deprecated. Another set of cases
+will be constructed, consisting of usages of each deprecated API from
+the cases described above. The static analysis checker <code>jdeprscan</code> should
+be run to ensure that it issues warnings for all such usages.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

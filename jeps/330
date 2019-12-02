@@ -1,0 +1,326 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 330: Launch Single-File Source-Code Programs</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 330: Launch Single-File Source-Code Programs</h1><table class="head"><tr><td>Owner</td><td>Jonathan Gibbons</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>11</td></tr><tr><td>Component</td><td>tools&#8201;/&#8201;javac</td></tr><tr><td>Discussion</td><td>compiler dash dev at openjdk dot java dot net</td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Alex Buckley, Mandy Chung</td></tr><tr><td>Endorsed by</td><td>Brian Goetz</td></tr><tr><td>Created</td><td>2017/12/01 19:04</td></tr><tr><td>Updated</td><td>2018/09/10 21:14</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8192920">8192920</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Enhance the <code>java</code> launcher to run a program supplied as a single file of Java
+source code, including usage from within a script by means of
+<a href="#Shebang_files">"shebang" files</a> and related techniques.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>It is not a goal to change either the Java Language Specification (JLS) or javac
+to accommodate shebang files. Likewise, it is not a goal to evolve the Java
+language into a general purpose scripting language.</p>
+<p>It is not a goal of this JEP to change the Java Language Specification to
+accommodate simpler ways of writing small programs, such as eliminating the need
+for the standard <code>public static void main(String[] args)</code> method. However, it is
+expected that any such changes to the Java language will be usable in
+conjunction with this feature.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Single-file programs -- where the whole program fits in a single source file --
+are common in the early stages of learning Java, and when writing small utility
+programs. In this context, it is pure ceremony to have to compile the program
+before running it. In addition, a single source file may compile to multiple
+class files, which adds packaging overhead to the simple goal of "run this
+program". It is desirable to be able to run the program directly from source
+with the <code>java</code> launcher:</p>
+<pre><code>java HelloWorld.java</code></pre>
+<h2 id="Description">Description</h2>
+<p>As of JDK 10, the <code>java</code> launcher operates in three modes: launching a class
+file, launching the main class of a JAR file, or launching the main class of a
+module.  Here we add a new, fourth mode: launching a class declared in a source
+file.</p>
+<p>Source-file mode is determined by considering two items on the command line:</p>
+<ol>
+<li>The first item on the command line that is neither an option nor part of an
+option. (In other words, the item that previously has been the class name.)</li>
+<li>The <code>--source</code> <em>version</em> option, if present.</li>
+</ol>
+<p>If the "class name" identifies an existing file with the <code>.java</code> extension,
+source-file mode is selected, with that file to be compiled and run.
+The <code>--source</code> option may be used to specify the source version of
+the source code.</p>
+<p>If the file does not have the <code>.java</code> extension, the <code>--source</code> option must
+be used to force source-file mode. This is for cases such as when the
+source file is a "script" to be executed and the name of the source file
+does not follow the normal naming conventions for Java source files. (See
+<a href="#Shebang_files">"shebang" files</a> below.)</p>
+<p>The <code>--source</code> option must also be used to specify the source version
+of the source code when the <code>--enable-preview</code> option is used.
+(See <a href="//openjdk.java.net/jeps/12">JEP 12</a>.)</p>
+<p>In source-file mode, the effect is as if the source file is compiled into
+memory, and the first class found in the source file is executed.
+For example, if a file called <code>HelloWorld.java</code> contains a class called
+<code>hello.World</code>, then the command</p>
+<pre><code>java HelloWorld.java</code></pre>
+<p>is informally equivalent to</p>
+<pre><code>javac -d &lt;memory&gt; HelloWorld.java
+java -cp &lt;memory&gt; hello.World</code></pre>
+<p>Any arguments placed after the name of the source file in the original command
+line are passed to the compiled class when it is executed.  For example,
+if a file called <code>Factorial.java</code> contains a class called <code>Factorial</code> to calculate
+the factorials of its arguments, then the command</p>
+<pre><code>java Factorial.java 3 4 5</code></pre>
+<p>is informally equivalent to</p>
+<pre><code>javac -d &lt;memory&gt; Factorial.java
+java -cp &lt;memory&gt; Factorial 3 4 5</code></pre>
+<p>In source-file mode, any additional command-line options are processed as follows:</p>
+<ul>
+<li>
+<p>The launcher scans the options specified before the source file for any that are
+relevant in order to compile the source file.  This includes: <code>--class-path</code>,
+<code>--module-path</code>, <code>--add-exports</code>, <code>--add-modules</code>, <code>--limit-modules</code>,
+<code>--patch-module</code>, <code>--upgrade-module-path</code>, and any variant forms of those
+options. It also includes the new <code>--enable-preview</code> option, described in
+<a href="//openjdk.java.net/jeps/12">JEP 12</a>.</p>
+</li>
+<li>
+<p>No provision is made to pass any additional options to the compiler,
+such as <code>-processor</code> or <code>-Werror</code>.</p>
+</li>
+<li>
+<p><a href="https://docs.oracle.com/javase/10/tools/java.htm#JSWOR-GUID-4856361B-8BFD-4964-AE84-121F5F6CF111">Command-line argument files</a> (@-files)
+may be used in the standard way. Long lists of arguments for either the VM or
+the program being invoked may be placed in files which are specified on the
+command-line by prefixing the filename with an <code>@</code> character.</p>
+</li>
+</ul>
+<p>In source-file mode, compilation proceeds as follows:</p>
+<ul>
+<li>
+<p>Any command-line options that are relevant to the compilation environment are
+taken into account.</p>
+</li>
+<li>
+<p>No other source files are found and compiled, as if the source path is set to
+an empty value.</p>
+</li>
+<li>
+<p>Annotation processing is disabled, as if <code>-proc:none</code> is in effect.</p>
+</li>
+<li>
+<p>If a <em>version</em> is specified, via the <code>--source</code> option, the value is used as the
+argument for an implicit <code>--release</code> option for the compilation. This sets both
+the source version accepted by compiler and the system API that may be
+used by the code in the source file.</p>
+</li>
+<li>
+<p>The source file is compiled in the context of an unnamed module.</p>
+</li>
+<li>
+<p>The source file should contain one or more top-level classes,
+the first of which is taken as the class to be executed.</p>
+</li>
+<li>
+<p>The compiler does not enforce the optional restriction defined at the end of
+<a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-7.html#jls-7.6">JLS &#167;7.6</a>,
+that a type in a named package should exist in a file whose name is composed
+from the type name followed by the <code>.java</code> extension.</p>
+</li>
+<li>
+<p>If the source file contains errors, appropriate error messages are written
+to the standard error stream, and the launcher exits with a non-zero exit code.</p>
+</li>
+</ul>
+<p>In source-file mode, execution proceeds as follows:</p>
+<ul>
+<li>
+<p>The class to be executed is the first top-level class found in the source
+file. It must contain a declaration of the standard
+<code>public static void main(String[])</code> method.</p>
+</li>
+<li>
+<p>The compiled classes are loaded by a custom class loader, that delegates to
+the application class loader. (This implies that classes appearing on the
+application class path cannot refer to any classes declared in the source
+file.)</p>
+</li>
+<li>
+<p>The compiled classes are executed in the context of an unnamed module, and
+as if <code>--add-modules=ALL-DEFAULT</code> is in effect (in addition to any other
+<code>--add-module</code> options that may be have been specified on the command line.)</p>
+</li>
+<li>
+<p>Any arguments appearing after the name of the file on the command line are
+passed to the standard <code>main</code> method in the obvious way.</p>
+</li>
+<li>
+<p>It is an error if there is a class on the application class path whose name
+is the same as that of the class to be executed.</p>
+</li>
+</ul>
+<p>Note that there is a potential minor ambiguity when using a simple command-line
+like <code>java HelloWorld.java</code>. Previously, <code>HelloWorld.java</code> would have been
+interpreted as a class called <code>java</code> in a package called <code>HelloWorld</code>, but which
+is now resolved in favor of a file called <code>HelloWorld.java</code> if such a file
+exists. Given that such a class name and such a package name both violate the
+nearly-universally-followed naming conventions, and given the unlikeliness of
+such a class being on the class path and a like-named file being in the current
+directory, this seems an acceptable compromise.</p>
+<h3 id="Implementation">Implementation</h3>
+<p>Source-file mode requires the presence of the <code>jdk.compiler</code> module.  When
+source-file mode for a file <code>Foo.java</code> is requested, the launcher behaves as
+if the command line were translated to:</p>
+<pre><code>java [VM args] \
+    -m jdk.compiler/&lt;source-launcher-implementation-class&gt; \
+    Foo.java [program args]</code></pre>
+<p>The source-launcher implementation class programmatically invokes the
+compiler, which compiles the source to an in-memory representation.
+The source-launcher implementation class then creates a class
+loader to load compiled classes from that in-memory representation, and invokes
+the standard <code>main(String[])</code> method of the first top-level class found in the
+source file.</p>
+<p>The source-launcher implementation class has access to any relevant command-line options, such
+as those to define the class path, module path, and the module graph, and passes
+those options to the compiler to configure the compilation environment.</p>
+<p>If the class that is invoked throws an exception, that exception is passed
+back to the launcher for handling in the normal way. However, the initial
+stackframes leading up to the execution of the class are removed from the
+stacktrace of the exception.  The intent is that the handling of the exception
+is similar to the handling if the class had been executed directly by the
+launcher itself.  The initial stackframes will be visible in any direct
+access to the stack, including (for example) <code>Thread.dumpStack()</code>.</p>
+<p>The class loader that is used to load the compiled classes itself uses an
+implementation-specific protocol for any URLs that refer to resources
+defined by the class loader. The only way to get such URLs is by using
+methods like <code>getResource</code> or <code>getResources</code>; creating any such URL
+from a string is not supported.</p>
+<a id="Shebang_files">
+<h3 id="&quot;Shebang&quot;-files">"Shebang" files</h3>
+</a><p><a id="Shebang_files">Single-file programs are also common when the task at hand needs a small utility
+program. In this context, it is desirable to be able to run a program directly
+from source using the </a><a href="https://en.wikipedia.org/wiki/Shebang_(Unix)">"#!"</a>
+mechanism on Unix-derived systems, such as macOS and Linux. This is a mechanism
+provided by the operating system which allows a single-file program (such as a
+script or source code) to be placed in any conveniently named executable file
+whose first line begins with <code>#!</code> and which specifies the name of a program to
+"execute" the contents of the file. Such files are called "shebang files".</p>
+<p>It is desirable to be able to execute Java programs with this mechanism.</p>
+<p>A shebang file to invoke the Java launcher using source-file mode must begin
+with something like:</p>
+<pre><code>#!/path/to/java --source version</code></pre>
+<p>For example, we could take the source code for a "Hello World" program, and
+put it in a file called <code>hello</code>, after an initial line of
+<code>#!/path/to/java --source 10</code>, and then mark the file as executable.
+Then, if the file is in the current directory, we could execute it with:</p>
+<pre><code>$ ./hello</code></pre>
+<p>Or, if the file is in a directory in the user's PATH, we could execute it with:</p>
+<pre><code>$ hello</code></pre>
+<p>Any arguments for the command are passed to the <code>main</code> method of the class
+that is executed. For example, if we put the source code for a program to
+compute factorials into a shebang file called <code>factorial</code>, we could execute it
+with a command like:</p>
+<pre><code>$ factorial 6</code></pre>
+<p>The <code>--source</code> option must be used in shebang files in the following
+situations:</p>
+<ul>
+<li>The name of the shebang file does not follow the standard naming conventions
+for Java source files.</li>
+<li>It is desired to specify additional VM options on the first line of the
+shebang file. In this case, the <code>--source</code> option should be specified first,
+after the name of the executable.</li>
+<li>It is desired to specify the version of the Java language used for the
+source code in the file.</li>
+</ul>
+<p>A shebang file can also be invoked explicitly by the launcher, perhaps with
+additional options, with a command like:</p>
+<pre><code>$ java -Dtrace=true --source 10 factorial 3</code></pre>
+<p>The Java launcher's source-file mode makes two accommodations for shebang files:</p>
+<ol>
+<li>
+<p>When the launcher reads the source file, if the file is not a Java source
+file (i.e. it is not a file whose name ends with <code>.java</code>) and if the first
+line begins with <code>#!</code>, then the contents of that line up to but not
+including the first newline are ignored when determining the source code to
+be passed to the compiler. The content of the file that appears after the
+first line must consist of a valid <code>CompilationUnit</code> as defined by &#167;7.3
+in the edition of the <em>Java Language Specification</em> that is appropriate to
+the version of the platform given in the <code>--source</code> option, if present, or
+the version of the platform being used to run the program if the <code>--source</code>
+option is not present.</p>
+<p>The newline at the end of the first line is preserved so that the line
+numbers in any compiler error messages are meaningful in the shebang file.</p>
+</li>
+<li>
+<p>Some operating systems pass the text on the first line after the name of the
+executable as a single argument to the executable. With that in mind, if the
+launcher encounters an option beginning <code>--source</code> and containing whitespace,
+it is split into a series of words, separated by whitespace, before being
+further analyzed by the launcher.  This allows additional arguments to be
+put on the first line, although some operating system may impose a limit on
+the overall length of the line. Using quotes to preserve whitespace in such
+values is not supported.</p>
+</li>
+</ol>
+<p>No changes to the JLS are required in support of this feature.</p>
+<p>In a shebang file, the first two bytes must be <code>0x23 0x21</code>, the two-character
+ASCII encoding of <code>#!</code>. All subsequent bytes are read with the default platform
+character encoding that is in effect.</p>
+<p>A first line beginning <code>#!</code> is only required when it is desired to execute the
+file with the operating system's shebang mechanism. There is no need for any
+special first line when the Java launcher is used explicitly to run the code in
+a source file, as in the <code>HelloWorld.java</code> and <code>Factorial.java</code> examples, given
+above. Indeed, the use of the shebang mechanism to execute files that follow
+the standard naming convention for Java source files is not permitted.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>The status quo has worked for 20+ years; we could continue with that.</p>
+<p>Instead of using <code>#!</code>, it would be possible to configure systems that support
+shebang files to use a different prefix, such as <code>//!</code>. Such a prefix would  be
+seen by <code>javac</code> as a single-line comment and would not need any special
+treatment to ignore it. However, introducing a new
+<a href="https://en.wikipedia.org/wiki/Magic_number_(programming)#Format_indicator">magic number</a> on
+operating systems like macOS and Linux requires either a manual or automated
+update to such systems, and is beyond the scope of this JEP.</p>
+<p>Instead of using the shebang mechanism, it would be possible to write a shell
+script that contains Java source code as a
+<a href="https://en.wikipedia.org/wiki/Here_document">here document</a> that can be passed
+to the Java source launcher. While this is ultimately a more flexible
+mechanism than the shebang mechanism, it is also more overhead than the use
+of shebang in simple cases.</p>
+<p>We could create a source launcher, but call it something else besides <code>java</code>,
+such as <code>jrun</code>.  Given the number of execution modes the launcher already
+has, this would likely be perceived as a gratuitous difference.</p>
+<p>We could delegate the task of "one-off runs" to the <code>jshell</code> tool.  While this
+may at first seem obvious, this was an explicit non-goal in the design of
+<code>jshell</code>. The <code>jshell</code> tool was designed to be an interactive shell, and many
+design decisions were made in favor of providing a better interactive
+experience.  Burdening it with the additional constraints of being the batch
+runner would detract from the interactive experience.</p>
+<p>We could also use the <code>jrunscript</code> tool. However, this tool provides limited
+facilities for interacting with the runtime environment, and does not address
+the desire to provide a simple introduction to using Java.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

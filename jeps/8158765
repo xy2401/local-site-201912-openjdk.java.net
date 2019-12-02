@@ -1,0 +1,369 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Isolated Methods</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Isolated Methods</h1><table class="head"><tr><td>Author</td><td>Michael Haupt</td></tr><tr><td>Owner</td><td>Maurizio Cimadamore</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>core-libs&#8201;/&#8201;java.lang.invoke</td></tr><tr><td>Discussion</td><td>mlvm dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>L</td></tr><tr><td>Duration</td><td>XL</td></tr><tr><td>Reviewed by</td><td>Alex Buckley, Brian Goetz, Jim Laskey, Paul Sandoz, Vladimir Ivanov</td></tr><tr><td>Created</td><td>2016/06/06 14:00</td></tr><tr><td>Updated</td><td>2018/04/16 21:06</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8158765">8158765</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Extend the <code>MethodHandles.Lookup</code> class of the <code>java.lang.invoke</code> package to
+support loading method bytecodes without an attached class, and to represent
+such methods as method handles.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>In the <code>MethodHandles.Lookup</code> class of the <code>java.lang.invoke</code> package,
+provide a new method <code>loadCode</code> to load a bytecode array plus constants as
+an isolated method and return a <code>MethodHandle</code> representing that method.</p>
+</li>
+<li>
+<p>At the level of the JVM, provide an optimised means to store isolated
+methods.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>A new compilation strategy for lambdas is not in the scope of this JEP.</p>
+</li>
+<li>
+<p>Extensions at the Java language level are explicitly out of scope.</p>
+</li>
+<li>
+<p>Extensions to the Java Virtual Machine instruction set (bytecodes) are
+likewise out of scope.</p>
+</li>
+</ul>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<ul>
+<li>
+<p>Improved performance of method handle infrastructure where it makes use of
+bytecode generation (also at startup).</p>
+</li>
+<li>
+<p>Reduced memory footprint of method handle infrastructure (specifically,
+<code>LambdaForm</code>s, <code>BoundMethodHandle</code>s, and invokers).</p>
+</li>
+<li>
+<p>Observable similar effects on dynamic language implementations once they
+adopt the new API.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>Both in the JDK core libraries and in language implementations running atop the
+JVM, it is a common pattern to generate stateless classes with a single static
+method. These classes are used to represent what is logically a method without a
+class, or an "isolated method". Generating them is cumbersome as it requires the
+generation of a full class, and imposes a certain load on the VM in terms of
+class loading and maintenance.</p>
+<p>To enable a more lightweight solution for this scenario, there should be a way
+of expressing and loading an isolated method directly, and to get hold of it in
+a form that can be used to invoke it, and to make sure no access violations are
+carried out using it.</p>
+<p>Method handles are usable abstractions for representing code that can be called.
+Moreover, a means for controlling lookup and access contexts already exists in
+the form of the <code>MethodHandles.Lookup</code> class. What is missing is a means to load
+a method in isolation. By adding a single API entry point to the
+<code>MethodHandles.Lookup</code> class that accepts the representation of an isolated
+method, such a method can be loaded with the lookup context implied by the
+<code>Lookup</code> instance at hand.</p>
+<p>There are several settings in the JDK core libraries, most notably in the
+low-level method handles infrastructure, where a new abstraction for isolated
+methods can be used to reduce code size and memory footprint, and to improve
+loading performance. Moreover, the Nashorn JavaScript engine can make use of the
+feature in a similar way, as it generates bytecode from JavaScript sources.
+Finally, all language implementations that run atop the JVM and generate
+bytecode may be clients of the isolated method loading capability.</p>
+<p>It needs to be noted that the aforementioned scenarios all require access to the
+internal <code>Unsafe</code> API. Offering a disciplined and secure way of defining custom
+code in the form of isolated methods will allow for rendering many of these uses
+of <code>Unsafe</code> unnecessary. Thereby, dependence on internal API, which guest
+language implementations on the JVM often have, can be reduced.</p>
+<h2 id="Description">Description</h2>
+<p>The <code>MethodHandles.Lookup</code> class of the <code>java.lang.invoke</code> package is to be
+extended with a method like this:</p>
+<pre><code>MethodHandle loadCode(String name, MethodType type, byte[] instructions, Object[] constants)</code></pre>
+<p>The <code>name</code> parameter is optional. It denotes the name the isolated method should
+be identifiable by in stack traces.</p>
+<p>The <code>type</code> parameter determines the method's return type and parameter types.
+The <code>instructions</code> array contains the method's bytecode instructions, as they
+would occur in a normal class file. A notable difference is that all indices
+into the class' constant pool that the bytecode would normally contain are now
+indices into the accompanying <code>constants</code> array. This serves as a method-local
+constant pool substitute.</p>
+<p>The <code>loadCode</code> method creates a method from the passed bytecode instructions and
+constants and returns a <code>MethodHandle</code> that can be used to call the method. The
+implementation of <code>loadCode</code> will take care of verification of the code to load.</p>
+<p>This method is isolated from any class and behaves largely like a static method.
+The method handle resulting from a <code>loadCode</code> invocation is of the <code>REF_static</code>
+kind. It cannot be cracked via <code>MethodHandles.Lookup.revealDirect()</code>.</p>
+<p>The context for a method defined in this way is determined by the <code>Lookup</code>
+instance receiving the <code>loadCode</code> call. In case the lookup privileges are not
+sufficient, an exception will be thrown.</p>
+<p><strong>The <code>constants</code> Array</strong></p>
+<p>The <code>constants</code> array, meant to contain constants referenced from the bytecode,
+deserves some attention. First and foremost, it should not be misunderstood as a
+constant pool. It rather provides a higher level of abstraction over constant
+pool contents, and adds convenience for clients.</p>
+<p>The array of constant pool patches that can be passed to invocations of
+<code>Unsafe.defineAnonymousClass</code> plays a similar role. For instance, the constant
+pool patches array allows to pass a <code>String</code> where a <code>CONSTANT_Utf8_info</code> entry
+is to be patched; in fact, that entry consists of a tag byte, two-byte length,
+and a character array. <code>Unsafe.defineAnonymousClass</code> supports similar
+convenience for other constant pool entries too.</p>
+<p>For the <code>constants</code> array passed to <code>loadCode</code>, similar convenience should be
+possible. For instance, where the method instructions reference a Java class,
+the <code>constants</code> array can contain a <code>Class</code> instance, rather than lower-level
+structures encountered in constant pools. Likewise, an <code>INVOKEVIRTUAL</code>
+instruction can reference a <code>constants</code> array entry that itself is a
+<code>MethodHandle</code> representing the method in question.</p>
+<p>The following table lists the different forms of possible constant pool entries
+and the Java classes that can be used to represent them in the <code>constants</code>
+array.</p>
+<ul>
+<li>
+<p><code>CONSTANT_Utf8_info</code>: <code>java.lang.String</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Integer_info</code>: <code>int</code>, <code>java.lang.Integer</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Float_info</code>: <code>float</code>, <code>java.lang.Float</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Long_info</code>: <code>long</code>, <code>java.lang.Long</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Double_info</code>: <code>double</code>, <code>java.lang.Double</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Class_info</code>: <code>java.lang.Class</code></p>
+</li>
+<li>
+<p><code>CONSTANT_String_info</code>: <code>java.lang.String</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Fieldref_info</code>: a <code>java.lang.invoke.DirectMethodHandle</code> of the
+right kind, obtained via the appropriate API in
+<code>java.lang.invoke.MethodHandles.Lookup</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Methodref_info</code>: a <code>java.lang.invoke.DirectMethodHandle</code> of the
+right kind, obtained via the appropriate API in
+<code>java.lang.invoke.MethodHandles.Lookup</code></p>
+</li>
+<li>
+<p><code>CONSTANT_InterfaceMethodref_info</code>: a <code>java.lang.invoke.DirectMethodHandle</code>
+of the right kind, obtained via the appropriate API in
+<code>java.lang.invoke.MethodHandles.Lookup</code></p>
+</li>
+<li>
+<p><code>CONSTANT_NameAndType_info</code>: (should not be required)</p>
+</li>
+<li>
+<p><code>CONSTANT_MethodHandle_info</code>: <code>java.lang.invoke.MethodHandle</code></p>
+</li>
+<li>
+<p><code>CONSTANT_MethodType_info</code>: <code>java.lang.invoke.MethodType</code></p>
+</li>
+<li>
+<p><code>CONSTANT_InvokeDynamic_info</code>: <em>either</em> a tuple of
+<code>(java.lang.invoke.MethodType,java.lang.invoke.MethodHandle)</code>, where the
+<code>MethodType</code> describes the call site's signature, and the <code>MethodHandle</code>
+represents the bootstrap method with already bound static arguments; <em>or</em> an
+already initialized <code>java.lang.invoke.CallSite</code></p>
+</li>
+</ul>
+<p>In addition, the Valhalla project proposes several new constant pool entry
+types, for which the substitutions in <code>constants</code> arrays can be as follows. Note
+that the table assumes tuples, which may be introduced with Valhalla, to be
+existent in the language.</p>
+<ul>
+<li>
+<p><code>CONSTANT_ArrayType_info</code>: tuple of <code>(byte,java.lang.Class)</code></p>
+</li>
+<li>
+<p><code>CONSTANT_MethodDescriptor_info</code>: array of <code>java.lang.Class</code> (<code>Class</code>
+instances may have to offer some additional information as Valhalla
+progresses)</p>
+</li>
+<li>
+<p><code>CONSTANT_ParameterizedType_info</code>: tuple of
+<code>(java.lang.Class,java.lang.Class[])</code></p>
+</li>
+<li>
+<p><code>CONSTANT_TypeVar_info</code>: tuple of <code>(java.lang.String,java.lang.Class)</code></p>
+</li>
+</ul>
+<p>As a further addition, the new constant pool entry types discussed in the
+<a href="https://bugs.openjdk.java.net/browse/JDK-8161256">general data in constant pools</a>
+proposal can be represented as follows.</p>
+<ul>
+<li>
+<p><code>CONSTANT_Dynamic</code>: tuple of
+<code>(java.lang.Class,java.lang.invoke.MethodHandle)</code>, where the <code>Class</code>
+represents the expected type, and the <code>MethodHandle</code> describes a bootstrap
+method with the static parameters already bound</p>
+</li>
+<li>
+<p><code>CONSTANT_Group</code>: an array or <code>java.util.List</code></p>
+</li>
+<li>
+<p><code>CONSTANT_Bytes</code>: <code>byte[]</code></p>
+</li>
+</ul>
+<p>As a <em>note on generic methods</em>, it needs to be pointed out that an isolated
+method does not have an enclosing class that could define type variables.
+Instead, all type variables mentioned in the signature of a generic isolated
+method belong to that method alone.</p>
+<p>The <code>constants</code> array can also contain all kinds of objects that can be loaded
+using an <code>LDC</code> instruction. This can be used to bind certain specific data that
+are known at compile time.</p>
+<p>It will be up to the implementation of <code>loadCode</code> to turn these convenience
+objects into proper lower-level representations resembling those in a constant
+pool. The details of this depend on the implementation choices that will be made
+for the internal representation of isolated methods.</p>
+<h3 id="Implementation">Implementation</h3>
+<p>The <code>loadCode</code> functionality can be implemented in several stages. Their depth
+of integration with the present system increases.</p>
+<p><strong>Stage 1: Internal Use for <code>LambdaForm</code> and Invoker Generation</strong></p>
+<p>The initial version of <code>loadCode</code> should be provided as part of the non-public
+API for Invokedynamic, e.g., as a non-public method in the
+<code>MethodHandles.Lookup</code> class, or in the <code>MethodHandleImpl</code> class. There, it can
+be used to generate <code>LambdaForm</code>s and other invokers in the <code>java.lang.invoke</code>
+implementation. The implementation should not treat isolated methods as such,
+but wrap the <code>LambdaForm</code> methods in a class as usual.</p>
+<p><strong>Stage 2: Optimised Internal Use for <code>LambdaForm</code> and Invoker Generation</strong></p>
+<p>The internal stage 1 <code>loadCode</code> implementation can, while the API remains
+stable, be optimised at the level of HotSpot. At this time, there are two design
+ideas that can be explored.</p>
+<ol>
+<li>
+<p>Internally, represent each isolated method as a method plus constant pool.
+The class an isolated method belongs to, to make it fit into the overall
+expectations of the VM, is a pseudo class that cannot be instantiated. This
+resembles the way single static method classes are currently built.</p>
+</li>
+<li>
+<p>Add to HotSpot the notion of a pseudo class (dubbed <code>Gargantuan</code>) that will
+be the holder of all methods defined through the <code>loadCode</code> interface. This
+will be an all-static class invisible from the outside (support for
+<code>getCallerClass</code> notwithstanding).</p>
+<p><code>Gargantuan</code> is a class that is intended to grow as new methods are defined.
+Methods can be collected when there are no more <code>MethodHandle</code>s referencing
+them. Each method in <code>Gargantuan</code> can have a context different from all
+other methods, depending on the lookup context at hand in a <code>loadCode</code>
+invocation.  This lookup context is preserved in <code>Gargantuan</code> and associated
+with the isolated method during its lifetime.</p>
+<p>The <code>constants</code> arrays of several isolated methods will very likely contain
+common constants. The <code>loadCode</code> VM-level implementation will make sure to
+only add those constants to the <code>Gargantuan</code> constant pool that are not
+already present, and to patch the bytecode instructions array accordingly.
+This elision of duplicate constant pool entries can also take place upon
+garbage collection to facilitate faster loading of isolated methods. Either
+way, all isolated methods share a common constant pool.</p>
+<p>The <code>Gargantuan</code> class can also exist once per module, which will enable
+efficient collection of constants stored for an isolated method, and
+possibly collection of other structures, as a module is unloaded.</p>
+</li>
+</ol>
+<p><strong>Stage 3: Public API</strong></p>
+<p>Eventually, the <code>loadCode</code> method should be public in <code>MethodHandles.Lookup</code>,
+to support its more widespread usage. In the meantime, availability via the MLVM
+repository will allow for applying the <code>loadCode</code> feature to existing language
+implementations for experimentation.</p>
+<h3 id="Usage-Examples">Usage Examples</h3>
+<p>The examples below serve to point out possible future shapes of the
+infrastructure needed to generate the <code>instructions</code> array. All examples
+describe the generation and loading of a method that has the signature
+<code>(Ljava/lang/String;)I</code> and retrieves the length of its argument. It consists of
+these instructions:</p>
+<pre><code>ALOAD_0
+INVOKEVIRTUAL #0 &lt;String.length()&gt;
+IRETURN</code></pre>
+<p>The first example adopts the higher level of abstraction over the constant pool,
+as suggested above:</p>
+<pre><code>MethodHandlee stringLength = lookup.loadCode("isoToString",
+    methodType(int.class, String.class),
+    new byte[]{42, 182, 0, 0, 172},
+    new Object[]{
+        lookup.findVirtual(String.class, "length", methodType(int.class))});</code></pre>
+<p>In the above example, the <code>instructions</code> array has been provided as immediate
+constants. To conveniently generate such arrays and the <code>constants</code> arrays they
+reference, a convenient generator for isolated methods is conceivable (its API
+is inspired by the ASM <code>GeneratorAdapter</code>):</p>
+<pre><code>MethodHandle stringLength =
+    new IsolatedMethodBuilder("isoToString", methodType(int.class, String.class)).
+        loadArg(0).
+        invokeVirtual(lookup.findVirtual(String.class, "length", methodType(int.class))).
+        returnValue().
+        load();</code></pre>
+<p>The above examples serve to kick off a discussion about how the isolated methods
+loading API and possible supporting API can be shaped.</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p><em>Anonymous classes</em> (obtained via <code>Unsafe.defineAnonymousClass()</code>) are an
+already existing way to dynamically define classes. They specifically support
+use cases where an anonymous method needs to access state associated with it,
+e.g., in case of lambda expressions that close over local state. Isolated
+methods can substitute those uses of anonymous classes that fall into the
+"single static method, no state" category. Isolated methods share with anonymous
+classes the characteristic that they cannot be looked up by name.</p>
+<p>An alternative approach to speed up bytecode spinning in the JDK core libraries
+is to use <em>bytecode templates</em> with predefined constant pools where only method
+bytecodes are inserted. This approach has two main drawbacks: it would be easily
+adoptable only in the core libraries but would not scale out to guest language
+implementations; and it would still require the bytecodes in question to be
+generated, separating which from the ASM class notion is hard.</p>
+<h2 id="Testing">Testing</h2>
+<p>There are no special platform or hardware requirements for testing. As the JDK
+core libraries themselves make use of method handles, and as especially the
+module system relies on lambdas and the ensuing bytecode spinning, the JDK
+itself is an excellent test bed. The existing tests for the method handle
+functionality will be valuable as well.</p>
+<p>In terms of testing by guest language implementations, all such implementations
+that already utilize the method handles API will implicitly be available for
+testing with their respective test suites. Experimental extensions of such guest
+language implementations can adopt an implementation scheme based on isolated
+methods for ongoing testing. The Nashorn JavaScript engine, for instance, is
+capable of running a large body of standard JavaScript code, including
+benchmarks.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>Introducing a new API to load code into the VM is risky per se. If this feature
+is deemed too risky, it can be moved to the <code>Unsafe</code> API.</p>
+<h2 id="Dependences">Dependences</h2>
+<p>This JEP depends on the presence of a bytecode generation framework that
+provides easy access to the constant pool, and allows to decouple method
+generation from class generation.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

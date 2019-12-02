@@ -1,0 +1,262 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Modules Support in JDK Tools</title><link rel="shortcut icon" href="../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../page.css" /><script type="text/javascript" src="../../page.js"><noscript></noscript></script></head><body><div id="main">
+<h1>Modules Support in JDK Tools</h1>
+<p>Note that tools and their command line options are not
+standardized by the JCP. This page lists what will be supported in
+OpenJDK.</p>
+<ul>
+<li><a href="#launcher">java launcher</a></li>
+<li><a href="#jam">jam packaging tool</a></li>
+<li><a href="#jrepo">JRepo: repository management tool</a></li>
+<li><a href="#otherTools">Other tools</a></li>
+</ul>
+<h3><a name="launcher" id="launcher">Java Launcher</a></h3>
+<p>The java launcher will support the following new options:</p>
+<pre>
+Usage: java [-options] class [args...]
+           (to execute a class)
+
+   or  java [-options] -jar file [args...]
+           (to execute a jar file)
+
+   or  java [-options] -jam file [args...]
+           (to execute a jam file)
+
+   or  java [-options] -jam file -modulemain org.foo [args...]
+           (to execute a jam file with a specific class in the module )
+
+   or  java [-options] -module module-name[:version-constraint] [args...]
+           (to execute a module from system repository)
+
+   or  java [-options] -module module-name[:version-constraint] -modulemain org.foo [args...]
+           (to execute a module from system repository with a specific class in the module)
+
+   or  java [-options] -repository location \
+                       -module module-name[:version-constraint] [args...]
+           (to execute a module from a repository)
+
+   or  java [-options] -repository location \
+                       -module module-name[:version-constraint] -modulemain foo.org [args...]
+           (to execute a module from a repository with a specific class in the module)
+
+</pre>
+<h4>Using the -jam option:</h4>
+<p>With the <code>-jam file</code> option, all JAM files in the
+directory containing the named JAM file will be in the system
+repository, and hence available to the application. The
+<code>-jam</code> option also supports a pack200 and gzip
+compressed jam file, with the extension
+<code>.jam.pack.gz</code>.</p>
+<pre>
+// Execute main class of the module in a JAM file
+java -jam /home/steve/org.foo.Xml-2.1.jam
+
+// Execute main class of the module in a JAM file
+java -classpath foo-path -jam /home/steve/org.foo.Xml-2.1.jam
+
+// Execute main class of the module in a compressed JAM file
+java -jam /home/steve/org.foo.Xml-2.1.jam.pack.gz
+</pre>
+<h4>Using the -module option</h4>
+<pre>
+// Execute main class of the highest version of org.foo.Xml module
+java -module org.foo.Xml
+
+// Execute main class of the highest version of org.foo.Xml module 
+// that is greater than 2.1.
+java -module org.foo.Xml:2.1+
+
+// Optionally can specify class path for the VM.
+java -classpath foo-path -module org.foo.Xml:2.1+
+
+ 
+// Execute a specific class in a module   
+java -classpath foo-path -module org.foo.Xml:2.1+ -modulemain FooClass
+</pre>
+<h4>Using the -repository and -module options</h4>
+<p>The -repository requires a -module option to be specified.</p>
+<pre>
+// Execute Module with an application repository from /xyz  
+java -repository /xyz -module org.foo.Xml:2.1+
+
+// A module can be executed along with -classpath to load legacy resources
+java -classpath foobar.jar -repository http://foo.com/samplerepo \
+   -module org.foo.Xml:2.1+
+
+// Execute main class of the highest version of org.foo.Xml module 
+// with an application repository from /xyz  
+java -repository /xyz -module org.foo.Xml
+</pre>
+<p>Notes</p>
+<ul>
+<li>The -jar, -jam and -module options are mutually exclusive.</li>
+<li>The version constraint syntax is defined in the JSR 277
+specification.</li>
+</ul>
+<h3><a name="jam" id="jam">Jam Packaging Tool</a></h3>
+<p>The <code>jam</code> tool packages the files that make up a
+module into a JAM archive file. Its options are patterned after the
+options of the <a href="http://java.sun.com/javase/6/docs/technotes/tools/solaris/jar.html">
+jar</a> command. A prototype of the jam command is available now
+and its options are listed below. The final version will likely
+support a number of additional options.</p>
+<pre>
+Usage: jam c[v0]fs jam-file superpackage-name files ...
+</pre>
+<p>For example:</p>
+<pre>
+// Create archive "org.foo.mymodule-1.0.jam" and build MODULE-INF/MODULE.METADATA
+// from the superpackage "org.foo.mymodule"
+jam cfs org.foo.mymodule-1.0.jam org.foo.mymodule .
+</pre>
+<h3><a name="jrepo" id="jrepo">JRepo: Repository Management
+Tool</a></h3>
+<p>The JRepo repository tool allows for inspection and modification
+of repositories.</p>
+<p><code>Usage: jrepo &lt;command&gt; &lt;flags&gt;
+&lt;options&gt;</code></p>
+Some flags are common to most commands:
+<ul>
+<li><code>-v</code>: verbose - yields more output</li>
+<li><code>-r repositoryLocation</code>: repository - location is
+filesystem path or URL to repository to be used</li>
+</ul>
+<p>Users do have to type the entire command, just enough characters
+to distinguish it from other commands. For example, <code>jrepo
+li</code> runs the <code>list</code> command.</p>
+<h4>JRepo commands and associated args</h4>
+<ul>
+<li><code>list [-v] [-p] [-r repositoryLocation]
+[moduleNamePrefix]</code>
+<p>Lists the names and versions of modules in a repository. With
+-v, also gives platform, architecture, pathname, and last modified
+time (if available). With -p, includes parent repositories. With
+-r, uses the given repository, otherwise uses the repository
+determined by the repository configuration. Listed modules are
+displayed in the same order that Repository.find() would find them
+(i.e. bootstrap-repository-first). With a moduleNamePrefix, lists
+only those modules whose names match the prefix.</p>
+</li>
+<li><code>install [-v] [-q] [-f] -r repositoryLocation
+JAMFile</code>
+<p>Installs the named JAMFile into the named repository, and checks
+that the module's dependencies are satisfied. -f forces
+installation even if another module with same characteristics
+(name, version, platform, architecture) is already installed. With
+-v, if the module uses a custom import policy, warns that the
+module's checks might not be sufficient to prevent runtime errors.
+With -q, does not do any checking. <em>Note: Neither forcing
+installation via -f nor any checking are implemented yet; use of -q
+or -f yields a usage error.</em></p>
+</li>
+<li><code>uninstall [-v] [-f | -i] -r repositoryLocation moduleName
+[ [moduleVersion] [modulePlatform-moduleArch] ]</code>
+<p>Uninstalls the identified module from the named repository.
+Fails if information given identifies more than one module,
+<em>unless</em> one of -f or -i is given. With -f, all modules
+identified are uninstalled. With -i, JRepo shows the user the
+matching modules, and asks which should be uninstalled.</p>
+</li>
+</ul>
+The remaining commands at this point only proposals; they need more
+thought/investigation:
+<ul>
+<li><code>dependencies [-v] [-r repositoryLocation] [moduleName [
+[moduleVersion] [modulePlatform-moduleArch] ] ]</code>
+<p>Lists all the modules on which the identified modules depend. If
+no moduleName, etc. are given, check dependencies of all modules in
+the repository.</p>
+</li>
+<li><code>contents [-v] [-i] [-r repositoryLocation] moduleName
+[moduleVersion] [modulePlatform-moduleArch]</code>
+<p>Lists the contents of the identified module (e.g. similar to "ls
+-lR" or "jar tf"). Fails if the information given identifies more
+than one module, <em>unless</em> -i is given. With -i, JRepo shows
+the user the matching modules, and asks which should have its
+contents listed.</p>
+</li>
+<li><code>get [-v] [-r repositoryLocation] [-n fileName] moduleName
+[moduleVersion] [modulePlatform-moduleArch]</code>
+<p>Creates a JAM file from the identified module. If -n is not
+given, uses the name of the module's corresponding file. If -n is
+given and names a directory, saves the JAM in the current directory
+using the name of the module's corresponding file. Otherwise, saves
+the JAM as the given moduleName.</p>
+</li>
+<li><code>check [-v] [-r repositoryLocation] [ moduleName [
+[moduleVersion] [modulePlatform-moduleArch] ] ]</code>
+<p>Runs shallow (or deep?) validationon the specified modules. If
+no module is specified, checks all modules in the repository.</p>
+</li>
+</ul>
+<h4>Notes, Questions, Open Issues</h4>
+<ul>
+<li>The repositoryLocation does not identify the <em>type</em> of
+the repository: the initial tool will treat it as a file system
+path or URL and use a Local or URLRepository as appropriate. In the
+fullness of time, we probably need some way to allow users to
+specify the kind of repository, e.g. a "-class clazz" or "-type
+serviceType" argument.</li>
+<li>It is TBD how the <code>get</code> and <code>contents</code>
+commands can trigger a download of enough information to satisfy
+their requirements. Currently, only modules for which the
+corresponding ModuleArchiveInfo instance has a file name could be
+handled.</li>
+</ul>
+<h3><a name="otherTools" id="otherTools">Other Tools</a></h3>
+<p>Other tools, owned by folks not directly engaged in the JSR 277
+effort, will need changes to work with modules. Dave Bristor is
+coordinating ownership of the changes.</p>
+<p>In general, these tools need access to modules similar to the
+way they currently need access to a classpath. We propose that the
+arguments as used with the java launcher be used, as appropriate.
+Most likely, only <code>-repository</code> and <code>-module</code>
+will be required.</p>
+<h4>langtools: javac, javap, javah, and javadoc</h4>
+<p>Owner: Jon Gibbons</p>
+Status: Under investigation and discussion; effort TBD. The tools
+do not all currently share a common front end; that may change.
+<h4>jdb</h4>
+<p>Owner: Jim Holmlund</p>
+Status: Work agreed to in prinicple; effort TBD.
+<h4>rmic</h4>
+<p>Owner: Peter Jones</p>
+Status: The JDK currently ships with 2 distinct copies of rmic:
+<ol>
+<li>one which is "handcrafted" and supports iiop</li>
+<li>one which is based on javadoc but does not support iiop</li>
+</ol>
+The goal is to incorporate iiop support into the second of the
+above. Since it is based on javadoc, changes for passing through
+arguments such as -module will then be transparent, with no extra
+work required in rmic.
+<h4>jrunscript</h4>
+<p>Owner: TBD</p>
+<p>Status: It's not certain that we need to update this tool; if so
+then need to find the code's owner.</p>
+<h4>javaws</h4>
+<p>Owner: Deployment team</p>
+<p>Status: Need to find an individual to own this.</p>
+<h4>pack200, unpack200</h4>
+<p>Owner: John Rose and/or Kumar Srinivasan</p>
+<p>Status: Dave is in discussion with John re the nature of changes
+required.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Java Platform Module System (&#8202;JSR 376)Expert Group Minutes: 2017/5/23</title><meta name="viewport" content="width=device-width, initial-scale=.6" /><link rel="stylesheet" type="text/css" href="//openjdk.java.net/.fonts/dejavu.css" /><style type="text/css">
+
+      HTML, BODY, DIV, SPAN, APPLET, OBJECT, IFRAME, H1, H2, H3, H4, H5, H6, P,
+      BLOCKQUOTE, PRE, A, ABBR, ACRONYM, ADDRESS, BIG, CITE, CODE, DEL, DFN, EM,
+      IMG, INS, KBD, Q, S, SAMP, SMALL, STRIKE, STRONG, SUB, SUP, TT, VAR, B, U,
+      I, CENTER, DL, DT, DD, OL, UL, LI, FIELDSET, FORM, LABEL, LEGEND, TABLE,
+      CAPTION, TBODY, TFOOT, THEAD, TR, TH, TD, ARTICLE, ASIDE, CANVAS, DETAILS,
+      EMBED, FIGURE, FIGCAPTION, FOOTER, HEADER, HGROUP, MENU, NAV, OUTPUT, RUBY,
+      SECTION, SUMMARY, TIME, MARK, AUDIO, VIDEO {
+        margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit;
+        vertical-align: baseline; }
+      ARTICLE, ASIDE, DETAILS, FIGCAPTION, FIGURE, 
+      FOOTER, HEADER, HGROUP, MENU, NAV, SECTION { display: block; }
+      BLOCKQUOTE, Q { quotes: none; }
+      BLOCKQUOTE:before, BLOCKQUOTE:after, Q:before, Q:after {
+              content: ''; content: none; }
+      TABLE { border-collapse: collapse; border-spacing: 0; }
+
+      A { text-decoration: none; }
+      A:link, TABLE.toc A:visited { color: #437291; }
+      A:visited { color: #666666; }
+      A.anchor:link, A.anchor:visited { color: black; }
+      A[href]:hover { color: #e76f00; }
+      A IMG { border-width: 0px; }
+
+      HTML { font-size: 20px; } /* baseline grid */
+      HTML > BODY { font-size: 14px; }
+      BODY {
+        background: white;
+        margin: 40px;
+        margin-bottom: 150%;
+        width: 560px;
+        line-height: 20px;
+        -webkit-text-size-adjust: 100%; /* iOS */
+        color: #222;
+      }
+
+      /* BODY { background: url("grid.png") repeat 0 5px; } */
+
+      BODY { font-family: "DejaVu Serif", "Bitstream Vera Serif",
+                          "Lucida Bright", "Bookman Old Style",
+                          Georgia, serif; }
+      CODE, TT, .jref, DIV.spec .open, TABLE.profiles {
+        font-family: "DejaVu Sans", "Bitstream Vera Sans",
+                     "Lucida Sans", Helvetica, sans-serif; }
+      PRE, PRE > CODE { font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+                        Monaco, "Courier New", monospace; }
+
+      @media only screen
+      and (min-device-width: 320px) and (max-device-width: 480px) {
+        BODY { width: 90%; }
+      }
+
+      I, EM { font-style: italic; }
+      B, STRONG, TH { font-weight: bold; }
+      SPAN.open { font-weight: bold; font-size: 12px; }
+
+      P { text-indent: 40px; }
+      P:first-child, UL + P, OL + P, BLOCKQUOTE + P, TABLE + P, P.subsection,
+        P.br, P.intro, DIV.toc + P, DIV.image + P { text-indent: 0; }
+      P.br, LI > P { margin-top: 10px; }
+      P.intro { margin-top: 32px; } /* grid tweak */
+      LI { margin-right: 20px; }
+
+      P.subsection { margin-top: 20px; }
+      P.subsection SPAN.title { font-weight: bold; padding-right: 20px; }
+
+      UL, OL { margin: 10px 0; padding-left: 40px; }
+      UL UL { margin: 0; }
+      LI { ZZmargin-bottom: 10px; }
+      UL.compact LI { margin-bottom: 0; }
+
+      PRE { padding: 0; margin: 10px 0 10px 40px; ZZwidth: 45em; }
+      BLOCKQUOTE { margin: 10px 0; margin-left: 40px; }
+      LI BLOCKQUOTE { margin-left: 0; }
+      UL LI { list-style-type: square; }
+      .todo { color: darkred; text-align: right; }
+      .error { color: red; font-weight: bold; }
+      .warn { color: #ee0000; font-weight: bold; }
+
+
+      H1 + P, H2 + P, H3 + P, PRE + P, BLOCKQUOTE + P { text-indent: 0; }
+      P.small { font-size: 11px; line-height: 16px; }
+
+      H1, DIV.h1-number, H2, DIV.h2-number, H3 { font-weight: bold; }
+
+      /*
+      H1 { margin-top: -13px; font-size: 22px; line-height: 40px; }
+      H2 { font-size: 17px; margin-top: 20px; margin-bottom: 10px; }
+      H3 { margin-top: 14px; margin-bottom: 10px; font-style: italic; }
+      */
+
+      DIV.doctitle, H1:first-child { margin-top: -13px;
+        font-size: 20px; line-height: 30px; font-weight: bold; }
+      DIV.twarn { color: #cc0000; font-weight: bold; margin-bottom: 9px; }
+      DIV.subtitle { margin-top: 2px; font-size: 18px; font-weight: bold; }
+      DIV.authors { margin-top: 10px; margin-bottom: 10px; font-size: 16px; }
+      DIV.author A { font-style: italic; }
+      DIV.version { margin-top: 13px; } /* grid tweak */
+      DIV.version, DIV.legal-notice { font-size: 11px; line-height: 15px; }
+      SPAN.hash { font-size: 11px; }
+      DIV.version SPAN.modified { color: green; font-weight: bold; }
+      DIV.head { margin-bottom: 20px; }
+
+      DIV.section > DIV.title, DIV.section DIV.number SPAN, H1, H2 {
+        ZZfont-size: 15px; font-weight: bold;
+        ZZline-height: 40px; margin-top: 20px; margin-bottom: 10px; }
+
+      H1, DIV.h1-number { font-size: 13px; letter-spacing: 1px;
+        text-transform: uppercase; margin-top: 30px; }
+
+      H1 SMALL { font-size: 18px; }
+
+      .sc { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+      .draft, .confidential { font-size: 13px; font-weight: bold;
+        letter-spacing: 1px; text-transform: uppercase; color: #e00; }
+
+      H1:first-child { letter-spacing: 0; text-transform: none;
+                       margin-bottom: 0; }
+      H1:first-child + H1 { margin-top: 1px; } /* grid tweak */
+
+      H1 + H2, H1 + H1 { margin-top: 0; }
+
+      H3 { margin-top: 10px; margin-bottom: 10px; font-style: italic; }
+
+      H1, H2, DIV, BODY > P, BODY > UL, BODY > OL, IMG { margin-left: 00px; }
+      PRE { margin-left: 80px; }
+      DIV.h1-number, DIV.h2-number { float: left; margin-left: 10px;
+        width: 20px; text-align: right; }
+      DIV.h1-number { font-size: 20px; }
+      DIV.h2-number { margin-top: 20px; }
+      DIV.h2-number SPAN { font-size: 12px; }
+      DIV.section DIV.body { margin-left: 00px; }
+
+      DIV.toc { margin: 20px 0; margin-left: 60px; margin-right: 20px; }
+
+      TABLE.toc { font-size: 14px; }
+      TD + TD { padding-left: 10px; }
+      TABLE.toc TH { font-weight: bold; text-align: left; }
+      TABLE.toc TD.subsections { font-size: 12px; }
+      TABLE.toc TD.number { font-weight: bold; font-size: 13px; }
+      TABLE.toc TD.title { text-transform: uppercase; font-size: 13px;
+        letter-spacing: 1px; font-weight: bold; }
+      TABLE.toc SPAN.subsection { white-space: nowrap; }
+      TABLE.toc TR.section TD { padding-top: 10px; }
+      TABLE.toc TR.section:first-child TD { padding-top: 0; }
+
+      SPAN.new { color: #e76f00; font-size: smaller; }
+      SPAN.update { font-size: smaller; }
+
+      DIV.image { margin: 20px 0 20px 20px; }
+
+  </style></head><body>
+<h1>Java Platform Module System <small>(&#8202;JSR 376)</small><br />Expert Group Minutes: <small>2017/5/23</small></h1>
+<p class="br"> Iris Clark</p>
+<div class="version">2017/5/26 12:26 -0700<span class="hash">&#8192;[38f5637354d0]</span></div><div class="legal-notice">Copyright &#169; 2017 Oracle and/or its affiliates &#183; All Rights Reserved &#183; <a href="license.pdf">License</a></div>
+<p class="intro"> The Expert Group met via video conference on Tuesday, 23 May
+2017 at 15:00 UTC in order to work toward closure on various technical issues
+and prepare to submit a revised Public Review Draft Specification to the JCP
+by 7 June.</p>
+<p class="br"> <em>Attendees:</em> Wayne Beaton (Eclipse, for the first ~10 minutes),
+Sasikanth Bharadwaj (Eclipse, about 5 minutes late), Alex Buckley (Oracle), Tim
+Ellison (IBM), R&#233;mi Forax, Brian Goetz (Oracle, moderator), Stephan Herrmann
+(Eclipse), David Lloyd (Red Hat), Mark Reinhold (Oracle), Robert Scholte
+(Apache Maven), Tom Watson (IBM).</p>
+<p class="br"> The intent of these minutes is capture the conversational flow of
+the discussion and to record decisions.  If you are only interested in the
+latter, search for the word &#8220;RESOLUTION&#8221; throughout the text.</p>
+<p class="br"> These minutes were taken during the meeting.  All participants had
+the opportunity to review and correct them for accuracy and completeness prior
+to publication.</p>
+<h2 id="Administration">Administration</h2>
+<p>Brian started the meeting by welcoming everybody back and doing a brief roll
+call.  He asked Mark whether the minutes for Thursday&#8217;s meeting had been
+posted.  Mark replied saying they&#8217;d be sent to the <a href="//mail.openjdk.java.net/mailman/listinfo/jpms-spec-experts">public EG list</a>
+shortly, and that Monday&#8217;s minutes would be posted to the private conference
+list for review later today.</p>
+<p class="br"> Today&#8217;s agenda:</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#LayerPrimitives">#LayerPrimitives</a> (two sub-items remaining)</li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#RestrictedKeywords">#RestrictedKeywords</a></li>
+<li>Advice on requiring automatic modules</li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MultiModuleJARs">#MultiModuleJARs</a> (JCP EC issue, review status)</li>
+<li>Ready to move forward?</li>
+</ul>
+<h2 id="LayerPrimitives"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#LayerPrimitives">#LayerPrimitives</a></h2>
+<p>This issue was added to the agenda when attendees were surveyed for any
+additional items.</p>
+<p>Discussion of this item began at Monday&#8217;s meeting (yesterday).  There was
+resolution for the <code>ModuleLayer.Controller::addPackage</code> method.  Since
+discussion for the <code>addExports</code> method had started, but did not finish, Brian
+suggested that David re-start that topic.</p>
+<p>David started by saying that <code>addOpens</code> was already in the layer controller
+API.  It both exports packages and opens them for deep reflection.  He wanted
+a means to only achieve the former.  David thought that <code>addExports</code> was a
+natural and low-risk API which would allow for more dynamic deployments.  It
+was low risk because <code>addOpens</code> was already supported, and does more.  As a
+use case, David described a deployment in which an framework needed to access
+a module, but deep reflection should not be allowed.  He wanted minimal
+privilege access.</p>
+<p>Brian paused David&#8217;s description to note that an additional attendee had dialed
+in, and requested that the person identify himself.  After Sasikanth&#8217;s
+introduction, there was some discussion about whether a third representative
+from Eclipse was reasonable.  Wayne said that it was a coordination issue.  He
+had made an internal request for a team representative and two people came.
+Mark and Tim shared the opinion that a third person reduced focus and was not
+generally helpful.  Mark noted that the original meeting request was for at
+most two technical representatives, and that participants were free to discuss
+the meetings with their colleagues or distribute draft minutes as necessary.
+The publication delay was not intended to keep things private, but to ensure
+accurate records.  After further discussion, Wayne decided that Stephan and
+Sasikanth were the appropriate representatives given the agenda and he dropped
+off the call.</p>
+<p>Brian apologized to David and asked him to continue describing his use case.
+David declared he was done and asked for comments.  Tim was the first to
+respond, asking whether the framework would be trusted enough to use the open
+API.  He thought that the framework already had ultimate rights over the
+lifecycle and there was no benefit in using a restricted API.  David replied
+that frameworks we not always privileged.  He also said that part of the
+problem was that they were in the prototype stage but <code>addExports</code> seemed to
+be needed and it was a low risk addition.</p>
+<p>When Brian asked for alternatives if the API was not added, David explained
+that <code>addOpens</code> or some kind of bytecode generation and injection would
+work. The latter was not attractive due to higher maintenance cost.  In
+contrast, the requested API was easy to implement and its presence avoided a
+possible problem.</p>
+<p>Mark said that he found the use case less than convincing.  After outlining
+what he considered the strong use cases for the existing <code>Controller</code> methods,
+Mark said that he was nervous adding an API for a hypothetical use case when
+there was a workaround.  David responded saying that he did not understand how
+<code>addExports</code> would be detrimental unless there was a change in the definition
+of <code>addOpens</code>. He considered this drastic change highly unlikely.  David
+repeated that in his view, the risk was essentially zero.</p>
+<p>Tom wondered whether <code>addOpens</code> had the potential to extend the class space.
+He was concerned about the introduction of split packages.  Mark addressed
+Tom&#8217;s concern by saying that <code>addOpens</code> and <code>addExports</code> do not change class
+loader delegation or class visibility in any way.  They can introduce split
+packages.  As sharp tools, they should be used with care.  If code introduces
+an inconsistency, that code will have to deal with it.  While Tom agreed with
+David that the addition sounded reasonable, he did not think that the risk was
+zero.</p>
+<p>Tim contributed that he was struggling to see what the essential problem was
+because the key functionality existed in <code>addOpens</code>.  He understood the desire
+to minimize surface area.</p>
+<p>R&#233;mi described an additional use case related to JUnit.  When JUnit (or a
+similar testing framework) is used, there is often a need to export a specific
+class to the JUnit module.  He solved this problem by generating a class (not
+bytecode) inside the module containing exactly what is needed for testing.  His
+concern was that the addition could be done at any time, not just at layer
+creation.  Tom countered that if the layer controller was not dynamic, it would
+not be helpful.  Mark stated that the JUnit use case was new to him and that
+the JDK-specific unit-test framework had already solved this problem in a
+different way.</p>
+<p>Mark asked David whether the deferral of <code>addPackage</code> had any impact on his
+case for <code>addExports</code>.  David replied that since the <code>addPackage</code> resolution
+was anticipated, his resolver does as much as possible up front.  The
+<code>addExports</code> use case was generally the first related to dynamic deployment
+after the fact; however, there were others.  Mark said that given that there
+were now two use cases, one from David and one from R&#233;mi, he thought it
+reasonable to add this method in the current release as long as no issues turn
+up in its implementation.</p>
+<p>Brian summarized the conversation saying that there seemed to be a variety of
+use cases and that the incremental risk over <code>addOpens</code> seemed low.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: <code>addExports</code> &#8212; NOW, assuming no adverse discoveries during
+implementation.  If problems are discovered, they will be brought back to
+the EG.</p>
+</blockquote>
+<p>The last sub-issue was the <code>addUses</code> method.  It was discussed briefly
+yesterday.  David explained that the need for this API was discovered during
+framework ports.  David said that the solution was similar to what was needed
+for core reflection and that it would be annoying to require a multi-release
+JAR just for this case.  He proposed that <code>addUses</code> either be automatic or else
+mitigated some other way.</p>
+<p>R&#233;mi asserted that if there is no module, an <code>addUses</code> is not necessary.  He
+expressed concern that frameworks which generate &#8220;uses&#8221; relationships at
+runtime would be precluded from static analysis.  David requested
+clarification.  Did R&#233;mi not like the use case where somebody can load a
+service that they did not declare?  R&#233;mi replied that if somebody creates a
+module, they need to follow the rules of modules.  David pointed out that if
+an API had providers that are declared in the consumer instead of the module
+there would be problems.  This was currently solved using a <code>ServiceLoader</code> on
+behalf of the caller.</p>
+<p>Mark joined in saying that the situation was starting to sound like
+the path that ended in
+<a href="//openjdk.java.net/projects/jigsaw/spec/issues/#IndirectQualifiedReflectiveAccess">#IndirectQualifiedReflectiveAccess</a>.
+He thought it sounded like the problem space was not fully understood
+and that more experience was necessary.  Mark suggested that designing an
+indirect service-loading facility in the next week sounded risky.
+David suggested &#8220;automatic&#8221; uses in the same sense that readability
+relationships are automatically assumed for reflection.</p>
+<p>David asked whether there was any gain in making the user &#8220;pause&#8221;, in the form
+of an <code>addUses</code> call, when they wanted to have access to a service.  Alex said
+that there was a difference between invoking <code>ServiceLoader</code> and performing
+core reflection.  Only advanced code is expected to perform core reflection.
+For such code, <code>addReads</code> has no value so the need to call it was removed. On
+the other hand, ordinary user code is expected to call <code>ServiceLoader::load</code>
+against the backdrop of its module declaration containing <code>uses</code> directives.
+As such, <code>ServiceLoader</code>&#8217;s <code>load</code> method expects that usability has been set
+up, either by <code>uses</code> directives (ordinary user code) or calls to <code>addUses</code>
+(advanced code).  In the corner case of advanced code calling
+<code>ServiceLoader::load</code> without <code>uses</code> directives in its module declaration,
+the need to call <code>addUses</code> is the price for the readability of ordinary user code
+that relies solely on explicit <code>uses</code> directives.  David agreed that this
+analysis made sense.  He was concerned about the potential that nobody
+declared a service that was later used.  Alex concluded by saying that the
+apparent need for <code>addUses</code> was due to things not working cleanly.</p>
+<p>As an alternate solution for <code>addUses</code>, R&#233;mi offered a preliminary suggestion
+of using the <code>MethodHandles.Lookup</code> API as a means to create indirect calls while
+avoiding bytecode generation.  He cautioned that he was not sure that this was
+a good solution and additional thought was required.  David reiterated that the
+burden should be on the framework.  Since he did not think that this was an
+emergency, continued discussion could be on the public EG list.</p>
+<p>Brian summarized by saying that there are workarounds and valid concerns about
+making it too easy for services to be undeclared.  He asked David whether a
+&#8220;LATER&#8221; disposition would be acceptable, so that this issue can be explored
+further after use cases without workarounds were identified.  David agreed.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: <code>addUses</code> &#8212; LATER, after additional exploration is done and
+more use cases are identified.</p>
+</blockquote>
+<h2 id="RestrictedKeywords"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#RestrictedKeywords">#RestrictedKeywords</a></h2>
+<p>This is an open issue.</p>
+<p>Stephan outlined three concerns.  First, as it stands the specification is
+unacceptable because it could not classify a token until after the entire
+module declaration has been consumed.  This could be reduced to the extent of a
+single module directive, but anything finer-grained would be a heuristic.
+Second, since the Eclipse compiler is at the bottom of a tall stack of plugins
+(not a stand-alone application like <code>javac</code>), use of a heuristic had the
+potential to disturb the entire ecosystem if there is a breaking change.
+Finally, any implementation would be based on very specific heuristics.  If
+modules were extended in a later iteration, the heuristics would break.  He
+noted that he had sent a proposal for an escaping mechanism to the
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2017-May/012560.html">jigsaw-dev</a>
+list.</p>
+<p>When Stephan finished describing the problem, Alex asked whether the
+specification was unacceptable or the problem was with the feature.  Stephan
+declared that feature itself was unacceptable.</p>
+<p>In R&#233;mi&#8217;s opinion, since there are millions of developers and only a few
+compiler implementors, he preferred to burden the implementors.  Stephan
+observed that perhaps the scale of the impact was under-appreciated.  If the
+burden of the implementation is on the IDE, any problems in that IDE would
+affect millions of developers.  R&#233;mi respectfully disagreed.</p>
+<p>Mark said he strongly agreed with R&#233;mi adding that a key value of the Java
+language is readability.  He thought that introducing an obscure rule with an
+obscure escaping syntax added unnecessary complexity to the language.  In his
+opinion, readability vastly outweighed implementation considerations.  Stephan
+regretted that there was no heuristics to measure user impact.  He said that
+some systems already have such escape mechanisms and that the change was
+small.</p>
+<p>Stephan confirmed Alex&#8217;s requested verification that parsing <code>transitive</code>
+required one additional token of look-ahead. Stephan added that the scale was
+the key concern.  David mused that an alternative to escaping was quoting as
+for strings.  He expected this to be a horribly unpopular suggestion.</p>
+<p>Alex pointed out that there was a long list of places in the Java language
+where lexing and parsing are difficult.  A big example is described at the end
+of the Java Language Specification (JLS), section 3.2 for <code>'&gt;'</code> characters.
+There were similar issues for the repurposing of <code>this</code> as a name in the JLS
+for Java SE 8.  Alex noted that restricted keywords are coming anyway due to
+<code>var</code> in the proposal for local-variable type inference.  R&#233;mi and Alex briefly
+discussed a few additional cases such as <code>requires transitive</code>, which is
+illegal in the Public Review specification since <code>transitive</code> is specified as a
+keyword.</p>
+<p>Summarizing a resolution, Alex thought we should keep the restricted keywords
+feature and clarify their treatment in module declarations.  This will be done
+with the knowledge of future potential impact to ordinary keywords.  R&#233;mi said
+that he found this acceptable.</p>
+<p>Stephan disagreed.  The required look-ahead of at most one was of concern.  He
+expected it to break when allowing annotations in more locations in
+<code>module-info.java</code> files.  Maintainability was also a concern due to the added
+heuristic which would likely break during future language changes.  He thought
+that highlighting tokens would be broken for existing tools, and his tool&#8217;s
+future development would be harder than necessary.</p>
+<p>Mark observed that there was resolution with one objection.  The resolution
+meant &#8220;NOW&#8221; but there was also agreement that resolution for Stephan&#8217;s
+proposal was &#8220;NEVER&#8221;, since affirming this choice now would close off
+the possibility of doing something different in a future release.</p>
+<p>Brian reiterated the resolution saying that &#8220;NOW&#8221; referred to clarifying the
+specification to reflect what the compiler must parse, and to classify
+Stephan&#8217;s request to avoid context-sensitivity in the parser as &#8220;NEVER&#8221;.  Mark
+added that the specification and reference implementation are already well down
+the road and that we think this is the right balance.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: NOW: Oracle to clarify the specification; NEVER, for the
+delivery of an alternate solution.</p>
+</blockquote>
+<p>Mark said that he&#8217;s glad that the discussion occurred but that this issue was
+raised extremely late.  He encouraged early engagement.  David agreed adding
+that most of the community got involved way too late causing a host of
+headaches.  He hoped that the community would learn from this.  While there was
+quite a bit of effort to encourage early engagement, more could always be done.</p>
+<p>Stephan said that he had originally brought this issue to the jigsaw-dev list
+<a href="//mail.openjdk.java.net/pipermail/jigsaw-dev/2016-November/010039.html">this past November</a>, and that he had been principally working from
+<code>lang-vm.html</code> which contained the expected JLS changes.  These changes were
+folded into the JLS draft included in the January 2017 Early Draft Review.
+Stephan felt that his feedback had been prompt.</p>
+<h2 id="Advice-on-requiring-automatic-modules">Advice on requiring automatic modules</h2>
+<p>This issue was added to the agenda when attendees were surveyed for any
+additional items.</p>
+<p>Robert wished to provide advice to developers about when to use module
+descriptors.  Automatic modules whose names are derived from their file names
+should not be referred to by name because their names are unstable, and doing
+so risks breaking the ecosystem.  It is understood that some projects cannot be
+transformed to use modules because of structural export issues.  New projects
+using Java 9 should follow JPMS rules.</p>
+<p>R&#233;mi encouraged library maintainers to convert to modules rapidly.</p>
+<p>Mark thought he agreed with Robert but wished to repeat the advice to confirm
+understanding.  If you maintain a library then you should modularize it
+explicitly only after each of its dependencies has either been modularized
+explicitly or else enhanced to specify an automatic module name in its JAR-file
+manifest.  If you maintain an application then it&#8217;s fine for its modules to
+depend on automatic modules whose names are derived from their file names, just
+make sure that your modules are not published for broad use since they will
+almost certainly need to be revised when the automatic modules upon which they
+depend are given proper names.</p>
+<p>Mark said that he did not expect every existing component to be modularized
+(e.g. popular, but dead projects). In that case, it might be acceptable to
+publish a module that depends on an automatic module with a file-derived name.
+Room for judgement needed to be maintained for such corner cases.</p>
+<p>Robert said he agreed with Mark&#8217;s summary.  Tim agreed and emphasized that
+things should be designed based on module system design assumptions.  He
+thought that this advice should not be in the specification, but clear
+communication was needed to describe these assumptions and to guide people in
+the right direction.</p>
+<p>Brian summarized saying that it sounded like everybody was in agreement in
+terms of specific advice and Tim though this advice should be communicated in a
+FAQ or other documentation.  Mark suggested that the &#8220;other documentation&#8221;
+could be a revised <a href="//openjdk.java.net/projects/jigsaw/spec/sotms/"><em>State of the Module System</em></a> document.  He
+anticipated an update of that document soon.</p>
+<h2 id="MultiModuleJARs"><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MultiModuleJARs">#MultiModuleJARs</a></h2>
+<p>This issue was included because it was of specific interest to the JCP EC.  </p>
+<p>Mark introduced this issue by saying that it was one of those issues that was
+closed some time ago on the basis that it could be added later.  Tim agreed
+with the resolution but said he added this item to the agenda because of a JCP
+EC PR ballot comment.  He had not seen any example scenarios to support the
+ballot comment.  Tim thought that without further information, the EG should
+feel comfortable with the existing resolution.</p>
+<p>David believed that it should be easy to implement a prototype.  Mark noted
+that Spring Boot already had an implementation. He agreed with David that this
+feature could be implemented at the user-level either as a prototype or a
+working product.</p>
+<p>Brian recapped saying that everybody seemed happy with the &#8220;LATER&#8221; resolution.</p>
+<blockquote>
+<p><strong>RESOLUTION</strong>: LATER, as <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MultiModuleJARs">previously decided</a>.</p>
+</blockquote>
+<h2 id="Agenda-review">Agenda review</h2>
+<p>Brian said that the previous issue was the final technical item on the agenda.
+There were two pending items:
+<a href="//openjdk.java.net/projects/jigsaw/spec/issues/#CompilationWithConcealedPackages">#CompilationWithConcealedPackages</a> needed
+review from Eclipse and <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#ResolutionAtCompileTime">#ResolutionAtCompileTime</a>
+required Oracle to provide an updated specification.</p>
+<p>David requested a quick review of <a href="//openjdk.java.net/projects/jigsaw/spec/issues/#LayerPrimitives">#LayerPrimitives</a> since he
+had audio problems at yesterday&#8217;s meeting.  He wished to ensure that the EG
+had properly understood his concerns and proposal.  After David reviewed
+his concerns, Mark assured him that yesterday&#8217;s proposal was understood.</p>
+<h2 id="Ready-to-move-forward">Ready to move forward?</h2>
+<p>Brian moved to the final topic saying that with one exception,
+<a href="//openjdk.java.net/projects/jigsaw/spec/issues/#RestrictedKeywords">#RestrictedKeywords</a>, there were no objections to the
+resolutions.  Almost everybody wished that we could have made more progress
+for the initial release on some of the items.</p>
+<p>Reaffirming what Brian said, Mark enumerated four issues that would be good to
+investigate for a future release (the &#8220;LATER&#8221; list):</p>
+<ul>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#AvoidConcealedPackageConflicts">#AvoidConcealedPackageConflicts</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#CyclicDependences">#CyclicDependences</a></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#LayerPrimitives">#LayerPrimitives</a>: <code>addUse</code> and <code>addPackage</code></li>
+<li><a href="//openjdk.java.net/projects/jigsaw/spec/issues/#MultiModuleJARs">#MultiModuleJARs</a></li>
+</ul>
+<p>Mark said he would attempt to condense the reasoning for why each was
+considered but not addressed at this time, and include that reasoning in an
+update to the specification.</p>
+<p>The discussion then moved to JCP Public Review (PR) process.  David suggested
+publishing the revised specification with sufficient time for the JCP EC to
+provide comments prior to the PR Ballot submission.  Brian noted that the
+process included a two week voting period for JCP EC review.  Any added delay
+would lose valuable time.  David was concerned that without a specific review
+period for the JCP EC, the specification may still be rejected.  He wanted to
+ensure that people were minimally happy.  Brian said that posting the minutes
+would provide a window into the specification and the EG&#8217;s positions.</p>
+<p>Tim asked whether it would be helpful to prioritize the &#8220;LATER&#8221; list.  Mark
+said that there were limits to what any particular EG could expect a
+hypothetical future EG to do; however he was open to prioritizing the &#8220;LATER&#8221;
+list.  Mark expected to have an interim working draft of the 376 specification
+later this week.  He encouraged the JCP EC to look at that material since it
+would be submitted for reconsideration no later than 7 June.</p>
+<h2 id="Conclusion">Conclusion</h2>
+<p>Brian asked for any final comments saying that there would not be a meeting
+tomorrow (Wednesday).  Tim said that he thought that the meetings had been a
+very useful process because things proceeded much faster than they would have
+in e-mail.  He thanked Brian for moderating and Iris for taking minutes.
+Brian thanked everybody for being available on such short notice.  Mark echoed
+this sentiment.</p>
+<p class="br"> Brian declared the meetings a success, and the EG adjourned.</p></body></html>

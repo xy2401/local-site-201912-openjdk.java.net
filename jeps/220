@@ -1,0 +1,573 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 220: Modular Run-Time Images</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 220: Modular Run-Time Images</h1><table class="head"><tr><td>Author</td><td>Mark Reinhold</td></tr><tr><td>Owner</td><td>Alan Bateman</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Closed&#8201;/&#8201;Delivered</td></tr><tr><td>Release</td><td>9</td></tr><tr><td>JSR</td><td><a href="https://jcp.org/en/jsr/detail?id=376">376</a></td></tr><tr><td>Discussion</td><td>jigsaw dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>L</td></tr><tr><td>Duration</td><td>L</td></tr><tr><td>Blocks</td><td><a href="200">JEP 200: The Modular JDK</a></td></tr><tr><td></td><td><a href="261">JEP 261: Module System</a></td></tr><tr><td>Relates to</td><td><a href="162">JEP 162: Prepare for Modularization</a></td></tr><tr><td></td><td><a href="201">JEP 201: Modular Source Code</a></td></tr><tr><td></td><td><a href="282">JEP 282: jlink: The Java Linker</a></td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Alex Buckley, Chris Hegarty, Mandy Chung, Paul Sandoz</td></tr><tr><td>Created</td><td>2014/10/23 15:05</td></tr><tr><td>Updated</td><td>2017/09/22 20:16</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8061971">8061971</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Restructure the JDK and JRE run-time images to accommodate modules and to
+improve performance, security, and maintainability.  Define a new URI
+scheme for naming the modules, classes, and resources stored in a
+run-time image without revealing the internal structure or format of the
+image.  Revise existing specifications as required to accommodate these
+changes.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Adopt a run-time format for stored class and resource files that:</p>
+<ul>
+<li>
+<p>Is more time- and space-efficient than the legacy JAR format, which
+in turn is based upon the ancient ZIP format;</p>
+</li>
+<li>
+<p>Can locate and load class and resource files on a per-module basis;</p>
+</li>
+<li>
+<p>Can store class and resource files from JDK modules and from
+library and application modules; and</p>
+</li>
+<li>
+<p>Can be extended to accommodate additional kinds of data going
+forward, such as precomputed JVM data structures and precompiled
+native code for Java classes.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Restructure the JDK and JRE run-time images to draw a clear
+distinction between files that developers, deployers, and end-users
+can rely upon and, when appropriate, modify, in contrast to files
+that are internal to the implementation and subject to change without
+notice.</p>
+</li>
+<li>
+<p>Provide supported ways to perform common operations such as, <em>e.g.</em>,
+enumerating all of the classes present in an image, which today
+require inspecting the internal structure of a run-time image.</p>
+</li>
+<li>
+<p>Enable the selective <em>de-privileging</em> of JDK classes that today are
+granted all security permissions but do not actually require those
+permissions.</p>
+</li>
+<li>
+<p>Preserve the existing behavior of well-behaved applications, <em>i.e.</em>,
+applications that do not depend upon internal aspects of JRE and JDK
+run-time images.</p>
+</li>
+</ul>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>Modular run-time images equivalent to the JRE, JDK, and
+<a href="//openjdk.java.net/jeps/161">Compact Profile</a> images of the immediately-preceding JDK 9 build
+must not regress on a representative set of startup, static footprint,
+and dynamic footprint benchmarks.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>It is not a goal to preserve all aspects of the current run-time
+image structure.</p>
+</li>
+<li>
+<p>It is not a goal to preserve the exact current behavior of all
+existing APIs.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p><a href="//openjdk.java.net/projects/jigsaw/">Project Jigsaw</a> aims to design and implement a standard module
+system for the Java&#160;SE Platform and to apply that system to the
+Platform itself, and to the JDK.  Its primary goals are to make
+implementations of the Platform more easily scalable down to small
+devices, improve the security and maintainability, enable improved
+application performance, and provide developers with better tools for
+programming in the large.</p>
+<p>This JEP is the third of four JEPs for Project Jigsaw.  The earlier
+<a href="//openjdk.java.net/jeps/200">JEP 200</a> defines the structure of the modular JDK, and
+<a href="//openjdk.java.net/jeps/201">JEP 201</a> reorganizes the JDK source code into modules.  A later
+JEP, <a href="//openjdk.java.net/jeps/261">261</a>, introduces the actual module system.</p>
+<h2 id="Description">Description</h2>
+<h3 id="Current-run-time-image-structure">Current run-time image structure</h3>
+<p>The JDK build system presently produces two types of run-time images: A
+Java Runtime Environment (JRE), which is a complete implementation of the
+Java&#160;SE Platform, and a Java Development Kit (JDK), which embeds a
+JRE and includes development tools and libraries.  (The three
+<a href="//openjdk.java.net/jeps/161">Compact Profile</a> builds are subsets of the JRE.)</p>
+<p>The root directory of a JRE image contains two directories, <code>bin</code> and
+<code>lib</code>, with the following content:</p>
+<ul>
+<li>
+<p>The <code>bin</code> directory contains essential executable binaries, and in
+particular the <code>java</code> command for launching the run-time system.  (On
+the Windows operating system it also contains the run-time system's
+dynamically-linked native libraries.)</p>
+</li>
+<li>
+<p>The <code>lib</code> directory contains a variety of files and subdirectories:</p>
+<ul>
+<li>
+<p>Various <code>.properties</code> and <code>.policy</code> files, most of which may be,
+though rarely are, edited by developers, deployers, and end users;</p>
+</li>
+<li>
+<p>The <code>endorsed</code> directory, which does not exist by default, into
+which JAR files containing implementations of
+<a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/index.html">endorsed standards and standalone technologies</a> may be
+placed;</p>
+</li>
+<li>
+<p>The <code>ext</code> directory, into which JAR files containing
+<a href="http://docs.oracle.com/javase/8/docs/technotes/guides/extensions/index.html">extensions or optional packages</a> may be placed;</p>
+</li>
+<li>
+<p>Various implementation-internal data files in assorted binary
+formats, <em>e.g.</em>, fonts, color profiles, and time-zone data;</p>
+</li>
+<li>
+<p>Various JAR files, including <code>rt.jar</code>, which contain the run-time
+system's Java class and resource files.</p>
+</li>
+<li>
+<p>The run-time system's dynamically-linked native libraries on the
+Linux, macOS, and Solaris operating systems.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>A JDK image includes a copy of the JRE in its <code>jre</code> subdirectory and
+contains additional subdirectories:</p>
+<ul>
+<li>
+<p>The <code>bin</code> directory contains command-line development and debugging
+tools, <em>e.g.</em>, <code>javac</code>, <code>javadoc</code>, and <code>jconsole</code>, along with
+duplicates of the binaries in the <code>jre/bin</code> directory for
+convenience;</p>
+</li>
+<li>
+<p>The <code>demo</code> and <code>sample</code> directories contain demonstration programs
+and sample code, respectively;</p>
+</li>
+<li>
+<p>The <code>man</code> directory contains UNIX-style manual pages;</p>
+</li>
+<li>
+<p>The <code>include</code> directory contains C/C++ header files for use when
+compiling native code that interfaces directly with the run-time
+system; and</p>
+</li>
+<li>
+<p>The <code>lib</code> directory contains various JAR files and other types of
+files comprising the implementations of the JDK's tools, among them
+<code>tools.jar</code>, which contains the classes of the <code>javac</code> compiler.</p>
+</li>
+</ul>
+<p>The root directory of a JDK image, or of a JRE image that is not embedded
+in a JDK image, also contains various <code>COPYRIGHT</code>, <code>LICENSE</code> and <code>README</code>
+files and also a <code>release</code> file that describes the image in terms of
+simple key/value property pairs, <em>e.g.</em>,</p>
+<pre><code>JAVA_VERSION="1.9.0"
+OS_NAME="Linux"
+OS_VERSION="2.6"
+OS_ARCH="amd64"</code></pre>
+<h3 id="New-run-time-image-structure">New run-time image structure</h3>
+<p>The present distinction between JRE and JDK images is purely historical,
+a consequence of an implementation decision made late in the development
+of the JDK&#160;1.2 release and never revisited.  The new image structure
+eliminates this distinction: A JDK image is simply a run-time image that
+happens to contain the full set of development tools and other items
+historically found in the JDK.</p>
+<p>A modular run-time image contains the following directories:</p>
+<ul>
+<li>
+<p>The <code>bin</code> directory contains any command-line launchers defined by
+the modules linked into the image.  (On Windows it continues to
+contain the run-time system's dynamically-linked native libraries.)</p>
+</li>
+<li>
+<p>The <code>conf</code> directory contains the <code>.properties</code>, <code>.policy</code>, and other
+kinds of files intended to be edited by developers, deployers, and
+end users, which were formerly found in the <code>lib</code> directory or
+subdirectories thereof.</p>
+</li>
+<li>
+<p>The <code>lib</code> directory on Linux, macOS, and Solaris contains the
+run-time system's dynamically-linked native libraries, as it does
+today.  These files, named <code>libjvm.so</code> or <code>libjvm.dylib</code>, may be
+linked against by programs that embed the run-time system.  A few
+other files in this directory are also intended for external use,
+including <code>src.zip</code> and <code>jexec</code>.</p>
+</li>
+<li>
+<p>All other files and directories in the <code>lib</code> directory must be
+treated as private implementation details of the run-time system.
+They are not intended for external use and their names, format, and
+content are subject to change without notice.</p>
+</li>
+<li>
+<p>The <code>legal</code> directory contains the legal notices for the modules
+linked into the image, grouped into one subdirectory per module.</p>
+</li>
+<li>
+<p>A full JDK image contains, additionally, the <code>demo</code>, <code>man</code>, and
+<code>include</code> directories, as it does today.  (The <code>samples</code> directory
+was removed by <a href="//openjdk.java.net/jeps/298">JEP 298</a>.)</p>
+</li>
+</ul>
+<p>The root directory of a modular run-time image also contains the
+<code>release</code> file, which is generated by the build system.  To make it easy
+to tell which modules are present in a run-time image the <code>release</code> file
+includes a new property, <code>MODULES</code>, which is a space-separated list of
+the names of those modules.  The list is topologically ordered according
+to the modules' dependence relationships, so the <code>java.base</code> module is
+always first.</p>
+<h3 id="Removed:-The-endorsed-standards-override-mechanism">Removed: The endorsed-standards override mechanism</h3>
+<p>The <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/index.html">endorsed-standards override mechanism</a> allowed implementations
+of newer versions of standards maintained outside of the Java Community
+Process, or of standalone APIs that are part of the Java&#160;SE Platform
+yet continue to evolve independently, to be installed into a run-time
+image.</p>
+<p>The endorsed-standards mechanism was defined in terms of a path-like
+system property, <code>java.endorsed.dirs</code>, and a default value for that
+property, <code>$JAVA_HOME/lib/endorsed</code>.  A JAR file containing a newer
+implementation of an endorsed standard or standalone API can be installed
+into a run-time image by placing it in one of the directories named by
+the system property, or by placing it in the default <code>lib/endorsed</code>
+directory if the system property is not defined.  Such JAR files are
+prepended to the JVM's bootstrap class path at run time, thereby
+overriding any definitions stored in the run-time system itself.</p>
+<p>A modular image is composed of modules rather than JAR files.  Going
+forward, endorsed standards and standalone APIs are supported in modular
+form only, via the concept of <a href="//openjdk.java.net/projects/jigsaw/goals-reqs/03#upgradeable-modules"><em>upgradeable modules</em></a>.  We have
+therefore removed the endorsed-standards override mechanism, including
+the <code>java.endorsed.dirs</code> system property and the <code>lib/endorsed</code>
+directory.  To help identify any existing uses of this mechanism the
+compiler and the launcher now fail if this system property is set, or if
+the <code>lib/endorsed</code> directory exists.</p>
+<h3 id="Removed:-The-extension-mechanism">Removed: The extension mechanism</h3>
+<p>The <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/extensions/index.html">extension mechanism</a> allowed JAR files containing APIs that
+extend the Java&#160;SE Platform to be installed into a run-time image so
+that their contents are visible to every application that is compiled
+with or runs on that image.</p>
+<p>The <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/extensions/spec.html">mechanism was defined</a> in terms of a path-like system
+property, <code>java.ext.dirs</code>, and a default value for that property composed
+of <code>$JAVA_HOME/lib/ext</code> and a platform-specific system-wide directory
+(<em>e.g</em>, <code>/usr/java/packages/lib/ext</code> on Linux).  It worked in much the
+same manner as the endorsed-standards mechanism except that JAR files
+placed in an extension directory were loaded by the run-time
+environment's <em>extension class loader</em>, which is a child of the bootstrap
+class loader and the parent of the <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ClassLoader.html#getSystemClassLoader--"><em>system class loader</em></a>, which
+actually loads the application to be run from the class path.  Extension
+classes therefore could not override the JDK classes loaded by the
+bootstrap loader but they were loaded in preference to classes defined by
+the system loader and its descendants.</p>
+<p>The extension mechanism was introduced in JDK&#160;1.2, which was
+released in 1998, but in modern times we have seen little evidence of its
+use.  This is not surprising, since most Java applications today place
+the libraries that they need directly on the class path rather than
+require that those libraries be installed as extensions of the run-time
+system.</p>
+<p>It is technically possible, though awkward, to continue to support the
+extension mechanism in the modular JDK.  To simplify both the
+Java&#160;SE Platform and the JDK we have removed the extension
+mechanism, including the <code>java.ext.dirs</code> system property and the
+<code>lib/ext</code> directory.  To help identify any existing uses of this
+mechanism the compiler and the launcher now fail if this system property
+is set, or if the <code>lib/ext</code> directory exists.  The compiler and the
+launcher ignore the platform-specific system-wide extension directory by
+default, but if the <code>-XX:+CheckEndorsedAndExtDirs</code> command-line option is
+specified then they fail if that directory exists and is not empty.</p>
+<p>Several features associated with the extension mechanism were retained,
+since they are useful in their own right:</p>
+<ul>
+<li>
+<p>The <code>Class-Path</code> manifest attribute, which specifies JAR files
+required by another JAR file;</p>
+</li>
+<li>
+<p>The <code>{Specification,Implementation}-{Title,Version,Vendor}</code> manifest
+attributes, which specify package and JAR-file version information;</p>
+</li>
+<li>
+<p>The <code>Sealed</code> manifest attribute, which seals a package or a JAR
+file; and</p>
+</li>
+<li>
+<p>The extension class loader itself, though it is now known as the
+<a href="//openjdk.java.net/jeps/261#Class-loaders"><em>platform</em> class loader</a>.</p>
+</li>
+</ul>
+<h3 id="Removed:-rt-jar-and-tools-jar">Removed: <code>rt.jar</code> and <code>tools.jar</code></h3>
+<p>The class and resource files previously stored in <code>lib/rt.jar</code>,
+<code>lib/tools.jar</code>, <code>lib/dt.jar</code>, and various other internal JAR files are
+now stored in a more efficient format in implementation-specific files in
+the <code>lib</code> directory.  The format of these files is not specified and is
+subject to change without notice.</p>
+<p>The removal of <code>rt.jar</code> and similar files leads to three distinct
+problems:</p>
+<ol>
+<li>
+<p>Existing standard APIs such as the
+<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ClassLoader.html#getSystemResource-java.lang.String-"><code>ClassLoader::getSystemResource</code></a> method return
+<a href="http://docs.oracle.com/javase/8/docs/api/java/net/URL.html"><code>URL</code></a> objects to name class and resource files inside the
+run-time image.  For example, when run on JDK 8 the code</p>
+<pre><code>ClassLoader.getSystemResource("java/lang/Class.class");</code></pre>
+<p>returns a <code>jar</code> URL of the form</p>
+<pre><code>jar:file:/usr/local/jdk8/jre/lib/rt.jar!/java/lang/Class.class</code></pre>
+<p>which, as can be seen, embeds a <code>file</code> URL to name the actual JAR
+file within the run-time image.  The <a href="http://docs.oracle.com/javase/8/docs/api/java/net/URL.html#getContent--"><code>getContent</code></a>
+method of that <code>URL</code> object can be used to retrieve the content of
+the class file, via the built-in protocol handler for the <code>jar</code> URL
+scheme.</p>
+<p>A modular image does not contain any JAR files, so URLs of the
+above form make no sense.  The specifications of <code>getSystemResource</code>
+and related methods, fortunately, do not require the <code>URL</code> objects
+returned by these methods actually to use the JAR scheme.  They
+do, however, require that it be possible to load the content of a
+stored class or resource file via these <code>URL</code> objects.</p>
+</li>
+<li>
+<p>The <a href="http://docs.oracle.com/javase/8/docs/api/java/security/CodeSource.html"><code>java.security.CodeSource</code></a> API and
+<a href="http://docs.oracle.com/javase/8/docs/technotes/guides/security/PolicyFiles.html#FileSyntax">security-policy files</a> use URLs to name the locations of code
+bases that are to be granted specified permissions.  Components of
+the run-time system that require specific permissions are currently
+identified in the <code>lib/security/java.policy</code> file via <code>file</code> URLs.
+The elliptic-curve cryptography provider, <em>e.g.</em>, is identified as</p>
+<pre><code>file:${java.home}/lib/ext/sunec.jar</code></pre>
+<p>which, obviously, has no meaning in a modular image.</p>
+</li>
+<li>
+<p>IDEs and other kinds of development tools require the ability to
+enumerate the class and resource files stored in a run-time image,
+and to read their contents.  Today they often do this directly by
+opening and reading <code>rt.jar</code> and similar files.  This is, of course,
+not possible with a modular image.</p>
+</li>
+</ol>
+<h3 id="New-URI-scheme-for-naming-stored-modules-classes-and-resources">New URI scheme for naming stored modules, classes, and resources</h3>
+<p>To address the above three problems a new URL scheme, <code>jrt</code>, can be used
+to name the modules, classes, and resources stored in a run-time image
+without revealing the internal structure or format of the image.</p>
+<p>A <code>jrt</code> URL is a hierarchical URI, per <a href="http://tools.ietf.org/html/rfc3986">RFC 3986</a>, with the
+syntax</p>
+<pre><code>jrt:/[$MODULE[/$PATH]]</code></pre>
+<p>where <code>$MODULE</code> is an optional module name and <code>$PATH</code>, if present, is
+the path to a specific class or resource file within that module.  The
+meaning of a <code>jrt</code> URL depends upon its structure:</p>
+<ul>
+<li>
+<p><code>jrt:/$MODULE/$PATH</code> refers to the specific class or resource file
+named <code>$PATH</code> within the given <code>$MODULE</code>.</p>
+</li>
+<li>
+<p><code>jrt:/$MODULE</code> refers to all of the class and resource files in the
+module <code>$MODULE</code>.</p>
+</li>
+<li>
+<p><code>jrt:/</code> refers to the entire collection of class and resource files
+stored in the current run-time image.</p>
+</li>
+</ul>
+<p>These three forms of <code>jrt</code> URLs address the above problems as follows:</p>
+<ol>
+<li>
+<p>APIs that presently return <code>jar</code> URLs now return <code>jrt</code> URLs.  The
+above invocation of <code>ClassLoader::getSystemResource</code>, <em>e.g.</em>, now
+returns the URL</p>
+<pre><code>jrt:/java.base/java/lang/Class.class</code></pre>
+<p>A built-in protocol handler for the <code>jrt</code> scheme ensures that the
+<code>getContent</code> method of such <code>URL</code> objects retrieves the content of
+the named class or resource file.</p>
+</li>
+<li>
+<p>Security-policy files and other uses of the <code>CodeSource</code> API can use
+<code>jrt</code> URLs to name specific modules for the purpose of granting
+permissions.  The elliptic-curve cryptography provider, <em>e.g.</em>, can
+now be identified by the <code>jrt</code> URL</p>
+<pre><code>jrt:/jdk.crypto.ec</code></pre>
+<p>Other modules that are currently granted all permissions but do not
+actually require them can trivially be de-privileged, <em>i.e.</em>, given
+precisely the permissions they require.</p>
+</li>
+<li>
+<p>A built-in <a href="http://docs.oracle.com/javase/8/docs/api/java/nio/file/spi/FileSystemProvider.html">NIO FileSystem provider</a> for the <code>jrt</code> URL
+scheme ensures that development tools can enumerate and read the
+class and resource files in a run-time image by loading the
+<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/file/FileSystem.html">FileSystem</a> named by the URL <code>jrt:/</code>, as follows:</p>
+<pre><code>FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+byte[] jlo = Files.readAllBytes(fs.getPath("modules", "java.base",
+                                           "java/lang/Object.class"));</code></pre>
+<p>The top-level <code>modules</code> directory in this filesystem contains one
+subdirectory for each module in the image.  The top-level <code>packages</code>
+directory contains one subdirectory for each package in the image,
+and that subdirectory contains a symbolic link to the subdirectory
+for the module that defines that package.</p>
+<p>For tools that support the development of code for JDK&#160;9 but
+which themselves run on JDK&#160;8, a copy of this filesystem
+provider suitable for use on JDK&#160;8 is placed in the <code>lib</code>
+directory of JDK&#160;9 run-time images, in a file named
+<code>jrt-fs.jar</code>.</p>
+</li>
+</ol>
+<p>(The <code>jrt</code> URL protocol handler does not return any content for URLs of
+the second and third forms.)</p>
+<h3 id="Build-system-changes">Build-system changes</h3>
+<p>The build system produces the new run-time image format described above,
+using the Java linker (<a href="//openjdk.java.net/jeps/282">JEP 282</a>).</p>
+<p>We took the opportunity here, finally, to rename the <code>images/j2sdk-image</code>
+and <code>images/j2re-image</code> directories to <code>images/jdk</code> and <code>images/jre</code>,
+respectively.</p>
+<h3 id="Minor-specification-changes">Minor specification changes</h3>
+<p><a href="//openjdk.java.net/jeps/162">JEP 162</a>, implemented in JDK 8, made a number of changes to
+prepare the Java&#160;SE Platform and the JDK for the modularization work
+described here and in related JEPs.  Among those changes were the removal
+of normative specification statements that require certain configuration
+files to be looked up in the <code>lib</code> directory of run-time images, since
+those files are now in the <code>conf</code> directory.  Most of the SE-only APIs
+with such statements were so revised as part of Java&#160;SE&#160;8, but
+some APIs shared across the Java&#160;SE and EE Platforms still contain
+such statements:</p>
+<ul>
+<li>
+<p><code>javax.xml.stream.XMLInputFactory</code> specifies
+<code>${java.home}/lib/stax.properties</code> (<a href="https://jcp.org/en/jsr/detail?id=173">JSR 173</a>).</p>
+</li>
+<li>
+<p><code>javax.xml.ws.spi.Provider</code> specifies
+<code>${java.home}/lib/jaxws.properties</code> (<a href="https://jcp.org/en/jsr/detail?id=224">JSR 224</a>).</p>
+</li>
+<li>
+<p><code>javax.xml.soap.MessageFactory</code>, and related classes, specify
+<code>${java.home}/lib/jaxm.properties</code> (<a href="https://jcp.org/en/jsr/detail?id=67">JSR 67</a>).</p>
+</li>
+</ul>
+<p>In Java SE 9, these statements no longer mandate the <code>lib</code> directory.</p>
+<h2 id="Testing">Testing</h2>
+<p>Some existing tests made direct use of run-time image internals (<em>e.g.</em>,
+<code>rt.jar</code>) or refer to system properties (<em>e.g.</em>, <code>java.ext.dirs</code>) that no
+longer exist.  These tests have been fixed.</p>
+<p>Early-access builds containing the changes described here were available
+throughout the development of the module system.  Members of the Java
+community were strongly encouraged to test their tools, libraries, and
+applications against these builds to help identify compatibility issues.</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p><a id="risks">The central risks of this proposal are ones of
+compatibility, summarized as follows:</a></p>
+<ul>
+<li>
+<p>A JDK image no longer contains a <code>jre</code> subdirectory, as noted above.
+Existing code that assumes the existence of that directory might not
+work correctly.</p>
+</li>
+<li>
+<p>JDK and JRE images no longer contain the files <code>lib/rt.jar</code>,
+<code>lib/tools.jar</code>, <code>lib/dt.jar</code>, and other internal JAR files, as
+noted above.  Existing code that assumes the existence of these files
+might not work correctly.</p>
+</li>
+<li>
+<p>The system properties <code>java.endorsed.dirs</code> and <code>java.ext.dirs</code> are no
+longer defined, as noted above.  Existing code that assumes these
+properties to have non-<code>null</code> values might not work correctly.</p>
+</li>
+<li>
+<p>The run-time system's dynamically-linked native libraries are always
+in the <code>lib</code> directory, except on Windows; in Linux and Solaris
+builds they were previously placed in the <code>lib/$ARCH</code> subdirectory.
+That was a vestigial remnant of images that could support multiple
+CPU architectures, which is no longer a requirement.</p>
+</li>
+<li>
+<p>The <code>src.zip</code> file is now in the <code>lib</code> directory rather than the
+top-level directory, and this file now includes one directory for
+each module in the image.  IDEs and other tools that read this file
+will need to be updated.</p>
+</li>
+<li>
+<p>Existing standard APIs that return <code>URL</code> objects to name class and
+resource files inside the run-time image now return <code>jrt</code> URLs, as
+noted above.  Existing code that expects these APIs to return <code>jar</code>
+URLs might not work correctly.</p>
+</li>
+<li>
+<p>The internal system property <code>sun.boot.class.path</code>
+<a href="//openjdk.java.net/jeps/261#Removed:-Bootstrap-class-path-options">has been removed</a>.  Existing code that depends upon this
+property might not work correctly.</p>
+</li>
+</ul>
+<ul>
+<li>
+<p>Class and resource files in a JDK image that were previously found in
+<code>lib/tools.jar</code>, and visible only when that file was added to the
+class path, are now visible via the system class loader or, in some
+cases, the bootstrap class loader.  The modules containing these
+files are not mentioned in the application class path, <em>i.e.</em>, in the
+value of the system property <code>java.class.path</code>.</p>
+</li>
+<li>
+<p>Class and resource files previously found in <code>lib/dt.jar</code> and visible
+only when that file was added to the class path are now visible via
+the bootstrap class loader and present in both the JRE and the JDK.</p>
+</li>
+<li>
+<p>Configuration files previously found in the <code>lib</code> directory,
+including the security policy file, are now located in the <code>conf</code>
+directory.  Existing code that examines or manipulates these files
+may need to be updated.</p>
+</li>
+<li>
+<p>The defining class loader of the types in some existing packages has
+changed.  Existing code that makes assumptions about the class
+loaders of these types might not work correctly.  The specific
+changes are enumerated in <a href="//openjdk.java.net/jeps/261#Class-loaders">JEP 261</a>.  Some of these changes
+are a consequence of the way in which components that contain both
+APIs and tools were <a href="//openjdk.java.net/jeps/200">modularized</a>.  The classes of such a
+component were historically split between <code>rt.jar</code> and <code>tools.jar</code>,
+but now all such classes are in a single module.</p>
+</li>
+<li>
+<p>The <code>bin</code> directory in a JRE image contains a few commands that were
+previously found only in JDK images, namely <code>appletviewer</code>, <code>idlj</code>,
+<code>jrunscript</code>, and <code>jstatd</code>.  As with the previous item, these changes
+are a consequence of the way in which components that contain both
+APIs and tools were modularized.</p>
+</li>
+</ul>
+<h2 id="Dependences">Dependences</h2>
+<p>This JEP is the third of four JEPs for <a href="//openjdk.java.net/projects/jigsaw/">Project Jigsaw</a>.  It depends
+upon <a href="//openjdk.java.net/jeps/201">JEP 201</a>, which reorganized the JDK source code into
+modules and upgraded the build system to compile modules.  It also
+depends upon earlier preparatory work done in <a href="//openjdk.java.net/jeps/162">JEP 162</a>,
+implemented in JDK 8.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

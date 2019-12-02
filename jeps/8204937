@@ -1,0 +1,540 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP draft: Type operator expressions in the JVM</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP draft: Type operator expressions in the JVM</h1><table class="head"><tr><td>Owner</td><td>John Rose</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Component</td><td>hotspot</td></tr><tr><td>Created</td><td>2018/06/13 06:48</td></tr><tr><td>Updated</td><td>2018/07/31 08:15</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8204937">8204937</a></td></tr></table><div class="markdown"><p>DRAFT DRAFT DRAFT</p>
+<h2 id="Summary">Summary</h2>
+<p>Extend the space of JVM type descriptors to include <em>type operators</em>,
+which are symbolic references to factory-made types.  This is a
+separable component of template classes.</p>
+<h2 id="Goals">Goals</h2>
+<p>Allow JVM type descriptors (for methods, fields, and constants) to
+make new distinctions between types not already present in the system
+of classes, primitives, and arrays.  Support future translation
+strategies which must make distinctions between different usages of
+the same basic JVM type, or which must provide a way to specify
+factory input to a class factory or template species factory.</p>
+<h2 id="Non-Goals">Non-Goals</h2>
+<p>This work is a low-level VM hook, like <code>invokedynamic</code>, not a language
+feature like lambdas.  As such, it will not propose any specific
+mechanism for representing parameterized types; it will only provide a
+necessary "hook" to name such types.  It will not provide a new way to
+define classes; it will only provide a way to associate such classes
+with a public symbolic descriptor.  It will not define any language
+features, nor translation strategies.  It will not attempt to extend,
+conflict, or rationalize the current syntax for <em>static</em> generic
+signatures (JVMS 4.7.9.1).</p>
+<h2 id="Success-Metrics">Success Metrics</h2>
+<p>Experimental translation strategies can be created which distinguish
+<code>List&lt;Integer&gt;</code> from <code>List&lt;String&gt;</code> in classfiles.  Experimental class
+templating mechanisms will be able to create species that are
+denotable from JVM type descriptors.  Designers of language features
+and translation strategies will be able to vary the encodings of new
+source-level types by changing a bootstrap method, rather than
+changing the JVM's core logic.  Security proofs will be easier to
+construct, given the black-box nature of type operators, decoupled
+from the complex details of templates and other advanced language
+features.  Experimental migration strategies can be tested without
+fully instantiating new language features, since new place-holder
+types easily be posited by simple changes in javac.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>Descriptors which can denote complex type instances, such as
+<code>List&lt;int&gt;</code> or <code>List&lt;ComplexDouble&gt;</code> are a necessary component of
+"reified generics", which in turn are a goal of Project Valhalla.  If
+a value type is to "code like a class, work like an int", then it
+seems necessary to be able to denote container types which are
+customized to that value type, rather than being erased to <code>Object</code>
+like a reference type.</p>
+<h2 id="Description">Description</h2>
+<p>We will extend the JVM's fundamental syntax for field descriptors,
+once for all future type schemes (we hope!).  The syntax will allow
+any single type descriptor to be modified by an optional suffix, which
+has the effect of constraining the original type descriptor in an ad
+hoc, programmable manner.  The combination of the original type
+descriptor and the suffix is called a <em>type operator expression</em>.</p>
+<p>The resolvable semantic elements of this expression are:</p>
+<ul>
+<li><em>carrier type:</em> the original type descriptor (before the suffix)</li>
+<li><em>type operator name:</em> a resolved class name and/or simple identifier</li>
+<li><em>type arguments:</em> one or more type descriptors and/or other constants</li>
+</ul>
+<p>All of the above semantic elements are optional; any may be omitted.
+If the type operator name is omitted, it will be derived from the
+carrier type, as in the case of a template class whose top type is the
+unspecialized class itself.  If the carrier type is omitted, it is
+defined to be <code>Object</code>, the customary carrier for untyped values in
+the JVM.</p>
+<p>For example, here are some potential use cases for type operator
+expressions:</p>
+<ul>
+<li>
+<p><strong>reified generics:</strong> The carrier type is <code>Map</code>, the type operator
+name is omitted, and the arguments are <code>int</code> and <code>String</code>.
+The whole expression denotes <code>Map&lt;int,String&gt;</code>.</p>
+</li>
+<li>
+<p><strong>wildcards:</strong> The carrier type is <code>List</code>, the type operator name
+is omitted, and the argument is the symbol (not type) <code>?</code>.  The
+whole expression denotes <code>List&lt;?&gt;</code>, as distinct from raw <code>List</code>.
+Given that wildcards are a special case of a concept called
+"existential types", it is notable that type operator expressions
+provide a way to wrap any bounded type (a carrier type) inside a
+symbolically labeled existential type.</p>
+</li>
+<li>
+<p><strong>non-nullable references:</strong> The carrier type is <code>String</code> and the
+type operator is <code>!</code> (or <code>java/lang/NotNull</code>) with no arguments.
+The whole expression denotes <code>String!</code>, a non-nullable string
+reference.</p>
+</li>
+<li>
+<p><strong>nullable values:</strong> The omitted carrier type defaults to <code>Object</code>
+and the type operator is <code>?</code> (or <code>java/lang/Nullable</code>) with one
+argument <code>int</code>.  The whole expression denotes <code>int?</code>, a nullable
+integer.</p>
+</li>
+<li>
+<p><strong>reified intersections:</strong> The carrier type is some interface <code>I</code>
+and the type operator is <code>&amp;</code> with a type argument <code>J</code>.  The whole
+expression denotes the intersection type <code>I&amp;J</code>.</p>
+</li>
+<li>
+<p><strong>reified unions:</strong> The omitted carrier type defaults to <code>Object</code>
+and the type operator name is <code>|</code> with two or more type arguments
+<code>I</code>, <code>J</code>.  The whole expression denotes the intersection type
+<code>I|J</code>.</p>
+</li>
+<li>
+<p><strong>fixed-sized arrays:</strong> The carrier type is an array type
+<code>double[]</code> and the type operator name is <code>Array.length</code> with one
+argument <code>5</code>.  The whole expression denotes <code>double[5]</code>, an
+length-constrained array.</p>
+</li>
+<li>
+<p><strong>range constraints:</strong> The carrier type is a primitive type <code>int</code>
+and the type operator name is <code>Integer.interval</code> with arguments
+<code>ge</code> and <code>0</code>.  The whole expression denotes <code>int</code> constrained to
+non-negative values.</p>
+</li>
+<li>
+<p><strong>null and notreached type tokens:</strong> The omitted carrier type
+defaults to <code>Object</code> and the type operator is <code>java/lang/Null</code> or
+<code>java/lang/NotReached</code>.  The whole expression denotes a reference
+constrained to be null, or a reference that is never delivered to
+its consumer (i.e., the constraint always fails).</p>
+</li>
+</ul>
+<p>The concrete grammar for such descriptors, including new productions,
+will be something like the following:</p>
+<pre><code>MethodType: '(' (FieldType)* ')' (FieldType | 'V')
+FieldType: PrimitiveType | ArrayType | ObjectType | *TypeExpr
+PrimitiveType: 'B' | 'C' | 'D' | 'F' | 'I' | 'J' | 'S' | 'Z'
+ArrayType: '[' (PrimitiveType | ArrayType | ObjectType)
+ObjectType: 'L' ClassName ';'
+*TypeExpr: TypeCarrier '/' (TypeOpName)? (';' | '[' (TypeArg)+ ']' )
+*TypeCarrier: FieldType | `L`
+*TypeOpName: '$' Identifier | ('L' ClassName) (';' '$' Identifier)?
+*TypeArg: FieldType | MethodType | NameArg | NumberArg
+*NumberArg: ('-')? DigitNotZero (Digit)* ';' | '0' ';'
+*NameArg: '$' Identifier ';'
+Identifier: (any character except '.' ';' '[' '/' '&lt;' '&gt;' ':')*</code></pre>
+<p>This grammar is built on slightly edited form of the one in JVMS 4.3.
+The new productions which support type operators are <code>TypeExpr</code>,
+<code>TypeCarrier</code>, <code>TypeOpName</code>, <code>TypeArg</code>, <code>NumberArg</code>, and <code>NameArg</code>.
+(They are starred.)  The production for <code>Identifier</code> is taken from
+JVMS 4.7.9.1.</p>
+<p>A <code>TypeExpr</code> denotes a fresh type which is treated by the JVM as
+distinct from any other type with a different descriptor string,
+including primitives, arrays, classes, and other <code>TypeExpr</code>s.</p>
+<p>The syntactic components of a <code>TypeExpr</code> are a <code>TypeCarrier</code>, a
+<code>TypeOpName</code>, and a sequence of zero or more <code>TypeArg</code>s.  These denote
+the resolvable semantic components of a resolved type operator
+expression, which are respectively the <em>carrier type</em>, the <em>type
+oeprator name</em>, and the <em>type arguments</em>.</p>
+<p>Two <code>TypeExpr</code>s with exactly the same spelling denote the same type.
+Any <code>FieldType</code> which is a proper prefix of another <code>FieldType</code> is a
+proper supertype of the longer <code>FieldType</code>.  Other than those
+relations, the JVM does not recognize any equivalences or relations
+between types with differently spelled <code>TypeExpr</code>s.</p>
+<p>In particular, the verifier treats every distinct type operator
+expression as a generic "black box" type, which starts with the
+carrier type and constrains it in some way, unknowable to the
+verifier.</p>
+<p>Thus, the verifier will allow values of the type operator type to
+implicitly convert to its carrier type, or any supertypes of its
+carrier type, but it will not allow such values to be converted to any
+other type.  Also, the verifier will not convert implicitly from a
+carrier type to a type operator type built on top of that carrier
+type; such conversions must be performed by explicit bytecode
+execution.</p>
+<p>Here are some syntax examples of descriptors containing type operator
+expressions (along with some hypothetical meanings):</p>
+<ul>
+<li><code>Ljava/util/Map;/[ID]</code> (the type species <code>Map&lt;int,double&gt;</code>)</li>
+<li><code>Ljava/util/List;/[I]</code> (the type species <code>List&lt;int&gt;</code>)</li>
+<li><code>Ljava/util/List;/[[I]</code> (the type species <code>List&lt;int[]&gt;</code>)</li>
+<li><code>Ljava/util/List;/[$wild;]</code> (the wildcard species of <code>List</code>)</li>
+<li><code>Ljava/util/List;/$Wild;</code> (wildcard alternate spelling)</li>
+<li><code>Ljava/util/List;/$Wild[Ljava/lang/Object;]</code> (wildcard alternate spelling)</li>
+<li><code>[D/$length[5;]</code> (fixed-sized array <code>double[5]</code>, not array of length-5 <code>double</code>)</li>
+<li><code>I/$interval[$ge;0;]</code> (<code>int</code> whose value is non-negative)</li>
+<li><code>L/Ljava/util/TupleTemplate[Ljava/lang/String;I]</code> (a pair of <code>String</code> and <code>int</code>)</li>
+<li><code>L/Ljava/util/TupleTemplate[FFF]</code> (a triple of <code>float</code>s)</li>
+<li><code>Ljava/lang/String;/$N;</code> (the <code>N</code> variant of <code>String</code>)</li>
+<li><code>(Ljava/lang/String;)Ljava/lang/String;/$N;</code> (method wrapping an <code>N-String</code>)</li>
+<li><code>(Ljava/lang/String;/$N;)Ljava/lang/String;</code> (method unwrapping an <code>N-String</code>)</li>
+<li><code>L/;</code> (shortest possible expression, a trivially constrained <code>Object</code>)</li>
+<li><code>LFoo;/;</code> (carrier type only, with trivial modification)</li>
+<li><code>L/$N;</code> (type operator only, <code>N-Object</code>)</li>
+<li><code>L/[$Arg;]</code> (lone argument with no type operator: no hypothetical meaning)</li>
+<li><code>L/LFoo[LBar;/$N;]</code> (the type species <code>Foo&lt;N-Bar&gt;</code>)</li>
+<li><code>L/LFoo[LBar;]/$N;</code> (the type species <code>N-Foo&lt;Bar&gt;</code>)</li>
+<li><code>[D/$length[5;]/$N;</code> (<code>N</code> variant of fixed-sized array <code>double[5]</code>)</li>
+<li><code>[D/$N/$length[5;];</code> (fixed-sized variant of <code>N</code>-variant of <code>double[]</code>)</li>
+</ul>
+<p>The last four examples show that type operator expressions can nest.
+For example, <code>L/LFoo[LBar;/$N;]</code> denotes a type which is derived first
+from <code>Bar</code> by modifying it with <code>N</code>, then passing the modified type to
+the parameterized type constructor <code>Foo</code>.  (The carrier type of the
+result is <code>Object</code>, not <code>Foo</code>.)  The last two examples show that type
+expressions can nest by piling up several <code>TypeOp</code> suffixes.  The
+order of these suffixes is significant purely because the descriptor
+strings are different: <code>I/$J;/$K;</code> is a different verifier type from
+<code>I/$K;/$J;</code> even if the computational effects of the <code>J</code> and <code>K</code> type
+modifiers happen to commute.</p>
+<p>The JVM will accept type operator expressions, structured as
+<code>TypeExpr</code> strings, in the following contexts:</p>
+<ul>
+<li>class field types -- allocated as "black box" references</li>
+<li>class method types -- treated as "black box" arguments and returns</li>
+<li><code>CONSTANT_NameAndType</code> types -- resolvable black box types (field or method)</li>
+<li><code>CONSTANT_Class</code> names -- resolvable type expressions with programmed resolution</li>
+<li><code>instanceof</code> operands (via <code>CONSTANT_Class</code>) -- resolvable types with programmed behavior</li>
+<li><code>checkcast</code>, <code>anewarray</code> operands -- similar to <code>instanceof</code></li>
+<li><code>invokevirtual</code> receivers (via <code>CONSTANT_Methodref</code>) -- programmably resolved methods</li>
+<li><code>getstatic</code>, <code>putfield</code>, etc. -- similar to <code>invokevirtual</code></li>
+</ul>
+<p>Normally, descriptor syntaxes are disjoint from the syntax of class
+names that appear with <code>CONSTANT_Class</code> constants.  For example, the
+descriptor <code>I</code> is very different from the class name <code>I</code>.  However, in
+some cases the syntaxes can overlap; the class name of an array is the
+same as its descriptor, including the trailing semicolon.  We use this
+trick with type operator expressions also, so that the same type
+operator expression can be inserted directly into a descriptor, and
+<em>also</em> used as a class name.</p>
+<p>A class name string can be unambiguously distinguished as a type
+operator expression in three steps:</p>
+<ul>
+<li>check if the last character is <code>]</code> or ';' (otherwise, fail)</li>
+<li>if the string begins with <code>[</code>, parse the array type name and look for a following <code>/</code></li>
+<li>otherwise, scan the string to see if the character <code>;</code> or <code>[</code> occurs</li>
+</ul>
+<p>If the first step and any of the remaining steps pass, then the class
+name string is proven <em>not</em> to be a plain class name or an array class
+name, and may be <em>assumed</em> to be a type operator expression (or else
+an erroneous input).  Otherwise it can be <em>assumed</em> to be a plain
+class name (or array class name).  Another simpler technique (though
+perhaps a slower one) is simply to parse the class name string as a
+simple class or array name, and see if the end is reached, or else the
+next remaining character is slash <code>/</code> introducing a type operator
+suffix; in that case the second step must be executed first.</p>
+<p>The second and third steps are expensive but necessary, but can be
+deferred until after the first step, which is cheap.  Note that the
+JVMS specifies that a class name may not contain an open bracket <code>[</code>
+unless it is an array type name, and in that case the bracket will not
+follow a package separator <code>/</code>.  Therefore the class name grammar is
+not ambiguous, even after type operator expressions are added.</p>
+<p>Some operations on a type expression require access to the inside of
+the black box.  These include loading a reflective constant for a type
+expression, making a type test (<code>checkcast</code>), making an array type
+whose component is the type expression, calling a method on an
+instance whose verified type is a type expression, etc.</p>
+<p>The built-in resolution mechanism for type operator expressions will
+perform the following jobs:</p>
+<ul>
+<li>Derive a bootstrap meethod ("BSM") from the <code>TypeCarrier</code> and <code>TypeOpName</code>.</li>
+<li>Call the BSM on the <code>TypeArg</code>s, suitably parsed and reified.</li>
+<li>(Also pass relevant context, such as the current class, the carrier, and the operator name.)</li>
+<li>Receive in reply from the BSM a <em>resolved type descriptor</em> for the type.</li>
+<li>Permanently and atomically record that descriptor for that exact type expression.</li>
+<li>Use the descriptor to derive the various behaviors required for that type.</li>
+</ul>
+<p>The details of these steps and the associated APIs are defined
+elsewhere, and may be extended over time.  See below for a sketch of
+resolved type descriptors and their behavior.  Type operators are
+named by an optional class and optional identifier.  If the class is
+present, it will help determine the bootstrap method; for example, if
+it is a template, the template will be specialized to the given
+arguments.  If the identifier only is present, the BSM will be a
+centralized one which assigns fixed standard meanings to a small
+number of names.</p>
+<p>When value types become available, type operator expressions will also
+be allowed to interoperate with value types.  A given type operator
+expression will always be unambiguously assigned a kind, as a value or
+a reference.  If other kinds are invented, type operator expressions
+will be "kinded" in the same way.  For example, the '$' could be
+followed by a kind character, or additional characters besides '$'
+could be assigned to introduce type operator expressions of distinct
+various kinds.</p>
+<p>The descriptor will not <em>be</em> a <code>Class</code> but will have its own
+reflective type and API.  The descriptor will <em>report</em> a concrete
+carrier <code>Class</code> which is compatible with all values described by the original
+type operator expression.  The BSM for a type operator may return a
+resolved type descriptor which reports only <code>Object</code> as its carrier
+class, or it may spin and load a new anonymous class, and use that.
+In either case, the JVM will be able to use the carrier class as a
+safe supertype for the type operator expression.  The JVM will <em>not</em>
+freely convert <em>from</em> the carrier class <em>to</em> the type operator type,
+except via a <code>checkcast</code> bytecode, whose behavior is under the control
+of the resolved type descriptor selected by the BSM.</p>
+<p>Note that the type operator expression language is self-contained and
+pre-normalized.  It does not make references into any constant pool,
+nor is there any "calculus" for proving that two distinct type
+expressions denote the same type.</p>
+<p>The API for resolved type descriptors will be something like this:</p>
+<pre><code>interface ResolvedTypeDescriptor&lt;T extends C, C&gt; {
+  Class&lt;T&gt; resolvedType();
+  Class&lt;C&gt; carrierType();
+  static &lt;T&gt; ResolvedTypeDescriptor&lt;T,?&gt; of(Class&lt;T&gt; clazz);
+
+  // These defaults may be wired into the JVM bytecodes if desired.
+  default boolean isInstance(C x) {
+    if (this != of(carrierClass()))  throw subclassResponsibility();
+    return carrierClass().isInstance(x);
+  }
+  default boolean isAssignableFrom(ResolvedTypeDescriptor&lt;?,?&gt; subDesc) {
+    if (this != of(carrierClass()))  throw subclassResponsibility();
+    return carrierClass().isAssignableFrom(subDesc.resolvedType());
+  }
+  default T cast(C x) {
+    if (this != of(carrierClass()))  throw subclassResponsibility();
+    return carrierClass().cast(x);
+  }
+  default T newArray(int length) {
+    if (this != of(carrierClass()))  throw subclassResponsibility();
+    return java.lang.reflect.Array.newInstance(carrierClass().getComponentType(), length);
+  }
+  default MethodHandle findVirtual(Lookup lookup, String name, MethodTypeDescriptor type) {
+    if (this != of(carrierClass()))  throw subclassResponsibility();
+    return lookup.findVirtual(carrierClass(), name, type.asMethodType());
+  }
+  private static RuntimeException subclassResponsibility() {
+    throw new IllegalArgumentException();
+  }
+  /**
+   * Initial entry point called from the VM when a type operator
+   * expression must be resolved.
+   */
+  static &lt;C&gt; ResolvedTypeDescriptor&lt;?,C&gt; initialMetafactory(
+    Lookup lookup, TypeDescriptorBootstrapCallInfo&lt;C&gt; bci
+  ) throws BootstrapMethodError {
+    String descriptor = bci.invocationName();
+    Class&lt;C&gt; carrierType = bci.invocationType();
+    Class&lt;?&gt; typeOpClass = bci.typeOperatorClass();
+    String typeOpName = bci.typeOperatorName();
+    List&lt;Object&gt; typeOpArgs = bci.asList();
+    ...
+  }
+}</code></pre>
+<p>It is an open question whether any of the <code>ResolvedTypeDescriptor</code> API should
+be merged into the <code>Class</code> API.  That decision could create a set of
+secondary "crasses" (runtime type quasi-classes) which do not directly
+represent a classfile, but instead represent a type somehow derived
+from or related to one or more classfiles.  There is some precedent
+for this, since the existing <code>Class</code> instances for primitives and
+<code>void</code>, and for arrays, may be viewed as "crasses".  In that case, the
+<code>carrierClass</code> API would probably be named <code>getPrimaryClass</code>, and
+would map a "crass" to its nearest proper supertype (or <code>Object</code> or an
+interface), and there would be a new query <code>isTypeExpression</code>.</p>
+<p>Keeping the <code>ResolvedTypeDescriptor</code> API disjoint from the legacy
+<code>Class</code> API would be cleaner, but would also require us to duplicate
+or extend many APIs, such as <code>Lookup</code>, in which <code>Class</code> is a proxy for
+a JVM type descriptor.  An interface <code>TypeDescriptor</code> (proposed by the
+<code>Constable</code> project) may give us a hook to generify those APIs, rather
+than brutally duplicating them, and without introducing "crasses".</p>
+<h2 id="Alternatives">Alternatives</h2>
+<p>This design can be viewed as a refinement of an earlier experimental
+mechanism called "class-dynamic", which decoded a sub-language from
+class name strings and spun classfiles on the fly in response to
+resolution requests.  That mechanism funneled the type operator
+expression through the class name, which is similar to the above
+design, but makes no distinction between a regular class reference and
+a type operator expression.</p>
+<p>The integration of type operators into the JVM seems to be cleaner if
+the distinction between regular named classes and type expressions is
+explicit from the beginning.  In addition, we do not want to commit to
+spinning classfiles in response to type operators; some use cases of
+type operators intentionally alias regular classes, but with some
+extra "annotation" payload injected.  This cannot be done in a
+framework which confuses class names with type expressions.</p>
+<p>When we design template classes, we could attempt to add a
+purpose-built descriptor syntax designed expressly for templates.
+However, a design like the one in this JEP would be needed anyway.</p>
+<p>We could try to live without reified generics altogether, in which
+case the existing type descriptors would be serviceable.</p>
+<h2 id="Testing">Testing</h2>
+<p>// What kinds of test development and execution will be required in order
+// to validate this enhancement, beyond the usual mandatory unit tests?</p>
+<h2 id="Risks-and-Assumptions">Risks and Assumptions</h2>
+<p>// Describe any risks or assumptions that must be considered along with
+// this proposal.</p>
+<h2 id="Dependencies">Dependencies</h2>
+<p>// Describe all dependencies that this JEP has on other JEPs, JBS issues,
+// components, products, or anything else.</p>
+<h4 id="Design-FAQ">Design FAQ</h4>
+<p>DRAFT DRAFT DRAFT
+<em>The following section will be part of the comments, not the JEP proper.</em></p>
+<ul>
+<li>
+<p><strong>You didn't use dot <code>.</code> for type operator syntax; why not?</strong>
+Because in some pathways, descriptors flow through class names, and
+slashes are converted to dots and vice versa.  Any distinction
+between slash and dot would be lost at that point, without
+complicated context-sensitive rules for dot-preservation or
+dot-recovery.</p>
+</li>
+<li>
+<p><strong>That grammar is complicated: Everything seems optional. Why not
+get rid of some optionality?</strong> Briefly, each optionality is
+motivated as follows.  The <code>TypeCarrier</code> could be removed in favor
+of making it always <code>Object</code>, but many use cases for type operators
+work within a static bound type, and it is wasteful not to allow
+that static bound to appear as a true verifier type.  Given a
+<code>TypeCarrier</code>, it makes sense that the actual type operator should
+sometimes be derived directly from the carrier and other types be a
+separately specified parameter, hence the optionality of the
+<code>TypeOpName</code>.  But if the <code>TypeOpName</code> is unrelated to the carrier
+type, the carrier is often <code>Object</code>, hence a special abbreviation
+for that common case that makes the <code>TypeCarrier</code> optional.  So the
+carrier can be either identical with the type operator, or
+completely separate.  The argument list is optional since some type
+operators inherently require arguments while some are "just the
+mode" (as with "not null").  The trailing semicolon <code>;</code> for missing
+a <code>TypeArg</code> list is a judgment call; it could be denoted instead by
+<code>[]</code>, but that seems egregiously noisy for a simple modifier like
+"not null", and requiring a non-empty <code>TypeArg</code> list in the brackets
+adds trivial complexity.</p>
+</li>
+<li>
+<p><strong>That grammar is complicated: Why are there different ways to
+denote a type operator?</strong> Dropping the <code>TypeOpName</code> allows the
+carrier and the type operator to come from the same class, as noted
+above, while allowing the type operator to be a fully resolved class
+name give obvious modularity benefits.  In the latter case allowing
+an additional name to select a class member gives a way for one
+class to expose a library of type operators. The final case, of a
+simple identifier, allows either the carrier type to selected a
+class member (or "mode" argument such as "wildcarded"), or the
+system to globally define a handful of type operators outside of the
+package scoping system: <code>!</code> (for "not null") and <code>?</code> (for "maybe
+null") are two such likely global operators.</p>
+</li>
+<li>
+<p><strong>That grammar is complicated: You allow too many kinds of type
+operator arguments. Why not just have types as parameters?</strong> Type
+arguments are clearly all you need to upgrade today's generics in
+place, to reify their types inside of descriptors.  But this is
+short-sighted, since C++ generics allow many other kinds of
+arguments.  The grammar chosen above allows specification a
+reasonable array of non-type arguments corresponding to common use
+cases of template arguments in C++ and other languages.  After
+types, strings are the obvious next candidate, and indeed strings
+can denote anything else we need, and are agreeably fundamental in
+the JVM.  We threw in <code>MethodType</code> because that is a fundamental
+construct in the JVM, and shouldn't be passed through a stringy
+encoding channel.  We threw in <code>NumberArg</code> because small integral
+numbers are fundamental in various use cases, such as definite
+arrays.  All of the above correspond to natively encoded constant
+pool entries (except integers which are larger than a <code>long</code>).</p>
+</li>
+<li>
+<p><strong>You forget <code>MethodHandle</code> and <code>Double</code> arguments, aren't those
+fundamental also?</strong> Yes, they are, but they can be readily encoded
+to bootstrap methods using combinations of the other argument types,
+and designing a hardwired stringy encoding for them would be
+needlessly complex.  For a method handle, just pass several
+arguments denoting its class, name, and type, with maybe a ref-kind
+also.  For a floating point number, consider using a string
+containing its hex-float representation, to avoid problems with
+rounding and ambiguity.</p>
+</li>
+<li>
+<p><strong>Those identifier strings are useless without a way to quote the
+illegal characters; why not have strings with proper quoting?</strong> The
+limitations on <code>TypeArg</code> strings are the same as those on class
+names, and there are standard systems (such as the "Symbolic
+Freedom" encoding) for representing the handful of illegal
+characters using escape sequences.  Bootstrap methods which need
+general strings should use such a scheme.  This is much easier than
+somehow telling the JVM it must start allowing hitherto "dangerous
+characters" in small parts of the descriptor grammar.</p>
+</li>
+<li>
+<p><strong>Constrained primitive types, seriously?</strong> An earlier version of
+the grammar assumed that the only carrier type was <code>Object</code>,
+allowing the "head" of the type operator expression to be type
+operator name (such as a template class).  This had two major
+downsides: First, it didn't capture the fact that a template might
+well be the supertype of all its instances; this is certainly true
+for containers like <code>List&lt;int&gt;</code>; throwing away that type bound means
+more checkcast bytecodes to restore it in method code, which seems a
+sorry waste.  Second, the <code>L</code> descriptor letter might be augmented
+(at some point) by additional classy descriptors (such as the <code>Q</code>
+descriptor of the "minimal value type" prototype).  Allowing carrier
+types to be any pre-existing verifier types seems prudent.  Given
+that, the primitive types and arrays come in pretty much "for free",
+although it would be reasonable to disallow constrained primitives
+if that turns out to be hard to implement, and add them in later
+when primitives are unified more fully with other types.</p>
+</li>
+<li>
+<p><strong>Why doesn't the <code>ArrayType</code> production mention <code>FieldType</code> any
+more?</strong> The array type syntax is our sole legacy syntax that is
+similar to a type operator.  From a prior component type it creates
+a complex new array object type.  We don't want to pretend that
+there is a way to customize that array object type by adding
+arbitrary "tweaks" to its component type -- it is hard enough to
+manage constrained scalar types without cutting them into the "guts"
+of the JVM's built-in array object mechanism.  We take the simpler
+choice of allowing array instances to be constrained without asking
+questions about what is inside them.  When arrays are virtualized
+(made instances of interfaces) then we can fully nest constraints
+within array component types, but not until then.</p>
+</li>
+</ul>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169;  Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

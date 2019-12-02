@@ -1,0 +1,315 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>Using JVM and javac options with jtreg</title><link rel="shortcut icon" href="../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../page.css" /><script type="text/javascript" src="../page.js"><noscript></noscript></script><style type="text/css">
+/**/
+    dd { margin-left: 1.5em; }
+    dd ul li { margin-left: 0; }
+    dt { font-style: oblique; }
+    pre { background-color:lightyellow; border:1px solid; margin:0 10px; padding:5px; }
+    table { background-color:lightyellow; border-width:1px; border-style: solid; border-collapse:collapse }
+    table th { background-color:lemonchiffon; }
+    table th,td { border: 1px solid; padding: 2px; }
+/**/
+</style></head><body><div id="main">
+<h1>Using JVM and javac options with jtreg</h1>
+<p>jtreg provides a number of command line options which specify
+options to be used when running java and javac commands. These
+options are available in shell scripts (as environment variables)
+and in Java code (as system properties) so that these values can be
+correctly propagated to child processes.</p>
+<ul>
+<li><a href="#cmdLineOpts">Environment Variables and System
+Properties for Command Line Options</a></li>
+<li><a href="#moreOpts">Additional environment variables and system
+properties</a></li>
+<li><a href="#run">Running JDK and JRE commands from within a
+test</a></li>
+</ul>
+<h2><a name="cmdLineOpts" id="cmdLineOpts">Environment Variables
+and System Properties for Command Line Options</a></h2>
+<p>The following table identifies which options affect the use of
+java and javac commands, and the corresponding environment
+variables and system properties for each option.</p>
+<table summary="table of options and corresponding environment variables and system properties" cellpadding="2">
+<tr>
+<th>jtreg Command Line Options</th>
+<th>Affects javac</th>
+<th>Affects java</th>
+<th>Environment Variable<br />
+(in shell scripts)</th>
+<th>System Property<br />
+(in java code)</th>
+</tr>
+<tr>
+<td><code>-agentlib*</code> <code>-agentpath*</code>
+<code>-classic</code> <code>-client</code> <code>-D*</code>
+<code>-d32</code> <code>-d64</code> <code>-da</code>
+<code>-disableassertions</code>
+<code>-disablesystemassertions</code> <code>-dsa</code>
+<code>-ea</code> <code>-enableassertions</code>
+<code>-enablesystemassertions</code> <code>-esa</code>
+<code>-green</code> <code>-hotspot</code> <code>-javaagent</code>
+<code>-native</code> <code>-server</code> <code>-X*</code>
+<code>-Xbootclasspath*</code> <code>-Xcomp</code>
+<code>-Xint</code> <code>-Xm*</code> <code>-Xmixed</code>
+<code>-Xms*</code> <code>-XX*</code></td>
+<td colspan="4" style="background-color:oldlace">Equivalent
+to:<br />
+<code>-vmoption:</code><i>option</i></td>
+</tr>
+<tr>
+<td><code>-vmoptions:</code>"<i>option1</i> <i>option2</i>
+<i>option3</i> <i>...</i>"</td>
+<td colspan="4" style="background-color:oldlace">Equivalent
+to:<br />
+<code>-vmoption:</code><i>option1</i>
+<code>-vmoption:</code><i>option2</i>
+<code>-vmoption:</code><i>option3</i> <i>...</i></td>
+</tr>
+<tr>
+<td rowspan="2"><code>-vmoption:</code><i>option</i></td>
+<td rowspan="2">
+<center>YES</center>
+</td>
+<td rowspan="2">
+<center>YES</center>
+</td>
+<td>TESTVMOPTS</td>
+<td>test.vm.opts</td>
+</tr>
+<tr>
+<td>TESTTOOLVMOPTS<br />
+Each option is automatically prefixed with -J</td>
+<td>test.tool.vm.opts<br />
+Each option is automatically prefixed with -J</td>
+</tr>
+<tr>
+<td><code>-javaoptions:</code>"<i>option1</i> <i>option2</i>
+<i>option3</i> <i>...</i>"</td>
+<td colspan="4" style="background-color:oldlace">Equivalent
+to:<br />
+<code>-javaoption:</code><i>option1</i>
+<code>-javaoption:</code><i>option2</i>
+<code>-javaoption:</code><i>option3</i> <i>...</i></td>
+</tr>
+<tr>
+<td><code>-javaoption:</code><i>option</i></td>
+<td>
+<center>NO</center>
+</td>
+<td>
+<center>YES</center>
+</td>
+<td>TESTJAVAOPTS</td>
+<td>test.java.opts</td>
+</tr>
+<tr>
+<td><code>-javacoptions:</code>"<i>option1</i> <i>option2</i>
+<i>option3</i> <i>...</i>"</td>
+<td colspan="4" style="background-color:oldlace">Equivalent
+to:<br />
+<code>-javacoption:</code><i>option1</i>
+<code>-javacoption:</code><i>option2</i>
+<code>-javacoption:</code><i>option3</i> <i>...</i></td>
+</tr>
+<tr>
+<td><code>-javacoption:</code><i>option</i></td>
+<td>
+<center>YES</center>
+</td>
+<td>
+<center>NO</center>
+</td>
+<td>TESTJAVACOPTS</td>
+<td>test.compiler.opts</td>
+</tr>
+</table>
+<h3>Notes</h3>
+<dl>
+<dt>jtreg Command Line Options</dt>
+<dd>
+<p>The options in the first row of the table are just supported for
+backwards compatibility. In general, direct use of these options is
+discouraged in favor of using the more explicit form
+<code>-vmoption:</code><i>option</i>.</p>
+</dd>
+<dt>Affects javac</dt>
+<dd>
+<p>If "yes", then the option will affect direct use of the Java
+compiler via the <code>@build</code> and <code>@compile</code>
+tags. In addition, it would typically be appropriate to honor the
+option when starting the Java compiler, javac, in a subprocess,
+such as in a shell test or in Java code.</p>
+</dd>
+<dt>Affects java</dt>
+<dd>
+<p>If "yes", then the option will affect direct use of the Java
+runtime via the <code>@run&#160;main</code> or
+<code>@run&#160;applet</code> tags. In addition, it would typically
+be appropriate to honor the option when starting a Java virtual
+machine in a subprocess, such as in a shell test or in Java
+code.</p>
+</dd>
+<dt>Environment Variables</dt>
+<dd>
+<p>When executing a shell test, jtreg will make the various
+different groups of options available in environment variables. In
+general, it is typically appropriate to progagate these options to
+any JDK tools or virtual machines that may be invoked from the
+shell test.</p>
+<p>The environment variables are <i>not</i> set when executing the
+actions other than <code>@run&#160;shell</code>.</p>
+</dd>
+<dt>System Property</dt>
+<dd>
+<p>When executing Java code, (i.e. with
+<code>@run&#160;main</code>, <code>@run&#160;compile</code> or
+<code>@run&#160;applet</code>) jtreg will make the various
+different groups of options available in system properties. In
+general, it is typically appropriate to propagate these options to
+any JDK tools or virtual machines that may be invoked from the Java
+code.</p>
+</dd>
+</dl>
+<p>All file system paths contained within these environment
+variables and system properties will be absolute paths.</p>
+<h2><a name="moreOpts" id="moreOpts">Additional environment
+variables and system properties</a></h2>
+<table summary="table of addition environment variables and system properties" cellpadding="2">
+<tr>
+<th>Environment Variable</th>
+<th>System Property</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>TESTJAVA</td>
+<td>test.java</td>
+<td>The directory containing the JDK or JRE to be tested. This is
+typically specified on the command line with either the
+<code>-jdk:</code><i>dir</i> or <code>-testjdk:</code><i>dir</i>
+options.</td>
+</tr>
+<tr>
+<td>COMPILEJAVA</td>
+<td>compile.java</td>
+<td>The directory containing the JDK to use to compile code when a
+JRE is being tested: i.e. when TESTJAVA just contains a JRE. This
+is either specified on the command line with the
+<code>-compilejdk:</code><i>dir</i> option, or defaults to TESTJAVA
+if the option is not given.</td>
+</tr>
+<tr>
+<td>TESTSRC</td>
+<td>test.src</td>
+<td>The directory containing the defining file for the test. The
+defining file is the file containing the test description: the
+comment beginning <code>@test ...</code></td>
+</tr>
+<tr>
+<td>TESTSRCPATH</td>
+<td>test.src.path</td>
+<td>The path containing the TESTSRC directory, and any library
+directories that may have been specified with
+<code>@library</code>.</td>
+</tr>
+<tr>
+<td>TESTCLASSES</td>
+<td>test.classes</td>
+<td>The directory containing the compiled classes for files in the
+TESTSRC directory.</td>
+</tr>
+<tr>
+<td>TESTCLASSPATH</td>
+<td>test.class.path</td>
+<td>The path containing the TESTCLASSES directory, and any library
+directories that may have been specified with
+<code>@library</code>.</td>
+</tr>
+<tr>
+<td>&#8211;</td>
+<td>java.home</td>
+<td>The location of the current JRE. If the JRE is part of a JDK,
+the last component of the filename will normally be
+"<code>jre</code>" and the location of the JDK will be the parent
+directory.</td>
+</tr>
+<tr>
+<td>&#8211;</td>
+<td>sun.boot.class.path</td>
+<td>The boot class path of the current JRE. If you want to start a
+child JVM with the same boot class path, you may want to set this
+value as the value for the <code>-bootclasspath</code> option for
+the child JVM.</td>
+</tr>
+</table>
+<h3>Notes</h3>
+<dl>
+<dt>Environment Variables</dt>
+<dd>As before, environment variables are only set when running
+shell scripts via <code>@run&#160;shell&#160;...</code>.</dd>
+<dt>System Properties</dt>
+<dd>As before, system properties are only set when running Java
+code via the <code>@run&#160;main</code>,
+<code>@run&#160;compile</code> or <code>@run&#160;applet</code>
+tags.</dd>
+</dl>
+<p>All file system paths contained within these environment
+variables and system properties will be absolute paths.</p>
+<h2><a name="run" id="run">Running JDK and JRE commands from within
+a test</a></h2>
+<p>In general, unless there is a specific reason to do otherwise,
+if a test needs to run a JDK or JRE command in a subprocess, it
+should honor the options set on the command line and propagate them
+as needed to those subprocesses. As much as is possible, this
+ensures consistent behavior between commands invoked by jtreg
+directly, and commands invoked from a shell script or Java code
+that is run as part of a test.</p>
+<h3>Running javac from within a shell script</h3>
+<p>Although individual tests may differ, the following is a
+template for how to execute javac in a shell script started by
+jtreg. ${FS} is assumed to have been specified as the platform
+specific file separator.</p>
+<pre>
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTTOOLVMOPTS} ${TESTJAVACOPTS} \
+    -d ${TESTCLASSES} -classpath ${TESTCLASSPATH} ${TESTSRC}${FS}MyTestClass.java ...
+</pre>
+<h3>Running java from within a shell script</h3>
+<p>Although individual tests may differ, the following is a
+template for how to execute java in a shell script started by
+jtreg. ${FS} is assumed to have been specified as the platform
+specific file separator.</p>
+<pre>${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} ${TESTJAVAOPTS} \
+    -classpath ${TESTCLASSPATH} MyTestClass <i>args...</i>
+</pre>
+<h3>Running javac from within Java code</h3>
+<p>In general, it should not be necessary to fork a new process to
+run javac. Use the public <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/javac/index.html">
+Java Compiler API</a> instead. More advanced users may want to use
+the Compiler Tree API.</p>
+<h3>Running a new Java virtual machine from within Java code</h3>
+<p>This is not common. You should only consider doing this when you
+need to change the characteristics (JVM options) of the JVM that is
+currently in use. If you do need to start a child JVM, you may need
+to use the <code>sun.boot.class.path</code> property, so that the
+child JVM can inherit the bootclasspath you are using, including
+any additions to the bootclasspath specified by the user with the
+<code>-Xbootclasspath/p:</code> or <code>-Xbootclasspath/a:</code>
+options.</p>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

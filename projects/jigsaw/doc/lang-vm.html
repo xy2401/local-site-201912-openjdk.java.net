@@ -1,0 +1,1116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta name="generator" content="DocBook XSL-NS Stylesheets V1.76.1" /><title>Modules in the Java Language and VM (Obsolete)</title><link rel="shortcut icon" href="../../../images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="../../../page.css" /><script type="text/javascript" src="../../../page.js"><noscript></noscript></script><link rel="home" href="#lang-vm" title="Modules in the Java Language and VM" /><link rel="next" href="#jigsaw-1" title="Chapter&#160;1.&#160;Language changes" /></head><body><div id="main">
+<div lang="en" class="book" title="Modules in the Java Language and VM" xml:lang="en">
+<div class="titlepage">
+<div>
+<div>
+<h1 class="title"><a name="lang-vm" id="lang-vm"></a>Modules in the
+Java Language and VM (Obsolete)</h1>
+</div>
+</div>
+<hr /></div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="chapter"><a href="#jigsaw-1">1. Language
+changes</a></span></dt>
+<dd>
+<dl>
+<dt><span class="section"><a href="#jigsaw-1.1">1.1.
+Example</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-1.2">1.2.
+Rules</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-1.3">1.3.
+Grammar</a></span></dt>
+<dd>
+<dl>
+<dt><span class="section"><a href="#jigsaw-1.3.1">1.3.1. Lexical
+grammar</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-1.3.2">1.3.2. Syntactic
+grammar</a></span></dt>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt><span class="chapter"><a href="#jigsaw-2">2. <code class="literal">ClassFile</code> changes</a></span></dt>
+<dd>
+<dl>
+<dt><span class="section"><a href="#jigsaw-2.1">2.1. Binary form of
+a module declaration</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.2">2.2. The
+<code class="literal">Module</code> attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.3">2.3. The
+<code class="literal">ModuleRequires</code>
+attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.4">2.4. The
+<code class="literal">ModuleProvides</code>
+attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.5">2.5. The
+<code class="literal">ModuleData</code> attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.6">2.6. The
+<code class="literal">CONSTANT_ModuleId_info</code>
+structure</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.7">2.7. The
+<code class="literal">CONSTANT_ModuleQuery_info</code>
+structure</a></span></dt>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="chapter" title="Chapter&#160;1.&#160;Language changes">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title"><a name="jigsaw-1" id="jigsaw-1"></a>Chapter&#160;1.&#160;Language changes</h2>
+</div>
+</div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#jigsaw-1.1">1.1.
+Example</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-1.2">1.2.
+Rules</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-1.3">1.3.
+Grammar</a></span></dt>
+<dd>
+<dl>
+<dt><span class="section"><a href="#jigsaw-1.3.1">1.3.1. Lexical
+grammar</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-1.3.2">1.3.2. Syntactic
+grammar</a></span></dt>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" title="1.1.&#160;Example">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-1.1" id="jigsaw-1.1"></a>1.1.&#160;Example</h2>
+</div>
+</div>
+</div>
+<div class="informalexample">
+<pre class="programlisting">
+module M @ 1.0 {
+  requires A @ /* Use v2 or above */ &gt;= 2.0 ;
+  requires B for compilation, reflection;
+
+  requires service S1;
+  requires optional service S2;
+
+  provides MI @ 4.0;
+  provides service MS with C;
+  exports  ME;
+  permits  MF;
+  class    MMain;
+
+  view N {
+    provides NI @ 1.0;
+    provides service NS with D;
+    exports  NE;
+    permits  MF;
+    class    NMain;
+  }
+}
+</pre></div>
+</div>
+<div class="section" title="1.2.&#160;Rules">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-1.2" id="jigsaw-1.2"></a>1.2.&#160;Rules</h2>
+</div>
+</div>
+</div>
+<p><code class="literal">module</code>, <code class="literal">requires</code>, <code class="literal">compilation</code>, <code class="literal">reflection</code>, <code class="literal">execution</code>, <code class="literal">service</code>,
+<code class="literal">local</code>, <code class="literal">optional</code>, <code class="literal">provides</code>,
+<code class="literal">with</code>, <code class="literal">exports</code>, <code class="literal">permits</code>, and
+<code class="literal">view</code> are restricted keywords.</p>
+<p class="note">This means that '<code class="literal">provides</code> <code class="literal">service</code>
+<code class="literal">;</code>' is legal - <code class="literal">service</code> is interpreted as an identifier because
+the token stream can be seen as not proceeding to declare a
+service. Also, '<code class="literal">provides</code> <code class="literal">service</code> <code class="literal">service</code>
+<code class="literal">with</code> <code class="literal">service</code> <code class="literal">;</code>' is
+legal.</p>
+<p>About a module declaration:</p>
+<div class="">
+<ul class="" type="disc">
+<li class="listitem">
+<p>A compilation unit (JLS 7.3) may contain a module
+declaration.</p>
+<p class="note">In this case, the filename of the compilation unit
+is typically <code class="literal">module-info.java</code>.</p>
+</li>
+<li class="listitem">
+<p>A module declaration indicates a module name, optionally
+followed by <code class="literal">@</code> and a module version. A
+module declaration may not be annotated.</p>
+</li>
+<li class="listitem">
+<p>A module name is a qualified identifier, in the spirit of a
+package-or-type name and a type name (JLS 6.5).</p>
+</li>
+<li class="listitem">
+<p>A module version is a new kind of literal, starting with a digit
+and thereafter consisting of Java letters, Java digits,
+<code class="literal">.</code> characters, and <code class="literal">-</code> characters in a sequence acceptable to the
+module system. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#versioning" target="_top">Requirement</a>)</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-javabase" id="jigsaw-1.2-javabase"></a>If a
+module declaration does not express a dependency on the
+<code class="literal">java.base</code> module, and the module
+declaration is not of <code class="literal">java.base</code>
+itself, then it is as if the module declaration has a dependency on
+a version of the <code class="literal">java.base</code> module
+chosen by the host system.</p>
+</li>
+</ul>
+</div>
+<p>About the <code class="literal">requires</code> directive:</p>
+<div class="">
+<ul class="" type="disc">
+<li class="listitem">
+<p><a name="jigsaw-1.2-dependency" id="jigsaw-1.2-dependency"></a><code class="literal">requires</code>
+takes a qualified identifier indicating a module name (if the
+modifier <code class="literal">service</code> is not present) or a
+service name (if the modifier <code class="literal">service</code>
+is present). (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#module-dependences" target="_top">Requirement</a>, <a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#service-declarations" target="_top">Requirement</a>)</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-localpublic" id="jigsaw-1.2-localpublic"></a>A module name may be preceded by one
+or more of the flags <code class="literal">local</code> and
+<code class="literal">public</code>.</p>
+<p>A module name may be followed by <code class="literal">@</code>
+and a version query. A version query is either a version, or an
+operator followed by a version. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#versioning" target="_top">Requirement</a>)</p>
+<p><a name="jigsaw-1.2-scopes" id="jigsaw-1.2-scopes"></a>A module
+name (or version query) may be followed by <code class="literal">for</code> and one or more of the <span class="emphasis"><em>scopes</em></span> <code class="literal">compilation</code>, <code class="literal">reflection</code>, and <code class="literal">execution</code>. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#optional-modules" target="_top">Requirement</a>, <a class="link" href="//openjdk.java.net/projects/jigsaw/doc/topics/scopes.html" target="_top">Description of scopes</a>)</p>
+<p><a name="jigsaw-1.2-defaultscopes" id="jigsaw-1.2-defaultscopes"></a>If no <code class="literal">for</code> clause is present, then it is as if a
+<code class="literal">for</code> <code class="literal">compilation</code><code class="literal">,</code>
+<code class="literal">execution</code> clause was present.</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-optionalservice" id="jigsaw-1.2-optionalservice"></a>A service name may be preceded by
+an <code class="literal">optional</code> flag.</p>
+</li>
+</ul>
+</div>
+<p>About the other directives:</p>
+<div class="">
+<ul class="" type="disc">
+<li class="listitem">
+<p><a name="jigsaw-1.2-provides" id="jigsaw-1.2-provides"></a><code class="literal">provides</code>
+takes a qualified identifier indicating a module name to serve as
+an alias (if the modifier <code class="literal">service</code> is
+not present) or a service name to be implemented (if the modifier
+<code class="literal">service</code> is present). (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#substitution" target="_top">Requirement</a>)</p>
+<p>A module name may be followed by <code class="literal">@</code>
+and a version.</p>
+<p>A service name must be followed by a <code class="literal">with</code> clause that indicates the implementation for
+the service. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#service-declarations" target="_top">Requirement</a>)</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-exports" id="jigsaw-1.2-exports"></a><code class="literal">exports</code> takes
+a qualified identifier indicating the name of a package to be
+exported. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#encapsulation" target="_top">Requirement</a>)</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-permits" id="jigsaw-1.2-permits"></a><code class="literal">permits</code> takes
+a qualified identifier indicating the name of a module which is
+permitted to depend on this module. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#platform-modularization" target="_top">Requirement</a>)</p>
+</li>
+<li class="listitem">
+<p><code class="literal">class</code> takes a qualified identifier
+indicating the name of the type which is an entry point for the
+module or view.</p>
+</li>
+<li class="listitem">
+<p><code class="literal">view</code> takes a qualified identifier
+indicating the name of the view, followed by a set of <code class="literal">provides</code>, <code class="literal">exports</code>,
+<code class="literal">permits</code>, and <code class="literal">class</code> clauses defining the view as seen by
+<code class="literal">requires</code> clauses in other modules.</p>
+</li>
+<li class="listitem">
+<p>Every module has a default view. Any <code class="literal">provides</code>, <code class="literal">exports</code>,
+<code class="literal">permits</code>, or <code class="literal">class</code> clause not declared in a named view is
+implicitly declared in the module's default view.</p>
+</li>
+</ul>
+</div>
+<p>Compile-time errors concerning duplicates:</p>
+<div class="">
+<ul class="" type="disc">
+<li class="listitem">
+<p><a name="jigsaw-1.2-100" id="jigsaw-1.2-100"></a>It is a
+compile-time error if more than one <code class="literal">requires</code> clause (that gives a module name) in a
+module declaration indicates the same module name.</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-110" id="jigsaw-1.2-110"></a>It is a
+compile-time error if more than one <code class="literal">requires</code> <code class="literal">service</code>
+clause in a module declaration indicates the same service name.</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-120" id="jigsaw-1.2-120"></a>It is a
+compile-time error if more than one <code class="literal">provides</code> clause (that gives a module name) in a
+view indicates the same module name.</p>
+<p><a name="jigsaw-1.2-121" id="jigsaw-1.2-121"></a>It is a
+compile-time error if more than one <code class="literal">provides</code> <code class="literal">service</code>
+clause in a view indicates the same pair of service name and
+implementation.</p>
+<p>(Multiple <code class="literal">provides</code> <code class="literal">service</code> clauses in a view may give the same
+service name with different implementations.)</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-130" id="jigsaw-1.2-130"></a>It is a
+compile-time error if more than one <code class="literal">exports</code> clause in a view indicates the same
+package name.</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-140" id="jigsaw-1.2-140"></a>It is a
+compile-time error if more than one <code class="literal">permits</code> clause in a view indicates the same module
+name.</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-200" id="jigsaw-1.2-200"></a>It is a
+compile-time error if a module declaration contains more than one
+view of the same name (whether declared as a non-default view or
+implicit as the default view).</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-210" id="jigsaw-1.2-210"></a>It is a
+compile-time error if an <code class="literal">exports</code>
+clause in a non-default view indicates the same package name as an
+<code class="literal">exports</code> clause in the default
+view.</p>
+<p>(A non-default view inherits the <code class="literal">exports</code> clauses of the default view, so duplicates
+should be prohibited among the combined default/non-default
+exports, as well as among the non-default exports.)</p>
+</li>
+</ul>
+</div>
+<p>Compile-time errors concerning references to other entities:</p>
+<div class="">
+<ul class="" type="disc">
+<li class="listitem">
+<p><a name="jigsaw-1.2-300" id="jigsaw-1.2-300"></a>It is a
+compile-time error if an implementation named by the <code class="literal">with</code> clause of <code class="literal">provides</code> <code class="literal">service</code> is
+<code class="literal">abstract</code>, or is not <code class="literal">public</code>, or does not have a <code class="literal">public</code> no-args constructor, or is an inner class
+(JLS 8.1.3).</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-310" id="jigsaw-1.2-310"></a>A type named as
+an entry point must indicate a class (of any accessibility) that
+declares a method called <code class="literal">main</code> which is
+<code class="literal">public</code>, <code class="literal">static</code>, <code class="literal">void</code>, and has
+a single formal parameter of type <code class="literal">String</code><code class="literal">[]</code>, or a
+compile-time error occurs.</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-320" id="jigsaw-1.2-320"></a>The operator in
+a version query must be <code class="literal">&lt;&lt;</code>,
+<code class="literal">&lt;=</code>, <code class="literal">=</code>,
+<code class="literal">&gt;=</code>, or <code class="literal">&gt;&gt;</code>, or a compile-time error occurs.</p>
+</li>
+<li class="listitem">
+<p><a name="jigsaw-1.2-330" id="jigsaw-1.2-330"></a>It is a
+compile-time error if a <code class="literal">requires</code>
+clause indicates both the <code class="literal">reflection</code>
+scope and the <code class="literal">execution</code> scope.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" title="1.3.&#160;Grammar">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-1.3" id="jigsaw-1.3"></a>1.3.&#160;Grammar</h2>
+</div>
+</div>
+</div>
+<p>The grammar below uses the following BNF-style conventions:</p>
+<div class="norm">
+<ul class="norm" type="disc">
+<li class="listitem">
+<p><span class="emphasis"><em>[x]</em></span> denotes zero or one
+occurrences of <span class="emphasis"><em>x</em></span>.</p>
+</li>
+<li class="listitem">
+<p><span class="emphasis"><em>{x}</em></span> denotes zero or more
+occurrences of <span class="emphasis"><em>x</em></span>.</p>
+</li>
+<li class="listitem">
+<p><span class="emphasis"><em>(x | y)</em></span> means one of
+either <span class="emphasis"><em>x</em></span> or <span class="emphasis"><em>y</em></span>.</p>
+</li>
+</ul>
+</div>
+<div class="section" title="1.3.1.&#160;Lexical grammar">
+<div class="titlepage">
+<div>
+<div>
+<h3 class="title"><a name="jigsaw-1.3.1" id="jigsaw-1.3.1"></a>1.3.1.&#160;Lexical grammar</h3>
+</div>
+</div>
+</div>
+<div class="literallayout">
+<p><br />
+Literal:<br />
+&#160;&#160;VersionLiteral<br />
+<br />
+VersionLiteral:<br />
+&#160;&#160;JavaDigit&#160;VersionLiteralChars<br />
+<br />
+VersionLiteralChars:<br />
+&#160;&#160;VersionLiteralChar<br />
+&#160;&#160;VersionLiteralChars&#160;VersionLiteralChar<br />
+<br />
+VersionLiteralChar:<br />
+&#160;&#160;JavaLetterOrDigit<br />
+&#160;&#160;<code class="literal">.</code><br />
+&#160;&#160;<code class="literal">-</code><br /></p>
+</div>
+</div>
+<div class="section" title="1.3.2.&#160;Syntactic grammar">
+<div class="titlepage">
+<div>
+<div>
+<h3 class="title"><a name="jigsaw-1.3.2" id="jigsaw-1.3.2"></a>1.3.2.&#160;Syntactic grammar</h3>
+</div>
+</div>
+</div>
+<div class="literallayout">
+<p><br />
+CompilationUnit:<br />
+&#160;&#160;[PackageDeclaration]&#160;{ImportDeclaration}&#160;{TypeDeclaration}<br />
+
+&#160;&#160;[ModuleDeclaration]<br />
+<br />
+ModuleDeclaration:<br />
+&#160;&#160;<code class="literal">module</code>&#160;ModuleNameAndVersion&#160;<code class="literal">{</code>&#160;{ModuleDirective}&#160;<code class="literal">}</code><br />
+<br />
+ModuleNameAndVersion:<br />
+&#160;&#160;ModuleName&#160;[<code class="literal">@</code>&#160;VersionLiteral]<br />
+<br />
+ModuleName:<br />
+&#160;&#160;Identifier<br />
+&#160;&#160;ModuleName&#160;<code class="literal">.</code>&#160;Identifier<br /></p>
+</div>
+<div class="literallayout">
+<p><br />
+ModuleDirective:<br />
+&#160;&#160;RequiresDirective<br />
+&#160;&#160;ProvidesDirective<br />
+&#160;&#160;ExportsDirective<br />
+&#160;&#160;PermitsDirective<br />
+&#160;&#160;EntrypointDirective<br />
+&#160;&#160;ViewDeclaration<br />
+<br />
+RequiresDirective:<br />
+&#160;&#160;<code class="literal">requires</code>&#160;{<code class="literal">local</code>&#160;|&#160;<code class="literal">public</code>}&#160;ModuleNameAndVersionQuery&#160;[<code class="literal">for</code>&#160;ScopeList]&#160;<code class="literal">;</code><br />
+
+&#160;&#160;<code class="literal">requires</code>&#160;[<code class="literal">optional</code>]&#160;<code class="literal">service</code>&#160;ServiceName&#160;<code class="literal">;</code><br />
+
+<br />
+ModuleNameAndVersionQuery:<br />
+&#160;&#160;&#160;ModuleName&#160;[<code class="literal">@</code>&#160;VersionQuery]<br />
+<br />
+VersionQuery:<br />
+&#160;&#160;[Operator]&#160;VersionLiteral<br />
+<br />
+ScopeList:<br />
+&#160;&#160;Scope<br />
+&#160;&#160;ScopeList&#160;<code class="literal">,</code>&#160;Scope<br />
+<br />
+Scope:<br />
+&#160;&#160;<code class="literal">compilation</code><br />
+&#160;&#160;<code class="literal">reflection</code><br />
+&#160;&#160;<code class="literal">execution</code><br />
+<br />
+ServiceName:<br />
+&#160;&#160;Identifier<br />
+&#160;&#160;ServiceName&#160;<code class="literal">.</code>&#160;Identifier<br />
+<br />
+ProvidesDirective:<br />
+&#160;&#160;<code class="literal">provides</code>&#160;ModuleNameAndVersion&#160;<code class="literal">;</code><br />
+
+&#160;&#160;<code class="literal">provides</code>&#160;<code class="literal">service</code>&#160;ServiceName&#160;<code class="literal">with</code>&#160;QualifiedIdentifier&#160;<code class="literal">;</code><br />
+<br />
+ExportsDirective:<br />
+&#160;&#160;<code class="literal">exports</code>&#160;PackageName&#160;<code class="literal">;</code><br />
+<br />
+PermitsDirective:<br />
+&#160;&#160;<code class="literal">permits</code>&#160;ModuleName&#160;<code class="literal">;</code><br />
+<br />
+EntrypointDirective:<br />
+&#160;&#160;<code class="literal">class</code>&#160;TypeName&#160;<code class="literal">;</code><br />
+<br />
+ViewDeclaration:<br />
+&#160;&#160;<code class="literal">view</code>&#160;ModuleName&#160;<code class="literal">{</code><br />
+&#160;&#160;&#160;&#160;{ProvidesDirective&#160;|&#160;ExportsDirective&#160;|&#160;PermitsDirective&#160;|&#160;EntrypointDirective}<br />
+
+&#160;&#160;&#160;&#160;<code class="literal">}</code><br /></p>
+</div>
+</div>
+</div>
+</div>
+<div class="chapter" title="Chapter&#160;2.&#160;ClassFile changes">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title"><a name="jigsaw-2" id="jigsaw-2"></a>Chapter&#160;2.&#160;<code class="literal">ClassFile</code> changes</h2>
+</div>
+</div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#jigsaw-2.1">2.1. Binary form of
+a module declaration</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.2">2.2. The
+<code class="literal">Module</code> attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.3">2.3. The
+<code class="literal">ModuleRequires</code>
+attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.4">2.4. The
+<code class="literal">ModuleProvides</code>
+attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.5">2.5. The
+<code class="literal">ModuleData</code> attribute</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.6">2.6. The
+<code class="literal">CONSTANT_ModuleId_info</code>
+structure</a></span></dt>
+<dt><span class="section"><a href="#jigsaw-2.7">2.7. The
+<code class="literal">CONSTANT_ModuleQuery_info</code>
+structure</a></span></dt>
+</dl>
+</div>
+<div class="section" title="2.1.&#160;Binary form of a module declaration">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-2.1" id="jigsaw-2.1"></a>2.1.&#160;Binary form of a module declaration</h2>
+</div>
+</div>
+</div>
+<p>A compilation unit that contains a module declaration (and
+potentially <a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#extensible-module-declarations" target="_top">additional arbitrary content</a>) is compiled to a
+<code class="literal">ClassFile</code> structure like any other
+compilation unit.</p>
+<p>By convention, the name of a compilation unit that contains a
+module declaration is <code class="literal">module-info.java</code>, echoing the <code class="literal">package-info.java</code> convention for a compilation
+unit that contains solely a package declaration. Consequently, by
+convention, the name for the compiled form of a module declaration
+is <code class="literal">module-info.class</code>.</p>
+<p>A new flag in the <code class="literal">ClassFile.access_flags</code> item, <code class="literal">ACC_MODULE</code> (0x8000), indicates that the
+<code class="literal">ClassFile</code> represents a module. This
+flag plays a similar role to <code class="literal">ACC_ANNOTATION</code> (0x2000) and <code class="literal">ACC_ENUM</code> (0x4000) in flagging this <code class="literal">ClassFile</code> as "not a normal class", and does
+<span class="emphasis"><em>not</em></span> describe accessibility
+of a class or interface.</p>
+<p>If <code class="literal">ACC_MODULE</code> is set in
+<code class="literal">ClassFile.access_flags</code>, then no other
+flag in <code class="literal">ClassFile.access_flags</code> may be
+set, and the following rules apply to the rest of the <code class="literal">ClassFile</code> structure:</p>
+<div class="">
+<ul class="" type="disc">
+<li class="listitem">
+<p><code class="literal">major_version</code>, <code class="literal">minor_version</code>: &#8805; 53.0 (i.e. Java SE 9 and
+above)</p>
+</li>
+<li class="listitem">
+<p><code class="literal">this_class</code>: [Module's name in
+internal form (JVMS 4.2.1)]/module-info</p>
+<p class="note">Traditionally, if <code class="literal">this_class</code> indicates "P/Q/R", then the
+<code class="literal">ClassFile</code> can be expected to live in a
+file <code class="literal">R.class</code> in a directory
+<code class="literal">P/Q</code> representing a package. This
+explains why "/module-info" is a suffix in <code class="literal">this_class</code> above: if <code class="literal">this_class</code> indicates "P/Q/module-info", then the
+<code class="literal">ClassFile</code> can be expected to live in a
+file <code class="literal">module-info.class</code> in a directory
+<code class="literal">P/Q</code> representing a module. The "real
+name" of the module, shorn of "/module-info", can be obtained from
+the <code class="literal">Module</code> attribute.</p>
+</li>
+<li class="listitem">
+<p><code class="literal">super_class</code>, <code class="literal">interfaces_count</code>, <code class="literal">fields_count</code>, <code class="literal">methods_count</code>: zero</p>
+</li>
+<li class="listitem">
+<p><code class="literal">attributes</code>: One <code class="literal">Module</code> attribute must be present, to record the
+name and version of the module. At most one of each of the
+<code class="literal">ModuleRequires</code>, <code class="literal">ModuleProvides</code>, and <code class="literal">ModuleData</code> attributes may be present. Except for
+these attributes and <code class="literal">Synthetic</code>,
+<code class="literal">SourceFile</code>, <code class="literal">SourceDebugExtension</code>, and <code class="literal">Deprecated</code>, none of the pre-defined attributes in
+JVMS 4.7 may appear.</p>
+</li>
+</ul>
+</div>
+<p>Some notes on compilation:</p>
+<div class="">
+<ul class="" type="disc">
+<li class="listitem">
+<p>There are no implicit <code class="literal">requires</code>
+dependences at the <code class="literal">ClassFile</code> level.
+That is, if no <code class="literal">ModuleRequires.modules</code>
+table is physically present, then no such table is inferred by the
+Java virtual machine.</p>
+<p>There will, however, always be a <code class="literal">ModuleRequires.modules</code> table in a <code class="literal">ClassFile</code>, due to the universal dependence of all
+modules on <code class="literal">java.base</code>. (<a class="link" href="#jigsaw-1.2-javabase">Compile-time</a>) The <code class="literal">ACC_SYNTHESIZED</code> flag is available for a compiler
+to record that a module declaration in source did not have an
+explicit <code class="literal">requires</code> clause for
+<code class="literal">java.base</code>.</p>
+</li>
+<li class="listitem">
+<p>There are no implicit re-exports (<code class="literal">requires</code> <code class="literal">public</code>) at
+the <code class="literal">ClassFile</code> level. That is, the
+<code class="literal">ACC_REEXPORT</code> flag is not set by
+default in <code class="literal">ModuleRequires.modules</code>.</p>
+</li>
+<li class="listitem">
+<p>There are no implicit scopes for module dependencies at the
+<code class="literal">ClassFile</code> level. That is, a compiler
+must explicitly set a module dependency's scope in <code class="literal">ModuleRequires.modules.module_flags</code> if a target
+module is required in that scope.</p>
+</li>
+<li class="listitem">
+<p>There are no implicit exports from views at the <code class="literal">ClassFile</code> level. That is, if no <code class="literal">ModuleProvides.exports</code> table is physically
+present, then no such table is inferred by the Java virtual
+machine.</p>
+</li>
+<li class="listitem">
+<p>An empty <code class="literal">ModuleProvides.permits</code>
+table means all other modules are permitted.</p>
+</li>
+<li class="listitem">
+<p>If a module declaration contains a default view, the default
+view's permits and exports are explicitly copied into the
+<code class="literal">module-info.class</code> file for all
+non-default views. <code class="literal">module-info.class</code>
+contains explicit permits and exports, with the exception of an
+empty permits table which implies permits all.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" title="2.2.&#160;The Module attribute">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-2.2" id="jigsaw-2.2"></a>2.2.&#160;The <code class="literal">Module</code>
+attribute</h2>
+</div>
+</div>
+</div>
+<pre class="screen">
+Module_attribute {
+  u2 attribute_name_index;
+  u4 attribute_length;
+  u2 module_id_index;
+}
+</pre>
+<p>The items of the <code class="literal">Module_attribute</code>
+structure are as follows:</p>
+<div class="variablelist">
+<dl>
+<dt><span class="term">attribute_name_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_name_index</code> item must be a valid index
+into the <code class="literal">constant_pool</code> table. The
+<code class="literal">constant_pool</code> entry at that index must
+be a <code class="literal">CONSTANT_Utf8_info</code> structure
+representing the string "Module".</p>
+</dd>
+<dt><span class="term">attribute_length</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_length</code>
+item must be 2.</p>
+</dd>
+<dt><span class="term">module_id_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">module_id_index</code>
+item must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_ModuleId_info</code> structure
+(<a class="xref" href="#jigsaw-2.6" title="2.6.&#160;The CONSTANT_ModuleId_info structure">&#167;2.6</a>)
+representing the name and version of the module represented by this
+<code class="literal">ClassFile</code>.</p>
+<p>The name must be equal to the module name indicated by the
+<code class="literal">ClassFile.this_class</code> item without the
+"/module-info" suffix.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" title="2.3.&#160;The ModuleRequires attribute">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-2.3" id="jigsaw-2.3"></a>2.3.&#160;The <code class="literal">ModuleRequires</code> attribute</h2>
+</div>
+</div>
+</div>
+<pre class="screen">
+ModuleRequires_attribute {
+  u2 attribute_name_index;
+  u4 attribute_length;
+  u2 modules_count;
+  { u2 module_index; u4 module_flags; } modules[modules_count];
+  u2 services_count;
+  { u2 service_index; u4 service_flags; } services[service_count];
+}
+</pre>
+<div class="variablelist">
+<dl>
+<dt><span class="term">attribute_name_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_name_index</code> item must be a valid index
+into the <code class="literal">constant_pool</code> table. The
+<code class="literal">constant_pool</code> entry at that index must
+be a <code class="literal">CONSTANT_Utf8_info</code> structure
+representing the string "ModuleRequires".</p>
+</dd>
+<dt><span class="term">attribute_length</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_length</code>
+item is the length of the attribute excluding the initial six
+bytes.</p>
+</dd>
+<dt><span class="term">modules_count</span></dt>
+<dd>
+<p>The value of the <code class="literal">modules_count</code> item
+indicates the number of entries in the <code class="literal">modules</code> table.</p>
+</dd>
+<dt><span class="term">modules</span></dt>
+<dd>
+<p>The value of each <code class="literal">module_index</code>
+entry must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_ModuleQuery_info</code> structure
+(<a class="xref" href="#jigsaw-2.7" title="2.7.&#160;The CONSTANT_ModuleQuery_info structure">&#167;2.7</a>)
+representing a query for a target module on which the module
+represented by this <code class="literal">ClassFile</code> depends.
+(<a class="link" href="#jigsaw-1.2-dependency">Compile-time</a>)</p>
+<p>A target module name may be referenced by at most one entry in a
+<code class="literal">modules</code> table. (<a class="link" href="#jigsaw-1.2-100">Compile-time</a>)</p>
+<p>Unless the <code class="literal">ClassFile</code> represents the
+module <code class="literal">java.base</code>, exactly one entry in
+a <code class="literal">modules</code> table must indicate a target
+module whose name is <code class="literal">java.base</code>, and
+its associated <code class="literal">module_flags</code> item must
+have <code class="literal">ACC_COMPILATION_SCOPE</code> and
+<code class="literal">ACC_EXECUTION_SCOPE</code> set and not have
+<code class="literal">ACC_REFLECTION_SCOPE</code> or <code class="literal">ACC_SYNTHETIC</code> set. (<a class="link" href="#jigsaw-1.2-javabase">Compile-time</a>)</p>
+<p>The value of the associated <code class="literal">module_flags</code> item is as follows:</p>
+<div class="variablelist">
+<dl>
+<dt><span class="term">0x0001 (<code class="literal">ACC_COMPILATION_SCOPE</code>)</span></dt>
+<dd>
+<p>Indicates that the target module must be present at
+compile-time. (<a class="link" href="#jigsaw-1.2-scopes">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">0x0002 (<code class="literal">ACC_REFLECTION_SCOPE</code>)</span></dt>
+<dd>
+<p>Indicates that the target module may be present at run-time.
+(<a class="link" href="#jigsaw-1.2-scopes">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">0x0004 (<code class="literal">ACC_EXECUTION_SCOPE</code>)</span></dt>
+<dd>
+<p>Indicates that the target module must be present at run-time.
+(<a class="link" href="#jigsaw-1.2-scopes">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">0x0010 (<code class="literal">ACC_LOCAL</code>)</span></dt>
+<dd>
+<p>Indicates that the target module's types must be loaded by the
+same defining classloader as the types of the module represented by
+this <code class="literal">ClassFile</code>. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#shared-class-loaders" target="_top">Requirement</a>, <a class="link" href="#jigsaw-1.2-localpublic">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">0x0020 (<code class="literal">ACC_REEXPORT</code>)</span></dt>
+<dd>
+<p>Indicates that the module re-exports the visible types which are
+exported by the target module. (<a class="link" href="#jigsaw-1.2-localpublic">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">0x1000 (<code class="literal">ACC_SYNTHETIC</code>)</span></dt>
+<dd>
+<p>Indicates the dependency is synthetic.</p>
+</dd>
+<dt><span class="term">0x10000 (<code class="literal">ACC_SYNTHESIZED</code>)</span></dt>
+<dd>
+<p>Indicates the dependency is synthesized.</p>
+</dd>
+</dl>
+</div>
+<p>In a <code class="literal">module_flags</code> item, at most one
+of the <code class="literal">ACC_REFLECTION_SCOPE</code> and
+<code class="literal">ACC_EXECUTION_SCOPE</code> flags must be set.
+(<a class="link" href="#jigsaw-1.2-330">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">services_count</span></dt>
+<dd>
+<p>The value of the <code class="literal">services_count</code>
+item indicates the number of entries in the <code class="literal">services</code> table.</p>
+</dd>
+<dt><span class="term">services</span></dt>
+<dd>
+<p>The value of each <code class="literal">services</code> entry
+must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Class_info</code> structure
+representing a service (interface or abstract class) on which the
+module represented by this <code class="literal">ClassFile</code>
+depends. (<a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#service-declarations" target="_top">Requirement</a>)</p>
+<p>A service may be referenced by at most one entry in a
+<code class="literal">services</code> table. (<a class="link" href="#jigsaw-1.2-110">Compile-time</a>)</p>
+<p>The value of the associated <code class="literal">service_flags</code> item is as follows:</p>
+<div class="variablelist">
+<dl>
+<dt><span class="term">0x0001 (<code class="literal">ACC_OPTIONAL</code>)</span></dt>
+<dd>
+<p>Indicates that this dependency on a service is optional at
+run-time. (<a class="link" href="#jigsaw-1.2-optionalservice">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">0x1000 (<code class="literal">ACC_SYNTHETIC</code>)</span></dt>
+<dd>
+<p>Indicates the dependency is synthetic.</p>
+</dd>
+<dt><span class="term">0x10000 (<code class="literal">ACC_SYNTHESIZED</code>)</span></dt>
+<dd>
+<p>Indicates the dependency is synthesized.</p>
+</dd>
+</dl>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" title="2.4.&#160;The ModuleProvides attribute">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-2.4" id="jigsaw-2.4"></a>2.4.&#160;The <code class="literal">ModuleProvides</code> attribute</h2>
+</div>
+</div>
+</div>
+<p>The range of entities offered by a module to the outside world
+has grown over time. It started off as aliases (<code class="literal">provides</code>) and friends (<code class="literal">permits</code>), then added entry points (<code class="literal">class</code>) and packages (<code class="literal">exports</code>). Recently, services (<code class="literal">provides service</code>) were added. Individual
+attributes for each kind of entity (<code class="literal">ModuleProvides</code>, <code class="literal">ModulePermits</code>, <code class="literal">ModuleEntrypoint</code>, <code class="literal">ModuleExports</code>) add little value. The introduction
+of "views" into the module system - where a view aggregates
+entities offered by a module, and where a module always has at
+least one "default" view - suggests a simple <code class="literal">ClassFile</code> representation: one attribute defines
+all views and the entities they offer. This authoritative
+description of what a module offers is a natural counterpart to the
+<code class="literal">ModuleRequires</code> attribute that
+describes what a module needs.</p>
+<pre class="screen">
+ModuleProvides_attribute {
+  u2 attribute_name_index;
+  u4 attribute_length;
+  u2 views_count;
+  { u2 view_name_index;
+    u2 entrypoint_index;
+
+    u2 aliases_count;
+    { u2 alias_index; } aliases[aliases_count];
+
+    u2 services_count;
+    { u2 service_index; u2 impl_index; } services[services_count];
+
+    u2 exports_count;
+    { u2 export_index; } exports[exports_count];
+
+    u2 permits_count;
+    { u2 permit_index; } permits[permit_count];
+  } views[views_count];
+}
+</pre>
+<div class="variablelist">
+<dl>
+<dt><span class="term">attribute_name_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_name_index</code> item must be a valid index
+into the <code class="literal">constant_pool</code> table. The
+<code class="literal">constant_pool</code> entry at that index must
+be a <code class="literal">CONSTANT_Utf8_info</code> structure
+representing the string "ModuleProvides".</p>
+</dd>
+<dt><span class="term">attribute_length</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_length</code>
+item is the length of the attribute excluding the initial six
+bytes.</p>
+</dd>
+<dt><span class="term">views_count</span></dt>
+<dd>
+<p>The value of the <code class="literal">views_count</code> item
+indicates the number of entries in the <code class="literal">views</code> table.</p>
+</dd>
+<dt><span class="term">views</span></dt>
+<dd>
+<p>Each entry in the <code class="literal">views</code> table has
+the following entries:</p>
+<div class="variablelist">
+<dl>
+<dt><span class="term">view_name_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">view_name_index</code>
+item must either be zero (to indicate this is the default view for
+the module represented by this <code class="literal">ClassFile</code>; the view's name is that of the module),
+or a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Utf8_info</code> structure
+representing the view's name in internal form (JVMS 4.2.1).</p>
+<p>Within the <code class="literal">views</code> table, the name of
+each view (whether a default view or a non-default view) must be
+unique. (<a class="link" href="#jigsaw-1.2-200">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">entrypoint_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">entrypoint_index</code>
+item must either be zero (to indicate this view has no entrypoint)
+or a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Class_info</code> structure
+representing the name of the class in internal form (JVMS 4.2.1)
+which is the entrypoint to this view.</p>
+</dd>
+<dt><span class="term">aliases_count</span></dt>
+<dd>
+<p>The value of the <code class="literal">aliases_count</code> item
+indicates the number of entries in the <code class="literal">aliases</code> table.</p>
+</dd>
+<dt><span class="term">aliases</span></dt>
+<dd>
+<p>The value of each <code class="literal">aliases</code> entry
+must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_ModuleId_info</code> structure
+(<a class="xref" href="#jigsaw-2.6" title="2.6.&#160;The CONSTANT_ModuleId_info structure">&#167;2.6</a>)
+representing a module name that is an alias for the module
+represented by this view. (<a class="link" href="#jigsaw-1.2-provides">Compile-time</a>)</p>
+<p>Within an entry of the <code class="literal">views</code> table,
+an alias's module name may be referenced by at most one entry in
+the <code class="literal">aliases</code> table. (<a class="link" href="#jigsaw-1.2-120">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">services_count</span></dt>
+<dd>
+<p>The value of the <code class="literal">services_count</code>
+item indicates the number of entries in the <code class="literal">services</code> table.</p>
+</dd>
+<dt><span class="term">services</span></dt>
+<dd>
+<p>The value of each <code class="literal">service_index</code>
+item must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Class_info</code> structure
+representing a service (interface or abstract class) provided by
+this view.</p>
+<p>The value of the associated <code class="literal">impl_index</code> item in this table must be a valid
+index into the <code class="literal">constant_pool</code> table.
+The <code class="literal">constant_pool</code> entry at that index
+must be a <code class="literal">CONSTANT_Class_info</code>
+structure representing the implementation for the service at
+<code class="literal">service_index</code>.</p>
+<p>Within an entry of the <code class="literal">views</code> table,
+at most one entry in the <code class="literal">services</code>
+table may reference the same pair of <code class="literal">service_index</code> and <code class="literal">impl_index</code> values. (<a class="link" href="#jigsaw-1.2-121">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">exports_count</span></dt>
+<dd>
+<p>The value of the <code class="literal">exports_count</code> item
+indicates the number of entries in the <code class="literal">exports</code> table.</p>
+</dd>
+<dt><span class="term">exports</span></dt>
+<dd>
+<p>The value of each <code class="literal">export_index</code> item
+must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Utf8_info</code> structure
+representing the name in internal form (JVMS 4.2.1) of a package to
+be exported by this view. (<a class="link" href="#jigsaw-1.2-exports">Compile-time</a>)</p>
+<p>Within an entry of the <code class="literal">views</code> table,
+a package name may be referenced by at most one entry in the
+<code class="literal">exports</code> table. (<a class="link" href="#jigsaw-1.2-130">Compile-time</a>)</p>
+</dd>
+<dt><span class="term">permits_count</span></dt>
+<dd>
+<p>The value of the <code class="literal">permits_count</code> item
+indicates the number of entries in the <code class="literal">permits</code> table.</p>
+</dd>
+<dt><span class="term">permits</span></dt>
+<dd>
+<p>The value of each <code class="literal">permit_index</code> item
+must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_ModuleId_info</code> structure
+(<a class="xref" href="#jigsaw-2.6" title="2.6.&#160;The CONSTANT_ModuleId_info structure">&#167;2.6</a>)
+representing a module which is permitted to have a dependency on
+the current view. (<a class="link" href="#jigsaw-1.2-permits">Compile-time</a>)</p>
+<p class="note">It is possible that a module system uses only the
+name of the permitted module, not its version, in determining
+visibility.</p>
+<p>Within an entry of the <code class="literal">views</code> table,
+a module name may be referenced by at most one entry in the
+<code class="literal">permits</code> table. (<a class="link" href="#jigsaw-1.2-140">Compile-time</a>)</p>
+</dd>
+</dl>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" title="2.5.&#160;The ModuleData attribute">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-2.5" id="jigsaw-2.5"></a>2.5.&#160;The <code class="literal">ModuleData</code> attribute</h2>
+</div>
+</div>
+</div>
+<pre class="screen">
+ModuleData_attribute {
+  u2 attribute_name_index;
+  u4 attribute_length;
+  u2 data_index;
+}
+</pre>
+<div class="variablelist">
+<dl>
+<dt><span class="term">attribute_name_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_name_index</code> item must be a valid index
+into the <code class="literal">constant_pool</code> table. The
+<code class="literal">constant_pool</code> entry at that index must
+be a <code class="literal">CONSTANT_Utf8_info</code> structure
+representing the string "ModuleData".</p>
+</dd>
+<dt><span class="term">attribute_length</span></dt>
+<dd>
+<p>The value of the <code class="literal">attribute_length</code>
+item is 2.</p>
+</dd>
+<dt><span class="term">data_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">data_index</code> item
+must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Utf8_info</code> structure
+representing the textual content, <a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#extensible-module-declarations" target="_top">other than the module declaration</a>, of the
+compilation unit that declared the module represented by this
+<code class="literal">ClassFile</code>.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" title="2.6.&#160;The CONSTANT_ModuleId_info structure">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-2.6" id="jigsaw-2.6"></a>2.6.&#160;The <code class="literal">CONSTANT_ModuleId_info</code> structure</h2>
+</div>
+</div>
+</div>
+<p>The <code class="literal">CONSTANT_ModuleId_info</code>
+structure in the constant pool is used to represent a pair of a
+module name and a version.</p>
+<pre class="screen">
+CONSTANT_ModuleId_info {
+  u1 tag;
+  u2 name_index;
+  u2 version_index;
+}
+</pre>
+<div class="variablelist">
+<dl>
+<dt><span class="term">tag</span></dt>
+<dd>
+<p>The <code class="literal">tag</code> item has the value
+<code class="literal">CONSTANT_ModuleId</code> (19).</p>
+</dd>
+<dt><span class="term">name_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">name_index</code> item
+must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Utf8_info</code> structure
+representing the module name in internal form (JVMS 4.2.1).</p>
+</dd>
+<dt><span class="term">version_index</span></dt>
+<dd>
+<p>If the value of the <code class="literal">version_index</code>
+item is not zero, then a version is present. The value must be a
+valid index into the <code class="literal">constant_pool</code>
+table. The <code class="literal">constant_pool</code> entry at that
+index must be a <code class="literal">CONSTANT_Utf8_info</code>
+structure representing <a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#versioning" target="_top">a version acceptable to the module system</a>. (Note
+that there <span class="emphasis"><em>is</em></span> a standard
+version format which must be followed or else a <code class="literal">ClassFormatError</code> will be thrown. It is simply that
+the format is not defined by <em class="citetitle">The <span class="trademark">Java</span>&#8482; Virtual Machine
+Specification</em>.)</p>
+<p>If the value of the <code class="literal">version_index</code>
+item is zero (as opposed to pointing to a <code class="literal">CONSTANT_Utf8_info</code> structure which holds the
+string "0"), then no version is present.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" title="2.7.&#160;The CONSTANT_ModuleQuery_info structure">
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title" style="clear: both"><a name="jigsaw-2.7" id="jigsaw-2.7"></a>2.7.&#160;The <code class="literal">CONSTANT_ModuleQuery_info</code> structure</h2>
+</div>
+</div>
+</div>
+<p>The <code class="literal">CONSTANT_ModuleQuery_info</code>
+structure in the constant pool is used to represent a pair of a
+module name and a version query.</p>
+<pre class="screen">
+CONSTANT_ModuleQuery_info {
+  u1 tag;
+  u2 name_index;
+  u2 versionquery_index;
+}
+</pre>
+<div class="variablelist">
+<dl>
+<dt><span class="term">tag</span></dt>
+<dd>
+<p>The <code class="literal">tag</code> item has the value
+<code class="literal">CONSTANT_ModuleQuery</code> (20).</p>
+</dd>
+<dt><span class="term">name_index</span></dt>
+<dd>
+<p>The value of the <code class="literal">name_index</code> item
+must be a valid index into the <code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Utf8_info</code> structure
+representing the module name in internal form (JVMS 4.2.1).</p>
+</dd>
+<dt><span class="term">versionquery_index</span></dt>
+<dd>
+<p>If the value of the <code class="literal">versionquery_index</code> item is not zero, then a
+version query is present. The value must be a valid index into the
+<code class="literal">constant_pool</code> table. The <code class="literal">constant_pool</code> entry at that index must be a
+<code class="literal">CONSTANT_Utf8_info</code> structure
+representing <a class="link" href="//openjdk.java.net/projects/jigsaw/doc/draft-java-module-system-requirements-12#versioning" target="_top">a version query acceptable to the module
+system</a>.</p>
+<p>If the value of the <code class="literal">versionquery_index</code> item is zero (as opposed to
+pointing to a <code class="literal">CONSTANT_Utf8_info</code>
+structure which holds the string "0"), then no version query is
+present.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+</div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="../../../images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="../../../images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

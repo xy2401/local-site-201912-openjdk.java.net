@@ -1,0 +1,257 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 293: Guidelines for JDK Command-Line Tool Options</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 293: Guidelines for JDK Command-Line Tool Options</h1><table class="head"><tr><td>Owner</td><td>Jonathan Gibbons</td></tr><tr><td>Type</td><td>Informational</td></tr><tr><td>Scope</td><td>JDK</td></tr><tr><td>Status</td><td>Candidate</td></tr><tr><td>Component</td><td>tools</td></tr><tr><td>Discussion</td><td>core dash libs dash dev at openjdk dot java dot net</td></tr><tr><td>Reviewed by</td><td>Alan Bateman, Alex Buckley, Chris Hegarty, Mandy Chung, Mark Reinhold</td></tr><tr><td>Created</td><td>2016/07/05 22:05</td></tr><tr><td>Updated</td><td>2016/07/11 15:04</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8160859">8160859</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>This informational JEP lays out guidelines for handling options in JDK
+command-line tools, including the Java launcher.</p>
+<h2 id="Motivation">Motivation</h2>
+<p>The JDK command-line tools have evolved over the years to use a variety of different
+conventions for the options they provide. For example:</p>
+<ul>
+<li>various tools: <code>-classpath</code>   (short-form <code>-cp</code>)</li>
+<li>javac: <code>-verbose</code>, <code>-version</code>, <code>-XprintRounds</code>, <code>-Xlint:unchecked</code></li>
+<li>jar, in JDK 8: <code>-c</code>, <code>-t</code>, <code>-x</code>, <em>etc.</em></li>
+<li>pack200: <code>-g</code>, <code>--no-gzip</code>, <code>--gzip</code>, <code>--version</code></li>
+</ul>
+<p>Even the options used to show command-line help vary between different JDK tools,
+with <code>-help</code>, <code>-?</code>, <code>--help</code> being amongst the alternatives.</p>
+<p>When new options are added to existing tools, and when new tools are added
+to the platform, it is desirable that options are used in a consistent manner.</p>
+<p>In addition, it is becoming increasingly common for the command-line tools used by
+developers to use the <a href="https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html">GNU-style</a> syntax, also described in <a href="http://linux.die.net/man/3/getopt">getopt(3)</a>,
+in which the name of an option is given by a short series of words separated with hyphens,
+or an equivalent single character short form.</p>
+<p>It is time for JDK tools to start becoming more consistent both with each other
+and with common prevailing industry practice. This does <em>not</em> mean that we should
+change all the options supported by all our tools overnight, but we should
+set guidelines for the use of new options in new and existing tools.</p>
+<p>The GNU-style syntax provides a way forward: it can coexist reasonably well
+with the existing options of existing JDK tools;  it is familiar to many,
+and it has library support which can be used for new tools.</p>
+<p>Existing tools will continue to support existing options, but may also support
+new-style aliases for those options. And for both pragmatic and compatibility
+reasons, the new style may never be adopted for some existing options
+in existing tools.</p>
+<h2 id="Option-syntax">Option syntax</h2>
+<p>The rules for option names are as follows:</p>
+<ul>
+<li>
+<p>Options have a long name, which is a short series of words, beginning
+with '--' and separated by '-'.
+For example: <code>--example-option</code></p>
+</li>
+<li>
+<p>Options may have a short, single character form.
+For example, <code>-e</code></p>
+</li>
+<li>
+<p>Options can require an argument to be provided.
+For a long-form options, the argument may be separated from the option name by
+either white space or '='. For single character options, the argument may
+immediately follow the character or may be separated by white space.
+For example:</p>
+<ul>
+<li><code>--example-option value</code></li>
+<li><code>--example-option=value</code></li>
+<li><code>-e value</code></li>
+<li><code>-evalue</code></li>
+</ul>
+</li>
+<li>
+<p>Options can allow an argument to be provided. If such an argument is present,
+then the syntax of the option is the same as if the option required the argument.
+For example:</p>
+<ul>
+<li><code>--example-option</code></li>
+<li><code>--example-option value</code></li>
+<li><code>--example-option=value</code></li>
+</ul>
+</li>
+<li>
+<p>Case is always significant, in both the long name or single character forms.
+For example, <code>--Example-Option</code> is not the same as <code>--example-option</code>.</p>
+</li>
+<li>
+<p>Long form names may <em>not</em> be abbreviated on the command line. For example,
+<code>--example-o</code> is not the same as <code>--example-option</code>.</p>
+</li>
+<li>
+<p>The use of options for subcommands is <em>not</em> included in the rules.</p>
+</li>
+<li>
+<p>Single character options may be grouped into a single token. For example,
+if <code>-a</code> and <code>-b</code> are single character options, they may be specified
+together on the command line as <code>-ab</code>.</p>
+</li>
+<li>
+<p>Although some option-decoding libraries may support grouping the
+single character form of a group of options into a single word, it is
+not required that this should be supported when the options being
+used require arguments to be provided. For example, a single character
+option that takes an argument may conflict with the use of an existing
+JDK-style argument.</p>
+</li>
+<li>
+<p>For some options, the argument may be a series of values.
+When the values are file system locations, such as for directories or files,
+the values should be separated by the platform-specific path separator character
+(<code>;</code> on Windows systems, <code>:</code> on other platforms.)
+Otherwise, the recommended separator is a comma.</p>
+</li>
+<li>
+<p>The use of <code>-X</code> as a prefix to indicate "non-standard" options will be discontinued
+for new options, although command-line help may continue to draw a distinction
+between more commonly used options and those for advanced use.</p>
+</li>
+<li>
+<p>Some forms on the command-line may be ambiguous; tools may try and be clever
+to disambiguate such cases. In general, tools are encouraged not to support
+combinations which might be ambiguous, and users are encouraged not to use
+forms which might be ambiguous. For example, tools which support the old
+short form option <code>-cp</code> for classpath may choose not to support both <code>-c</code>
+and <code>-p</code> as single-character forms for new options.</p>
+</li>
+<li>
+<p>Existing options defined in existing tools will continue to be supported
+until phased out or replaced, on a case by case basis.  In some cases,
+that may be never.</p>
+</li>
+</ul>
+<p>The HotSpot VM will accept, via the JNI Invocation API, a subset of these rules,
+in which new options are specified using the long form name, and using <code>=</code> as the
+separator for any argument value.  The HotSpot VM will not change the form of any
+of the current set of <code>-XX</code> options.</p>
+<p>The use of the '=' form will also make it easier to pass options from a tool
+other than the launcher to the underlying VM using <code>-J</code>.
+For example, you can use a single <code>J</code> option, as in <code>-J--</code><em><code>&lt;name&gt;</code></em><code>=</code><em><code>&lt;value&gt;</code></em>,
+instead of having to use two <code>-J</code> options as before: <code>-J-</code><em><code>&lt;name&gt;</code></em> <code>-J</code><em><code>&lt;value&gt;</code></em>.
+The <code>=</code> form also makes it possible to use a common form for the set of
+options which may be provided to the Java launcher, the Hotspot VM (via the JNI interface)
+and tools like <code>javac</code>.</p>
+<p>The <code>jdk.internal.opt</code> module contains a copy of the <a href="https://pholser.github.io/jopt-simple/">JOptSimple</a> library
+for use by JDK modules which provide command-line tools.</p>
+<h2 id="Common-options">Common options</h2>
+<p>The <a href="//openjdk.java.net/jeps/261">JDK implementation</a> of the <a href="//openjdk.java.net/projects/jigsaw/spec/">Java Platform Module System</a>
+introduces a number of new options to configure the module system.</p>
+<p>Any tool that supports the ability to configure some aspect of the module system
+should provide an option that is consistent with other tools supporting equivalent
+functionality as much as possible. As a baseline, all tools and API should support
+the long form option, using '=' to separate an argument.</p>
+<p>The set of common options is as follows. Note: the list is intended to just indicate
+the name of the options and the general form of any arguments it may take.
+The exact details of these options are specified elsewhere, such as <a href="//openjdk.java.net/jeps/261">JEP 261</a>,
+or the documentation for the individual tool providing the option.</p>
+<p>Not all tools may support all of these options. Some tools may not be able to
+support the single-character form, if it conflicts with a previously defined
+option.</p>
+<ul>
+<li>
+<p><code>--module-path</code> <em><code>&lt;path&gt;</code></em>, &#160; <code>-p</code> <em><code>&lt;path&gt;</code></em></p>
+<p>Specifies the application module path.</p>
+</li>
+<li>
+<p><code>--upgrade-module-path</code> <em><code>&lt;path&gt;</code></em></p>
+<p>Specifies the module path for upgradeable modules.</p>
+</li>
+<li>
+<p><code>--add-modules</code> <em><code>&lt;module&gt;(</code></em><code>,</code><em><code>&lt;module&gt;)</code></em><code>*</code></p>
+</li>
+</ul>
+<p>Specifies root modules to resolve in addition to the initial module.</p>
+<ul>
+<li>
+<p><code>--limit-modules</code> <em><code>&lt;module&gt;(</code></em><code>,</code><em><code>&lt;module&gt;)</code></em><code>*</code></p>
+<p>Limits the universe of observable modules.</p>
+</li>
+<li>
+<p><code>--add-reads</code> <em><code>&lt;module&gt;</code></em><code>=</code><em><code>&lt;target-module&gt;(</code></em><code>,</code><em><code>&lt;target-module&gt;)</code></em><code>*</code></p>
+<p>Add a read edge from <em><code>&lt;module&gt;</code></em> to each <em><code>&lt;target-module&gt;</code></em>.</p>
+</li>
+<li>
+<p><code>--add-exports</code> <em><code>&lt;module&gt;</code></em><code>/</code><em><code>&lt;package&gt;</code></em><code>=</code><em><code>&lt;target-module&gt;(</code></em><code>,</code><em><code>&lt;target-module&gt;)</code></em><code>*</code></p>
+<p>Add a qualified export of <em><code>&lt;package&gt;</code></em> from <em><code>&lt;module&gt;</code></em> to <em><code>&lt;target-module&gt;</code></em>.</p>
+</li>
+<li>
+<p><code>--patch-module</code> <em><code>&lt;module&gt;</code></em><code>=</code><em><code>&lt;file&gt;(</code></em><code>:</code><em><code>&lt;file&gt;</code></em>)<code>*</code></p>
+<p>Override or augment a module with classes and resources in JAR files or directories.</p>
+</li>
+</ul>
+<p>In addition, tools currently supporting a <code>-classpath</code> option should support the
+new-style long form option as equivalent:</p>
+<ul>
+<li><code>--class-path</code> <em><code>&lt;path&gt;</code></em></li>
+</ul>
+<p>Given the existing support for <code>-cp</code> as a short form for <code>-classpath</code>, a single
+character form will not be introduced.</p>
+<p>All tools should provide some amount of command-line help. At a minimum, the
+following should be supported.</p>
+<ul>
+<li><code>--help</code></li>
+</ul>
+<p>In time, additional options that are common across different tools may be added to this list.</p>
+<h3 id="@-files">@-files</h3>
+<p>Users sometimes run into system limitations on the length of a command line when
+creating a command line with lots of options or with long arguments for options
+for a specific tool.</p>
+<p>Tools for which this is a common problem may choose to support "argument files"
+or "@-files", containing strings to be expanded in place of the @file
+argument. Tools are encouraged to support the same syntax for the tokens within
+such an argument file.</p>
+<h2 id="Command-line-help">Command-line help</h2>
+<p>Tools should support command-line help with a <code>--help</code> option.
+Some options take complex structured values. The command-line help should use
+the following rules to display such structured values:</p>
+<ul>
+<li>
+<p>Display the names of place-holders using <em><code>&lt;</code>name<code>&gt;</code></em>.</p>
+</li>
+<li>
+<p>Use parentheses for grouping:  <em><code>(...)</code></em></p>
+</li>
+<li>
+<p>Use <em><code>*</code></em> for repetition, zero or more times.</p>
+</li>
+</ul>
+<p>Tools should ensure that the output for command line help fits within the width
+of a terminal using default terminal settings: this is typically 80 characters.</p>
+<p>Tools that show command-line help for a long-form option that takes an argument
+should normally show the option using a space to separate the argument, and provide
+a note at the end that <code>=</code> may also be used as a separator.</p>
+<p>Tools providing equivalent options should provide the same command-line help text.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>

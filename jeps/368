@@ -1,0 +1,424 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /><title>JEP 368: Text Blocks (Second Preview)</title><link rel="shortcut icon" href="/images/nanoduke.ico" /><link rel="stylesheet" type="text/css" href="/page.css" /><script type="text/javascript" src="/page.js"><noscript></noscript></script><style type="text/css" xml:space="preserve">
+      TABLE { border-collapse: collapse; padding: 0px; margin: 1em 0; }
+      TR:first-child TH, TR:first-child TD { padding-top: 0; }
+      TH, TD { padding: 0px; padding-top: .5ex; vertical-align: baseline; text-align: left; }
+      TD + TD, TH + TH { padding-left: 1em; }
+      TD:first-child, TH:first-child, TD.jep { text-align: right; }
+      TABLE.head TD:first-child { font-style: italic; padding-left: 2em; }
+      PRE { padding-left: 2em; margin: 1ex 0; font-size: inherit; }
+      TABLE PRE { padding-left: 0; margin: 0; }
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { padding-left: .5em; }
+      TABLE.jeps TD:first-child,
+      TABLE.jeps TD:first-child + TD,
+      TABLE.jeps TD:first-child + TD + TD { font-size: smaller; }
+      TABLE.jeps TD.cl { font-size: smaller; padding-right: 0; text-align: right; }
+      TABLE.jeps TD.cm { font-size: smaller; padding-left: .1em; padding-right: .1em; }
+      TABLE.jeps TD.cr { font-size: smaller; padding-left: 0; }
+      TABLE.jeps TD.z { padding-left: 0; padding-right: 0; }
+      TABLE.head TD { padding-top: 0; }
+      .withdrawn { text-decoration: line-through; }
+    </style></head><body><div id="main"><h1>JEP 368: Text Blocks (Second Preview)</h1><table class="head"><tr><td>Owner</td><td>Jim Laskey</td></tr><tr><td>Type</td><td>Feature</td></tr><tr><td>Scope</td><td>SE</td></tr><tr><td>Status</td><td>Targeted</td></tr><tr><td>Release</td><td>14</td></tr><tr><td>Component</td><td>tools</td></tr><tr><td>Discussion</td><td>amber dash dev at openjdk dot java dot net</td></tr><tr><td>Effort</td><td>M</td></tr><tr><td>Duration</td><td>M</td></tr><tr><td>Relates to</td><td><a href="355">JEP 355: Text Blocks (Preview)</a></td></tr><tr><td>Reviewed by</td><td>Alex Buckley</td></tr><tr><td>Created</td><td>2019/09/30 14:10</td></tr><tr><td>Updated</td><td>2019/11/26 16:40</td></tr><tr><td>Issue</td><td><a href="https://bugs.openjdk.java.net/browse/JDK-8231623">8231623</a></td></tr></table><div class="markdown"><h2 id="Summary">Summary</h2>
+<p>Add <em>text blocks</em> to the Java language. A text block is a multi-line string literal that avoids the need for most escape sequences, automatically formats the string in a predictable way, and gives the developer control over the format when desired.</p>
+<h2 id="History">History</h2>
+<p>Text blocks were proposed by <a href="https://openjdk.java.net/jeps/355">JEP 355</a> in early 2019 as a follow-on to explorations begun in <a href="https://openjdk.java.net/jeps/326">JEP 326</a> (Raw String Literals), which was withdrawn. JEP 355 was <a href="https://mail.openjdk.java.net/pipermail/jdk-dev/2019-June/003050.html">targeted to JDK 13 in June 2019</a> as a <a href="//openjdk.java.net/jeps/12">preview feature</a>. Feedback on JDK 13 suggests that this feature should be previewed again, with the addition of <a href="#New-escape-sequences">two new escape sequences</a>.</p>
+<h2 id="Goals">Goals</h2>
+<ul>
+<li>
+<p>Simplify the task of writing Java programs by making it easy to express strings that span several lines of source code, while avoiding escape sequences in common cases.</p>
+</li>
+<li>
+<p>Enhance the readability of strings in Java programs that denote code written in non-Java languages.</p>
+</li>
+<li>
+<p>Support migration from string literals by stipulating that any new construct can express the same set of strings as a string literal, interpret the same escape sequences, and be manipulated in the same ways as a string literal.</p>
+</li>
+<li>
+<p>Add escape sequences for managing explicit white space and newline control.</p>
+</li>
+</ul>
+<h2 id="Non-Goals">Non-Goals</h2>
+<ul>
+<li>
+<p>It is not a goal to define a new reference type, distinct from <code>java.lang.String</code>, for the strings expressed by any new construct.</p>
+</li>
+<li>
+<p>It is not a goal to define new operators, distinct from <code>+</code>, that take <code>String</code> operands.</p>
+</li>
+<li>
+<p>Text blocks do not directly support string interpolation. Interpolation may be considered in a future JEP.</p>
+</li>
+<li>
+<p>Text blocks do not support raw strings, that is, strings whose characters are not processed in any way.</p>
+</li>
+</ul>
+<h2 id="Motivation">Motivation</h2>
+<p>In Java, embedding a snippet of HTML, XML, SQL, or JSON in a string literal <code>"..."</code> usually requires significant editing with escapes and concatenation before the code containing the snippet will compile. The snippet is often difficult to read and arduous to maintain.</p>
+<p>More generally, the need to denote short, medium, and long blocks of text in a Java program is near universal, whether the text is code from other programming languages, structured text representing golden files, or messages in natural languages. On the one hand, the Java language recognizes this need by allowing strings of unbounded size and content; on the other hand, it embodies a design default that strings should be small enough to denote on a single line of a source file (surrounded by " characters), and simple enough to escape easily. This design default is at odds with the large number of Java programs where strings are too long to fit comfortably on a single line.</p>
+<p>Accordingly, it would improve both the readability and the writability of a broad class of Java programs to have a linguistic mechanism for denoting strings more literally than a string literal -- across multiple lines and without the visual clutter of escapes. In essence, a two-dimensional block of text, rather than a one-dimensional sequence of characters.</p>
+<p>Still, it is impossible to predict the role of every string in Java programs. Just because a string spans multiple lines of source code does not mean that newline characters are desirable in the string. One part of a program may be more readable when strings are laid out over multiple lines, but the embedded newline characters may change the behavior of another part of the program. Accordingly, it would be helpful if the developer had precise control over where newlines appear, and, as a related matter, how much white space appears to the left and right of the "block" of text.</p>
+<h3 id="HTML-example">HTML example</h3>
+<p><em>Using "one-dimensional" string literals</em></p>
+<pre><code>String html = "&lt;html&gt;\n" +
+              "    &lt;body&gt;\n" +
+              "        &lt;p&gt;Hello, world&lt;/p&gt;\n" +
+              "    &lt;/body&gt;\n" +
+              "&lt;/html&gt;\n";</code></pre>
+<p><em>Using a "two-dimensional" block of text</em></p>
+<pre><code>String html = """
+              &lt;html&gt;
+                  &lt;body&gt;
+                      &lt;p&gt;Hello, world&lt;/p&gt;
+                  &lt;/body&gt;
+              &lt;/html&gt;
+              """;</code></pre>
+<h3 id="SQL-example">SQL example</h3>
+<p><em>Using "one-dimensional" string literals</em></p>
+<pre><code>String query = "SELECT `EMP_ID`, `LAST_NAME` FROM `EMPLOYEE_TB`\n" +
+               "WHERE `CITY` = 'INDIANAPOLIS'\n" +
+               "ORDER BY `EMP_ID`, `LAST_NAME`;\n";</code></pre>
+<p><em>Using a "two-dimensional" block of text</em></p>
+<pre><code>String query = """
+               SELECT `EMP_ID`, `LAST_NAME` FROM `EMPLOYEE_TB`
+               WHERE `CITY` = 'INDIANAPOLIS'
+               ORDER BY `EMP_ID`, `LAST_NAME`;
+               """;</code></pre>
+<h3 id="Polyglot-language-example">Polyglot language example</h3>
+<p><em>Using "one-dimensional" string literals</em></p>
+<pre><code>ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
+Object obj = engine.eval("function hello() {\n" +
+                         "    print('\"Hello, world\"');\n" +
+                         "}\n" +
+                         "\n" +
+                         "hello();\n");</code></pre>
+<p><em>Using a "two-dimensional" block of text</em></p>
+<pre><code>ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
+Object obj = engine.eval("""
+                         function hello() {
+                             print('"Hello, world"');
+                         }
+                         
+                         hello();
+                         """);</code></pre>
+<h2 id="Description">Description</h2>
+<blockquote>
+<p><em>This section is identical to the same section in this JEP's predecessor, <a href="https://openjdk.java.net/jeps/355">JEP 355</a>, except for the addition of the subsection on <a href="#New-escape-sequences">new escape sequences</a>.</em></p>
+</blockquote>
+<p>A <em>text block</em> is a new kind of literal in the Java language. It may be used to denote a string anywhere that a <em><a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.10.5">string literal</a></em> could appear, but offers greater expressiveness and less accidental complexity.</p>
+<p>A text block consists of zero or more content characters, enclosed by opening and closing delimiters.</p>
+<p>The <em>opening delimiter</em> is a sequence of three double quote characters (<code>"""</code>) followed by zero or more white spaces followed by a line terminator. The <em>content</em> begins at the first character after the line terminator of the opening delimiter.</p>
+<p>The <em>closing delimiter</em> is a sequence of three double quote characters. The content ends at the last character before the first double quote of the closing delimiter.</p>
+<p>The content may include double quote characters directly, unlike the characters in a string literal. The use of <code>\"</code> in a text block is permitted, but not necessary or recommended. Fat delimiters (<code>"""</code>) were chosen so that <code>"</code> characters could appear unescaped, and also to visually distinguish a text block from a string literal.</p>
+<p>The content may include line terminators directly, unlike the characters in a string literal. The use of <code>\n</code> in a text block is permitted, but not necessary or recommended. For example, the text block:</p>
+<pre><code>"""
+line 1
+line 2
+line 3
+"""</code></pre>
+<p>is equivalent to the string literal:</p>
+<pre><code>"line 1\nline 2\nline 3\n"</code></pre>
+<p>or a concatenation of string literals:</p>
+<pre><code>"line 1\n" +
+"line 2\n" +
+"line 3\n"</code></pre>
+<p>If a line terminator is not required at the end of the string, then the closing delimiter can be placed on the last line of content. For example, the text block:</p>
+<pre><code>"""
+line 1
+line 2
+line 3"""</code></pre>
+<p>is equivalent to the string literal:</p>
+<pre><code>"line 1\nline 2\nline 3"</code></pre>
+<p>A text block can denote the empty string, although this is not recommended because it needs two lines of source code:</p>
+<pre><code>String empty = """
+""";</code></pre>
+<p>Here are some examples of ill-formed text blocks:</p>
+<pre><code>String a = """""";   // no line terminator after opening delimiter
+String b = """ """;  // no line terminator after opening delimiter
+String c = """
+           ";        // no closing delimiter (text block continues to EOF)
+String d = """
+           abc \ def
+           """;      // unescaped backslash (see below for escape processing)</code></pre>
+<h3 id="Compile-time-processing">Compile-time processing</h3>
+<p>A text block is a <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-15.html#jls-15.28">constant expression</a> of type <code>String</code>, just like a string literal. However, unlike a string literal, the content of a text block is processed by the Java compiler in three distinct steps:</p>
+<ol>
+<li>
+<p>Line terminators in the content are translated to LF (<code>\u000A</code>). The purpose of this translation is to follow the principle of least surprise when moving Java source code across platforms.</p>
+</li>
+<li>
+<p>Incidental white space surrounding the content, introduced to match the indentation of Java source code, is removed.</p>
+</li>
+<li>
+<p>Escape sequences in the content are interpreted. Performing interpretation as the final step means developers can write escape sequences such as <code>\n</code> without them being modified or deleted by earlier steps.</p>
+</li>
+</ol>
+<p>The processed content is recorded in the <code>class</code> file as a <code>CONSTANT_String_info</code> entry in the constant pool, just like the characters of a string literal. The <code>class</code> file does not record whether a <code>CONSTANT_String_info</code> entry was derived from a text block or a string literal.</p>
+<p>At run time, a text block is evaluated to an instance of <code>String</code>, just like a string literal. Instances of <code>String</code> that are derived from text blocks are indistinguishable from instances derived from string literals. Two text blocks with the same processed content will refer to the same instance of <code>String</code> due to <a href="https://docs.oracle.com/javase/specs/jvms/se12/html/jvms-5.html#jvms-5.1-300">interning</a>, just like for <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.10.5-410">string literals</a>.</p>
+<p>The following sections discuss compile-time processing in more detail.</p>
+<h4 id="1--Line-terminators">1. Line terminators</h4>
+<p>Line terminators in the content are <em>normalized</em> from CR (<code>\u000D</code>) and CRLF (<code>\u000D\u000A</code>) to LF (<code>\u000A</code>) by the Java compiler. This ensures that the string derived from the content is equivalent across platforms, even if the source code has been translated to a platform encoding (see <code>javac -encoding</code>).</p>
+<p>For example, if Java source code that was created on a Unix platform (where the line terminator is LF) is edited on a Windows platform (where the line terminator is CRLF), then without normalization, the content would become one character longer for each line. Any algorithm that relied on LF being the line terminator might fail, and any test that needed to verify string equality with <code>String::equals</code> would fail.</p>
+<p>The escape sequences <code>\n</code> (LF), <code>\f</code> (FF), and <code>\r</code> (CR) are <em>not</em> interpreted during normalization; escape processing happens later.</p>
+<h4 id="2--Incidental-white-space">2. Incidental white space</h4>
+<p>The text blocks in <a href="#Motivation">shown above</a> were easier to read than their concatenated string literal counterparts, but the obvious interpretation for the content of a text block would include the spaces added to indent the embedded string so that it lines up neatly with the opening delimiter. Here is the HTML example using dots to visualize the spaces that the developer added for indentation:</p>
+<pre><code>String html = """
+..............&lt;html&gt;
+..............    &lt;body&gt;
+..............        &lt;p&gt;Hello, world&lt;/p&gt;
+..............    &lt;/body&gt;
+..............&lt;/html&gt;
+..............""";</code></pre>
+<p>Since the opening delimiter is generally positioned to appear on the same line as the statement or expression which consumes the text block, there is no real significance to the fact that 14 visualized spaces start each line. Including those spaces in the content would mean the text block denotes a string different from the one denoted by the concatenated string literals. This would hurt migration, and be a recurring source of surprise: it is overwhelmingly likely that the developer does <em>not</em> want those spaces in the string. Also, the closing delimiter is generally positioned to align with the content, which further suggests that the 14 visualized spaces are insignificant.</p>
+<p>Spaces may also appear at the end of each line, especially when a text block is populated by copy-pasting snippets from other files (which may themselves have been formed by copy-pasting from yet more files). Here is the HTML example reimagined with some trailing white space, again using dots to visualize spaces:</p>
+<pre><code>String html = """
+..............&lt;html&gt;...
+..............    &lt;body&gt;
+..............        &lt;p&gt;Hello, world&lt;/p&gt;....
+..............    &lt;/body&gt;.
+..............&lt;/html&gt;...
+..............""";</code></pre>
+<p>Trailing white space is most often unintentional, idiosyncratic, and insignificant. It is overwhelmingly likely that the developer does not care about it. Trailing white space characters are similar to line terminators, in that both are invisible artifacts of the source code editing environment. With no visual guide to the presence of trailing white space characters, including them in the content would be a recurring source of surprise, as it would affect the length, hash code, etc, of the string.</p>
+<p>Accordingly, an appropriate interpretation for the content of a text block is to differentiate <em>incidental white space</em> at the start and end of each line, from <em>essential white space</em>. The Java compiler processes the content by removing incidental white space to yield what the developer intended. <code>String::indent</code> can then be used to manage indentation if desired. Using <code>|</code> to visualize margins:</p>
+<pre><code>|&lt;html&gt;|
+|    &lt;body&gt;|
+|        &lt;p&gt;Hello, world&lt;/p&gt;|
+|    &lt;/body&gt;|
+|&lt;/html&gt;|</code></pre>
+<p>The <em>re-indentation algorithm</em> takes the content of a text block whose line terminators have been normalized to LF. It removes the same amount of white space from each line of content until at least one of the lines has a non-white space character in the leftmost position. The position of the opening <code>"""</code> characters has no effect on the algorithm, but the position of the closing <code>"""</code> characters does have an effect if placed on its own line. The algorithm is as follows:</p>
+<ol>
+<li>
+<p>Split the content of the text block at every LF, producing a list of <em>individual lines</em>. Note that any line in the content which was just an LF will become an empty line in the list of individual lines.</p>
+</li>
+<li>
+<p>Add all <em>non-blank</em> lines from the list of individual lines into a set of <em>determining lines</em>. (Blank lines -- lines that are empty or are composed wholly of white space -- have no visible influence on the indentation. Excluding blank lines from the set of determining lines avoids throwing off step 4 of the algorithm.)</p>
+</li>
+<li>
+<p>If the last line in the list of individual lines (i.e., the line with the closing delimiter) is <em>blank</em>, then add it to the set of determining lines. (The indentation of the closing delimiter should influence the indentation of the content as a whole -- a <a href="#Significant-trailing-line-policy"><em>significant trailing line</em></a> policy.)</p>
+</li>
+<li>
+<p>Compute the <em>common white space prefix</em> of the set of determining lines, by counting the number of leading white space characters on each line and taking the minimum count.</p>
+</li>
+<li>
+<p>Remove the common white space prefix from each <em>non-blank</em> line in the list of individual lines.</p>
+</li>
+<li>
+<p>Remove all trailing white space from all lines in the modified list of individual lines from step 5. This step collapses wholly-white-space lines in the modified list so that they are empty, but does not discard them.</p>
+</li>
+<li>
+<p>Construct the result string by joining all the lines in the modified list of individual lines from step 6, using LF as the separator between lines. If the final line in the list from step 6 is empty, then the joining LF from the previous line will be the last character in the result string.</p>
+</li>
+</ol>
+<p>The escape sequences <code>\b</code> (backspace) and <code>\t</code> (tab) are <em>not</em> interpreted by the algorithm; escape processing happens later.</p>
+<p>The re-indentation algorithm will be normative in <em>The Java Language Specification</em>. Developers will have access to it via <code>String::stripIndent</code>, a new instance method.</p>
+<h4 id="Significant-trailing-line-policy">Significant trailing line policy</h4>
+<p>Normally, one would format a text block in two ways: first, position the left edge of the content to appear under the first <code>"</code> of the opening delimiter, and second, place the closing delimiter on its own line to appear exactly under the opening delimiter. The resulting string will have no white space at the start of any line, and will not include the trailing blank line of the closing delimiter.</p>
+<p>However, because the trailing blank line is considered a <em>determining line</em>, moving it to the left has the effect of reducing the common white space prefix, and therefore reducing the the amount of white space that is stripped from the start of every line. In the extreme case, where the closing delimiter is moved all the way to the left, that reduces the common white space prefix to zero, effectively opting out of white space stripping.</p>
+<p>For example, with the closing delimiter moved all the way to the left, there is no incidental white space to visualize with dots:</p>
+<pre><code>String html = """
+              &lt;html&gt;
+                  &lt;body&gt;
+                      &lt;p&gt;Hello, world&lt;/p&gt;
+                  &lt;/body&gt;
+              &lt;/html&gt;
+""";</code></pre>
+<p>Including the trailing blank line with the closing delimiter, the common white space prefix is zero, so zero white space is removed from the start of each line. The algorithm thus produces: (using <code>|</code> to visualize the left margin)</p>
+<pre><code>|              &lt;html&gt;
+|                  &lt;body&gt;
+|                      &lt;p&gt;Hello, world&lt;/p&gt;
+|                  &lt;/body&gt;
+|              &lt;/html&gt;</code></pre>
+<p>Alternatively, suppose the closing delimiter is not moved all the way to the left, but rather under the <code>t</code> of <code>html</code> so it is eight spaces deeper than the variable declaration:</p>
+<pre><code>String html = """
+              &lt;html&gt;
+                  &lt;body&gt;
+                      &lt;p&gt;Hello, world&lt;/p&gt;
+                  &lt;/body&gt;
+              &lt;/html&gt;
+        """;</code></pre>
+<p>The spaces visualized with dots are considered to be incidental:</p>
+<pre><code>String html = """
+........      &lt;html&gt;
+........          &lt;body&gt;
+........              &lt;p&gt;Hello, world&lt;/p&gt;
+........          &lt;/body&gt;
+........      &lt;/html&gt;
+........""";</code></pre>
+<p>Including the trailing blank line with the closing delimiter, the common white space prefix is eight, so eight white spaces are removed from the start of each line. The algorithm thus preserves the essential indentation of the content relative to the closing delimiter:</p>
+<pre><code>|      &lt;html&gt;
+|          &lt;body&gt;
+|              &lt;p&gt;Hello, world&lt;/p&gt;
+|          &lt;/body&gt;
+|      &lt;/html&gt;</code></pre>
+<p>Finally, suppose the closing delimiter is moved slightly to the <em>right</em> of the content:</p>
+<pre><code>String html = """
+              &lt;html&gt;
+                  &lt;body&gt;
+                      &lt;p&gt;Hello, world&lt;/p&gt;
+                  &lt;/body&gt;
+              &lt;/html&gt;
+                  """;</code></pre>
+<p>The spaces visualized with dots are considered to be incidental:</p>
+<pre><code>String html = """
+..............&lt;html&gt;
+..............    &lt;body&gt;
+..............        &lt;p&gt;Hello, world&lt;/p&gt;
+..............    &lt;/body&gt;
+..............&lt;/html&gt;
+..............    """;</code></pre>
+<p>The common white space prefix is 14, so 14 white spaces are removed from the start of each line. The trailing blank line is stripped to leave an empty line, which being the last line is then discarded. In other words, moving the closing delimiter to the right of the content has no effect, and the algorithm again preserves the essential indentation of the content:</p>
+<pre><code>|&lt;html&gt;
+|    &lt;body&gt;
+|        &lt;p&gt;Hello, world&lt;/p&gt;
+|    &lt;/body&gt;
+|&lt;/html&gt;</code></pre>
+<h4 id="3--Escape-sequences">3. Escape sequences</h4>
+<p>After the content is re-indented, any <em>escape sequences</em> in the content are interpreted. Text blocks support all of the escape sequences supported in string literals, including <code>\n</code>, <code>\t</code>, <code>\'</code>, <code>\"</code>, and <code>\\</code>. See <a href="https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-3.10.6">section 3.10.6</a> of the <em>The Java Language Specification</em> for the full list. Developers will have access to escape processing via <code>String::translateEscapes</code>, a new instance method.</p>
+<p>Interpreting escapes as the final step allows developers to use <code>\n</code>, <code>\f</code>, and <code>\r</code> for vertical formatting of a string without it affecting the translation of line terminators in step 1, and to use <code>\b</code> and <code>\t</code> for horizontal formatting of a string without it affecting the removal of incidental white space in step 2. For example, consider this text block that contains the <code>\r</code> escape sequence (CR):</p>
+<pre><code>String html = """
+              &lt;html&gt;\r
+                  &lt;body&gt;\r
+                      &lt;p&gt;Hello, world&lt;/p&gt;\r
+                  &lt;/body&gt;\r
+              &lt;/html&gt;\r
+              """;</code></pre>
+<p>The CR escapes are not processed until after the line terminators have been normalized to LF. Using Unicode escapes to visualize LF (<code>\u000A</code>) and CR (<code>\u000D</code>), the result is:</p>
+<pre><code>|&lt;html&gt;\u000D\u000A
+|    &lt;body&gt;\u000D\u000A
+|        &lt;p&gt;Hello, world&lt;/p&gt;\u000D\u000A
+|    &lt;/body&gt;\u000D\u000A
+|&lt;/html&gt;\u000D\u000A</code></pre>
+<p>Note that it is legal to use <code>"</code> freely inside a text block, even next to the opening or closing delimiter. For example:</p>
+<pre><code>String story = """
+    "When I use a word," Humpty Dumpty said,
+    in rather a scornful tone, "it means just what I
+    choose it to mean - neither more nor less."
+    "The question is," said Alice, "whether you
+    can make words mean so many different things."
+    "The question is," said Humpty Dumpty,
+    "which is to be master - that's all."
+    """;</code></pre>
+<p>However, sequences of three <code>"</code> characters require the escaping of at least one <code>"</code> to avoid mimicking the closing delimiter:</p>
+<pre><code>String code = 
+    """
+    String text = \"""
+        A text block inside a text block
+    \""";
+    """;</code></pre>
+<h3 id="New-escape-sequences">New escape sequences</h3>
+<p>To allow finer control of the processing of newlines and white space, we introduce two new escape sequences.</p>
+<p>First, the <code>\&lt;line-terminator&gt;</code> escape sequence explicitly suppresses the insertion of a newline character.</p>
+<p>For example, it is common practice to split very long string literals into concatenations of smaller substrings, and then hard wrap the resulting string expression onto multiple lines:</p>
+<pre><code>String literal = "Lorem ipsum dolor sit amet, consectetur adipiscing " +
+                 "elit, sed do eiusmod tempor incididunt ut labore " +
+                 "et dolore magna aliqua.";</code></pre>
+<p>With the <code>\&lt;line-terminator&gt;</code> escape sequence this could be expressed as:</p>
+<pre><code>String text = """
+                Lorem ipsum dolor sit amet, consectetur adipiscing \
+                elit, sed do eiusmod tempor incididunt ut labore \
+                et dolore magna aliqua.\
+                """;</code></pre>
+<p>For the simple reason that character literals and traditional string literals don't allow embedded newlines, the <code>\&lt;line-terminator&gt;</code> escape sequence is only applicable to text blocks.</p>
+<p>Second, the new <code>\s</code> escape sequence simply translates to a single space (<code>\u0020</code>).</p>
+<p>Escape sequences aren't translated until after incident space stripping, so <code>\s</code> can act as fence to prevent the stripping of trailing white space. Using <code>\s</code> at the end of each line in this example guarantees that each line is exactly six characters long:</p>
+<pre><code>String colors = """
+    red  \s
+    green\s
+    blue \s
+    """;</code></pre>
+<p>The <code>\s</code> escape sequence can be used in both text blocks and traditional string literals.</p>
+<h3 id="Concatenation-of-text-blocks">Concatenation of text blocks</h3>
+<p>Text blocks can be used anywhere a string literal can be used. For example, text blocks and string literals may be concatenated interchangeably:</p>
+<pre><code>String code = "public void print(Object o) {" +
+              """
+                  System.out.println(Objects.toString(o));
+              }
+              """;</code></pre>
+<p>However, concatenation involving a text block can become rather clunky. Take this text block as a starting point:</p>
+<pre><code>String code = """
+              public void print(Object o) {
+                  System.out.println(Objects.toString(o));
+              }
+              """;</code></pre>
+<p>Suppose it needs to be changed so that the type of <code>o</code> comes from a variable. Using concatenation, the text block that contains the trailing code will need to start on a new line. Unfortunately, the straightforward insertion of a newline in the program, as below, will cause a long span of white space between the type and the text beginning <code>o</code> :</p>
+<pre><code>String code = """
+              public void print(""" + type + """
+                                                 o) {
+                  System.out.println(Objects.toString(o));
+              }
+              """;</code></pre>
+<p>The white space can be removed manually, but this hurts readability of the quoted code:</p>
+<pre><code>String code = """
+              public void print(""" + type + """
+               o) {
+                  System.out.println(Objects.toString(o));
+              }
+              """;</code></pre>
+<p>A cleaner alternative is to use <code>String::replace</code> or <code>String::format</code>, as follows:</p>
+<pre><code>String code = """
+              public void print($type o) {
+                  System.out.println(Objects.toString(o));
+              }
+              """.replace("$type", type);</code></pre>
+<pre><code>String code = String.format("""
+              public void print(%s o) {
+                  System.out.println(Objects.toString(o));
+              }
+              """, type);</code></pre>
+<p>Another alternative involves the introduction of a new instance method, <code>String::formatted</code>, which could be used as follows:</p>
+<pre><code>String source = """
+                public void print(%s object) {
+                    System.out.println(Objects.toString(object));
+                }
+                """.formatted(type);</code></pre>
+<h3 id="Additional-Methods">Additional Methods</h3>
+<p>The following methods will be added to support text blocks;</p>
+<ul>
+<li><code>String::stripIndent()</code>: used to strip away incidental white space from the text block content</li>
+<li><code>String::translateEscapes()</code>: used to translate escape sequences</li>
+<li><code>String::formatted(Object... args)</code>: simplify value substitution in the text block</li>
+</ul>
+<h2 id="Alternatives">Alternatives</h2>
+<h3 id="Do-nothing">Do nothing</h3>
+<p>Java has prospered for over 20 years with string literals that required newlines to be escaped. IDEs ease the maintenance burden by supporting automatic formatting and concatenation of strings that span several lines of source code. The <code>String</code> class has also evolved to include methods that simplify the processing and formatting of long strings, such as a method that presents a string as a <a href="https://docs.oracle.com/en/java/javase/12/docs/api/java.base/java/lang/String.html#lines()">stream of lines</a>. However, strings are such a fundamental part of the Java language that the shortcomings of string literals are apparent to <a href="https://stackoverflow.com/questions/878573/java-multiline-string">vast numbers of developers</a>. Other JVM languages have also made advances in how long and complex strings are denoted. Unsurprisingly, then, multi-line string literals have consistently been one of the most requested features for Java. Introducing a multi-line construct of low to moderate complexity would have a high payoff.</p>
+<h3 id="Allow-a-string-literal-to-span-multiple-lines">Allow a string literal to span multiple lines</h3>
+<p>Multi-line string literals could be introduced in Java simply by allowing line terminators in existing string literals. However, this would do nothing about the pain of escaping <code>"</code> characters. <code>\"</code> is the most frequently occurring escape sequence after <code>\n</code>, because of frequency of code snippets. The only way to avoid escaping <code>"</code> in a string literal would be to provide an alternate delimiter scheme for string literals. Delimiters were much discussed for <a href="https://openjdk.java.net/jeps/326">JEP 326</a> (Raw String Literals), and the lessons learned were used to inform the design of text blocks, so it would be misguided to upset the stability of string literals.</p>
+<h3 id="Adopt-another-language's-multi-string-literal">Adopt another language's multi-string literal</h3>
+<p>According to <a href="https://mail.openjdk.java.net/pipermail/amber-spec-experts/2019-March/001082.html">Brian Goetz</a>:</p>
+<blockquote>
+<p>Many people have suggested that Java should adopt multi-line string
+literals from Swift or Rust. However, the approach of &#8220;just do what
+language X does&#8221; is intrinsically irresponsible; nearly every feature of
+every language is conditioned by other features of that language.
+Instead, the game is to learn from how other languages do things, assess
+the tradeoffs they&#8217;ve chosen (explicitly and implicitly), and ask what
+can be applied to the constraints of the language we have and user
+expectations within the community we have.</p>
+</blockquote>
+<p>For <a href="https://openjdk.java.net/jeps/326">JEP 326</a> (Raw String Literals), we surveyed many modern programming languages and their support for multi-line string literals. The results of these surveys influenced the current proposal, such as the choice of three <code>"</code> characters for delimiters (although there were other reasons for this choice too) and the recognition of the need for automatic indentation management.</p>
+<h3 id="Do-not-remove-incidental-white-space">Do not remove incidental white space</h3>
+<p>If Java introduced multi-line string literals without support for automatically removing incidental white space, then many developers would write a method to remove it themselves, or lobby for the <code>String</code> class to include a removal method. However, that implies a potentially expensive computation every time the string is instantiated at run time, which would reduce the benefit of string interning. Having the Java language mandate the removal of incidental white space, both in leading and trailing positions, seems the most appropriate solution. Developers can opt out of leading white space removal by careful placement of the closing delimiter.</p>
+<h3 id="Raw-string-literals">Raw string literals</h3>
+<p>For <a href="https://openjdk.java.net/jeps/326">JEP 326</a> (Raw String Literals), we took a different approach to the problem of denoting strings without escaping newlines and quotes, focusing on the raw-ness of strings. We now believe that this focus was wrong, because while raw string literals could easily span multiple lines of source code, the cost of supporting unescaped delimiters in their content was extreme. This limited the effectiveness of the feature in the multi-line use case, which is a critical one because of the frequency of embedding multi-line (but not truly raw) code snippets in Java programs. A good outcome of the pivot from raw-ness to multi-line-ness was a renewed focus on having a consistent escape language between string literals, text blocks, and related features that may be added in future.</p>
+<h2 id="Testing">Testing</h2>
+<p>Tests that use string literals for the creation, interning, and manipulation of instances of <code>String</code> should be duplicated to use text blocks too. Negative tests should be added for corner cases involving line terminators and EOF.</p>
+<p>Tests should be added to ensure that text blocks can embed Java-in-Java, Markdown-in-Java, SQL-in-Java, and at least one JVM-language-in-Java.</p>
+</div></div><div id="sidebar"><div id="openjdk-sidebar-logo"><a href="/"><img alt="OpenJDK logo" src="/images/openjdk-small.png" /></a></div><div class="links"><div class="links"><a href="/workshop"><b>Workshop</b></a></div></div><div class="links"><div class="link"><a href="/faq/">OpenJDK FAQ</a></div><div class="link"><a href="/install/">Installing</a></div><div class="link"><a href="/contribute/">Contributing</a></div><div class="link"><a href="/sponsor/">Sponsoring</a></div><div class="link"><a href="/guide/">Developers' Guide</a></div><div class="link"><a href="/groups/vulnerability/report">Vulnerabilities</a></div></div><div class="links"><div class="links"><a href="//mail.openjdk.java.net">Mailing lists</a></div><div class="link"><a href="/irc">IRC</a>
+                      &#183; <a href="https://wiki.openjdk.java.net">Wiki</a></div></div><div class="links"><div class="links"><a href="/bylaws">Bylaws</a> &#183; <a href="/census">Census</a></div><div class="link"><a href="/legal/">Legal</a></div></div><div class="links"><div class="links"><a href="/jeps/0"><b>JEP Process</b></a></div></div><div class="links"><div class="link search"><form method="get" action="https://www.google.com/search"><input id="searchBox" style="color: gray" type="text" name="q" size="10" maxlength="255" value="search" /><input type="hidden" name="sitesearch" value="openjdk.java.net" /></form></div></div><div class="links"><div class="about">Source code</div><div class="link"><a href="//hg.openjdk.java.net">Mercurial</a></div><div class="link">Bundles (<a href="http://download.java.net/openjdk/jdk6">6</a>)</div></div><div class="links"><div class="about">Groups</div><div class="link"><a href="/groups/">(overview)</a></div><div class="link"><a href="/groups/2d">2D Graphics</a></div><div class="link"><a href="/groups/adoption">Adoption</a></div><div class="link"><a href="/groups/awt">AWT</a></div><div class="link"><a href="/groups/build">Build</a></div><div class="link"><a href="/groups/csr">Compatibility &amp; Specification Review</a></div><div class="link"><a href="/groups/compiler">Compiler</a></div><div class="link"><a href="/groups/conformance">Conformance</a></div><div class="link"><a href="/groups/core-libs">Core Libraries</a></div><div class="link"><a href="/groups/gb">Governing Board</a></div><div class="link"><a href="/groups/hotspot">HotSpot</a></div><div class="link"><a href="/groups/ide-support">IDE Tooling &amp; Support</a></div><div class="link"><a href="/groups/i18n">Internationalization</a></div><div class="link"><a href="/groups/jmx">JMX</a></div><div class="link"><a href="/groups/members">Members</a></div><div class="link"><a href="/groups/net">Networking</a></div><div class="link"><a href="/groups/nb-projects">NetBeans Projects</a></div><div class="link"><a href="/groups/porters">Porters</a></div><div class="link"><a href="/groups/quality">Quality</a></div><div class="link"><a href="/groups/security">Security</a></div><div class="link"><a href="/groups/serviceability">Serviceability</a></div><div class="link"><a href="/groups/sound">Sound</a></div><div class="link"><a href="/groups/swing">Swing</a></div><div class="link"><a href="/groups/vulnerability">Vulnerability</a></div><div class="link"><a href="/groups/web">Web</a></div></div><div class="links"><div class="about">Projects</div><div class="link"><a href="/projects/">(overview)</a></div><div class="link"><a href="/projects/amber">Amber</a></div><div class="link"><a href="/projects/anno-pipeline">Annotations Pipeline 2.0</a></div><div class="link"><a href="/projects/audio-engine">Audio Engine</a></div><div class="link"><a href="/projects/build-infra">Build Infrastructure</a></div><div class="link"><a href="/projects/caciocavallo">Caciocavallo</a></div><div class="link"><a href="/projects/closures">Closures</a></div><div class="link"><a href="/projects/code-tools">Code Tools</a></div><div class="link"><a href="/projects/coin">Coin</a></div><div class="link"><a href="/projects/cvmi">Common VM Interface</a></div><div class="link"><a href="/projects/compiler-grammar">Compiler Grammar</a></div><div class="link"><a href="/projects/detroit">Detroit</a></div><div class="link"><a href="/projects/dio">Device I/O</a></div><div class="link"><a href="/projects/duke">Duke</a></div><div class="link"><a href="/projects/font-scaler">Font Scaler</a></div><div class="link"><a href="/projects/fbtoolkit">Framebuffer Toolkit</a></div><div class="link"><a href="/projects/graal">Graal</a></div><div class="link"><a href="/projects/graphics-rasterizer">Graphics Rasterizer</a></div><div class="link"><a href="/projects/harfbuzz">HarfBuzz Integration</a></div><div class="link"><a href="/projects/icedtea">IcedTea</a></div><div class="link"><a href="/projects/jdk6">JDK 6</a></div><div class="link"><a href="/projects/jdk7">JDK 7</a></div><div class="link"><a href="/projects/jdk7u">JDK 7 Updates</a></div><div class="link"><a href="/projects/jdk8">JDK 8</a></div><div class="link"><a href="/projects/jdk8u">JDK 8 Updates</a></div><div class="link"><a href="/projects/jdk9">JDK 9</a></div><div class="link"><a href="/projects/jdk">JDK</a>
+      (&#8230;
+       <a href="/projects/jdk/12">12</a>,
+       <a href="/projects/jdk/13">13</a>,
+       <a href="/projects/jdk/14">14</a>)</div><div class="link"><a href="/projects/jdk-updates">JDK Updates</a></div><div class="link"><a href="/projects/javadoc-next">JavaDoc.Next</a></div><div class="link"><a href="/projects/jigsaw">Jigsaw</a></div><div class="link"><a href="/projects/kona">Kona</a></div><div class="link"><a href="/projects/kulla">Kulla</a></div><div class="link"><a href="/projects/lambda">Lambda</a></div><div class="link"><a href="/projects/lanai">Lanai</a></div><div class="link"><a href="/projects/locale-enhancement">Locale Enhancement</a></div><div class="link"><a href="/projects/loom">Loom</a></div><div class="link"><a href="/projects/jmm">Memory Model Update</a></div><div class="link"><a href="/projects/metropolis">Metropolis</a></div><div class="link"><a href="/projects/jmc">Mission Control</a></div><div class="link"><a href="/projects/mobile">Mobile</a></div><div class="link"><a href="/projects/modules">Modules</a></div><div class="link"><a href="/projects/mlvm">Multi-Language VM</a></div><div class="link"><a href="/projects/nashorn">Nashorn</a></div><div class="link"><a href="/projects/nio">New I/O</a></div><div class="link"><a href="/projects/openjfx">OpenJFX</a></div><div class="link"><a href="/projects/panama">Panama</a></div><div class="link"><a href="/projects/penrose">Penrose</a></div><div class="link"><a href="/projects/aarch32-port">Port: AArch32</a></div><div class="link"><a href="/projects/aarch64-port">Port: AArch64</a></div><div class="link"><a href="/projects/bsd-port">Port: BSD</a></div><div class="link"><a href="/projects/haiku-port">Port: Haiku</a></div><div class="link"><a href="/projects/macosx-port">Port: Mac OS X</a></div><div class="link"><a href="/projects/mips-port">Port: MIPS</a></div><div class="link"><a href="/projects/ppc-aix-port">Port: PowerPC/AIX</a></div><div class="link"><a href="/projects/s390x-port">Port: s390x</a></div><div class="link"><a href="/projects/portola">Portola</a></div><div class="link"><a href="/projects/sctp">SCTP</a></div><div class="link"><a href="/projects/skara">Skara</a></div><div class="link"><a href="/projects/shenandoah">Shenandoah</a></div><div class="link"><a href="/projects/sumatra">Sumatra</a></div><div class="link"><a href="/projects/threeten">ThreeTen</a></div><div class="link"><a href="/projects/tiered-attrib">Tiered Attribution</a></div><div class="link"><a href="/projects/tsan">Tsan</a></div><div class="link"><a href="/projects/type-annotations">Type Annotations</a></div><div class="link"><a href="/projects/xrender">XRender Pipeline</a></div><div class="link"><a href="/projects/valhalla">Valhalla</a></div><div class="link"><a href="/projects/verona">Verona</a></div><div class="link"><a href="/projects/visualvm">VisualVM</a></div><div class="link"><a href="/projects/zero">Zero</a></div><div class="link"><a href="/projects/zgc">ZGC</a></div></div><div class="links"><div class="about">Tools</div><div class="link"><a href="http://java.sun.com/javase/downloads/index.jsp">Java SE</a></div><div class="link"><a href="http://mercurial-scm.org/mercurial/">Mercurial</a></div><div class="link"><a href="/jtreg/index.html">jtreg harness</a></div></div><div class="links"><div class="about">Related</div><div class="link"><a href="http://planetjdk.org">Planet JDK</a></div><div class="link"><a href="http://java.sun.com">java.sun.com</a></div><div class="link"><a href="http://jcp.org">Java Community Process</a></div><div class="link"><a href="//jdk.java.net">JDK GA/EA Builds</a></div></div><div class="buttons"><a href="http://oracle.com"><img alt="Oracle logo" src="/images/oracle.png" /></a></div></div><div id="footer">
+
+        &#169; 2019 Oracle Corporation and/or its affiliates
+        <br /><a href="/legal/tou/">Terms of Use</a>
+        &#183;
+        
+            License: <a href="/legal/gplv2+ce.html">GPLv2</a>
+        &#183; <a href="http://www.oracle.com/us/legal/privacy/">Privacy</a>
+        &#183; <a href="http://www.oracle.com/us/legal/third-party-trademarks/third-party-trademarks-078568.html">Trademarks</a></div><SCRIPT type="text/javascript">
+  var sc_project=2527440;
+  var sc_invisible=1;
+  var sc_partition=24;
+  var sc_security="d832a704";
+  var sc_remove_link=1;
+  </SCRIPT><script type="text/javascript" src="https://www.statcounter.com/counter/counter_xhtml.js" async="yes"></script><noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/2527440/0/d832a704/1/" alt="web statistics" /></div></noscript></body></html>
